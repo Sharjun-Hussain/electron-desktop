@@ -228,9 +228,12 @@ function LoginForm() {
           toast.success("Access Granted");
 
           setTimeout(() => {
-            const returnUrl = searchParams.get("redirect") || "/";
-            // Use a hard reload to ensure the DesktopAuthProvider 
-            // picks up the new session from localStorage immediately.
+            let returnUrl = searchParams.get("redirect") || "/";
+            // If redirect points back to the login page, go to dashboard instead
+            if (!returnUrl || returnUrl.startsWith("/login") || returnUrl === "/") {
+              returnUrl = "/";
+            }
+            // Hard reload ensures DesktopAuthProvider picks up the new session immediately.
             window.location.href = returnUrl;
           }, 600);
           return;

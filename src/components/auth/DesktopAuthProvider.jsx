@@ -6,10 +6,18 @@ import { getDesktopSession, desktopLogout } from '@/lib/desktop-auth';
 const SessionContext = createContext(null);
 
 export function DesktopAuthProvider({ children }) {
-  const [session, setSession] = useState(null);
-  const [status, setStatus] = useState('loading');
+  const [session, setSession] = useState(() => {
+    if (typeof window !== 'undefined') return getDesktopSession();
+    return null;
+  });
+  
+  const [status, setStatus] = useState(() => {
+    if (typeof window !== 'undefined') return getDesktopSession() ? 'authenticated' : 'unauthenticated';
+    return 'loading';
+  });
 
   useEffect(() => {
+    // Re-verify session on mount
     const currentSession = getDesktopSession();
     setSession(currentSession);
     setStatus(currentSession ? 'authenticated' : 'unauthenticated');
@@ -24,9 +32,14 @@ export function DesktopAuthProvider({ children }) {
       }
 
       const response = await originalFetch(...args);
+      
+      // If we get a 401, it means our session is invalid or expired
       if (response.status === 401 && !window.location.pathname.includes('/login')) {
         console.warn(`[DesktopAuth] 401 Unauthorized from ${args[0]}. Logging out...`);
-        desktopLogout();
+        // Only logout if we actually have a session to clear, to avoid infinite loops
+        if (getDesktopSession()) {
+          desktopLogout();
+        }
       }
       return response;
     };
