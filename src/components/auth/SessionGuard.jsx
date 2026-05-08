@@ -18,11 +18,16 @@ export default function SessionGuard({ children }) {
     }
   }, [status, pathname, router]);
 
-  useEffect(() => {
-    // Optional: Check for token expiration periodically if not handled by NextAuth
-    // NextAuth's session strategy: "jwt" with maxAge usually handles this, 
-    // but the status will flip to "unauthenticated" when it expires.
-  }, [session]);
+  // Don't render protected routes until we know the auth status
+  // This prevents SWR from firing requests before window.fetch is patched
+  const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-token"];
+  if (status === "loading" && !publicPaths.includes(pathname)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-zinc-950">
+        <div className="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }
