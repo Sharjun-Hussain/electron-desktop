@@ -1,0 +1,196 @@
+"use client";
+
+import React, { useRef } from "react";
+import { useRouter } from "next/navigation";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  FileText,
+  Package,
+  Users,
+  History,
+  MoreHorizontal
+} from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import axios from "axios";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+
+// Helper for Number Animation
+const AnimatedNumber = ({ value, isCurrency, formatCurrency, formatNumber, compact = true }) => {
+  const spanRef = useRef(null);
+
+  useGSAP(() => {
+    const cleanValue = parseFloat(String(value).replace(/[^0-9.-]+/g, ""));
+    const dummy = { val: 0 };
+
+    gsap.to(dummy, {
+      val: cleanValue,
+      duration: 1.5,
+      ease: "power2.out",
+      onUpdate: () => {
+        if (spanRef.current) {
+          // If currency, use the hook, else use formatNumber
+          spanRef.current.textContent = isCurrency
+            ? formatCurrency(dummy.val, { compact })
+            : formatNumber(dummy.val, { compact });
+        }
+      }
+    });
+  }, [value, compact]);
+
+  return <span ref={spanRef}>0</span>;
+};
+
+export default function StatsGrid() {
+  const { data: session } = useSession();
+  const { formatCurrency, formatNumber } = useCurrency();
+  const router = useRouter();
+  const containerRef = useRef(null);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!session?.accessToken) return;
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/dashboard/summary`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` }
+        });
+        if (res.data.status === "success") {
+          setData(res.data.data);
+        }
+      } catch (error) {
+        console.error("Dashboard Stats Fetch Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [session]);
+
+  const stats = [
+    {
+      name: "Today Revenue",
+      value: data?.todayRevenue?.value || 0,
+      isCurrency: true,
+      change: data?.todayRevenue?.change || "0%",
+      trend: data?.todayRevenue?.trend || "up",
+      icon: DollarSign,
+      gradient: "from-emerald-500 to-teal-400",
+      comparisonLabel: "vs Daily Avg",
+      url: "/sales"
+    },
+    {
+      name: "Pending Invoices",
+      value: data?.pendingInvoices?.value || 0,
+      isCurrency: false,
+      change: data?.pendingInvoices?.change || "0%",
+      trend: data?.pendingInvoices?.trend || "stable",
+      icon: FileText,
+      gradient: "from-blue-500 to-indigo-400",
+      comparisonLabel: "of Active Files",
+      url: "/sales"
+    },
+    {
+      name: "Low Stock Items",
+      value: data?.lowStockCount?.value || 0,
+      isCurrency: false,
+      change: data?.lowStockCount?.change || "0%",
+      trend: data?.lowStockCount?.trend || "up",
+      icon: Package,
+      gradient: "from-amber-500 to-orange-400",
+      comparisonLabel: "of Catalog",
+      url: "/inventory-insights"
+    },
+    {
+      name: "Expiring Soon",
+      value: data?.expiringCount?.value || 0,
+      isCurrency: false,
+      change: data?.expiringCount?.change || "Alerts",
+      trend: "stable",
+      icon: History,
+      gradient: "from-rose-500 to-pink-400",
+      comparisonLabel: "Critical Batches",
+      url: "/inventory-insights"
+    },
+    {
+      name: "New Customers",
+      value: data?.newCustomers?.value || 0,
+      isCurrency: false,
+      change: data?.newCustomers?.change || "0%",
+      trend: data?.newCustomers?.trend || "up",
+      icon: Users,
+      gradient: "from-violet-500 to-purple-400",
+      comparisonLabel: "Growth",
+      url: "/customers"
+    },
+  ];
+
+  return (
+    <div ref={containerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {stats.map((stat, index) => (
+        <div
+          key={stat.name}
+          id={
+            stat.name === "Today Revenue" ? "stats-revenue" :
+            stat.name === "Pending Invoices" ? "stats-invoices" :
+            stat.name === "Low Stock Items" ? "stats-inventory" :
+            stat.name === "Expiring Soon" ? "stats-expiring" :
+            stat.name === "New Customers" ? "stats-customers" : undefined
+          }
+          onClick={() => stat.url && router.push(stat.url)}
+          className={cn(
+            "bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4 transition-all duration-300 hover:shadow-md hover:border-emerald-500/30 group cursor-pointer",
+            stat.name === "Expiring Soon" && stat.value > 0 && "border-rose-500/20 bg-rose-50/5"
+          )}
+        >
+          <div className={cn(
+            "p-3 rounded-lg bg-linear-to-br text-white shadow-sm transition-transform duration-300 group-hover:scale-105",
+            stat.gradient
+          )}>
+            <stat.icon className="w-5 h-5" />
+          </div>
+
+          <div className="flex flex-col min-w-0">
+            <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+              {stat.name}
+            </p>
+            <h3 className="text-2xl font-bold text-foreground tabular-nums">
+              <AnimatedNumber
+                value={stat.value}
+                isCurrency={stat.isCurrency}
+                formatCurrency={formatCurrency}
+                formatNumber={formatNumber}
+                compact={true}
+              />
+            </h3>
+            {stat.change && (
+                <div className="flex items-center gap-2 mt-1.5 min-w-0">
+                    <span className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0",
+                        stat.trend === "up" 
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 border border-emerald-500/10" 
+                            : stat.trend === "stable"
+                            ? "bg-slate-50 text-slate-500 dark:bg-slate-500/10 border border-slate-500/10"
+                            : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 border border-rose-500/10"
+                    )}>
+                        {stat.trend === "up" ? <TrendingUp className="w-3 h-3" /> : stat.trend === "stable" ? null : <TrendingDown className="w-3 h-3" />}
+                        {stat.change}
+                    </span>
+                    <span className="text-[10px] font-medium text-muted-foreground/60 truncate">
+                        {stat.comparisonLabel}
+                    </span>
+                </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

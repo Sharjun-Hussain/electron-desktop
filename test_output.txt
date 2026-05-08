@@ -1,0 +1,35 @@
+
+Running 1 test using 1 worker
+
+Navigating to login...
+  ✘  1 [chromium] › tests/e2e/test-login.spec.js:43:5 › Test Direct Login Fallback (1.2s)
+
+
+  1) [chromium] › tests/e2e/test-login.spec.js:43:5 › Test Direct Login Fallback ───────────────────
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      11 | async function login(page) {
+      12 |     console.log("Navigating to login...");
+    > 13 |     await page.goto('/login');
+         |                ^
+      14 |
+      15 |     console.log("Filling credentials...");
+      16 |     await page.locator('input[type="email"], input[name="email"]').first().fill(ADMIN_EMAIL);
+        at login (/home/joon/pos/pos-frontend-OLD/tests/e2e/test-login.spec.js:13:16)
+        at /home/joon/pos/pos-frontend-OLD/tests/e2e/test-login.spec.js:44:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/test-login-Test-Direct-Login-Fallback-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/test-login.spec.js:43:5 › Test Direct Login Fallback ────────────────────
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
