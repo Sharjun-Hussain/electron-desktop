@@ -101,6 +101,7 @@ export function PosSettings() {
   const [activeTab, setActiveTab] = useState(searchParams.get("config") || "behavior");
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewMaximized, setIsPreviewMaximized] = useState(false);
+  const [systemPrinters, setSystemPrinters] = useState([]);
   const printRef = useRef(null);
 
   const handleTestPrint = useReactToPrint({
@@ -132,7 +133,8 @@ export function PosSettings() {
     posPricingMode: "fifo", // "fifo" or "manual_batch"
     enableBatchSelection: false,
     showUser: true, showCustomer: true, showDateTime: true, showSalesType: true,
-    autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false
+    autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false,
+    receiptPrinterName: "", barcodePrinterName: ""
   });
 
   const [peripherals, setPeripherals] = useState({
@@ -142,6 +144,28 @@ export function PosSettings() {
     drawer: { status: 'wired', name: 'Printer Linked' },
     digitalScale: { status: 'online', name: 'Mettler Toledo - COM3' }
   });
+
+  // Fetch System Printers (Desktop Only)
+  useEffect(() => {
+    if (activeTab === 'printer' && window.api?.getPrinters) {
+      window.api.getPrinters().then(printers => {
+        setSystemPrinters(printers);
+        
+        // Auto-detect connection status based on saved names
+        setPeripherals(prev => ({
+          ...prev,
+          receiptPrinter: {
+            status: printers.some(p => p.name === formData.receiptPrinterName) ? 'connected' : 'disconnected',
+            name: formData.receiptPrinterName || null
+          },
+          barcodePrinter: {
+            status: printers.some(p => p.name === formData.barcodePrinterName) ? 'connected' : 'disconnected',
+            name: formData.barcodePrinterName || null
+          }
+        }));
+      });
+    }
+  }, [activeTab, window.api, formData.receiptPrinterName, formData.barcodePrinterName]);
 
   // Pattern Recognition for Barcode Scanners
   useEffect(() => {
@@ -809,8 +833,42 @@ export function PosSettings() {
                       <ToggleRow label="Auto-Print Settlement" desc="Trigger printer immediately after payment" checked={formData.autoPrint} onCheckedChange={(c) => updateField('autoPrint', c)} />
                       <ToggleRow label="Kick Drawer Basis" desc="Trigger cash drawer RJ11 pulse on sale" checked={formData.openCashDrawer} onCheckedChange={(c) => updateField('openCashDrawer', c)} />
                       <ToggleRow label="Auto-Advance Feed" desc="Perform paper feed after document cut" checked={formData.autoFeed} onCheckedChange={(c) => updateField('autoFeed', c)} />
-                      <ToggleRow label="Silent Receipt Basis" desc="Skip system print dialog (Experimental)" checked={formData.silentPrint} onCheckedChange={(c) => updateField('silentPrint', c)} />
+                      <ToggleRow label="Silent Receipt Basis" desc="Skip system print dialog (Native Setup)" checked={formData.silentPrint} onCheckedChange={(c) => updateField('silentPrint', c)} />
                     </div>
+
+                    {formData.silentPrint && (
+                      <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/50 space-y-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 px-1">Default Receipt Printer</Label>
+                          <Select value={formData.receiptPrinterName} onValueChange={(v) => updateField('receiptPrinterName', v)}>
+                            <SelectTrigger className={selectTriggerCls}>
+                              <SelectValue placeholder="Select a printer..." />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                              <SelectItem value="DEFAULT" className="text-xs font-medium">System Default Printer</SelectItem>
+                              {systemPrinters.map(p => (
+                                <SelectItem key={p.name} value={p.name} className="text-xs font-medium">{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 px-1">Default Barcode Printer</Label>
+                          <Select value={formData.barcodePrinterName} onValueChange={(v) => updateField('barcodePrinterName', v)}>
+                            <SelectTrigger className={selectTriggerCls}>
+                              <SelectValue placeholder="Select a printer..." />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                              <SelectItem value="DEFAULT" className="text-xs font-medium">System Default Printer</SelectItem>
+                              {systemPrinters.map(p => (
+                                <SelectItem key={p.name} value={p.name} className="text-xs font-medium">{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 

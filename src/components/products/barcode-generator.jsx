@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useReactToPrint } from "react-to-print";
 import {
   Sparkles, Download, Eye, EyeOff, Printer, Layout, Maximize2, RefreshCw, CheckSquare, Square, Check, X, SlidersHorizontal, Settings2, Search
@@ -83,11 +84,52 @@ export function BarcodeGenerator({ data, onDataChange }) {
   });
 
   const printRef = useRef(null);
-
-  const handlePrint = useReactToPrint({
+  const { useModularSettings } = useAppSettings();
+  const { data: posResponse } = useModularSettings("pos");
+  
+  const handleStandardPrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Barcodes-${currentItem?.barcodeValue || "Batch"}`,
   });
+
+  const handlePrint = async () => {
+    if (!printRef.current) return;
+
+    // Desktop Silent Printing logic
+    if (window.api?.printSilent && posResponse?.data?.silentPrint) {
+      try {
+        const printerName = posResponse?.data?.barcodePrinterName || "DEFAULT";
+        const html = printRef.current.innerHTML;
+        
+        const fullHtml = `
+          <html>
+            <head>
+              <style>
+                body { margin: 0; padding: 0; }
+                @page { margin: 0; }
+              </style>
+            </head>
+            <body>${html}</body>
+          </html>
+        `;
+
+        const result = await window.api.printSilent({ 
+          html: fullHtml, 
+          printerName: printerName === "DEFAULT" ? "" : printerName 
+        });
+
+        if (result.success) {
+          // toast.success("Barcodes printed silently");
+        } else {
+          handleStandardPrint();
+        }
+      } catch (err) {
+        handleStandardPrint();
+      }
+    } else {
+      handleStandardPrint();
+    }
+  };
 
   const barcodeFormats = [
     { value: "CODE128", label: "CODE 128" },

@@ -511,11 +511,55 @@ export default function PosPage() {
   }, [syncPendingSales]);
 
   // ── Print ─────────────────────────────────────────────────────────────────
-  const handlePrint = useReactToPrint({
+  const handleStandardPrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Receipt_${printableSale?.invoice_number || "Draft"}`,
     onAfterPrint: () => setPrintableSale(null),
   });
+
+  const handlePrint = useCallback(async () => {
+    if (!printRef.current) return;
+
+    // Desktop Silent Printing logic
+    if (window.api?.printSilent && posResponse?.data?.silentPrint) {
+      try {
+        const printerName = posResponse?.data?.receiptPrinterName || "DEFAULT";
+        const html = printRef.current.innerHTML;
+        
+        // Wrap in basic style for thermal printing if needed
+        const fullHtml = `
+          <html>
+            <head>
+              <style>
+                body { margin: 0; padding: 0; font-family: sans-serif; }
+                @page { margin: 0; }
+              </style>
+            </head>
+            <body>${html}</body>
+          </html>
+        `;
+
+        const result = await window.api.printSilent({ 
+          html: fullHtml, 
+          printerName: printerName === "DEFAULT" ? "" : printerName 
+        });
+
+        if (result.success) {
+          toast.success("Receipt printed silently");
+          setPrintableSale(null);
+        } else {
+          toast.error("Silent print failed: " + result.message);
+          handleStandardPrint(); // Fallback to standard print
+        }
+      } catch (err) {
+        console.error("Silent printing error:", err);
+        handleStandardPrint();
+      }
+    } else {
+      handleStandardPrint();
+    }
+  }, [printableSale, handleStandardPrint, posResponse]);
+
   useEffect(() => {
     if (printableSale) {
       const t = setTimeout(() => { if (printRef.current) handlePrint(); }, 500);
