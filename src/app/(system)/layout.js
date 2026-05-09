@@ -14,13 +14,13 @@ export default function AppLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
-
-  const isPosScreen = pathname === '/pos';
   const { general } = useAppSettings();
 
   const density = general?.interface?.density || 'comfortable';
   const performance = general?.interface?.performance || 'standard';
   const fontSize = general?.interface?.fontSize || '14';
+
+  const isPosScreen = pathname?.includes('/pos');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -42,12 +42,14 @@ export default function AppLayout({ children }) {
   if (isPosScreen) {
     return (
       <div 
-        className="min-h-screen w-full bg-background font-sans selection:bg-[#10b981] selection:text-white relative"
+        className="min-h-screen w-full bg-background font-sans selection:bg-[#10b981] selection:text-white relative flex flex-col"
         data-density={density}
         data-performance={performance}
         style={{ fontSize: `${fontSize}px` }}
       >
-        {children}
+        <div className="flex-1 overflow-hidden">
+          {children}
+        </div>
         {/* Minimal POS Credit */}
         <div className="fixed bottom-2 right-4 z-[9999] pointer-events-none select-none">
           <span className="text-[9px] font-bold text-muted-foreground/20 uppercase tracking-[0.2em]">{t("pos.credit")}</span>
