@@ -16,7 +16,8 @@ import {
   Sparkles,
   FileText,
   Gift,
-  Lock
+  Lock,
+  History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ import { ReportSettings } from "./report-settings";
 import { LoyaltySettings } from "./loyalty-settings";
 import { BackupSettings } from "./backup-settings";
 import { SubscriptionDetails } from "./subscription-details";
+import { ReleaseNotes } from "./release-notes";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
 import { PERMISSIONS } from "@/lib/permissions";
@@ -49,6 +51,7 @@ const sidebarItems = [
   { id: "backup", label: "Backup", icon: Database, desc: "Data snapshots & security nexus", permission: PERMISSIONS.BACKUP_CONFIG },
   { id: "subscription", label: "Plan & Subscription", icon: Sparkles, desc: "Billing details & resource limits", permission: PERMISSIONS.SETTINGS_GENERAL },
   { id: "health", label: "System Health", icon: Activity, desc: "Database optimization & metrics", permission: PERMISSIONS.SETTINGS_HEALTH },
+  { id: "changelog", label: "Release Notes", icon: History, desc: "Software version history", permission: PERMISSIONS.SETTINGS_GENERAL },
 ];
 
 export function SettingsPage() {
@@ -144,12 +147,12 @@ export function SettingsPage() {
         </nav>
 
         {/* Sidebar Footer */}
-        {/* <div className="p-4 mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="p-4 mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 dark:text-slate-500 px-1">
-            <span>Core Engine</span>
-            <span className="tabular-nums opacity-60">v3.1.2</span>
+            <span>Inzeedo POS Core</span>
+            <span className="tabular-nums opacity-60">v1.1.0</span>
           </div>
-        </div> */}
+        </div>
       </aside>
 
       {/* ─── CONTENT AREA: MINIMALIST PRO ─── */}
@@ -188,6 +191,7 @@ export function SettingsPage() {
           {activeTab === "backup" && isBackupEnabled && <BackupSettings />}
           {activeTab === "subscription" && <SubscriptionDetails />}
           {activeTab === "health" && hasPermission(PERMISSIONS.SETTINGS_HEALTH) && <SystemHealthSettings />}
+          {activeTab === "changelog" && <ReleaseNotes />}
         </div>
       </main>
     </div>
