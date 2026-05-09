@@ -58,20 +58,6 @@ export default function Dashboard() {
               <StatsGrid />
             </div>
 
-            {/* 1.5. Charts Section */}
-            <div id="dashboard-charts" className="dashboard-item">
-              <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl">
-                    <BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground tracking-tight">Live KPI Visualizer</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5 font-medium opacity-80">Interactive data trends and performance metrics.</p>
-                  </div>
-                </div>
-              <DashboardCharts />
-            </div>
-
             {/* 2. Quick Actions Section */}
             <div id="dashboard-quick-access" className="dashboard-item">
                <div className="flex items-center gap-3 mb-6">
@@ -84,6 +70,20 @@ export default function Dashboard() {
                   </div>
                 </div>
               <QuickActions />
+            </div>
+
+            {/* 1.5. Charts Section */}
+            <div id="dashboard-charts" className="dashboard-item">
+              <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl">
+                    <BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground tracking-tight">Live KPI Visualizer</h2>
+                    <p className="text-sm text-muted-foreground mt-0.5 font-medium opacity-80">Interactive data trends and performance metrics.</p>
+                  </div>
+                </div>
+              <DashboardCharts />
             </div>
 
             {/* 3. Placeholder for Activity (Example of Grid Layout) */}
