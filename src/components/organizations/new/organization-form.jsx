@@ -56,7 +56,7 @@ export const formSchema = z.object({
   owner_phone: z.string().optional(),
   branch_name: z.string().optional(),
 
-  subscription_tier: z.enum(['Basic', 'Pro', 'Enterprise']).optional(),
+  subscription_tier: z.enum(['Essential', 'Professional', 'Enterprise']).optional(),
   billing_cycle: z.enum(['Monthly', 'Yearly', 'Lifetime']).optional(),
   subscription_status: z.enum(['Active', 'Expired', 'Trial', 'Suspended']).optional(),
   subscription_expiry_date: z.string().optional(),
@@ -421,8 +421,8 @@ export function OrganizationForm({ initialData }) {
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl><SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Identify plan" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="Basic">Basic Edition</SelectItem>
-                        <SelectItem value="Pro">Professional</SelectItem>
+                        <SelectItem value="Essential">Basic Edition</SelectItem>
+                        <SelectItem value="Professional">Professional</SelectItem>
                         <SelectItem value="Enterprise">Enterprise Elite</SelectItem>
                       </SelectContent>
                     </Select>
