@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getDesktopSession, desktopLogout } from '@/lib/desktop-auth';
+import { TermsModal } from './terms-modal';
 
 const SessionContext = createContext(null);
 
@@ -57,9 +58,25 @@ export function DesktopAuthProvider({ children }) {
     }
   };
 
+  const handleTermsAccept = () => {
+    if (typeof window !== 'undefined') {
+      const currentSession = getDesktopSession();
+      if (currentSession && currentSession.user) {
+        currentSession.user.terms_accepted = true;
+        localStorage.setItem('inzeedo_session', JSON.stringify(currentSession));
+        setSession({ ...currentSession });
+      }
+    }
+  };
+
+  const showTerms = status === 'authenticated' && session?.user && !session.user.terms_accepted;
+
   return (
     <SessionContext.Provider value={value}>
-      {children}
+      {showTerms && <TermsModal onAccept={handleTermsAccept} />}
+      <div className={showTerms ? "blur-sm pointer-events-none select-none transition-all duration-700" : "transition-all duration-700"}>
+        {children}
+      </div>
     </SessionContext.Provider>
   );
 }

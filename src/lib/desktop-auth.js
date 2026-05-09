@@ -36,6 +36,7 @@ export const desktopLogin = async (email, password) => {
         organization_id: user.organization_id,
         organization: user.organization || null,
         branches: user.branches || [],
+        terms_accepted: user.terms_accepted,
       },
       accessToken: auth_token,
       refreshToken: refresh_token,
