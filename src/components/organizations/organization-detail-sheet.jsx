@@ -19,8 +19,16 @@ import {
   Layout, FileText, Bell, Repeat, PackageCheck,
   BookOpen, Users2, Receipt, Map, QrCode, CloudUpload, Download,
   ShoppingCart, Truck, Wallet, Filter, BarChart3, PieChart,
-  Rocket, Crown, AlertCircle, CalendarDays
+  Rocket, Crown, AlertCircle, CalendarDays, Lock
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -139,6 +147,11 @@ export default function OrganizationDetailSheet({
   const [trialDays, setTrialDays] = useState(14);
   const [isExtending, setIsExtending] = useState(false);
 
+  // Password Reset State
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+
   const fetchDetails = async () => {
     if (!organizationId || !accessToken) return;
     try {
@@ -200,7 +213,7 @@ export default function OrganizationDetailSheet({
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             plan_id: selectedPlanId,
             subscription_status: updateFields.status,
             billing_cycle: updateFields.cycle,
@@ -365,9 +378,9 @@ export default function OrganizationDetailSheet({
           body: JSON.stringify({ days: trialDays }),
         }
       );
-      
+
       const resData = await response.json();
-      
+
       if (response.ok) {
         toast.success(`Trial extended by ${trialDays} days`);
         setExtendingTrial(false);
@@ -418,6 +431,41 @@ export default function OrganizationDetailSheet({
       }
     } catch (err) {
       toast.error("Failed to update module override");
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Security Protocol: Password must be at least 6 characters for institutional compliance.");
+      return;
+    }
+
+    try {
+      setIsResetting(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}/reset-admin-password`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ password: newPassword }),
+        }
+      );
+
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success(resData.message || "Administrative credentials successfully synchronized.");
+        setIsResetPasswordDialogOpen(false);
+        setNewPassword("");
+      } else {
+        throw new Error(resData.message || "Credential synchronization failed.");
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to reset admin password");
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -512,9 +560,13 @@ export default function OrganizationDetailSheet({
                   <SectionHeader icon={Zap} title="Administrative Controls" description="Manage fundamental organizational access and states" />
 
                   <div className="grid grid-cols-1 gap-3">
-                    <Button variant="outline" className="justify-between h-14 rounded-xl border-border bg-card/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 font-medium text-sm group transition-all">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsResetPasswordDialogOpen(true)}
+                      className="justify-between h-14 rounded-xl border-border bg-card/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 font-medium text-sm group transition-all"
+                    >
                       <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-                        <Shield className="h-5 w-5 text-emerald-600" />
+                        <Lock className="h-5 w-5 text-emerald-600" />
                         Reset Admin Password
                       </div>
                       <ExternalLink className="h-4 w-4 opacity-30" />
@@ -727,10 +779,10 @@ export default function OrganizationDetailSheet({
 
                 {/* Plan Update Section */}
                 <div className="space-y-4">
-                  <SectionHeader 
-                    icon={Zap} 
-                    title="Plan Setup & Synchronization" 
-                    description="Configure subscription details and resource allocation" 
+                  <SectionHeader
+                    icon={Zap}
+                    title="Plan Setup & Synchronization"
+                    description="Configure subscription details and resource allocation"
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-xl border border-border bg-card">
@@ -750,8 +802,8 @@ export default function OrganizationDetailSheet({
 
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-muted-foreground">Subscription Status</label>
-                      <Select 
-                        value={updateFields.status} 
+                      <Select
+                        value={updateFields.status}
                         onValueChange={(val) => setUpdateFields(prev => ({ ...prev, status: val }))}
                       >
                         <SelectTrigger>
@@ -768,8 +820,8 @@ export default function OrganizationDetailSheet({
 
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-muted-foreground">Billing Cycle</label>
-                      <Select 
-                        value={updateFields.cycle} 
+                      <Select
+                        value={updateFields.cycle}
                         onValueChange={(val) => setUpdateFields(prev => ({ ...prev, cycle: val }))}
                       >
                         <SelectTrigger>
@@ -786,7 +838,7 @@ export default function OrganizationDetailSheet({
 
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-muted-foreground">Amount (USD)</label>
-                      <Input 
+                      <Input
                         type="number"
                         value={updateFields.amount}
                         onChange={(e) => setUpdateFields(prev => ({ ...prev, amount: e.target.value }))}
@@ -796,7 +848,7 @@ export default function OrganizationDetailSheet({
 
                     <div className="sm:col-span-2 space-y-2">
                       <label className="text-xs font-bold text-muted-foreground">Internal Notes</label>
-                      <Input 
+                      <Input
                         value={updateFields.notes}
                         onChange={(e) => setUpdateFields(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Reason for change..."
@@ -849,8 +901,8 @@ export default function OrganizationDetailSheet({
                         className="h-10 bg-white"
                         placeholder="Days"
                       />
-                      <Button 
-                        onClick={handleExtendTrial} 
+                      <Button
+                        onClick={handleExtendTrial}
                         className="h-10 px-6"
                         disabled={isExtending}
                       >
@@ -968,6 +1020,69 @@ export default function OrganizationDetailSheet({
           </Tabs>
         </div>
       </SheetContent>
+
+      {/* Reset Admin Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-2xl border-border bg-background">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2.5 text-xl font-bold">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <Lock className="w-5 h-5 text-emerald-600" />
+              </div>
+              Reset Admin Credentials
+            </DialogTitle>
+            <DialogDescription className="text-sm font-medium text-muted-foreground pt-2">
+              This will forcefully update the primary administrative password for <span className="text-foreground font-bold">{org?.name}</span>. Ensure institutional clearance before proceeding.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+            <div className="space-y-4">
+              <label className="text-[11px] font-bold text-muted-foreground uppercase  ml-1 mb-2">New Administrative Password</label>
+              <div className="relative group">
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className=" rounded-md mt-3 border-border bg-card/50 px-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-lg tracking-widest"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                  <ShieldCheck className="h-5 w-5 text-emerald-500" />
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground ml-1">
+                Security requirement: Minimum 6 characters with alpha-numeric complexity.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsResetPasswordDialogOpen(false)}
+              className="rounded-xl h-11 px-6 font-semibold"
+            >
+              Abort
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={isResetting || !newPassword}
+              className="rounded-xl h-11 px-8 font-bold bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 gap-2"
+            >
+              {isResetting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Synchronizing...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="h-4 w-4" />
+                  Update Credentials
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 }

@@ -53,7 +53,7 @@ export const translations = {
       intelligent_insights: "Intelligent Insights",
       global_settings: "Global Settings",
       business_profiles: "Business Profiles",
-      branch_hierarchy: "Branch Hierarchy",
+      branch_hierarchy: "Branch Registry",
       application_users: "Application Users",
       employees: "Employees",
       audit_logs: "Audit Logs",
