@@ -18,6 +18,23 @@ import { Badge } from "@/components/ui/badge";
 export function ReleaseNotes() {
   const releases = [
     {
+      version: "1.1.1",
+      date: "May 10, 2026",
+      title: "Authentication & Parity Update",
+      type: "Patch",
+      changes: [
+        {
+          category: "Security & Stability",
+          icon: ShieldCheck,
+          items: [
+            "Resolved authentication session hydration issues causing redirect loops.",
+            "Improved consistency between web and desktop session guards.",
+            "Optimized route guarding for better performance on slow networks."
+          ]
+        }
+      ]
+    },
+    {
       version: "1.1.0",
       date: "May 09, 2026",
       title: "Organization Empowerment & UI Refinement",
@@ -80,7 +97,7 @@ export function ReleaseNotes() {
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
           <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.1.0</span>
+          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.1.1</span>
         </div>
       </div>
 
@@ -140,7 +157,7 @@ export function ReleaseNotes() {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-900 dark:text-white leading-none">System Engine Specification</p>
-            <p className="text-[10px] text-slate-500 mt-1">Core build 1.1.0.83152 (Stable)</p>
+            <p className="text-[10px] text-slate-500 mt-1">Core build 1.1.1.83152 (Stable)</p>
           </div>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
