@@ -759,10 +759,10 @@ export default function CreatePurchaseOrder({ initialData }) {
                 <CardHeader className="bg-muted/50 dark:bg-muted/20 border-b border-border/40 px-5 py-3 flex flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-emerald-600" />
-                    <CardTitle className="text-[13px] font-bold">Vendor & Branch Registry</CardTitle>
+                    <CardTitle className="text-[13px] font-bold">Supplier & Delivery Details</CardTitle>
                   </div>
                   <Badge variant="outline" className="bg-background text-[10px] font-bold border-border/60">
-                    Step 1: Identity & Location
+                    Step 1: Basic Information
                   </Badge>
                 </CardHeader>
                 <CardContent className="p-6">
@@ -776,7 +776,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                           <div className="flex items-center justify-between h-5 ">
                             <FormLabel className="font-semibold text-foreground flex items-center gap-2">
                               <User className="w-3.5 h-3.5 text-emerald-600" />
-                              Primary Supplier
+                              Select Supplier
                             </FormLabel>
                             <Button
                               type="button"
@@ -856,7 +856,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                         <FormItem className="flex flex-col">
                           <FormLabel className="font-semibold text-foreground mb-1.5 flex items-center gap-2">
                             <Globe className="w-3.5 h-3.5 text-emerald-600" />
-                            Allocated Destination
+                            Delivery Branch
                           </FormLabel>
                           <Popover open={branchOpen} onOpenChange={setBranchOpen}>
                             <PopoverTrigger asChild>
@@ -928,7 +928,7 @@ export default function CreatePurchaseOrder({ initialData }) {
               <Card className="border border-border/40 shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
                 <CardHeader className="bg-muted/50 dark:bg-muted/20 border-b border-border/40 px-5 py-3 flex flex-row items-center gap-2 space-y-0">
                   <CalendarDays className="w-4 h-4 text-emerald-600" />
-                  <CardTitle className="text-[13px] font-bold">Transaction Timeline</CardTitle>
+                  <CardTitle className="text-[13px] font-bold">Order Timeline</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
@@ -938,7 +938,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                       name="orderDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel className="font-semibold text-foreground mb-1.5">Official Issuance Date</FormLabel>
+                          <FormLabel className="font-semibold text-foreground mb-1.5">Order Date</FormLabel>
                           <Popover open={orderDateOpen} onOpenChange={setOrderDateOpen}>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -976,7 +976,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
                           <FormLabel className="font-semibold text-foreground mb-1.5 flex items-center justify-between">
-                            Target Receipt Date
+                            Expected Delivery Date
                             <Badge variant="outline" className="text-[9px] h-4 py-0 font-normal opacity-60">Optional</Badge>
                           </FormLabel>
                           <Popover open={expectedDateOpen} onOpenChange={setExpectedDateOpen}>
