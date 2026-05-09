@@ -11,7 +11,9 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { useBreadcrumbStore } from "@/store/useBreadcrumbStore";
 import { AccessDenied } from "@/components/general/access-denied";
 
-export default function EditOrganizationPage() {
+import { Suspense } from "react";
+
+function EditOrganizationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -30,7 +32,7 @@ export default function EditOrganizationPage() {
   }, [status, router]);
 
   useEffect(() => {
-    if (status !== "authenticated" || !accessToken) return;
+    if (status !== "authenticated" || !accessToken || !organizationId) return;
 
     const fetchOrganization = async () => {
       setIsLoading(true);
@@ -98,5 +100,18 @@ export default function EditOrganizationPage() {
         {organizationData && <OrganizationForm initialData={organizationData} />}
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function EditOrganizationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-[60vh] gap-3 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span className="text-sm font-medium">Loading organization details...</span>
+      </div>
+    }>
+      <EditOrganizationContent />
+    </Suspense>
   );
 }
