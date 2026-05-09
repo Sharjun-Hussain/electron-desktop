@@ -237,6 +237,7 @@ export default function CreatePurchaseOrder({ initialData }) {
 
   // Popover States
   const [supplierOpen, setSupplierOpen] = useState(false);
+  const [branchOpen, setBranchOpen] = useState(false);
   const [orderDateOpen, setOrderDateOpen] = useState(false);
   const [expectedDateOpen, setExpectedDateOpen] = useState(false);
   const [isCreateSupplierOpen, setIsCreateSupplierOpen] = useState(false);
@@ -857,23 +858,64 @@ export default function CreatePurchaseOrder({ initialData }) {
                             <Globe className="w-3.5 h-3.5 text-emerald-600" />
                             Allocated Destination
                           </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="h-11 border-border/60 focus:ring-emerald-500/20 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all">
-                                <SelectValue placeholder="Select Destination Branch" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="rounded-xl border-emerald-500/10 shadow-xl">
-                              {branches.map((branch) => (
-                                <SelectItem key={branch.id} value={String(branch.id)} className="py-2.5 rounded-lg focus:bg-emerald-50 cursor-pointer">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                    <span className="font-medium text-[13px]">{branch.name}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={branchOpen} onOpenChange={setBranchOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value
+                                    ? branches.find(
+                                      (branch) =>
+                                        String(branch.id) ===
+                                        String(field.value)
+                                    )?.name
+                                    : "Select Destination Branch..."}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder="Search branch..." />
+                                <CommandList>
+                                  <CommandEmpty className="p-3 text-center text-xs text-muted-foreground">
+                                    No branch found.
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {branches.map((branch) => (
+                                      <CommandItem
+                                        value={branch.name}
+                                        key={branch.id}
+                                        onSelect={() => {
+                                          form.setValue("branchId", String(branch.id));
+                                          setBranchOpen(false);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            String(branch.id) === String(field.value)
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                        <div className="flex items-center gap-2">
+                                          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                                          <span className="font-medium">{branch.name}</span>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
                       )}
