@@ -15,7 +15,11 @@ import {
   Calendar as CalendarIcon, 
   Upload, 
   Receipt,
-  FileEdit
+  FileEdit,
+  Wallet,
+  Banknote,
+  CreditCard as CardIcon,
+  Landmark
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -143,15 +147,20 @@ export default function EditExpense({ id }) {
         expense_category_id: data.category_id
       };
       
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(payload));
+      if (data.attachment) {
+        formData.append("attachment", data.attachment);
+      }
+      
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses/${id}`,
         {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${session?.accessToken}`,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload),
+          body: formData,
         }
       );
 
@@ -181,14 +190,27 @@ export default function EditExpense({ id }) {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md">
-          <Receipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+      <div className="flex items-center justify-between pb-2 border-b border-border/50">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl shadow-sm">
+              <FileEdit className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight">Update Expense</h1>
+              <p className="text-xs text-muted-foreground mt-0.5 opacity-60">Edit and refine expenditure details</p>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight">Update Expense</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Edit and refine expenditure details</p>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="h-9 text-muted-foreground hover:text-foreground transition-colors group"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Back to Directory
+        </Button>
       </div>
 
       <Form {...form}>
@@ -197,7 +219,7 @@ export default function EditExpense({ id }) {
             <div className="lg:col-span-2 space-y-6">
               <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
-                  <CardTitle className="text-sm font-semibold text-foreground">
+                  <CardTitle className="text-sm font-medium text-foreground">
                     Expense Information
                   </CardTitle>
                 </CardHeader>
@@ -214,7 +236,7 @@ export default function EditExpense({ id }) {
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "w-full h-9 pl-3 text-left font-normal border-gray-200 hover:border-emerald-200",
+                                  "w-full h-10 pl-3 text-left font-normal border-input hover:border-accent transition-colors bg-background rounded-md shadow-sm",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -287,18 +309,38 @@ export default function EditExpense({ id }) {
                     name="payment_method"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Payment Mode</FormLabel>
+                        <FormLabel className="text-sm">Payment Mode</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-9 border-gray-200">
+                            <SelectTrigger className="h-10 border-input bg-background rounded-md shadow-sm">
                               <SelectValue placeholder="Select method" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="cash">Cash</SelectItem>
-                            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                            <SelectItem value="cheque">Cheque</SelectItem>
-                            <SelectItem value="credit_card">Credit Card</SelectItem>
+                          <SelectContent className="rounded-md shadow-lg">
+                            <SelectItem value="cash">
+                              <div className="flex items-center gap-2">
+                                <Banknote className="h-3.5 w-3.5 text-emerald-500" />
+                                <span>Cash</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="bank_transfer">
+                              <div className="flex items-center gap-2">
+                                <Landmark className="h-3.5 w-3.5 text-blue-500" />
+                                <span>Bank Transfer</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="cheque">
+                              <div className="flex items-center gap-2">
+                                <Receipt className="h-3.5 w-3.5 text-amber-500" />
+                                <span>Cheque</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="credit_card">
+                              <div className="flex items-center gap-2">
+                                <CardIcon className="h-3.5 w-3.5 text-purple-500" />
+                                <span>Credit Card</span>
+                              </div>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -361,29 +403,95 @@ export default function EditExpense({ id }) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3">
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-primary text-primary-foreground font-medium rounded-md shadow-sm"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  ) : (
+                    <Save className="h-5 w-5 mr-2" />
+                  )}
+                  {isSubmitting ? "Updating..." : "Finalize Changes"}
+                </Button>
                 <Button
                   variant="outline"
                   type="button"
                   onClick={() => router.back()}
                   disabled={isSubmitting}
-                  className="flex-1 h-10 font-semibold text-muted-foreground border-gray-200"
+                  className="w-full h-11 text-muted-foreground text-xs tracking-wide rounded-md shadow-sm"
                 >
-                  Discard
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-2" />
-                  )}
-                  {isSubmitting ? "Updating..." : "Update Expense"}
+                  Discard & Exit
                 </Button>
               </div>
+              
+              <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
+                <CardHeader className="border-b bg-muted/30 px-6 py-4">
+                  <CardTitle className="text-sm font-medium text-foreground">
+                    Upload New Receipt
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <FormField
+                    control={form.control}
+                    name="attachment"
+                    render={({ field: { value, onChange, ...fieldProps } }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex flex-col items-center justify-center border border-dashed border-input rounded-xl p-6 hover:bg-accent/50 transition-all cursor-pointer relative group">
+                            <input
+                              type="file"
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              onChange={(e) => onChange(e.target.files?.[0])}
+                              {...fieldProps}
+                            />
+                            {value ? (
+                              <div className="flex flex-col items-center gap-3">
+                                {value.type?.startsWith("image/") ? (
+                                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-border shadow-sm">
+                                    <img
+                                      src={URL.createObjectURL(value)}
+                                      alt="Preview"
+                                      className="w-full h-full object-cover"
+                                      onLoad={(e) => URL.revokeObjectURL(e.target.src)}
+                                    />
+                                  </div>
+                                ) : (
+                                  <Receipt className="h-8 w-8 text-primary" />
+                                )}
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs text-foreground truncate max-w-[150px] font-medium">
+                                    {value.name}
+                                  </span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 text-destructive hover:bg-destructive/10 text-[11px] underline"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    onChange(null);
+                                  }}
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center gap-3 text-muted-foreground text-center">
+                                <Upload className="h-6 w-6 opacity-40 group-hover:text-primary transition-all" />
+                                <span className="text-xs text-foreground block">Click to replace receipt</span>
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
               {initialData?.receipt_image && (
                 <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">

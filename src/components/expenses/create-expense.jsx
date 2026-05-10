@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Upload, X, Receipt } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Upload, X, Receipt, Wallet, Banknote, CreditCard as CardIcon, Landmark, Info, Plus } from "lucide-react";
 import { useFormRestore } from "@/hooks/use-form-restore";
 import { Button } from "@/components/ui/button";
 import {
@@ -183,14 +183,27 @@ export default function CreateExpense() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md">
-          <Receipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+      <div className="flex items-center justify-between pb-2 border-b border-border/50">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl shadow-sm">
+              <Receipt className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight">Record Expense</h1>
+              <p className="text-xs text-muted-foreground mt-0.5 opacity-60">Financial management & expenditure control</p>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight">Record Expense</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Record business expenditure details</p>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="h-9 text-muted-foreground hover:text-foreground transition-colors group"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Back to Directory
+        </Button>
       </div>
 
       <Form {...form}>
@@ -199,7 +212,7 @@ export default function CreateExpense() {
             <div className="lg:col-span-2 space-y-6">
               <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
                 <CardHeader className="border-b bg-muted/30 px-6 py-4">
-                  <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider">
+                  <CardTitle className="text-sm font-medium text-foreground">
                     Header Details
                   </CardTitle>
                 </CardHeader>
@@ -209,14 +222,14 @@ export default function CreateExpense() {
                     name="date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Expense Date</FormLabel>
+                        <FormLabel className="text-sm">Expense Date</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "w-full h-11 pl-3 text-left font-bold border-border/60 hover:border-emerald-500 transition-colors bg-background rounded-xl",
+                                  "w-full h-10 pl-3 text-left font-normal border-input hover:border-accent transition-colors bg-background rounded-md",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -251,10 +264,10 @@ export default function CreateExpense() {
                     name="category_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Category</FormLabel>
+                        <FormLabel className="text-sm">Category</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-11 border-border/60 font-bold bg-background rounded-xl">
+                            <SelectTrigger className="h-10 border-input bg-background rounded-md shadow-sm">
                               <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                           </FormControl>
@@ -276,9 +289,9 @@ export default function CreateExpense() {
                     name="reference_no"
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Reference Number</FormLabel>
+                        <FormLabel className="text-sm">Reference Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Invoice #, Receipt #" className="h-11 border-border/60 font-bold bg-background rounded-xl shadow-none focus-visible:ring-emerald-500" {...field} />
+                          <Input placeholder="e.g. Invoice #, Receipt #" className="h-10 border-input bg-background rounded-md shadow-sm focus-visible:ring-primary" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -290,11 +303,11 @@ export default function CreateExpense() {
                     name="note"
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
-                        <FormLabel className="text-xs font-bold uppercase tracking-tight text-muted-foreground">Note</FormLabel>
+                        <FormLabel className="text-sm">Note</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Additional details about this expense..."
-                            className="resize-none min-h-[100px] border-border/60 font-medium bg-background rounded-xl shadow-none focus-visible:ring-emerald-500"
+                            className="resize-none min-h-[100px] border-input bg-background rounded-md shadow-sm focus-visible:ring-primary"
                             {...field}
                           />
                         </FormControl>
@@ -306,48 +319,91 @@ export default function CreateExpense() {
               </Card>
 
               {/* SPLIT PAYMENTS MATRIX */}
-              <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
+              <Card className="rounded-2xl border border-border shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
                 <CardHeader className="border-b bg-muted/30 px-6 py-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider">
-                    Payment Breakdown
-                  </CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={addPaymentLine} className="h-8 text-[10px] font-black uppercase">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-emerald-600" />
+                    <CardTitle className="text-sm font-medium text-foreground">
+                      Payment Breakdown
+                    </CardTitle>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addPaymentLine} 
+                    className="h-8 text-[11px] bg-background border-border text-foreground hover:bg-accent rounded-md shadow-sm"
+                  >
+                    <Plus className="mr-1.5 h-3 w-3" />
                     Add Method
                   </Button>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
                   {payments.map((pmt, idx) => (
-                    <div key={pmt.id} className="group relative flex flex-col gap-4 p-4 bg-muted/10 border border-border/40 rounded-2xl transition-all hover:border-emerald-500/30">
-                      <div className="flex items-center gap-3">
-                        <div className="shrink-0">
-                          <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Method</label>
-                          <select
-                            value={pmt.method}
-                            onChange={(e) => updatePayment(pmt.id, "method", e.target.value)}
-                            className="h-10 px-3 text-xs font-bold rounded-xl bg-background border border-border/60 outline-none focus:ring-1 focus:ring-emerald-500 min-w-[140px]"
+                    <div key={pmt.id} className="group relative flex flex-col gap-5 p-5 bg-muted/10 border border-border/40 rounded-xl transition-all hover:bg-muted/20">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div className="md:col-span-4">
+                          <label className="text-[11px] text-muted-foreground mb-2 block">Payment Method</label>
+                          <Select 
+                            value={pmt.method} 
+                            onValueChange={(val) => updatePayment(pmt.id, "method", val)}
                           >
-                            <option value="cash">Cash</option>
-                            <option value="bank">Bank Transfer</option>
-                            <option value="card">Card Terminal</option>
-                            <option value="cheque">Cheque</option>
-                          </select>
+                            <SelectTrigger className="h-10 bg-background border-input rounded-md shadow-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-md shadow-lg">
+                              <SelectItem value="cash">
+                                <div className="flex items-center gap-2">
+                                  <Banknote className="h-3.5 w-3.5 text-emerald-500" />
+                                  <span>Cash</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="bank">
+                                <div className="flex items-center gap-2">
+                                  <Landmark className="h-3.5 w-3.5 text-blue-500" />
+                                  <span>Bank Transfer</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="card">
+                                <div className="flex items-center gap-2">
+                                  <CardIcon className="h-3.5 w-3.5 text-purple-500" />
+                                  <span>Card Terminal</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="cheque">
+                                <div className="flex items-center gap-2">
+                                  <Receipt className="h-3.5 w-3.5 text-amber-500" />
+                                  <span>Cheque</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <div className="flex-1">
-                          <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Amount (LKR)</label>
-                          <Input
-                            type="number"
-                            value={pmt.amount}
-                            onChange={(e) => updatePayment(pmt.id, "amount", e.target.value)}
-                            className="h-10 font-black text-sm bg-background border-border/60 rounded-xl"
-                          />
-                        </div>
-                        {payments.length > 1 && (
-                          <div className="pt-5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => removePaymentLine(pmt.id)} className="h-9 w-9 text-red-500 hover:bg-red-50">
-                              <X className="h-4 w-4" />
-                            </Button>
+                        <div className="md:col-span-5">
+                          <label className="text-[11px] text-muted-foreground mb-2 block">Amount (LKR)</label>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              value={pmt.amount}
+                              onChange={(e) => updatePayment(pmt.id, "amount", e.target.value)}
+                              className="h-10 text-sm bg-background border-input rounded-md pl-3 shadow-sm focus-visible:ring-primary tabular-nums"
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground opacity-40">LKR</div>
                           </div>
-                        )}
+                        </div>
+                        <div className="md:col-span-2">
+                          {payments.length > 1 && (
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => removePaymentLine(pmt.id)} 
+                              className="h-10 w-full text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md transition-all"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       {pmt.method === "cheque" && (
@@ -399,7 +455,7 @@ export default function CreateExpense() {
             <div className="space-y-6">
               <Card className="rounded-xl border border-border shadow-sm overflow-hidden">
                 <CardHeader className="border-b bg-muted/30 px-6 py-4">
-                  <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider">
+                  <CardTitle className="text-sm font-medium text-foreground">
                     Attachment
                   </CardTitle>
                 </CardHeader>
@@ -410,7 +466,7 @@ export default function CreateExpense() {
                     render={({ field: { value, onChange, ...fieldProps } }) => (
                       <FormItem>
                         <FormControl>
-                          <div className="flex flex-col items-center justify-center border border-dashed border-border/60 rounded-2xl p-8 hover:border-emerald-500/50 hover:bg-emerald-50/10 transition-all cursor-pointer relative group">
+                          <div className="flex flex-col items-center justify-center border border-dashed border-input rounded-xl p-8 hover:bg-accent/50 transition-all cursor-pointer relative group">
                             <input
                               type="file"
                               className="absolute inset-0 opacity-0 cursor-pointer"
@@ -418,29 +474,45 @@ export default function CreateExpense() {
                               {...fieldProps}
                             />
                             {value ? (
-                              <div className="flex flex-col items-center gap-2">
-                                <Receipt className="h-8 w-8 text-emerald-600" />
-                                <span className="text-xs font-bold text-foreground truncate max-w-[150px]">
-                                  {value.name}
-                                </span>
+                              <div className="flex flex-col items-center gap-3">
+                                {value?.type?.startsWith("image/") ? (
+                                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-border shadow-sm">
+                                    <img
+                                      src={URL.createObjectURL(value)}
+                                      alt="Preview"
+                                      className="w-full h-full object-cover"
+                                      onLoad={(e) => URL.revokeObjectURL(e.target.src)}
+                                    />
+                                  </div>
+                                ) : (
+                                  <Receipt className="h-8 w-8 text-primary" />
+                                )}
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs text-foreground truncate max-w-[150px] font-medium">
+                                    {value.name}
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {(value.size / 1024).toFixed(1)} KB
+                                  </span>
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50 text-[10px] font-black uppercase underline"
+                                  className="h-8 text-destructive hover:bg-destructive/10 text-[11px] underline"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     onChange(null);
                                   }}
                                 >
-                                  Remove
+                                  Remove & Replace
                                 </Button>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center gap-3 text-muted-foreground text-center">
-                                <Upload className="h-8 w-8 opacity-40 group-hover:text-emerald-500 group-hover:opacity-100 transition-all" />
+                                <Upload className="h-8 w-8 opacity-40 group-hover:text-primary group-hover:opacity-100 transition-all" />
                                 <div className="space-y-1">
-                                  <span className="text-xs font-bold text-foreground block uppercase">Upload Receipt</span>
-                                  <span className="text-[10px] font-medium opacity-60 block">JPG, PNG, PDF (Max 5MB)</span>
+                                  <span className="text-xs text-foreground block">Upload Receipt</span>
+                                  <span className="text-[11px] opacity-60 block">JPG, PNG, PDF (Max 5MB)</span>
                                 </div>
                               </div>
                             )}
@@ -453,22 +525,22 @@ export default function CreateExpense() {
                 </CardContent>
               </Card>
 
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 space-y-4">
-                <h3 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest border-b border-emerald-500/10 pb-2">
+              <div className="bg-muted/30 border border-border rounded-xl p-6 space-y-4">
+                <h3 className="text-xs font-medium text-foreground border-b border-border pb-2">
                   Expense Summary
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Recorded Subtotal</span>
-                    <span className="font-bold text-foreground tabular-nums">LKR {totalPayments.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="text-muted-foreground">Recorded Subtotal</span>
+                    <span className="font-medium text-foreground tabular-nums">LKR {totalPayments.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Estimated Tax</span>
-                    <span className="font-bold text-foreground tabular-nums">LKR 0.00</span>
+                    <span className="text-muted-foreground">Estimated Tax</span>
+                    <span className="font-medium text-foreground tabular-nums">LKR 0.00</span>
                   </div>
-                  <div className="pt-3 border-t border-emerald-500/20 flex justify-between items-center">
-                    <span className="font-black text-xs uppercase text-foreground">Net Expenditure</span>
-                    <span className="text-2xl font-black text-red-500 tabular-nums drop-shadow-sm">
+                  <div className="pt-3 border-t border-border flex justify-between items-center">
+                    <span className="text-sm font-medium text-foreground">Net Expenditure</span>
+                    <span className="text-2xl font-bold text-destructive tabular-nums">
                       LKR {totalPayments.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -479,7 +551,7 @@ export default function CreateExpense() {
                 <Button
                   type="submit"
                   disabled={isSubmitting || totalPayments <= 0}
-                  className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-500/20"
+                  className="w-full h-11 bg-primary text-primary-foreground font-medium rounded-md shadow-sm"
                 >
                   {isSubmitting ? (
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -489,13 +561,13 @@ export default function CreateExpense() {
                   {isSubmitting ? "Processing..." : "Finalize & Record"}
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   type="button"
                   onClick={() => router.back()}
                   disabled={isSubmitting}
-                  className="w-full h-11 font-bold text-muted-foreground uppercase text-[11px] hover:bg-muted/50"
+                  className="w-full h-11 text-muted-foreground text-xs tracking-wide rounded-md shadow-sm"
                 >
-                  Discard Entry
+                  Discard & Exit
                 </Button>
               </div>
             </div>
