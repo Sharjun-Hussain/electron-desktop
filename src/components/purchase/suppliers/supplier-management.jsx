@@ -283,6 +283,7 @@ export default function SupplierPage() {
       "Official Representative": s.contact_person || "Unassigned",
       "Operational Address": s.address || "N/A",
       "Operational Status": s.is_active ? "Active" : "Suspended",
+      "Current Balance": s.current_balance || 0,
       "Registration Date": s.created_at
         ? new Date(s.created_at).toLocaleDateString()
         : "N/A",

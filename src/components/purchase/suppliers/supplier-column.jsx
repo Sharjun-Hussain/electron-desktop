@@ -23,6 +23,13 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
 
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "LKR",
+  }).format(parseFloat(amount || 0));
+};
+
 // Standardized Header Component
 const DataTableColumnHeader = ({ column, title }) => {
   return (
@@ -125,6 +132,28 @@ export const getSupplierColumns = ({ onDelete, onToggleStatus, onEdit, onViewLed
         >
           {supplier.address || "No physical address provided"}
         </span>
+      );
+    },
+  },
+  {
+    accessorKey: "current_balance",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Exposure Sum" />
+    ),
+    cell: ({ row }) => {
+      const balance = parseFloat(row.getValue("current_balance") || 0);
+      return (
+        <div className="flex flex-col">
+          <span className={cn(
+            "text-[13px] font-bold tabular-nums leading-none",
+            balance > 0 ? "text-red-600" : balance < 0 ? "text-emerald-600" : "text-foreground/40"
+          )}>
+            {formatCurrency(balance)}
+          </span>
+          <span className="text-[10px] font-bold text-muted-foreground/60 uppercase mt-1">
+            {balance > 0 ? "Payable" : balance < 0 ? "Credit" : "Settled"}
+          </span>
+        </div>
       );
     },
   },
