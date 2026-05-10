@@ -148,7 +148,15 @@ export function SystemBreadcrumb() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.back()}
+              onClick={() => {
+                const segments = pathname.split("/").filter((segment) => segment !== "" && segment !== "pos");
+                if (segments.length > 1) {
+                  segments.pop();
+                  router.push("/" + segments.join("/"));
+                } else {
+                  router.push("/");
+                }
+              }}
               className="h-8 px-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4 mr-1.5" />

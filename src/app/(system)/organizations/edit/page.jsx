@@ -47,7 +47,7 @@ function EditOrganizationContent() {
         if (data.status === "success") {
           setOrganizationData(data.data);
           const label = data.data.name || `Organization #${data.data.id}`;
-          setBreadcrumb(organizationId, label);
+          setBreadcrumb('edit', label);
           document.title = `Edit ${label} | Inzeedo POS`;
         } else {
           throw new Error(data.message || "Failed to fetch");
