@@ -209,7 +209,7 @@ const ResourceTableToolbar = ({
                 variant="outline"
                 size="sm"
                 disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-                className="h-8 px-3 text-sm font-medium border-gray-200 bg-white hover:bg-gray-50 text-gray-700 rounded-md shadow-none gap-1.5 shrink-0"
+                className="h-8 px-3 text-sm font-medium border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-md shadow-none gap-1.5 shrink-0"
               >
                 Bulk Actions {table.getFilteredSelectedRowModel().rows.length > 0 && `(${table.getFilteredSelectedRowModel().rows.length})`}
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
@@ -224,7 +224,7 @@ const ResourceTableToolbar = ({
             variant="outline"
             size="sm"
             disabled
-            className="h-8 px-3 text-sm font-medium border-gray-200 bg-white text-gray-400 rounded-md shadow-none gap-1.5 shrink-0 opacity-60 cursor-default"
+            className="h-8 px-3 text-sm font-medium border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-400 dark:text-slate-600 rounded-md shadow-none gap-1.5 shrink-0 opacity-60 cursor-default"
           >
             Bulk Actions
             <ChevronDown className="h-3.5 w-3.5 opacity-40" />
@@ -244,7 +244,7 @@ const ResourceTableToolbar = ({
               table.getColumn(searchColumn)?.setFilterValue(value);
               if (onSearchChange) onSearchChange(value);
             }}
-            className="h-8 pl-8 pr-3 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-gray-600 placeholder:text-gray-400"
+            className="h-8 pl-8 pr-3 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-gray-600 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
           />
         </div>
 
@@ -277,8 +277,8 @@ const ResourceTableToolbar = ({
         {(sortOptions && onSortChange) && (
           <div id="inventory-sort">
             <Select value={sortValue} onValueChange={onSortChange}>
-            <SelectTrigger className="h-8 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors gap-1 px-2 w-auto shrink-0">
-              <span className="text-gray-400 font-normal mr-0.5">Sort:</span>
+            <SelectTrigger className="h-8 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 text-sm font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-100 transition-colors gap-1 px-2 w-auto shrink-0">
+              <span className="text-gray-400 dark:text-slate-500 font-normal mr-0.5">Sort:</span>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-md border-gray-200 shadow-lg">
