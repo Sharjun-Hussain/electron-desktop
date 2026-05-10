@@ -75,7 +75,15 @@ const StockManagement = () => {
             });
             const data = await res.json();
             if (data.status === "success") {
-                setStocks(data.data.data || []);
+                const stockList = data.data.data || [];
+                const stocksWithSearch = stockList.map(stock => {
+                    const attributes = stock.variant?.attribute_values?.map(av => av.value).join(" ") || "";
+                    return {
+                        ...stock,
+                        searchText: `${stock.product?.name || ""} ${stock.variant?.sku || ""} ${stock.variant?.name || ""} ${attributes}`.toLowerCase()
+                    };
+                });
+                setStocks(stocksWithSearch);
             } else {
                 throw new Error("Failed to load stocks");
             }
@@ -157,7 +165,7 @@ const StockManagement = () => {
                         <span className="hidden sm:inline">Reload Catalog</span>
                     </Button>
                 }
-                searchColumn="product" // Matches the accessorKey string for the global filter in standard config (we may need to ensure string search works on complex cells)
+                searchColumn="searchText"
                 searchPlaceholder="Search products by name..."
                 filterComponents={branchFilter}
             />

@@ -34,6 +34,13 @@ function getImageUrl(imageField) {
 
 export const getStockColumns = ({ onAdjust, hasEditPermission }) => [
   {
+    accessorKey: "searchText",
+    header: () => null,
+    cell: () => null,
+    enableSorting: false,
+    enableHiding: true,
+  },
+  {
     accessorKey: "product",
     header: ({ column }) => (
       <Button
