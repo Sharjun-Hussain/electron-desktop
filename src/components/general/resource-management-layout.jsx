@@ -175,6 +175,22 @@ const ResourceTableToolbar = ({
   enableBulkActions = true,
 }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState(table.getColumn(searchColumn)?.getFilterValue() ?? "");
+
+  // Debounce search update to improve performance
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      table.getColumn(searchColumn)?.setFilterValue(searchValue);
+      if (onSearchChange) onSearchChange(searchValue);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchValue, searchColumn, table, onSearchChange]);
+
+  // Sync internal search value if external filter is reset
+  const tableSearchValue = table.getColumn(searchColumn)?.getFilterValue() ?? "";
+  React.useEffect(() => {
+    setSearchValue(tableSearchValue);
+  }, [tableSearchValue]);
 
   const columnFilters = table.getState().columnFilters;
   const internalIsFiltered = columnFilters.length > 0;
@@ -238,12 +254,8 @@ const ResourceTableToolbar = ({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
           <Input
             placeholder={searchPlaceholder || "Search..."}
-            value={table.getColumn(searchColumn)?.getFilterValue() ?? ""}
-            onChange={(event) => {
-              const value = event.target.value;
-              table.getColumn(searchColumn)?.setFilterValue(value);
-              if (onSearchChange) onSearchChange(value);
-            }}
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
             className="h-8 pl-8 pr-3 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-gray-600 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
           />
         </div>
