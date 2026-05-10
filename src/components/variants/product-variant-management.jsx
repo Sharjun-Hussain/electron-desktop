@@ -51,6 +51,7 @@ import {
   Check,
   Package,
   ChevronsUpDown,
+  ImageIcon,
 } from "lucide-react";
 
 // Custom Components & Hooks
@@ -68,7 +69,7 @@ const getImageUrl = (imagePath) => {
   if (imagePath.startsWith("http")) return imagePath;
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api/v1", "");
-  
+
   try {
     const images = JSON.parse(imagePath);
     const path = Array.isArray(images) && images.length > 0 ? images[0] : imagePath;
@@ -332,10 +333,10 @@ const VariantGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDe
       <div className="flex gap-4">
         <div className="h-20 w-20 shrink-0 rounded-2xl bg-muted/30 border border-border/50 overflow-hidden flex items-center justify-center">
           {variant.image || variant.parent_image ? (
-            <img 
-              src={getImageUrl(variant.image || variant.parent_image)} 
-              alt={variant.sku} 
-              className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" 
+            <img
+              src={getImageUrl(variant.image || variant.parent_image)}
+              alt={variant.sku}
+              className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
           ) : (
             <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
@@ -352,7 +353,7 @@ const VariantGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDe
           <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider opacity-70">
             {variant.parent_product_name}
           </p>
-          
+
           <div className="flex flex-wrap gap-1 mt-1">
             {variant.attribute_values?.length > 0 ? (
               variant.attribute_values.map((av, idx) => (
