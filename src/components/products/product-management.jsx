@@ -445,6 +445,9 @@ export default function ProductsPage() {
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
   const [productForDetail, setProductForDetail] = useState(null);
 
+  const [viewMode, setViewMode] = useState("list");
+  const [sortValue, setSortValue] = useState("newest");
+
   // --- Hooks ---
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -476,6 +479,16 @@ export default function ProductsPage() {
         size: pagination.pageSize.toString(),
       });
 
+      const sortMap = {
+        newest: { sort_by: "created_at", order: "DESC" },
+        oldest: { sort_by: "created_at", order: "ASC" },
+        name_asc: { sort_by: "name", order: "ASC" },
+        name_desc: { sort_by: "name", order: "DESC" },
+      };
+      const { sort_by, order } = sortMap[sortValue] || sortMap.newest;
+      params.append("sort_by", sort_by);
+      params.append("order", order);
+
       if (debouncedSearch) {
         params.append("name", debouncedSearch);
       }
@@ -506,7 +519,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [session?.accessToken, pagination.pageIndex, pagination.pageSize, debouncedSearch]);
+  }, [session?.accessToken, pagination.pageIndex, pagination.pageSize, debouncedSearch, sortValue]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -742,8 +755,7 @@ export default function ProductsPage() {
     }));
   }, [products]);
 
-  const [viewMode, setViewMode] = useState("list");
-  const [sortValue, setSortValue] = useState("newest");
+
 
   const sortOptions = [
     { label: "Newest first", value: "newest" },
@@ -811,7 +823,10 @@ export default function ProductsPage() {
         // Sort & View
         sortOptions={sortOptions}
         sortValue={sortValue}
-        onSortChange={setSortValue}
+        onSortChange={(val) => {
+          setSortValue(val);
+          setPagination(prev => ({ ...prev, pageIndex: 0 }));
+        }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         renderGridItem={(row) => (
