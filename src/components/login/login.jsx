@@ -98,7 +98,7 @@ const AuthFields = memo(({ control, showPassword, setShowPassword }) => (
       name="password"
       render={({ field }) => (
         <FormItem>
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <FormLabel className="text-slate-700 dark:text-zinc-300 font-medium">
               Password
             </FormLabel>
@@ -108,7 +108,7 @@ const AuthFields = memo(({ control, showPassword, setShowPassword }) => (
             >
               Forgot password?
             </Link>
-          </div>
+          </div> */}
           <div className="relative group">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
             <FormControl>
