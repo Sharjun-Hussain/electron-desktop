@@ -239,7 +239,7 @@ export const getColumns = ({ onDelete, session }) => [
               onClick={() => onDelete(po.id)}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              <span>Delete Protocol</span>
+              <span>Delete PO</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

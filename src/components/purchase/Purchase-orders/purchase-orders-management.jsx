@@ -187,8 +187,9 @@ export default function PurchaseOrderPage() {
       getColumns({
         onDelete: canDelete(PURCHASE) ? handleDelete : null,
         canEdit: canUpdate(PURCHASE),
+        session,
       }),
-    [handleDelete, canDelete, canUpdate, PURCHASE]
+    [handleDelete, canDelete, canUpdate, PURCHASE, session]
   );
 
   const stats = useMemo(() => {
