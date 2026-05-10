@@ -293,7 +293,7 @@ const ResourceTableToolbar = ({
               <span className="text-gray-400 dark:text-slate-500 font-normal mr-0.5">Sort:</span>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-md border-gray-200 shadow-lg">
+            <SelectContent className="rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in zoom-in-95">
               {sortOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value} className="text-sm font-medium rounded-md">
                   {opt.label}

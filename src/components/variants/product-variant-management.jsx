@@ -242,7 +242,7 @@ const VariantBulkActions = ({ table, onDelete, onDeactivate, onActivate }) => {
   return (
     <>
       <DropdownMenuItem
-        className="text-sm font-medium rounded-md"
+        className="text-sm font-medium rounded-lg px-3 py-2 cursor-pointer focus:bg-emerald-500/10 focus:text-emerald-600 dark:focus:bg-emerald-500/20 dark:focus:text-emerald-400 transition-colors"
         disabled={numSelected === 0}
         onClick={() => {
           onActivate(selectedIds);
@@ -253,7 +253,7 @@ const VariantBulkActions = ({ table, onDelete, onDeactivate, onActivate }) => {
       </DropdownMenuItem>
 
       <DropdownMenuItem
-        className="text-sm font-medium rounded-md"
+        className="text-sm font-medium rounded-lg px-3 py-2 cursor-pointer focus:bg-emerald-500/10 focus:text-emerald-600 dark:focus:bg-emerald-500/20 dark:focus:text-emerald-400 transition-colors"
         disabled={numSelected === 0}
         onClick={() => {
           onDeactivate(selectedIds);
@@ -266,7 +266,7 @@ const VariantBulkActions = ({ table, onDelete, onDeactivate, onActivate }) => {
       <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
 
       <DropdownMenuItem
-        className="text-sm font-medium rounded-md text-rose-500 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-900/10"
+        className="text-sm font-medium rounded-lg px-3 py-2 cursor-pointer text-rose-500 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-900/20 dark:focus:text-rose-400 transition-colors"
         disabled={numSelected === 0}
         onClick={() => {
           onDelete(selectedIds);
