@@ -378,9 +378,6 @@ export default function CreateReturn() {
       {/* ── Premium Header ── */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl border border-border/50 bg-card h-10 w-10 shrink-0">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
               <RotateCcw className="w-4.5 h-4.5 text-emerald-500" />
