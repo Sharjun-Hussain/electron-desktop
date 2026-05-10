@@ -63,8 +63,10 @@ export default function ProfilePage() {
       
       // If we don't have a local file selected, sync with session image
       // This ensures that on initial load or after session update, the correct image is shown
-      if (!avatarFile) {
-        setAvatarPreview(getImageUrl(session.user.image));
+      if (!avatarFile && session.user.image) {
+        const base = getImageUrl(session.user.image);
+        const version = session.user.imageLastUpdated || Date.now();
+        setAvatarPreview(`${base}${base.includes('?') ? '&' : '?'}v=${version}`);
       }
     }
   }, [session, avatarFile]);
@@ -110,7 +112,9 @@ export default function ProfilePage() {
         // Immediately update local UI state from the confirmed backend response
         // This bypasses any session update lag or caching issues
         setAvatarFile(null);
-        setAvatarPreview(getImageUrl(updatedUser.profile_image));
+        const base = getImageUrl(updatedUser.profile_image);
+        const timestamp = Date.now();
+        setAvatarPreview(`${base}${base.includes('?') ? '&' : '?'}v=${timestamp}`);
         setProfileForm({ name: updatedUser.name });
       }
 
