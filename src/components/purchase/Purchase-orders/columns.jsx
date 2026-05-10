@@ -236,7 +236,9 @@ export const getColumns = ({ onDelete, session }) => [
 
             <DropdownMenuItem
               className="cursor-pointer text-red-600 focus:text-red-700"
-              onClick={() => onDelete(po.id)}
+              onClick={() => {
+                if (window.onDeletePO) window.onDeletePO(po);
+              }}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               <span>Delete PO</span>

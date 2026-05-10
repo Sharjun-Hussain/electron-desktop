@@ -31,6 +31,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { MODULES } from "@/lib/permissions";
 
 import { SendPOWhatsAppDialog } from "./SendPOWhatsAppDialog";
+import { DeletePODialog } from "./delete-po-dialog";
 
 // ── Header ──────────────────────────────────────────────────────────────────
 const POHeaderContent = () => (
@@ -80,7 +81,9 @@ const POBulkActions = ({ table, onDelete }) => {
   const selectedIds = selectedRows.map((row) => row.original.id);
 
   const handleDelete = () => {
-    onDelete(selectedIds);
+    if (window.onDeletePO) {
+      window.onDeletePO(selectedIds);
+    }
     table.resetRowSelection();
   };
 
@@ -107,6 +110,9 @@ export default function PurchaseOrderPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [selectedPO, setSelectedPO] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [poToDelete, setPoToDelete] = useState(null);
+  const [idsToDelete, setIdsToDelete] = useState([]);
   const { canCreate, canUpdate, canDelete } = usePermission();
   const { PURCHASE } = MODULES;
 
@@ -116,7 +122,20 @@ export default function PurchaseOrderPage() {
       setSelectedPO(po);
       setWhatsappDialogOpen(true);
     };
-    return () => { delete window.onSendPOWhatsApp; };
+    window.onDeletePO = (poOrIds) => {
+      if (Array.isArray(poOrIds)) {
+        setIdsToDelete(poOrIds);
+        setPoToDelete(null);
+      } else {
+        setPoToDelete(poOrIds);
+        setIdsToDelete([poOrIds.id]);
+      }
+      setDeleteDialogOpen(true);
+    };
+    return () => { 
+      delete window.onSendPOWhatsApp; 
+      delete window.onDeletePO;
+    };
   }, []);
 
   const fetchPurchaseOrders = useCallback(async () => {
@@ -162,24 +181,35 @@ export default function PurchaseOrderPage() {
 
   const handleDelete = useCallback(async (ids) => {
     const idsToDelete = Array.isArray(ids) ? ids : [ids];
-    toast.promise(
-      Promise.all(
-        idsToDelete.map((id) =>
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders/${id}`, {
+    
+    // Check if we have IDs to delete
+    if (idsToDelete.length === 0) return;
+
+    try {
+      const results = await Promise.all(
+        idsToDelete.map(async (id) => {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders/${id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${session?.accessToken}` },
-          })
-        )
-      ),
-      {
-        loading: "Deleting...",
-        success: () => {
-          fetchPurchaseOrders();
-          return "Order(s) deleted successfully!";
-        },
-        error: "Failed to delete.",
+          });
+          const data = await response.json();
+          return { id, ok: response.ok, message: data.message };
+        })
+      );
+
+      const failed = results.filter(r => !r.ok);
+      if (failed.length === 0) {
+        toast.success(idsToDelete.length > 1 ? "Orders deleted successfully!" : "Order deleted successfully!");
+        fetchPurchaseOrders();
+      } else {
+        // Show the first error message
+        toast.error(failed[0].message || "Failed to delete order(s). Status might prevent deletion.");
+        fetchPurchaseOrders(); // Still refresh to show current state
       }
-    );
+    } catch (err) {
+      toast.error("An error occurred while deleting.");
+      console.error(err);
+    }
   }, [session, fetchPurchaseOrders]);
 
   const columns = useMemo(
@@ -304,6 +334,13 @@ export default function PurchaseOrderPage() {
         open={whatsappDialogOpen} 
         onOpenChange={setWhatsappDialogOpen} 
         po={selectedPO} 
+      />
+      <DeletePODialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={() => handleDelete(idsToDelete)}
+        poNumber={poToDelete?.po_number}
+        count={idsToDelete.length}
       />
     </ResourceManagementLayout>
   );
