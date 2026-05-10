@@ -46,10 +46,17 @@ export function usePosData() {
       const localDistributors = await db.distributors.toArray();
       const localEmployees = await db.employees.toArray();
 
+      // Optimized pre-grouping of variants to avoid O(n²) lookups
+      const variantsByProduct = localVariants.reduce((acc, v) => {
+        if (!acc[v.productId]) acc[v.productId] = [];
+        acc[v.productId].push(v);
+        return acc;
+      }, {});
+      
       // We need to re-group variants into products for allProducts state
       const grouped = localProducts.map(p => ({
         ...p,
-        variants: localVariants.filter(v => v.productId === p.id)
+        variants: variantsByProduct[p.id] || []
       }));
 
       setAllProducts(grouped);
@@ -159,9 +166,15 @@ export function usePosData() {
         console.warn("Product sync failed, using local DB", results[0].reason);
         const localProducts = await db.products.toArray();
         const localVariants = await db.variants.toArray();
+        const variantsByProduct = localVariants.reduce((acc, v) => {
+          if (!acc[v.productId]) acc[v.productId] = [];
+          acc[v.productId].push(v);
+          return acc;
+        }, {});
+
         const grouped = localProducts.map(p => ({
           ...p,
-          variants: localVariants.filter(v => v.productId === p.id)
+          variants: variantsByProduct[p.id] || []
         }));
         setAllProducts(grouped);
         setFlattenedVariants(localVariants);
