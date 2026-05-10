@@ -92,8 +92,8 @@ const SectionHeader = ({ icon: Icon, title, description }) => (
 );
 
 // ── Input class helper ───────────────────────────────────
-const inputCls = "h-9 border-gray-200 focus-visible:ring-emerald-500 focus-visible:ring-offset-0 text-sm font-medium";
-const selectTriggerCls = "h-9 border-gray-200 focus:ring-emerald-500 text-sm font-medium";
+const inputCls = "h-9 border-gray-200 dark:border-slate-800 bg-background dark:bg-slate-900/50 focus-visible:ring-emerald-500 focus-visible:ring-offset-0 text-sm font-medium dark:text-slate-100 dark:placeholder:text-slate-500";
+const selectTriggerCls = "h-9 border-gray-200 dark:border-slate-800 bg-background dark:bg-slate-900/50 focus:ring-emerald-500 text-sm font-medium dark:text-slate-100";
 
 // ── Main Form Component ──────────────────────────────────
 export function OrganizationForm({ initialData }) {
