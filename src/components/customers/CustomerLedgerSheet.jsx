@@ -356,7 +356,11 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
                       <p className="text-sm font-semibold text-foreground">Record Manual Settlement</p>
                       <p className="text-sm text-muted-foreground">Log a payment or reconcile the ledger balance.</p>
                     </div>
-                    <Button onClick={() => setSettleOpen(true)} className="gap-2 shadow-sm font-semibold">
+                    <Button 
+                      onClick={() => setSettleOpen(true)} 
+                      disabled={!isReceivable}
+                      className="gap-2 shadow-sm font-semibold"
+                    >
                       <Wallet className="h-4 w-4" />
                       Record Settlement
                     </Button>
