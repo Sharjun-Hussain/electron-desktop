@@ -58,7 +58,7 @@ export function TermsModal({ onAccept }) {
       if (!res.ok) throw new Error("Failed to update terms status");
 
       const data = await res.json();
-      if (data.success) {
+      if (data.status === "success") {
         toast.success("Terms accepted. Welcome to Inzeedo POS!");
         onAccept();
       }
