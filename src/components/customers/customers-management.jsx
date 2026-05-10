@@ -33,6 +33,7 @@ import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
 import { CustomerLedgerSheet } from "./CustomerLedgerSheet";
 import { EditCustomerSheet } from "./EditCustomerSheet";
+import { DeleteCustomerDialog } from "./delete-customer-dialog";
 import { usePermission } from "@/hooks/use-permission";
 import { cn } from "@/lib/utils";
 import { exportToCSV } from "@/lib/exportUtils";
@@ -45,7 +46,8 @@ import { StatusBadge } from "../ui/status-badge";
 export function CustomersManagement() {
   const { data: session } = useSession();
   const { canCreate, canUpdate, canDelete } = usePermission();
-  const { formatCurrency } = useAppSettings();
+  const { formatCurrency, loyalty } = useAppSettings();
+  const isLoyaltyEnabled = loyalty?.is_active ?? false;
   const CUSTOMER = "customer";
 
   const [data, setData] = useState([]);
@@ -64,6 +66,8 @@ export function CustomersManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -163,12 +167,17 @@ export function CustomersManagement() {
     }));
   }, [data]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (customer) => {
     if (!session?.accessToken) return;
-    if (!confirm("Are you sure you want to delete this customer profile?")) return;
+    setDeletingCustomer(customer);
+    setIsDeleteOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!session?.accessToken || !deletingCustomer) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/${deletingCustomer.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${session.accessToken}`,
@@ -317,7 +326,7 @@ export function CustomersManagement() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              onClick={() => handleDelete(row.original.id)}
+              onClick={() => handleDelete(row.original)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -325,7 +334,10 @@ export function CustomersManagement() {
         </div>
       )
     }
-  ], [formatCurrency, canUpdate, canDelete, pathname]);
+  ].filter(col => {
+    if (col.accessorKey === "loyaltyPoints" && !isLoyaltyEnabled) return false;
+    return true;
+  }), [formatCurrency, canUpdate, canDelete, pathname, isLoyaltyEnabled]);
 
   return (
     <>
@@ -390,7 +402,7 @@ export function CustomersManagement() {
               { id: "active", label: "Active" },
               { id: "vip", label: "VIP Tier" },
               { id: "inactive", label: "Archived" },
-            ].map((tab) => (
+            ].filter(tab => tab.id !== "vip" || isLoyaltyEnabled).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
@@ -429,6 +441,13 @@ export function CustomersManagement() {
         open={isLedgerOpen}
         onOpenChange={handleCloseLedger}
         accessToken={session?.accessToken}
+      />
+
+      <DeleteCustomerDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onConfirm={confirmDelete}
+        customerName={deletingCustomer?.name}
       />
     </>
   );

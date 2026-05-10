@@ -4,7 +4,8 @@ import { Star, TrendingUp, Users, Activity } from "lucide-react";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
 export function CustomerStats({ customers, totalTotal }) {
-  const { formatCurrency } = useAppSettings();
+  const { formatCurrency, loyalty } = useAppSettings();
+  const isLoyaltyEnabled = loyalty?.is_active ?? false;
   
   // Note: For server-side pagination, these ideally come from a summary API.
   // Using passed 'totalTotal' for the main count.
@@ -37,7 +38,7 @@ export function CustomerStats({ customers, totalTotal }) {
       icon: TrendingUp,
       gradient: "from-violet-500 to-purple-400"
     },
-  ];
+  ].filter(stat => stat.label !== "VIP Tier" || isLoyaltyEnabled);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
