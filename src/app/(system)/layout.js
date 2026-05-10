@@ -41,7 +41,7 @@ export default function AppLayout({ children }) {
   // POS Screen - Full width, optimized for touch/speed
   if (isPosScreen) {
     return (
-      <div 
+      <div
         className="min-h-screen w-full bg-background font-sans selection:bg-[#10b981] selection:text-white relative flex flex-col"
         data-density={density}
         data-performance={performance}
@@ -50,17 +50,14 @@ export default function AppLayout({ children }) {
         <div className="flex-1 overflow-hidden">
           {children}
         </div>
-        {/* Minimal POS Credit */}
-        <div className="fixed bottom-2 right-4 z-[9999] pointer-events-none select-none">
-          <span className="text-[9px] font-bold text-muted-foreground/20 uppercase tracking-[0.2em]">{t("pos.credit")}</span>
-        </div>
+
       </div>
     );
   }
 
   // Standard Dashboard Screens
   return (
-    <div 
+    <div
       className="flex h-screen w-full bg-background text-foreground font-sans selection:bg-[#10b981] selection:text-white transition-colors duration-500 overflow-hidden"
       data-density={density}
       data-performance={performance}
