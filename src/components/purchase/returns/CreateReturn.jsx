@@ -17,6 +17,7 @@ import {
   Trash2,
   Loader2,
   RotateCcw,
+  Save,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -392,16 +393,15 @@ export default function CreateReturn() {
         </div>
 
         <div className="flex items-center gap-3">
-            <Button type="button" variant="outline" className="rounded-xl h-10 px-6 text-xs font-medium" onClick={() => router.back()}>Cancel</Button>
             <Button 
                 onClick={form.handleSubmit(onSubmit)}
                 disabled={isSubmitting} 
-                className="gap-2 rounded-xl h-10 px-6 text-xs font-medium bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20"
+                className="gap-2 rounded-xl h-10 px-6 text-[13px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all active:scale-95"
             >
                 {isSubmitting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                    <RotateCcw className="mr-2 h-4 w-4" />
+                    <Save className="mr-2 h-4 w-4" />
                 )}
                 {isSubmitting ? "Processing..." : "Create Return"}
             </Button>
