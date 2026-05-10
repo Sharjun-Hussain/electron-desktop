@@ -22,7 +22,7 @@ export default function OrganizationPageSkeleton() {
       {/* Stats Skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="border-slate-100 shadow-sm rounded-2xl">
+          <Card key={i} className="border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
@@ -37,9 +37,9 @@ export default function OrganizationPageSkeleton() {
       </div>
 
       {/* Table Skeleton */}
-      <Card className="border border-slate-100 shadow-sm rounded-2xl overflow-hidden bg-white">
+      <Card className="border border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900/50">
         <CardContent className="p-0">
-          <div className="p-4 border-b border-slate-100 flex justify-between items-center">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
             <Skeleton className="h-10 w-64 rounded-xl" />
             <div className="flex gap-2">
               <Skeleton className="h-10 w-32 rounded-xl" />
