@@ -122,7 +122,7 @@ const ProductCardSimple = memo(({ product, onAddToCart, isWholesale }) => {
 ProductCardSimple.displayName = "ProductCardSimple";
 
 // ─── Main ProductGrid component ───────────────────────────────────────────────
-export const ProductGrid = memo(forwardRef(({ allProducts, flattenedVariants, onAddToCart, isWholesale }, ref) => {
+export const ProductGrid = memo(forwardRef(({ allProducts, flattenedVariants, onAddToCart, isWholesale, isLoading }, ref) => {
   const [productSearch, setProductSearch] = useState("");
   const [showImages, setShowImages] = useState(true);
   const debouncedSearch = useDebounce(productSearch, 300);
@@ -190,6 +190,33 @@ export const ProductGrid = memo(forwardRef(({ allProducts, flattenedVariants, on
     );
   }, [allProducts, debouncedSearch]);
 
+  const SkeletonCard = () => (
+    <div className="animate-pulse flex flex-col h-full bg-card/40 border border-border/40 rounded-xl overflow-hidden">
+      <div className="aspect-3/2 bg-muted/20" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-muted/40 rounded w-3/4" />
+        <div className="h-3 bg-muted/20 rounded w-1/2" />
+        <div className="mt-auto pt-2 border-t border-border/10 flex justify-between">
+          <div className="h-5 bg-emerald-500/10 rounded w-20" />
+          <div className="h-4 bg-muted/10 rounded w-16" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const SkeletonRow = () => (
+    <div className="animate-pulse flex items-center justify-between p-4 bg-card/40 border border-border/40 rounded-xl">
+      <div className="flex items-center gap-4 flex-1">
+        <div className="h-10 w-10 bg-muted/30 rounded" />
+        <div className="space-y-2 flex-1">
+          <div className="h-4 bg-muted/40 rounded w-1/3" />
+          <div className="h-3 bg-muted/20 rounded w-20" />
+        </div>
+      </div>
+      <div className="h-5 bg-emerald-500/10 rounded w-24" />
+    </div>
+  );
+
   return (
     <>
       {/* Search bar lives here — its own isolated state. Added more top padding for spacing. */}
@@ -219,18 +246,42 @@ export const ProductGrid = memo(forwardRef(({ allProducts, flattenedVariants, on
         </div>
       </div>
       <div className="flex-1 p-6 overflow-y-auto bg-muted/20">
-        {showImages ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 pb-10">
-            {filteredProducts.map((p) => (
-              <ProductCardWithImage key={p.id} product={p} onAddToCart={onAddToCart} isWholesale={isWholesale} />
-            ))}
-          </div>
+        {isLoading && allProducts.length === 0 ? (
+          showImages ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 pb-10">
+              {[...Array(9)].map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {[...Array(6)].map((_, i) => <SkeletonRow key={i} />)}
+            </div>
+          )
         ) : (
-          <div className="flex flex-col gap-3">
-            {filteredProducts.map((p) => (
-              <ProductCardSimple key={p.id} product={p} onAddToCart={onAddToCart} isWholesale={isWholesale} />
-            ))}
-          </div>
+          showImages ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 pb-10">
+              {filteredProducts.map((p) => (
+                <ProductCardWithImage key={p.id} product={p} onAddToCart={onAddToCart} isWholesale={isWholesale} />
+              ))}
+              {filteredProducts.length === 0 && (
+                <div className="col-span-full py-20 text-center">
+                  <PackageSearch className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                  <p className="text-muted-foreground">{t("pos.no_products_found")}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filteredProducts.map((p) => (
+                <ProductCardSimple key={p.id} product={p} onAddToCart={onAddToCart} isWholesale={isWholesale} />
+              ))}
+              {filteredProducts.length === 0 && (
+                <div className="py-20 text-center">
+                  <PackageSearch className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                  <p className="text-muted-foreground">{t("pos.no_products_found")}</p>
+                </div>
+              )}
+            </div>
+          )
         )}
       </div>
     </>

@@ -26,6 +26,9 @@ function getImageUrl(imageField) {
   return null;
 }
 
+// Session-level flag to prevent redundant fetching within the same application session
+let hasFetchedInSession = false;
+
 export function usePosData() {
   const { data: session } = useSession();
 
@@ -65,19 +68,39 @@ export function usePosData() {
       setDistributors(localDistributors);
       setActiveEmployees(localEmployees);
       console.log("Loaded POS data from IndexedDB (Offline Mode)");
+      return localProducts.length > 0;
     } catch (err) {
       console.error("Failed to load from IndexedDB:", err);
+      return false;
     }
   }, []);
 
-  const fetchData = useCallback(async () => {
-    if (!session?.accessToken) return;
-    setIsLoading(true);
+  const fetchData = useCallback(async (force = false) => {
+    // 1. Always prioritize fast local loading first
+    const hasDataLocally = allProducts.length > 0;
+    if (!hasDataLocally) {
+      const dataFound = await loadFromDB();
+      // If we found local data, we can stop "initial loading" state immediately
+      if (dataFound) {
+        setIsLoading(false);
+      }
+    }
+
+    // 2. Decide if we need to fetch from network
+    if (!session?.accessToken) {
+      setIsLoading(false);
+      return;
+    }
+
+    // If we've already synced in this session and aren't forcing, stop here
+    if (hasFetchedInSession && !force) {
+      setIsLoading(false);
+      return;
+    }
     
     // Check if browser is online
     if (!navigator.onLine) {
        setIsOffline(true);
-       await loadFromDB();
        setIsLoading(false);
        return;
     }
@@ -96,7 +119,7 @@ export function usePosData() {
         endpoints.map(e => 
           fetch(e.url, { 
             headers: { Authorization: `Bearer ${session.accessToken}` },
-            signal: AbortSignal.timeout(10000) // 10s timeout
+            signal: AbortSignal.timeout(15000) // 15s timeout for large datasets
           }).then(async res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
@@ -117,11 +140,9 @@ export function usePosData() {
         const prodData = results[0].value;
         const rawProductList = prodData.data.data || [];
 
-        // For manufacturing businesses, only Finished Goods are sold at POS
         const businessType = (session?.user?.organization?.business_type || "").toLowerCase();
         const isManufacturing = businessType === "manufacturing";
         
-        // RELAXED FILTER: Show Finished Goods OR products with NO type (legacy/imported)
         const filteredList = isManufacturing
           ? rawProductList.filter(p => {
               const type = (p.product_type || "").toLowerCase();
@@ -162,31 +183,11 @@ export function usePosData() {
         setAllProducts(processedProducts);
         setFlattenedVariants(variantsFlat);
         setIsOffline(false);
-      } else {
-        console.warn("Product sync failed, using local DB", results[0].reason);
-        const localProducts = await db.products.toArray();
-        const localVariants = await db.variants.toArray();
-        const variantsByProduct = localVariants.reduce((acc, v) => {
-          if (!acc[v.productId]) acc[v.productId] = [];
-          acc[v.productId].push(v);
-          return acc;
-        }, {});
-
-        const grouped = localProducts.map(p => ({
-          ...p,
-          variants: variantsByProduct[p.id] || []
-        }));
-        setAllProducts(grouped);
-        setFlattenedVariants(localVariants);
       }
 
       // 2. Handle Customers
       if (isSuccess(results[1])) {
         processedCustomers = results[1].value.data;
-        setCustomers(processedCustomers);
-      } else {
-        console.warn("Customer sync failed", results[1].reason);
-        processedCustomers = await db.customers.toArray();
         setCustomers(processedCustomers);
       }
 
@@ -194,23 +195,15 @@ export function usePosData() {
       if (isSuccess(results[2])) {
         processedDistributors = results[2].value.data;
         setDistributors(processedDistributors);
-      } else {
-        console.warn("Distributor sync failed", results[2].reason);
-        processedDistributors = await db.distributors.toArray();
-        setDistributors(processedDistributors);
       }
 
       // 4. Handle Sellers
       if (isSuccess(results[3])) {
         processedEmployees = results[3].value.data;
         setActiveEmployees(processedEmployees);
-      } else {
-        console.warn("Seller sync failed", results[3].reason);
-        processedEmployees = await db.employees.toArray();
-        setActiveEmployees(processedEmployees);
       }
 
-      // Sync successful results to IndexedDB for next offline session
+      // Sync successful results to IndexedDB
       await syncMasterData({
         products: processedProducts.length > 0 ? processedProducts : undefined,
         customers: processedCustomers.length > 0 ? processedCustomers : undefined,
@@ -218,15 +211,14 @@ export function usePosData() {
         employees: processedEmployees.length > 0 ? processedEmployees : undefined
       });
 
+      hasFetchedInSession = true;
     } catch (error) {
-      console.error("Error fetching POS data, falling back to IndexedDB:", error);
+      console.error("Error syncing POS data:", error);
       setIsOffline(true);
-      await loadFromDB();
-      toast.error("Offline Mode: Using cached data");
     } finally {
       setIsLoading(false);
     }
-  }, [session, loadFromDB]);
+  }, [session, loadFromDB, allProducts.length]);
 
   useEffect(() => {
     fetchData();
@@ -255,5 +247,6 @@ export function usePosData() {
     addCustomerToList,
     addDistributorToList,
     session,
+    refetch: () => fetchData(true)
   };
 }

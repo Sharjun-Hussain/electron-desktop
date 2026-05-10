@@ -417,7 +417,11 @@ export default function PosPage() {
   }, [businessResponse, posResponse, generalResponse]);
 
   // ── Core hooks ─────────────────────────────────────────────────────────────
-  const { allProducts, flattenedVariants, customers, distributors, activeEmployees, selectedBranch, setSelectedBranch, addCustomerToList, addDistributorToList } = usePosData();
+  const { 
+    allProducts, flattenedVariants, customers, distributors, 
+    activeEmployees, selectedBranch, setSelectedBranch, 
+    addCustomerToList, addDistributorToList, isLoading 
+  } = usePosData();
   const { state, dispatch, handleSelectCustomer, handleSelectDistributor } = usePosCart();
 
   // ── UI state for dialogs only (these drive conditional rendering) ──────────
@@ -992,6 +996,7 @@ export default function PosPage() {
               flattenedVariants={flattenedVariants}
               onAddToCart={handleAddToCart}
               isWholesale={state.isWholesale}
+              isLoading={isLoading}
             />
           </aside>
 
