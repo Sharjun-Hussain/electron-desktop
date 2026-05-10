@@ -370,35 +370,7 @@ export default function BrandPage() {
     return { total, active, inactive };
   }, [brands]);
 
-  const handleExport = useCallback(() => {
-    if (brands.length === 0) {
-      toast.error("No data to export");
-      return;
-    }
 
-    const headers = ["ID", "Name", "Description", "Status", "Created At"];
-    const csvContent = [
-      headers.join(","),
-      ...brands.map(b => [
-        b.id,
-        `"${b.name}"`,
-        `"${b.description || ""}"`,
-        b.is_active ? "Active" : "Inactive",
-        new Date(b.created_at).toLocaleDateString()
-      ].join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `brands_export_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Brands exported successfully!");
-  }, [brands]);
 
   // 7. Get the columns by passing the handlers
   const columns = useMemo(() => getBrandColumns({
@@ -433,7 +405,8 @@ export default function BrandPage() {
         addButtonLabel="New Brand"
         onAddClick={canCreate ? handleAddClick : null}
         isAdding={isDialogOpen}
-        onExportClick={handleExport}
+        exportFileName="brands-directory"
+        showPrint={false}
         bulkActionsComponent={bulkActionsComponent}
         searchColumn="name"
         searchPlaceholder="Filter brands by name..."
