@@ -33,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address").or(z.literal("")),
-  phone: z.string().min(10, "Phone number must be at least 10 characters"),
+  phone: z.string().regex(/^[0-9]{10}$/, "Mobile number must be exactly 10 digits"),
   address: z.string().min(5, "Address must be at least 5 characters").or(z.literal("")),
 });
 
@@ -137,9 +137,19 @@ export function AddCustomerSheet({ open, onOpenChange, onAdd }) {
                         <FormLabel className="font-semibold text-foreground">Contact Number</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="077 123 4567"
+                            type="tel"
+                            placeholder="0771234567"
                             className="shadow-sm"
                             {...field}
+                            onKeyDown={(e) => {
+                              if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Tab" && e.key !== "Enter" && e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Delete") {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                              field.onChange(value);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
