@@ -168,9 +168,6 @@ const BrandGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDele
           <h3 className="font-bold text-slate-900 dark:text-slate-100 text-lg  group-hover:text-emerald-600 transition-colors line-clamp-1 p-1">
             {brand.name}
           </h3>
-          <Badge variant="secondary" className="text-[10px] px-2 h-5 font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-none tracking-wider uppercase">
-            Slug: {brand.slug || "---"}
-          </Badge>
         </div>
       </div>
 
@@ -379,13 +376,12 @@ export default function BrandPage() {
       return;
     }
 
-    const headers = ["ID", "Name", "Slug", "Description", "Status", "Created At"];
+    const headers = ["ID", "Name", "Description", "Status", "Created At"];
     const csvContent = [
       headers.join(","),
       ...brands.map(b => [
         b.id,
         `"${b.name}"`,
-        `"${b.slug}"`,
         `"${b.description || ""}"`,
         b.is_active ? "Active" : "Inactive",
         new Date(b.created_at).toLocaleDateString()

@@ -30,7 +30,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 letters"),
-  slug: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -42,7 +41,6 @@ export function BrandDrawer({ open, onOpenChange, onSuccess, session, initialDat
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      slug: "",
       description: "",
     },
   });
@@ -53,13 +51,11 @@ export function BrandDrawer({ open, onOpenChange, onSuccess, session, initialDat
     if (initialData) {
       form.reset({
         name: initialData.name || "",
-        slug: initialData.slug || "",
         description: initialData.description || "",
       });
     } else {
       form.reset({
         name: "",
-        slug: "",
         description: "",
       });
     }
@@ -139,23 +135,7 @@ export function BrandDrawer({ open, onOpenChange, onSuccess, session, initialDat
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="slug"
-              render={({ field }) => (
-                <FormItem className="space-y-1">
-                  <FormLabel className="text-xs font-semibold text-muted-foreground ml-1">Identifier (Optional)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="brand-name" 
-                      className="bg-background border-border/60 rounded-xl px-4 py-2 text-sm shadow-sm focus:ring-emerald-500/20"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage className="text-xs text-red-500 ml-1" />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name="description"

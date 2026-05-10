@@ -31,7 +31,6 @@ import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(2, "Brand name must be at least 2 characters"),
-  slug: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -43,7 +42,6 @@ export function BrandSheet({ open, onOpenChange, onSuccess, session, initialData
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      slug: "",
       description: "",
     },
   });
@@ -55,13 +53,11 @@ export function BrandSheet({ open, onOpenChange, onSuccess, session, initialData
     if (initialData) {
       form.reset({
         name: initialData.name || "",
-        slug: initialData.slug || "",
         description: initialData.description || "",
       });
     } else {
       form.reset({
         name: "",
-        slug: "",
         description: "",
       });
     }
@@ -160,23 +156,7 @@ export function BrandSheet({ open, onOpenChange, onSuccess, session, initialData
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="slug"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-foreground">Identifier (Slug)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="brand-identifier"
-                          className="shadow-sm"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
 
                 <FormField
                   control={form.control}

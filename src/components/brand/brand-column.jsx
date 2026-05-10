@@ -77,7 +77,6 @@ export const getBrandColumns = ({
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-sm font-bold text-foreground  truncate leading-tight">{brand.name}</span>
-            <span className="text-xs font-medium text-muted-foreground/40 mt-0.5 truncate">{brand.slug || "No identifier"}</span>
           </div>
         </div>
       );
