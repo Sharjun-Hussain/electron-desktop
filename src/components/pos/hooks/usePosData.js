@@ -76,41 +76,50 @@ export function usePosData() {
     }
 
     try {
-      const [prodRes, custRes, distRes, sellerRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products?size=1000`, {
-          headers: { Authorization: `Bearer ${session.accessToken}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/active/list`, {
-          headers: { Authorization: `Bearer ${session.accessToken}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/distributors/active/list`, {
-          headers: { Authorization: `Bearer ${session.accessToken}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/active-sellers`, {
-          headers: { Authorization: `Bearer ${session.accessToken}` },
-        }),
-      ]);
+      // Define endpoints to fetch
+      const endpoints = [
+        { key: 'products', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/products?size=1000` },
+        { key: 'customers', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/active/list` },
+        { key: 'distributors', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/distributors/active/list` },
+        { key: 'sellers', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/active-sellers` },
+      ];
 
-      const [prodResult, custResult, distResult, sellerResult] = await Promise.all([
-        prodRes.json(),
-        custRes.json(),
-        distRes.json(),
-        sellerRes.json(),
-      ]);
+      // Fetch all with Settled to prevent one failure from blocking others
+      const results = await Promise.allSettled(
+        endpoints.map(e => 
+          fetch(e.url, { 
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+            signal: AbortSignal.timeout(10000) // 10s timeout
+          }).then(async res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+          })
+        )
+      );
 
       let processedProducts = [];
       let processedCustomers = [];
       let processedDistributors = [];
       let processedEmployees = [];
 
-      if (prodResult.status === "success") {
-        const rawProductList = prodResult.data.data || [];
+      // Helper to check if a result was successful
+      const isSuccess = (res) => res.status === 'fulfilled' && res.value.status === 'success';
+
+      // 1. Handle Products
+      if (isSuccess(results[0])) {
+        const prodData = results[0].value;
+        const rawProductList = prodData.data.data || [];
 
         // For manufacturing businesses, only Finished Goods are sold at POS
         const businessType = (session?.user?.organization?.business_type || "").toLowerCase();
         const isManufacturing = businessType === "manufacturing";
+        
+        // RELAXED FILTER: Show Finished Goods OR products with NO type (legacy/imported)
         const filteredList = isManufacturing
-          ? rawProductList.filter(p => (p.product_type || "").toLowerCase() === "finished good")
+          ? rawProductList.filter(p => {
+              const type = (p.product_type || "").toLowerCase();
+              return type === "finished good" || type === "";
+            })
           : rawProductList;
 
         processedProducts = filteredList.map((p) => ({
@@ -146,29 +155,54 @@ export function usePosData() {
         setAllProducts(processedProducts);
         setFlattenedVariants(variantsFlat);
         setIsOffline(false);
+      } else {
+        console.warn("Product sync failed, using local DB", results[0].reason);
+        const localProducts = await db.products.toArray();
+        const localVariants = await db.variants.toArray();
+        const grouped = localProducts.map(p => ({
+          ...p,
+          variants: localVariants.filter(v => v.productId === p.id)
+        }));
+        setAllProducts(grouped);
+        setFlattenedVariants(localVariants);
       }
 
-      if (custResult.status === "success") {
-        processedCustomers = custResult.data;
+      // 2. Handle Customers
+      if (isSuccess(results[1])) {
+        processedCustomers = results[1].value.data;
+        setCustomers(processedCustomers);
+      } else {
+        console.warn("Customer sync failed", results[1].reason);
+        processedCustomers = await db.customers.toArray();
         setCustomers(processedCustomers);
       }
 
-      if (distResult.status === "success") {
-        processedDistributors = distResult.data;
+      // 3. Handle Distributors
+      if (isSuccess(results[2])) {
+        processedDistributors = results[2].value.data;
+        setDistributors(processedDistributors);
+      } else {
+        console.warn("Distributor sync failed", results[2].reason);
+        processedDistributors = await db.distributors.toArray();
         setDistributors(processedDistributors);
       }
 
-      if (sellerResult.status === "success") {
-        processedEmployees = sellerResult.data;
+      // 4. Handle Sellers
+      if (isSuccess(results[3])) {
+        processedEmployees = results[3].value.data;
+        setActiveEmployees(processedEmployees);
+      } else {
+        console.warn("Seller sync failed", results[3].reason);
+        processedEmployees = await db.employees.toArray();
         setActiveEmployees(processedEmployees);
       }
 
-      // Sync to IndexedDB
+      // Sync successful results to IndexedDB for next offline session
       await syncMasterData({
-        products: processedProducts,
-        customers: processedCustomers,
-        distributors: processedDistributors,
-        employees: processedEmployees
+        products: processedProducts.length > 0 ? processedProducts : undefined,
+        customers: processedCustomers.length > 0 ? processedCustomers : undefined,
+        distributors: processedDistributors.length > 0 ? processedDistributors : undefined,
+        employees: processedEmployees.length > 0 ? processedEmployees : undefined
       });
 
     } catch (error) {
