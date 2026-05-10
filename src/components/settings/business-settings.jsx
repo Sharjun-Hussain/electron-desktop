@@ -201,60 +201,6 @@ export function BusinessSettings() {
         </CardContent>
       </Card>
 
-      {/* Feature Modules Activation */}
-      {(hasRole("Super Admin") || formData.whatsapp_enabled || formData.shopify_enabled) && (
-        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-xl overflow-hidden">
-          <CardContent className="p-6">
-            <SectionHeader icon={Fingerprint} title="Feature Modules" description="Activate specialized application protocols" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {(hasRole("Super Admin") || formData.whatsapp_enabled) && (
-                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/20">
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">WhatsApp CRM</h4>
-                    <p className="text-[11px] text-slate-500">Enable Chatwoot integration and templates</p>
-                  </div>
-                  <div 
-                    className={cn(
-                      "w-11 h-6 rounded-full relative transition-all duration-300",
-                      formData.whatsapp_enabled ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700",
-                      hasRole("Super Admin") ? "cursor-pointer" : "opacity-50 cursor-not-allowed"
-                    )}
-                    onClick={() => hasRole("Super Admin") && updateField('whatsapp_enabled', !formData.whatsapp_enabled)}
-                  >
-                    <div className={cn(
-                      "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
-                      formData.whatsapp_enabled ? "left-6" : "left-1"
-                    )} />
-                  </div>
-                </div>
-              )}
-
-              {(hasRole("Super Admin") || formData.shopify_enabled) && (
-                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/20">
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Shopify POS</h4>
-                    <p className="text-[11px] text-slate-500">Enable multi-channel inventory sync</p>
-                  </div>
-                  <div 
-                    className={cn(
-                      "w-11 h-6 rounded-full relative transition-all duration-300",
-                      formData.shopify_enabled ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700",
-                      hasRole("Super Admin") ? "cursor-pointer" : "opacity-50 cursor-not-allowed"
-                    )}
-                    onClick={() => hasRole("Super Admin") && updateField('shopify_enabled', !formData.shopify_enabled)}
-                  >
-                    <div className={cn(
-                      "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
-                      formData.shopify_enabled ? "left-6" : "left-1"
-                    )} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Footer Actions */}
       <div className="flex justify-end gap-3 pt-2">
