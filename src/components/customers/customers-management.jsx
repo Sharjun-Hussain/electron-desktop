@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Plus,
@@ -22,6 +22,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { AddCustomerSheet } from "./AddCustomerSheet";
 import { CustomerStats } from "./customer-stats";
+
+// --- MEMOIZED STATS WRAPPER ---
+const MemoizedStats = React.memo(({ customers, totalTotal }) => (
+  <CustomerStats customers={customers} totalTotal={totalTotal} />
+));
+MemoizedStats.displayName = "MemoizedStats";
+
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
 import { CustomerLedgerSheet } from "./CustomerLedgerSheet";
@@ -45,7 +52,7 @@ export function CustomersManagement() {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 1000, // High limit for instant local filtering
     total: 0,
     pages: 1
   });
@@ -76,9 +83,8 @@ export function CustomersManagement() {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams({
-        page: pagination.page,
-        size: pagination.limit,
-        search: searchQuery,
+        page: 1,
+        size: 1000,
         status: activeTab === "all" ? "" : activeTab
       });
 
@@ -90,7 +96,13 @@ export function CustomersManagement() {
       );
       const result = await res.json();
       if (result.status === "success") {
-        setData(Array.isArray(result.data) ? result.data : (result.data.data || []));
+        const rawData = Array.isArray(result.data) ? result.data : (result.data.data || []);
+        // Flatten data for instant multi-column search
+        const flattenedData = rawData.map(item => ({
+          ...item,
+          searchText: `${item.name} ${item.phone || ""} ${item.email || ""} ${item.id}`.toLowerCase()
+        }));
+        setData(flattenedData);
         if (result.data.pagination) {
           setPagination(prev => ({ ...prev, ...result.data.pagination }));
         }
@@ -103,7 +115,7 @@ export function CustomersManagement() {
     } finally {
       setLoading(false);
     }
-  }, [session, searchQuery, activeTab, pagination.page, pagination.limit]);
+  }, [session, activeTab]);
 
   useEffect(() => {
     fetchData();
@@ -190,7 +202,12 @@ export function CustomersManagement() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const columns = [
+  const handleSearchChange = useCallback((v) => {
+    setSearchQuery(v);
+    setPagination(p => ({ ...p, page: 1 }));
+  }, []);
+
+  const columns = useMemo(() => [
     {
       accessorKey: "name",
       header: "Customer",
@@ -230,6 +247,12 @@ export function CustomersManagement() {
           </div>
         </div>
       )
+    },
+    {
+      accessorKey: "searchText",
+      header: "Search",
+      enableHiding: true,
+      cell: () => null,
     },
     {
       accessorKey: "totalSpent",
@@ -302,7 +325,7 @@ export function CustomersManagement() {
         </div>
       )
     }
-  ];
+  ], [formatCurrency, canUpdate, canDelete, pathname]);
 
   return (
     <>
@@ -321,12 +344,10 @@ export function CustomersManagement() {
             </div>
           </div>
         }
-        statCardsComponent={<CustomerStats customers={data} totalTotal={pagination.total} />}
+        statCardsComponent={<MemoizedStats customers={data} totalTotal={pagination.total} />}
         searchPlaceholder="Search Name, Email, or Phone..."
-        onSearchChange={(v) => {
-          setSearchQuery(v);
-          setPagination(p => ({ ...p, page: 1 }));
-        }}
+        searchColumn="searchText"
+        onSearchChange={handleSearchChange}
         onExportClick={null}
         exportData={exportData}
         exportFileName="Customers_Registry_Export"
