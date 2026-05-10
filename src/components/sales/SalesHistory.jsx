@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppSettings } from "@/app/hooks/useAppSettings";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { format, subDays, startOfMonth } from "date-fns";
 import {
@@ -54,6 +54,27 @@ import { Badge } from "@/components/ui/badge";
 import { ReceiptTemplate } from "../pos/ReceiptTemplate";
 import { SalesHistorySkeleton } from "./SalesHistorySkeleton";
 
+// --- MEMOIZED STATS COMPONENT ---
+const StatsSection = React.memo(({ stats }) => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {stats.map((card, idx) => (
+        <div key={idx} className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
+          <div className={`p-3 rounded-lg bg-linear-to-br ${card.gradient} text-white`}>
+            <card.icon className="w-5 h-5 shadow-sm" />
+          </div>
+          <div className="flex flex-col">
+            <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</p>
+            <h3 className="text-2xl font-bold text-foreground">{card.value}</h3>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+StatsSection.displayName = "StatsSection";
+
 export default function SalesHistory() {
   const { data: session } = useSession();
   const { formatCurrency, business, pos: posSettings, generateDocNumber } = useAppSettings();
@@ -66,23 +87,23 @@ export default function SalesHistory() {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 1000, // Large limit for instant local search
     total: 0,
     pages: 1
   });
-  
+
   // The 'date' state drives the API fetch
   const [date, setDate] = useState({
     from: startOfMonth(new Date()),
     to: new Date(),
   });
-  
+
   // The 'internalDate' is local to the Calendar UI to avoid jumping to loaders
   const [internalDate, setInternalDate] = useState({
     from: startOfMonth(new Date()),
     to: new Date(),
   });
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSale, setSelectedSale] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -93,7 +114,7 @@ export default function SalesHistory() {
   const [subCategories, setSubCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [products, setProducts] = useState([]);
-  
+
   const [selectedSupplier, setSelectedSupplier] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubCategory, setSelectedSubCategory] = useState("all");
@@ -152,11 +173,10 @@ export default function SalesHistory() {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams({
-        page: pagination.page,
-        size: pagination.limit,
+        page: 1,
+        size: 1000,
         start_date: date?.from ? format(date.from, 'yyyy-MM-dd') : '',
         end_date: date?.to ? format(date.to, 'yyyy-MM-dd') : '',
-        search: searchQuery,
         supplier_id: selectedSupplier,
         main_category_id: selectedCategory,
         sub_category_id: selectedSubCategory,
@@ -170,7 +190,13 @@ export default function SalesHistory() {
       });
       const result = await res.json();
       if (result.status === 'success') {
-        setData(result.data.data || []);
+        const rawData = result.data.data || [];
+        // Flatten data for instant multi-column search
+        const flattenedData = rawData.map(item => ({
+          ...item,
+          searchText: `${item.invoice_number} ${item.customer?.name || ""} ${item.branch?.name || ""} ${item.payment_method} ${item.payment_status}`.toLowerCase()
+        }));
+        setData(flattenedData);
         if (result.data.pagination) {
           setPagination(prev => ({ ...prev, ...result.data.pagination }));
         }
@@ -183,7 +209,7 @@ export default function SalesHistory() {
     } finally {
       setLoading(false);
     }
-  }, [session, date, searchQuery, pagination.page, pagination.limit, selectedSupplier, selectedCategory, selectedSubCategory, selectedBrand, selectedProduct]);
+  }, [session, date, selectedSupplier, selectedCategory, selectedSubCategory, selectedBrand, selectedProduct]);
 
   useEffect(() => {
     fetchSales();
@@ -281,14 +307,19 @@ export default function SalesHistory() {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
+  const handleSearchChange = useCallback((v) => {
+    setSearchQuery(v);
+    setPagination(p => ({ ...p, page: 1 }));
+  }, []);
+
   // --- COLUMNS ---
-  const columns = [
+  const columns = useMemo(() => [
     {
       accessorKey: "invoice_number",
       header: "Invoice",
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <button 
+          <button
             onClick={() => handleViewDetails(row.original)}
             className="text-left font-bold text-sm text-emerald-600 hover:text-emerald-700 hover:underline decoration-emerald-500/30 underline-offset-4"
           >
@@ -324,13 +355,19 @@ export default function SalesHistory() {
       )
     },
     {
+      accessorKey: "searchText",
+      header: "Search",
+      enableHiding: true,
+      cell: () => null,
+    },
+    {
       accessorKey: "payment_method",
       header: "Method",
       cell: ({ row }) => (
-        <StatusBadge 
-          value={row.getValue("payment_method")} 
+        <StatusBadge
+          value={row.getValue("payment_method")}
           showIcon={false}
-          className="bg-slate-500/5 text-slate-600 border-slate-200 dark:bg-slate-400/5 dark:text-slate-400 dark:border-slate-800" 
+          className="bg-slate-500/5 text-slate-600 border-slate-200 dark:bg-slate-400/5 dark:text-slate-400 dark:border-slate-800"
         />
       )
     },
@@ -350,8 +387,8 @@ export default function SalesHistory() {
         <div className="flex justify-center gap-2">
           <StatusBadge value={row.getValue("payment_status")} />
           {(row.original.return_status && row.original.return_status !== 'none' || row.original.returns?.length > 0) && (
-            <StatusBadge 
-              value={row.original.return_status === 'full' ? 'returned' : 'partial return'} 
+            <StatusBadge
+              value={row.original.return_status === 'full' ? 'returned' : 'partial return'}
               className="bg-orange-500/10 text-orange-600 border-orange-500/20"
             />
           )}
@@ -384,7 +421,7 @@ export default function SalesHistory() {
         </div>
       )
     }
-  ];
+  ], [formatCurrency, generateDocNumber, pathname]);
 
   // --- STATS ---
   const stats = useMemo(() => {
@@ -397,21 +434,9 @@ export default function SalesHistory() {
     ];
   }, [data, pagination.total, formatCurrency]);
 
-  const statCards = (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((card, idx) => (
-        <div key={idx} className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
-          <div className={`p-3 rounded-lg bg-linear-to-br ${card.gradient} text-white`}>
-            <card.icon className="w-5 h-5 shadow-sm" />
-          </div>
-          <div className="flex flex-col">
-            <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</p>
-            <h3 className="text-2xl font-bold text-foreground">{card.value}</h3>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  const statCards = useMemo(() => (
+    <StatsSection stats={stats} />
+  ), [stats]);
 
   return (
     <>
@@ -432,12 +457,9 @@ export default function SalesHistory() {
         }
         statCardsComponent={statCards}
         loadingSkeleton={<SalesHistorySkeleton />}
-        searchPlaceholder="Invoice #, Customer..."
-        searchColumn="invoice_number"
-        onSearchChange={(v) => {
-          setSearchQuery(v);
-          setPagination(p => ({ ...p, page: 1 }));
-        }}
+        searchPlaceholder="Filter by Invoice, Customer, or Branch..."
+        searchColumn="searchText"
+        onSearchChange={handleSearchChange}
         onExportClick={null}
         exportData={exportData}
         exportFileName={`Sales_History_Export_${format(new Date(), "yyyyMMdd")}`}
