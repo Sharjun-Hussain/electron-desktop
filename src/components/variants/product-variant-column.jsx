@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // Helper to copy text
 const copyToClipboard = (text, label) => {
@@ -147,6 +148,30 @@ export const getProductVariantColumns = ({
                 Barcode :   {barcode}
               </span>
             )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "total_stock",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Stock" />
+      ),
+      cell: ({ row }) => {
+        const stock = row.original.total_stock;
+        return (
+          <div className="flex items-center">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "px-2.5 py-0.5 h-6 font-bold rounded-md border",
+                stock > 0 
+                  ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/10" 
+                  : "bg-rose-500/5 text-rose-600 border-rose-500/10"
+              )}
+            >
+              {stock} Units
+            </Badge>
           </div>
         );
       },

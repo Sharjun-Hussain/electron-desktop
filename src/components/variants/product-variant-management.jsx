@@ -374,9 +374,18 @@ const VariantGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDe
 
       <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-50 dark:border-slate-800/50">
         <div className="flex flex-col">
-          <span className="text-xs font-bold text-slate-400  leading-none">Price Outlet</span>
           <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-            ${variant.selling_price || "0.00"}
+            ${variant.selling_price || variant.price || "0.00"}
+          </span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-bold text-slate-400 leading-none">Current Stock</span>
+          <span className={cn(
+            "text-sm font-bold",
+            (variant.total_stock || 0) > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+          )}>
+            {variant.total_stock || 0} Units
           </span>
         </div>
 
@@ -455,6 +464,7 @@ export default function ProductVariantsPage() {
               // but we ensure it's available here from the parent scope just in case
               product_id: variant.product_id || product.id,
               search_text: searchText,
+              total_stock: (variant.stocks || []).reduce((sum, s) => sum + parseFloat(s.quantity || 0), 0)
             };
           })
         );
