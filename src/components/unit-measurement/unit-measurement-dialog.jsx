@@ -84,7 +84,7 @@ export function MeasurementUnitDialog({ open, onOpenChange, onSuccess, session, 
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/measurement-units/${initialData.id}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/measurement-units`;
 
-      const method = isEditing ? "PATCH" : "POST";
+      const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,

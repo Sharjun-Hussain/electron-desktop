@@ -116,7 +116,7 @@ export function SubCategorySheet({ open, onOpenChange, onSuccess, session, initi
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/${initialData.id}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories`;
 
-      const method = isEditing ? "PATCH" : "POST";
+      const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,

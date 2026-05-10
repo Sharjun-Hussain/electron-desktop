@@ -76,7 +76,7 @@ export function MainCategorySheet({ open, onOpenChange, onSuccess, session, init
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/main-categories/${initialData.id}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/main-categories`;
 
-      const method = isEditing ? "PATCH" : "POST";
+      const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,

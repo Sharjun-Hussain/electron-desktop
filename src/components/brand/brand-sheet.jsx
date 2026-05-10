@@ -81,7 +81,7 @@ export function BrandSheet({ open, onOpenChange, onSuccess, session, initialData
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands/${initialData.id}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands`;
 
-      const method = isEditing ? "PATCH" : "POST";
+      const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,

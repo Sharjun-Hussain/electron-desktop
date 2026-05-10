@@ -145,7 +145,7 @@ export function ContainerDialog({ open, onOpenChange, onSuccess, session, initia
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/containers/${initialData.id}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/containers`;
 
-      const method = isEditing ? "PATCH" : "POST";
+      const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
