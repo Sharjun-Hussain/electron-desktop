@@ -507,9 +507,9 @@ export function ProductForm({ initialData = null }) {
             const lastCode = data.lastProductCode;
             const orgName = data.organizationName || business?.name || "PRD";
             const orgPrefix = orgName.substring(0, 3).toUpperCase();
-            
+
             let nextNumber = 1;
-            
+
             if (lastCode && lastCode.includes('-')) {
               const parts = lastCode.split('-');
               const lastNum = parseInt(parts[parts.length - 1]);
@@ -806,8 +806,8 @@ export function ProductForm({ initialData = null }) {
                     )}
                   </h1>
                   <p className="text-xs text-slate-500 font-medium mt-1">
-                    {isEditing 
-                      ? `Update ${form.watch("product_type")?.toLowerCase() || "product"} specifications` 
+                    {isEditing
+                      ? `Update ${form.watch("product_type")?.toLowerCase() || "product"} specifications`
                       : `Add a new ${form.watch("product_type")?.toLowerCase() || "item"} to your inventory`
                     }
                   </p>
@@ -817,7 +817,7 @@ export function ProductForm({ initialData = null }) {
               <div className="flex items-center gap-2">
                 {/* Utility Hub */}
                 <div className="flex items-center gap-1.5 px-1.5 py-1 border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 rounded-md mr-2">
-                  <Button
+                  {/* <Button
                     type="button"
                     variant="ghost"
                     size="icon"
@@ -826,7 +826,7 @@ export function ProductForm({ initialData = null }) {
                     title="Reset Form"
                   >
                     <RefreshCw className="size-4" />
-                  </Button>
+                  </Button> */}
                   {isEditing && (
                     <Button
                       type="button"
@@ -1010,36 +1010,36 @@ export function ProductForm({ initialData = null }) {
                             <FormLabel className="text-sm font-semibold">Product Type</FormLabel>
                             <FormControl>
                               <div className="flex gap-2">
-                                  {['Finished Good', 'Raw Material', 'Semi-Finished', 'Service'].map((type) => (
-                                    <Button
-                                      key={type}
-                                      type="button"
-                                      variant={field.value === type ? "primary" : "outline"}
-                                      size="sm"
-                                      className="text-[10px] h-7 px-2"
-                                      onClick={() => {
-                                        field.onChange(type);
-                                        // Sync logic:
-                                        // 1. Finished Goods are usually manufacturable
-                                        if (type === 'Finished Good') {
-                                          form.setValue("can_be_manufactured", true);
-                                        } else {
-                                          form.setValue("can_be_manufactured", false);
-                                        }
+                                {['Finished Good', 'Raw Material', 'Semi-Finished', 'Service'].map((type) => (
+                                  <Button
+                                    key={type}
+                                    type="button"
+                                    variant={field.value === type ? "primary" : "outline"}
+                                    size="sm"
+                                    className="text-[10px] h-7 px-2"
+                                    onClick={() => {
+                                      field.onChange(type);
+                                      // Sync logic:
+                                      // 1. Finished Goods are usually manufacturable
+                                      if (type === 'Finished Good') {
+                                        form.setValue("can_be_manufactured", true);
+                                      } else {
+                                        form.setValue("can_be_manufactured", false);
+                                      }
 
-                                        // 2. Try to auto-select a matching category if it exists
-                                        const matchingCategory = options.mainCategories.find(
-                                          cat => cat.name.toLowerCase().includes(type.toLowerCase()) || 
-                                                 type.toLowerCase().includes(cat.name.toLowerCase())
-                                        );
-                                        if (matchingCategory) {
-                                          form.setValue("main_category_id", matchingCategory.id);
-                                        }
-                                      }}
-                                    >
-                                      {type}
-                                    </Button>
-                                  ))}
+                                      // 2. Try to auto-select a matching category if it exists
+                                      const matchingCategory = options.mainCategories.find(
+                                        cat => cat.name.toLowerCase().includes(type.toLowerCase()) ||
+                                          type.toLowerCase().includes(cat.name.toLowerCase())
+                                      );
+                                      if (matchingCategory) {
+                                        form.setValue("main_category_id", matchingCategory.id);
+                                      }
+                                    }}
+                                  >
+                                    {type}
+                                  </Button>
+                                ))}
                               </div>
                             </FormControl>
                             <FormMessage />
