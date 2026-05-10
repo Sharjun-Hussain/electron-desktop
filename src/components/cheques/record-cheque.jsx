@@ -161,7 +161,7 @@ export default function RecordCheque() {
                       <FormItem className="space-y-1.5">
                         <FormLabel className="text-sm font-medium text-muted-foreground">Serial Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="Instrument ID" className="h-9 text-sm bg-white border-gray-200 focus-visible:ring-emerald-500" {...field} />
+                          <Input placeholder="Instrument ID" className="h-9 text-sm bg-background border-border focus-visible:ring-emerald-500" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -175,7 +175,7 @@ export default function RecordCheque() {
                       <FormItem className="space-y-1.5">
                         <FormLabel className="text-sm font-medium text-muted-foreground">Banking Entity</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Commercial Bank" className="h-9 text-sm bg-white border-gray-200 focus-visible:ring-emerald-500" {...field} />
+                          <Input placeholder="e.g. Commercial Bank" className="h-9 text-sm bg-background border-border focus-visible:ring-emerald-500" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -189,7 +189,7 @@ export default function RecordCheque() {
                       <FormItem className="md:col-span-2 space-y-1.5">
                         <FormLabel className="text-sm font-medium text-muted-foreground">Branch (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Colombo 03" className="h-9 text-sm bg-white border-gray-200 focus-visible:ring-emerald-500" {...field} />
+                          <Input placeholder="e.g. Colombo 03" className="h-9 text-sm bg-background border-border focus-visible:ring-emerald-500" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -213,7 +213,7 @@ export default function RecordCheque() {
                         <FormControl>
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">LKR</span>
-                            <Input type="number" step="0.01" placeholder="0.00" className="h-9 pl-12 bg-white border-gray-200 focus-visible:ring-emerald-500" {...field} />
+                            <Input type="number" step="0.01" placeholder="0.00" className="h-9 pl-12 bg-background border-border focus-visible:ring-emerald-500" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -233,7 +233,7 @@ export default function RecordCheque() {
                               <Button
                                 variant="outline"
                                 className={cn(
-                                  "w-full h-9 pl-3 text-left font-normal bg-white border-gray-200 focus:ring-emerald-500/20 focus:border-emerald-500",
+                                  "w-full h-9 pl-3 text-left font-normal bg-background border-border focus:ring-emerald-500/20 focus:border-emerald-500",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -313,7 +313,7 @@ export default function RecordCheque() {
                         <FormLabel className="text-sm font-medium text-muted-foreground">Cheque Nature</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-9 bg-white border-gray-200 focus:ring-emerald-500/20 focus:border-emerald-500">
+                            <SelectTrigger className="h-9 bg-background border-border focus:ring-emerald-500/20 focus:border-emerald-500">
                               <SelectValue placeholder="Select nature" />
                             </SelectTrigger>
                           </FormControl>
@@ -336,7 +336,7 @@ export default function RecordCheque() {
                           {chequeType === "receivable" ? "Payor Stakeholder" : "Payee Stakeholder"}
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Legal entity name" className="h-9 bg-white border-gray-200 focus-visible:ring-emerald-500" {...field} />
+                          <Input placeholder="Legal entity name" className="h-9 bg-background border-border focus-visible:ring-emerald-500" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -352,7 +352,7 @@ export default function RecordCheque() {
                         <FormControl>
                           <Textarea
                             placeholder="Additional details..."
-                            className="resize-none min-h-[100px] bg-white border-gray-200 focus-visible:ring-emerald-500"
+                            className="resize-none min-h-[100px] bg-background border-border focus-visible:ring-emerald-500"
                             {...field}
                           />
                         </FormControl>
@@ -383,7 +383,7 @@ export default function RecordCheque() {
               </Card>
 
               {/* Information Tip Card - Cleaner Version */}
-              <div className="bg-white border border-border border-l-4 border-l-emerald-500 rounded-lg p-5 shadow-xs">
+              <div className="bg-muted/30 border border-border border-l-4 border-l-emerald-500 rounded-lg p-5 shadow-xs">
                 <h4 className="text-sm font-bold text-foreground mb-1">
                    Security Notice
                 </h4>
