@@ -113,8 +113,8 @@ const BrandGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDele
       className={cn(
         "group relative flex flex-col gap-4 p-5 rounded-[24px] border transition-all duration-300",
         isSelected 
-          ? "bg-emerald-500/5 border-emerald-500/30 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-500/20" 
-          : "bg-white dark:bg-slate-900/50 border-slate-100 dark:border-slate-800/60 hover:border-emerald-500/20 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none hover:-translate-y-1"
+          ? "bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/20" 
+          : "bg-white dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/50 hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-emerald-500/5 hover:-translate-y-1.5"
       )}
     >
       {/* Header */}
@@ -156,7 +156,7 @@ const BrandGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDele
       {/* Identity */}
       <div className="flex flex-col items-center text-center mt-2 gap-4">
         <div className="relative">
-          <div className="w-20 h-20 rounded-3xl bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center ring-4 ring-slate-100/50 dark:ring-slate-800/30 group-hover:scale-110 group-hover:bg-emerald-500/10 transition-all duration-500">
+          <div className="w-20 h-20 rounded-[28px] bg-slate-50 dark:bg-slate-800/40 flex items-center justify-center ring-8 ring-slate-50 dark:ring-slate-900/50 group-hover:scale-110 group-hover:bg-emerald-500/10 transition-all duration-500 shadow-sm">
             <Tag className="w-10 h-10 text-slate-400 group-hover:text-emerald-600 transition-colors" />
           </div>
           {!brand.is_active && (
@@ -168,7 +168,7 @@ const BrandGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDele
           <h3 className="font-bold text-slate-900 dark:text-slate-100 text-lg  group-hover:text-emerald-600 transition-colors line-clamp-1 p-1">
             {brand.name}
           </h3>
-          <Badge variant="outline" className="text-xs px-2 h-5 font-bold border-slate-200 dark:border-slate-800 text-slate-400">
+          <Badge variant="secondary" className="text-[10px] px-2 h-5 font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-none tracking-wider uppercase">
             Slug: {brand.slug || "---"}
           </Badge>
         </div>
@@ -176,9 +176,9 @@ const BrandGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDele
 
       {/* Footer / Meta */}
       <div className="mt-auto pt-4 flex flex-wrap justify-center gap-2 border-t border-slate-50 dark:border-slate-800/50">
-        <div className="flex flex-col items-center">
-           <span className="text-xs font-bold text-slate-400  leading-none">Manufacturer</span>
-           <span className="text-sm font-bold text-slate-600 dark:text-slate-400 ">Official Partner</span>
+        <div className="flex flex-col items-center gap-0.5">
+           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">Manufacturer</span>
+           <span className="text-xs font-bold text-slate-600 dark:text-slate-300 ">OFFICIAL PARTNER</span>
         </div>
       </div>
     </div>

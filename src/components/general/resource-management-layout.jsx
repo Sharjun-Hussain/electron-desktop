@@ -554,7 +554,7 @@ export const ResourceManagementLayout = ({
 
             <div className={cn(
               "transition-all duration-300",
-              viewMode === "grid" && "bg-gray-50/30"
+              viewMode === "grid" && "bg-gray-50/30 dark:bg-slate-950/20"
             )}>
               {viewMode === "grid" && renderGridItem ? (
                 <DataGrid
