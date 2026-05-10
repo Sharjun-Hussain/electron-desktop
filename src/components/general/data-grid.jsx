@@ -50,10 +50,6 @@ export function DataGrid({
           </div>
         )}
       </div>
-
-      <div className="mt-auto">
-        <DataTablePagination table={table} />
-      </div>
     </div>
   );
 }
