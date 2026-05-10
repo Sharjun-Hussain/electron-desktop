@@ -52,8 +52,8 @@ const SupplierFilters = ({ table }) => {
   if (!table) return null;
   return (
     <div className="flex items-center gap-4">
-      <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest pl-1">Network Status</label>
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-tight pl-0.5">Network Status</label>
         <Select
           value={String(table.getColumn("is_active")?.getFilterValue() ?? "all")}
           onValueChange={(value) => {
@@ -62,13 +62,13 @@ const SupplierFilters = ({ table }) => {
               ?.setFilterValue(value === "all" ? undefined : value === "true");
           }}
         >
-          <SelectTrigger className="w-[180px] h-9 shadow-xs text-[12px] font-bold">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All partners" />
           </SelectTrigger>
-          <SelectContent className="rounded-xl border-border shadow-lg">
-            <SelectItem value="all" className="text-[12px] font-medium">All Global Partners</SelectItem>
-            <SelectItem value="true" className="text-[12px] font-bold text-emerald-600">Active Supply</SelectItem>
-            <SelectItem value="false" className="text-[12px] font-bold text-amber-600">Suspended / Hold</SelectItem>
+          <SelectContent>
+            <SelectItem value="all">All Global Partners</SelectItem>
+            <SelectItem value="true">Active Supply</SelectItem>
+            <SelectItem value="false">Suspended / Hold</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -97,17 +97,17 @@ const SupplierBulkActions = ({ table, onDelete, onBulkActivation }) => {
 
   return (
     <>
-      <DropdownMenuItem onClick={handleActivate} className="rounded-lg py-2.5 cursor-pointer font-bold text-[11px] focus:bg-emerald-50 focus:text-emerald-600 transition-colors uppercase tracking-wider">
-        <CheckCircle2 className="mr-3 h-4 w-4" />
+      <DropdownMenuItem onClick={handleActivate}>
+        <CheckCircle2 className="mr-2 h-4 w-4" />
         Activate Network
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={handleDeactivate} className="rounded-lg py-2.5 cursor-pointer font-bold text-[11px] focus:bg-amber-50 focus:text-amber-600 transition-colors uppercase tracking-wider">
-        <XCircle className="mr-3 h-4 w-4" />
+      <DropdownMenuItem onClick={handleDeactivate}>
+        <XCircle className="mr-2 h-4 w-4" />
         Suspend Network
       </DropdownMenuItem>
-      <DropdownMenuSeparator className="my-2 opacity-50" />
-      <DropdownMenuItem onClick={handleDelete} className="rounded-lg py-2.5 cursor-pointer font-bold text-[11px] text-red-600 focus:bg-red-50 focus:text-red-700 transition-colors uppercase tracking-wider">
-        <Trash2 className="mr-3 h-4 w-4" />
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+        <Trash2 className="mr-2 h-4 w-4" />
         Purge Metadata
       </DropdownMenuItem>
     </>

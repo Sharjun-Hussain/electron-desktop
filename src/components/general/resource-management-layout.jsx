@@ -208,6 +208,7 @@ const ResourceTableToolbar = ({
                 id="inventory-bulk-actions"
                 variant="outline"
                 size="sm"
+                disabled={table.getFilteredSelectedRowModel().rows.length === 0}
                 className="h-8 px-3 text-sm font-medium border-gray-200 bg-white hover:bg-gray-50 text-gray-700 rounded-md shadow-none gap-1.5 shrink-0"
               >
                 Bulk Actions {table.getFilteredSelectedRowModel().rows.length > 0 && `(${table.getFilteredSelectedRowModel().rows.length})`}
