@@ -106,7 +106,7 @@ export const getBrandColumns = ({
       const isActive = row.getValue("is_active");
       return (
         <StatusBadge 
-          status={isActive ? "active" : "inactive"} 
+          value={isActive ? "active" : "inactive"} 
           className="animate-in fade-in zoom-in duration-300"
         />
       );
