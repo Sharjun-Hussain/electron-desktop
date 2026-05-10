@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  ShieldCheck, 
-  FileText, 
+import {
+  ShieldCheck,
+  FileText,
   ArrowRight,
   Scale,
   Lock,
@@ -88,7 +88,7 @@ export function TermsModal({ onAccept }) {
         <CardContent className="p-0">
           <ScrollArea className="h-[55vh] p-8 bg-slate-50/30 dark:bg-slate-950/30" onScrollCapture={handleScroll}>
             <div className="space-y-8 text-slate-600 dark:text-slate-400 pb-6">
-              
+
               {/* SECTION 1 */}
               <section className="space-y-3">
                 <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
@@ -144,7 +144,7 @@ export function TermsModal({ onAccept }) {
                   <h3 className="text-[14px] font-bold">4. Customization & Professional Services</h3>
                 </div>
                 <p className="text-[12px] leading-relaxed">
-                  The Inzeedo POS Core is a standardized product. Any adjustments, UI modifications, or addition of custom modules are considered <strong>Professional Services</strong>. These must be performed exclusively by Inzeedo's engineering team to maintain system integrity. Custom work is subject to separate quotations and service-level agreements.
+                  The Inzeedo POS is a standardized product. Any adjustments, UI modifications, or addition of custom modules are considered <strong>Professional Services</strong>. These must be performed exclusively by Inzeedo's engineering team to maintain system integrity. Custom work is subject to separate quotations and service-level agreements.
                 </p>
               </section>
 
@@ -198,9 +198,9 @@ export function TermsModal({ onAccept }) {
 
         <CardFooter className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Checkbox 
-              id="terms" 
-              checked={isChecked} 
+            <Checkbox
+              id="terms"
+              checked={isChecked}
               onCheckedChange={setIsChecked}
               className="w-5 h-5 border-slate-300 dark:border-slate-700 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 rounded-md"
             />
@@ -215,7 +215,7 @@ export function TermsModal({ onAccept }) {
                 Scroll to review all sections
               </span>
             )}
-            <Button 
+            <Button
               disabled={!isChecked || !hasScrolledToBottom || isSubmitting}
               onClick={handleSubmit}
               className="h-11 px-8 bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white rounded-xl shadow-lg text-[13px] font-bold transition-all active:scale-95 flex items-center gap-2"
