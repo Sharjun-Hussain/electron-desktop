@@ -109,9 +109,9 @@ export function ExpenseCategorySheet({ isOpen, onClose, onSuccess, initialData }
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="flex flex-col w-full sm:max-w-md p-0 overflow-hidden bg-white">
+      <SheetContent className="flex flex-col w-full sm:max-w-md p-0 overflow-hidden bg-background border-l border-border">
         {/* Header */}
-        <SheetHeader className="px-6 py-5 border-b border-gray-100">
+        <SheetHeader className="px-6 py-5 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md">
               <FolderDown className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -144,7 +144,7 @@ export function ExpenseCategorySheet({ isOpen, onClose, onSuccess, initialData }
                         <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
                         <Input
                           placeholder="e.g., Utilities, Rent, Marketing"
-                          className="h-10 pl-9 border-gray-200 focus-visible:ring-emerald-500 focus-visible:ring-offset-0"
+                          className="h-10 pl-9 border-border bg-background focus-visible:ring-emerald-500 focus-visible:ring-offset-0"
                           {...field}
                         />
                       </div>
@@ -167,7 +167,7 @@ export function ExpenseCategorySheet({ isOpen, onClose, onSuccess, initialData }
                         <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/50" />
                         <Textarea
                           placeholder="Briefly describe what this category covers..."
-                          className="pl-9 resize-none min-h-[100px] border-gray-200 focus-visible:ring-emerald-500 focus-visible:ring-offset-0"
+                          className="pl-9 resize-none min-h-[100px] border-border bg-background focus-visible:ring-emerald-500 focus-visible:ring-offset-0"
                           {...field}
                           value={field.value || ""}
                         />
@@ -182,7 +182,7 @@ export function ExpenseCategorySheet({ isOpen, onClose, onSuccess, initialData }
                 control={form.control}
                 name="is_active"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                  <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border bg-muted/30 p-4">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -209,13 +209,13 @@ export function ExpenseCategorySheet({ isOpen, onClose, onSuccess, initialData }
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-gray-100">
+        <div className="px-6 py-4 border-t border-border bg-muted/20">
           <div className="flex gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 h-10 font-semibold border-gray-200"
+              className="flex-1 h-10 font-semibold border-border bg-background hover:bg-muted"
               disabled={isSubmitting}
             >
               Cancel
