@@ -118,7 +118,9 @@ export function OrganizationForm({ initialData }) {
       subscription_tier: initialData.subscription_tier || undefined,
       billing_cycle: initialData.billing_cycle || undefined,
       subscription_status: initialData.subscription_status || undefined,
-      subscription_expiry_date: initialData.subscription_expiry_date ? new Date(initialData.subscription_expiry_date).toISOString().split('T')[0] : "",
+      subscription_expiry_date: (initialData.subscription_expiry_date && !isNaN(new Date(initialData.subscription_expiry_date).getTime())) 
+        ? new Date(initialData.subscription_expiry_date).toISOString().split('T')[0] 
+        : "",
       amount: "",
       payment_method: "",
       status: initialData.status || "active",
@@ -151,7 +153,7 @@ export function OrganizationForm({ initialData }) {
   const { clearSavedData } = useFormRestore(form);
 
   const logo = form.watch("logo");
-  const newLogoPreview = logo ? URL.createObjectURL(logo) : null;
+  const newLogoPreview = (logo instanceof Blob || logo instanceof File) ? URL.createObjectURL(logo) : null;
   const previewUrl = newLogoPreview || (initialData?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL.replace('/api/v1', '')}/${initialData.logo}` : "");
 
   async function onSubmit(data) {

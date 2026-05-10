@@ -96,7 +96,7 @@ export const translations = {
       customer: "Customer",
       hold_sale: "Hold Sale",
       clear_cart: "Clear Cart",
-      credit: "Inzeedo Credit Enterprise © 2026",
+      credit: "Inzeedo (PVT) Ltd © 2026",
       new_customer: "New Customer",
       full_name: "Full Name",
       phone_optional: "Phone (Optional)",

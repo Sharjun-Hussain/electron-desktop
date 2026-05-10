@@ -385,7 +385,7 @@ export default function PosPage() {
   const activeShift = activeShiftRes?.data || null;
   const [isShiftManagerOpen, setIsShiftManagerOpen] = useState(false);
 
-  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [isOnline, setIsOnline] = useState(true); // Default to true, let the fetch fail naturally if offline
   const pendingSales = useLiveQuery(() => db.pendingSales.toArray()) || [];
 
   const handleThemeToggle = async () => {
@@ -492,21 +492,25 @@ export default function PosPage() {
 
   // ── Connectivity & Sync Listener ───────────────────────────────────────────
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      syncPendingSales();
+    const handleConnectivityChange = () => {
+      const online = navigator.onLine;
+      setIsOnline(online);
+      if (online) syncPendingSales();
     };
-    const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleConnectivityChange);
+    window.addEventListener('offline', handleConnectivityChange);
 
-    // Initial sync check
-    if (navigator.onLine) syncPendingSales();
+    // Initial sync check — try anyway regardless of navigator.onLine
+    syncPendingSales();
+
+    // Periodic sync check every 5 minutes
+    const syncInterval = setInterval(syncPendingSales, 5 * 60 * 1000);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleConnectivityChange);
+      window.removeEventListener('offline', handleConnectivityChange);
+      clearInterval(syncInterval);
     };
   }, [syncPendingSales]);
 

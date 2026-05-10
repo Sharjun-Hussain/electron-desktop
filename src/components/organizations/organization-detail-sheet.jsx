@@ -495,7 +495,7 @@ export default function OrganizationDetailSheet({
                 <SheetTitle className="text-xl font-bold text-foreground truncate">
                   {loading ? "Synchronizing..." : (org?.name || "No Name")}
                 </SheetTitle>
-                {org && <StatusBadge value={org.is_active} />}
+                {org && <StatusBadge value={org?.is_active} />}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/20 font-medium text-[10px] px-2 py-0">

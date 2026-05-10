@@ -482,7 +482,6 @@ export function CustomSidebar() {
                     {getUserInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 border-2 border-background z-10 shadow-sm" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="right" sideOffset={20} className="w-56 rounded-xl p-2 bg-card border border-border shadow-md">

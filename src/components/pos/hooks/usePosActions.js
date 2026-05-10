@@ -142,26 +142,6 @@ export function usePosActions({
       redeemed_points: loyaltyEnabled ? (parseInt(redeemedPoints) || 0) : 0,
     };
 
-    // --- OFFLINE LOGIC ---
-    if (!navigator.onLine) {
-      try {
-        await db.pendingSales.add({
-          saleData,
-          type: 'sale',
-          createdAt: new Date()
-        });
-        await decrementLocalStock(state.cart);
-        toast.success("Offline: Sale saved to local queue");
-        playBeep("success");
-        dispatch({ type: "CLEAR_CART" });
-        onSuccess?.();
-        return;
-      } catch (err) {
-        toast.error("Failed to save sale locally");
-        return;
-      }
-    }
-
     if (!session?.accessToken) return toast.error("Please log in to complete the sale");
 
     try {
@@ -187,7 +167,7 @@ export function usePosActions({
       console.error("Sale request failed, queuing locally:", error);
       await db.pendingSales.add({ saleData, type: 'sale', createdAt: new Date() });
       await decrementLocalStock(state.cart);
-      toast.warning("Network issue: Sale queued locally");
+      toast.success("Sale completed (Local Storage)");
       playBeep("success");
       dispatch({ type: "CLEAR_CART" });
       onSuccess?.();
@@ -239,11 +219,6 @@ export function usePosActions({
       shift_id: activeShiftId || null,
     };
 
-    if (!navigator.onLine) {
-      toast.error("Offline: Holding sales is not supported in offline mode.");
-      return;
-    }
-
     if (!session?.accessToken) return toast.error("Please log in to hold the sale");
 
     try {
@@ -271,7 +246,7 @@ export function usePosActions({
 
   // ── Fetch Sales ───────────────────────────────────────────────────────────
   const fetchSales = useCallback(async (status) => {
-    if (!session?.accessToken || !navigator.onLine) return;
+    if (!session?.accessToken) return;
     setIsLoadingSales(true);
     try {
       const res = await fetch(
@@ -286,7 +261,7 @@ export function usePosActions({
 
   // ── Delete Sale ───────────────────────────────────────────────────────────
   const deleteSale = useCallback(async (id) => {
-    if (!session?.accessToken || !navigator.onLine) return false;
+    if (!session?.accessToken) return false;
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/${id}`, {
         method: "DELETE",
@@ -330,39 +305,41 @@ export function usePosActions({
     if (!query || query.length < 2 || !session?.accessToken) return;
     setIsLoadingStock(true);
 
-    if (!navigator.onLine) {
-      try {
-        // Local search in IndexedDB when offline
-        const matches = await db.variants
-          .filter(v =>
-            v.fullName.toLowerCase().includes(query.toLowerCase()) ||
-            v.barcode?.includes(query)
-          )
-          .toArray();
-        setStockData(matches.map(m => ({
-          id: m.id,
-          name: m.fullName,
-          barcode: m.barcode,
-          stock: m.stock,
-          retail_price: m.retailPrice
-        })));
-      } catch (err) {
-        console.error("Offline stock lookup failed:", err);
-      } finally {
-        setIsLoadingStock(false);
-      }
-      return;
-    }
-
+    // Try online/local-server search first, fallback to IndexedDB if it fails
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/stock/check?search=${encodeURIComponent(query)}`,
         { headers: { Authorization: `Bearer ${session.accessToken}` } }
       );
       const result = await res.json();
-      if (result.status === "success") setStockData(result.data || []);
-    } catch { toast.error("Failed to fetch stock info"); }
-    finally { setIsLoadingStock(false); }
+      if (result.status === "success") {
+        setStockData(result.data || []);
+        return;
+      }
+    } catch (err) {
+      console.warn("Local server stock check failed, falling back to local DB:", err);
+    }
+
+    try {
+      // Local search in IndexedDB when backend is unreachable
+      const matches = await db.variants
+        .filter(v =>
+          v.fullName.toLowerCase().includes(query.toLowerCase()) ||
+          v.barcode?.includes(query)
+        )
+        .toArray();
+      setStockData(matches.map(m => ({
+        id: m.id,
+        name: m.fullName,
+        barcode: m.barcode,
+        stock: m.stock,
+        retail_price: m.retailPrice
+      })));
+    } catch (err) {
+      console.error("Offline stock lookup failed:", err);
+    } finally {
+      setIsLoadingStock(false);
+    }
   }, [session]);
 
   const clearStockData = useCallback(() => setStockData([]), []);
@@ -395,7 +372,7 @@ export function usePosActions({
     }
 
     if (successCount > 0) {
-      toast.success(`Successfully synced ${successCount} offline sales`);
+      toast.success(`Updated ${successCount} records in background`);
     }
   }, [session]);
 

@@ -76,6 +76,7 @@ import {
 } from "@/components/ui/sheet";
 import { PERMISSIONS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { exportToCSV } from "@/lib/exportUtils";
 
 // ----------------------------------------------------------------------
 // 2. Helper Components
@@ -729,6 +730,18 @@ export default function ProductsPage() {
     [handleDelete, handleBulkDeactivate, handleBulkActivate, handlePrintBarcode]
   );
 
+  const exportData = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    return products.map(p => ({
+      "Product Name": p.name,
+      "SKU": p.sku || "N/A",
+      "Category": p.main_category?.name || "General",
+      "Unit": p.unit?.name || "Units",
+      "Variants": p.variants?.length || 0,
+      "Status": p.is_active ? "Active" : "Suspended"
+    }));
+  }, [products]);
+
   const [viewMode, setViewMode] = useState("list");
   const [sortValue, setSortValue] = useState("newest");
 
@@ -750,6 +763,8 @@ export default function ProductsPage() {
         isError={!!error}
         errorMessage={error}
         onRetry={fetchProducts}
+        exportData={exportData}
+        exportFileName="Inventory_Catalog_Audit"
 
         // Header
         headerTitle={<HeaderContent total={totalProducts} />}
