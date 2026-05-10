@@ -231,7 +231,7 @@ const ResourceTableToolbar = ({
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 rounded-md border-gray-200 shadow-lg p-1">
+            <DropdownMenuContent align="start" className="w-48 rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-1.5 animate-in zoom-in-95">
               {bulkActionsComponent}
             </DropdownMenuContent>
           </DropdownMenu>
