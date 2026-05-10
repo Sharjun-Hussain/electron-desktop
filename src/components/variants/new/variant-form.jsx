@@ -295,7 +295,9 @@ export function ProductVariantForm({ initialData = null }) {
 
   const { data: session } = useSession();
   const router = useRouter();
-  const isEditing = !!initialData;
+  
+  // Dynamic isEditing based on whether we have a currentEditingId
+  const isEditing = !!currentEditingId;
 
   const form = useForm({
     resolver: zodResolver(variantFormSchema),
@@ -539,7 +541,7 @@ export function ProductVariantForm({ initialData = null }) {
       });
 
       const url = isEditing
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/${data.product_id}/variants/${initialData.id}`
+        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/${data.product_id}/variants/${currentEditingId}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/${data.product_id}/variants`;
 
       if (isEditing) {
@@ -571,6 +573,8 @@ export function ProductVariantForm({ initialData = null }) {
         setImagePreviews([]);
       } else {
         clearSavedData();
+        // If we were editing, we might want to stay on the page but reset the editing state
+        // or go back to the list. Based on the current flow, we go back to the list.
         router.push("/variants");
       }
     } catch (error) {

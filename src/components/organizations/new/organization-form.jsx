@@ -118,7 +118,7 @@ export function OrganizationForm({ initialData }) {
       subscription_tier: initialData.subscription_tier || undefined,
       billing_cycle: initialData.billing_cycle || undefined,
       subscription_status: initialData.subscription_status || undefined,
-      subscription_expiry_date: (initialData.subscription_expiry_date && !isNaN(new Date(initialData.subscription_expiry_date).getTime())) 
+      subscription_expiry_date: (initialData.subscription_expiry_date && !isNaN(new Date(initialData.subscription_expiry_date).getTime()) && initialData.subscription_expiry_date !== '1970-01-01T00:00:00.000Z') 
         ? new Date(initialData.subscription_expiry_date).toISOString().split('T')[0] 
         : "",
       amount: "",
@@ -197,11 +197,11 @@ export function OrganizationForm({ initialData }) {
       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${initialData.id}`
       : `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/create`;
 
-    if (isEditMode) formData.append("_method", "PATCH");
+    if (isEditMode) formData.append("_method", "PUT");
 
     try {
       const response = await fetch(url, {
-        method: isEditMode ? "PATCH" : "POST",
+        method: "POST", // Standardize on POST with _method override
         body: formData,
         headers: { Authorization: `Bearer ${accessToken}` },
       });
