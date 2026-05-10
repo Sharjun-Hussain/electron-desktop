@@ -170,18 +170,24 @@ export default function CreateReturn() {
 
     const subscription = form.watch((value, { name }) => {
         if (name === "supplierId") {
-            // Clear selections when supplier changes
-            form.setValue("purchaseOrderId", "");
-            form.setValue("grnId", "");
-            replace([]);
+            // Optional: could keep it if user wants to filter POs by supplier first
         } else if (name === "purchaseOrderId") {
             if (value.purchaseOrderId) {
-                form.setValue("grnId", ""); // Mutually exclusive
+                const selectedPo = purchaseOrders.find(p => p.id === value.purchaseOrderId);
+                if (selectedPo && selectedPo.supplier_id) {
+                    form.setValue("supplierId", selectedPo.supplier_id);
+                }
+                form.setValue("notes", `Purchase Return for PO: ${selectedPo?.po_number || value.purchaseOrderId}`);
                 fetchItems(value.purchaseOrderId, null);
             }
         } else if (name === "grnId") {
             if (value.grnId) {
-                form.setValue("purchaseOrderId", ""); // Mutually exclusive
+                const selectedGrn = grns.find(g => g.id === value.grnId);
+                if (selectedGrn) {
+                    if (selectedGrn.supplier_id) form.setValue("supplierId", selectedGrn.supplier_id);
+                    if (selectedGrn.purchase_order_id) form.setValue("purchaseOrderId", selectedGrn.purchase_order_id);
+                }
+                form.setValue("notes", `Purchase Return for GRN: ${selectedGrn?.grn_number || value.grnId}`);
                 fetchItems(null, value.grnId);
             }
         }
@@ -199,7 +205,7 @@ export default function CreateReturn() {
             return;
         }
         try {
-            const [suppliersRes, productsRes, branchesRes] = await Promise.all([
+            const [suppliersRes, productsRes, branchesRes, posRes, grnsRes] = await Promise.all([
                 fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/active/list`, {
                     headers: { Authorization: `Bearer ${session.accessToken}` },
                 }),
@@ -208,11 +214,21 @@ export default function CreateReturn() {
                 }),
                 fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
                     headers: { Authorization: `Bearer ${session.accessToken}` },
+                }),
+                fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders?size=100`, {
+                    headers: { Authorization: `Bearer ${session.accessToken}` },
+                }),
+                fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/grn?size=100`, {
+                    headers: { Authorization: `Bearer ${session.accessToken}` },
                 })
             ]);
 
             const suppliersData = await suppliersRes.json();
             const productsData = await productsRes.json();
+            const branchesData = await branchesRes.json();
+            const posData = await posRes.json();
+            const grnsData = await grnsRes.json();
+
             if (suppliersData.status === 'success') {
                 setSuppliers(suppliersData.data || []);
             }
@@ -220,14 +236,19 @@ export default function CreateReturn() {
                 setProducts(productsData.data?.data || productsData.data || []);
             }
 
-            if (branchesRes.ok) {
-                const branchesData = await branchesRes.json();
-                if (branchesData.status === 'success') {
-                    setBranches(branchesData.data || []);
-                    if (branchesData.data?.length === 1 && !form.getValues("branchId")) {
-                        form.setValue("branchId", branchesData.data[0].id);
-                    }
+            if (branchesData.status === 'success') {
+                setBranches(branchesData.data || []);
+                if (branchesData.data?.length === 1 && !form.getValues("branchId")) {
+                    form.setValue("branchId", branchesData.data[0].id);
                 }
+            }
+            
+            if (posData.status === 'success') {
+                setPurchaseOrders(posData.data?.data || posData.data || []);
+            }
+            
+            if (grnsData.status === 'success') {
+                setGrns(grnsData.data?.data || grnsData.data || []);
             }
 
         } catch (error) {
@@ -249,8 +270,7 @@ export default function CreateReturn() {
   useEffect(() => {
     async function fetchLinkedDocs() {
         if (!session?.accessToken || !selectedSupplierId) {
-            setPurchaseOrders([]);
-            setGrns([]);
+            // Don't clear if we already have initial data
             return;
         }
 
@@ -356,20 +376,38 @@ export default function CreateReturn() {
   return (
     <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
       {/* ── Premium Header ── */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl border border-border/50 bg-card h-10 w-10 shrink-0">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl border border-border/50 bg-card h-10 w-10 shrink-0">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <RotateCcw className="w-4.5 h-4.5 text-emerald-500" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">Create Purchase Return</h1>
+              <p className="text-[13px] text-muted-foreground font-medium opacity-80">
+                Return goods to supplier
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <RotateCcw className="w-4.5 h-4.5 text-emerald-500" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">Create Purchase Return</h1>
-            <p className="text-[13px] text-muted-foreground font-medium opacity-80">
-              Return goods to supplier
-            </p>
-          </div>
+            <Button type="button" variant="outline" className="rounded-xl h-10 px-6 text-xs font-medium" onClick={() => router.back()}>Cancel</Button>
+            <Button 
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isSubmitting} 
+                className="gap-2 rounded-xl h-10 px-6 text-xs font-medium bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20"
+            >
+                {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                )}
+                {isSubmitting ? "Processing..." : "Create Return"}
+            </Button>
         </div>
       </div>
 
@@ -405,46 +443,6 @@ export default function CreateReturn() {
                                             field.onChange(date);
                                             setOpenDatePopover(false);
                                         }} disabled={(date) => date > new Date() || date < new Date("1900-01-01")} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="branchId"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Branch</FormLabel>
-                                <Popover open={openBranchPopover} onOpenChange={setOpenBranchPopover}>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button variant="outline" role="combobox" className={cn("justify-between", !field.value && "text-muted-foreground")}>
-                                                {field.value ? branches.find((b) => b.id === field.value)?.name : "Select branch"}
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[400px] p-0">
-                                        <Command>
-                                            <CommandInput placeholder="Search branch..." />
-                                            <CommandList>
-                                                <CommandEmpty>No branch found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {branches.map((branch) => (
-                                                        <CommandItem key={branch.id} value={branch.name} onSelect={() => {
-                                                            form.setValue("branchId", branch.id);
-                                                            setOpenBranchPopover(false);
-                                                        }}>
-                                                            <Check className={cn("mr-2 h-4 w-4", branch.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                            {branch.name}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
                                     </PopoverContent>
                                 </Popover>
                                 <FormMessage />
@@ -567,7 +565,46 @@ export default function CreateReturn() {
                                         </Command>
                                     </PopoverContent>
                                 </Popover>
-                                <p className="text-[12px] text-muted-foreground mt-1">Selecting a PO or GRN will auto-fill items.</p>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="branchId"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Branch</FormLabel>
+                                <Popover open={openBranchPopover} onOpenChange={setOpenBranchPopover}>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button variant="outline" role="combobox" className={cn("justify-between", !field.value && "text-muted-foreground")}>
+                                                {field.value ? branches.find((b) => b.id === field.value)?.name : "Select branch"}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[400px] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search branch..." />
+                                            <CommandList>
+                                                <CommandEmpty>No branch found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {branches.map((branch) => (
+                                                        <CommandItem key={branch.id} value={branch.name} onSelect={() => {
+                                                            form.setValue("branchId", branch.id);
+                                                            setOpenBranchPopover(false);
+                                                        }}>
+                                                            <Check className={cn("mr-2 h-4 w-4", branch.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                            {branch.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -600,7 +637,7 @@ export default function CreateReturn() {
                         <CardTitle className="text-base font-semibold">Return Items</CardTitle>
                         <p className="text-xs text-muted-foreground mt-1">Add products to return and specify quantities and reasons.</p>
                       </div>
-                      <Button type="button" size="sm" variant="outline" className="gap-1.5 rounded-xl border-border/60 bg-background" onClick={addItem}>
+                      <Button type="button" size="sm" variant="outline" disabled className="gap-1.5 rounded-xl border-border/60 bg-background opacity-50 cursor-not-allowed" onClick={addItem}>
                           <Plus className="mr-1 h-4 w-4" /> Add Item
                       </Button>
                   </CardHeader>
@@ -778,14 +815,7 @@ export default function CreateReturn() {
             </div>
           </div>
 
-          {/* Sticky Footer Actions */}
-          <div className="flex justify-end items-center gap-3 sticky bottom-0 bg-background/80 backdrop-blur-md border-t border-border/50 p-4 -mx-6 -mb-6 z-10">
-                <Button type="button" variant="outline" className="rounded-xl" onClick={() => router.back()}>Cancel</Button>
-                <Button type="submit" disabled={isSubmitting} className="gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20">
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Return
-                </Button>
-            </div>
+
         </form>
       </Form>
     </div>
