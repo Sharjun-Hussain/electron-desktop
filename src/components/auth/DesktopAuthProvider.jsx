@@ -51,7 +51,24 @@ export function DesktopAuthProvider({ children }) {
   const value = {
     data: session,
     status: status,
-    update: async () => {
+    update: async (newData) => {
+      if (newData && typeof window !== 'undefined') {
+        const current = getDesktopSession();
+        if (current && current.user) {
+          // Update specific fields
+          if (newData.name) current.user.name = newData.name;
+          if (newData.email) current.user.email = newData.email;
+          if (newData.image) {
+            current.user.image = newData.image;
+            // Add a timestamp to break image cache when updated
+            current.user.imageLastUpdated = Date.now();
+          }
+          
+          localStorage.setItem('inzeedo_session', JSON.stringify(current));
+          setSession({ ...current });
+          return;
+        }
+      }
       const updated = getDesktopSession();
       setSession(updated);
       setStatus(updated ? 'authenticated' : 'unauthenticated');

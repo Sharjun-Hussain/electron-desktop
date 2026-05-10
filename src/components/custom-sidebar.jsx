@@ -77,6 +77,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui/avatar";
+
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -99,16 +105,27 @@ export function CustomSidebar() {
 
   const sidebarRef = useRef(null);
 
-  const user = {
+  const user = React.useMemo(() => ({
     name: session?.user?.name || "User",
     email: session?.user?.email || "user@example.com",
     avatar: session?.user?.image,
     organizationName: session?.user?.organization?.name || business?.name || "Inzeedo",
     branchName: session?.user?.branches?.[0]?.name || "Main Branch",
-  };
+  }), [session?.user, business]);
 
-  const getProfileAvatar = () => {
-    return getImageUrl(user.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`;
+  const avatarUrl = React.useMemo(() => {
+    const base = getImageUrl(user.avatar);
+    if (!base) return null;
+
+    // Add cache breaker if available to ensure immediate update after photo change
+    if (session?.user?.imageLastUpdated) {
+      return `${base}${base.includes('?') ? '&' : '?'}v=${session.user.imageLastUpdated}`;
+    }
+    return base;
+  }, [user.avatar, session?.user?.imageLastUpdated]);
+
+  const getUserInitials = (name) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   const sidebarData = {
@@ -252,7 +269,7 @@ export function CustomSidebar() {
 
   const isModuleEnabled = (moduleKey) => {
     if (!moduleKey) return true;
-    
+
     // 0. Check Master Organization (Full Bypass)
     if (business?.is_master === true) return true;
 
@@ -265,7 +282,7 @@ export function CustomSidebar() {
     if (business?.module_overrides && business.module_overrides[moduleKey] !== undefined) {
       return business.module_overrides[moduleKey];
     }
-    
+
     // 2. Check Plan features (primary path)
     const planFeatures = business?.plan?.features || [];
     if (planFeatures.length > 0) {
@@ -367,8 +384,8 @@ export function CustomSidebar() {
 
   return (
     <div ref={sidebarRef} className="flex h-screen sticky top-0 z-50 gap-0 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group/sidebar overflow-visible">
-      <aside 
-        id="sidebar-main" 
+      <aside
+        id="sidebar-main"
         className={cn(
           "flex flex-col items-center py-6 bg-(--sidebar-bg-custom) border-r border-sidebar-border/40 z-50 relative pointer-events-auto shrink-0 transition-all duration-500 ease-in-out",
           isCollapsed ? "w-20" : "w-30"
@@ -394,11 +411,11 @@ export function CustomSidebar() {
                 }
               });
             }
-            
+
             // 2. Find the best (longest) match across the ENTIRE sidebar to ensure only one item is "Active"
             // We compare the longest match for this item against the longest match possible in the whole sidebar
             const thisItemLongestMatch = matches.sort((a, b) => b.length - a.length)[0] || "";
-            
+
             const allPossibleMatches = filteredPrimary.flatMap(p => {
               const pMatches = [];
               if (pathname === p.url || pathname.startsWith(`${p.url}/`)) pMatches.push(p.url);
@@ -428,8 +445,8 @@ export function CustomSidebar() {
                       onClick={() => handleCategoryClick(item)}
                       className={cn(
                         "w-16 group relative flex flex-col items-center justify-center py-3 px-1 transition-all duration-300 rounded-xl mb-1 outline-none",
-                        isActive ? "bg-emerald-500/10 text-emerald-600" : 
-                        isSelected ? "text-emerald-600/70" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        isActive ? "bg-emerald-500/10 text-emerald-600" :
+                          isSelected ? "text-emerald-600/70" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                       )}
                     >
                       <item.icon className={cn("size-6 transition-transform group-hover:scale-105", isCollapsed ? "" : "mb-1.5", isActive ? "text-emerald-600" : isSelected ? "text-emerald-600/70" : "text-muted-foreground group-hover:text-foreground")} />
@@ -455,18 +472,16 @@ export function CustomSidebar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="relative h-10 w-10 outline-none group">
-                <div className="size-full rounded-xl overflow-hidden border border-border group-hover:border-emerald-500/50 transition-all shadow-sm">
-                  <div className="size-full bg-muted flex items-center justify-center text-foreground text-xs font-bold">
-                    <img
-                      src={getProfileAvatar()}
-                      alt={user.name}
-                      className="size-full object-cover"
-                      onError={(e) => {
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`;
-                      }}
-                    />
-                  </div>
-                </div>
+                <Avatar className="size-full rounded-xl overflow-hidden border border-border group-hover:border-emerald-500/50 transition-all shadow-sm">
+                  <AvatarImage
+                    src={avatarUrl}
+                    alt={user.name}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 font-bold text-xs">
+                    {getUserInitials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 border-2 border-background z-10 shadow-sm" />
               </button>
             </DropdownMenuTrigger>
@@ -474,7 +489,7 @@ export function CustomSidebar() {
               <div className="px-2 py-3 border-b border-border mb-2">
                 <p className="text-sm font-bold text-foreground truncate">{user.name}</p>
                 <p className="text-[11px] text-muted-foreground truncate mb-1">{user.email}</p>
-                
+
                 <div className="flex flex-col gap-1 mt-2 border-t border-border/50 pt-2">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-tight">
                     <Building className="size-3" />
