@@ -516,48 +516,48 @@ export default function PurchaseOrderView() {
                 <ChevronDown className="h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 border-border/60 shadow-xl rounded-xl p-1.5">
-              <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 px-2 py-1.5">Order Management</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-border/40" />
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Order Management</DropdownMenuLabel>
+              <DropdownMenuSeparator />
 
               <Link href={`/purchase/purchase-orders/edit?poid=${poData.id}`}>
-                <DropdownMenuItem className="rounded-lg gap-2 cursor-pointer">
-                  <Edit className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Edit Order</span>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Edit className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>Edit Order</span>
                 </DropdownMenuItem>
               </Link>
 
-              <DropdownMenuItem onClick={handlePrint} className="rounded-lg gap-2 cursor-pointer">
-                <Printer className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Print Protocol</span>
+              <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
+                <Printer className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Print Protocol</span>
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={handleDownloadPDF} className="rounded-lg gap-2 cursor-pointer">
-                <Download className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Download PDF</span>
+              <DropdownMenuItem onClick={handleDownloadPDF} className="cursor-pointer">
+                <Download className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Download PDF</span>
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator className="bg-border/40" />
+              <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={handleDuplicate} className="rounded-lg gap-2 cursor-pointer">
-                <Copy className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Duplicate PO</span>
+              <DropdownMenuItem onClick={handleDuplicate} className="cursor-pointer">
+                <Copy className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Duplicate PO</span>
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={handleEmail} className="rounded-lg gap-2 cursor-pointer">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Email Supplier</span>
+              <DropdownMenuItem onClick={handleEmail} className="cursor-pointer">
+                <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Email Supplier</span>
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator className="bg-border/40" />
+              <DropdownMenuSeparator />
 
               <DropdownMenuItem
                 onClick={handleCancel}
-                className="rounded-lg gap-2 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50/50"
+                className="cursor-pointer text-red-600 focus:text-red-700"
                 disabled={poData.status === 'cancelled' || poData.status === 'received'}
               >
-                <XCircle className="h-4 w-4" />
-                <span className="font-medium">Cancel Order</span>
+                <XCircle className="h-4 w-4 mr-2" />
+                <span>Cancel Order</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

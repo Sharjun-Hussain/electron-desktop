@@ -12,10 +12,12 @@ import {
   Mail,
   XCircle,
   FileText,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,7 +53,7 @@ const DataTableColumnHeader = ({ column, title }) => {
   );
 };
 
-export const getColumns = ({ onDelete }) => [
+export const getColumns = ({ onDelete, session }) => [
   {
     id: "select",
     header: ({ table }) => (
@@ -160,41 +162,66 @@ export const getColumns = ({ onDelete }) => [
               <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 p-1.5 rounded-xl shadow-xl border-border/40">
-            <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 px-2 py-1.5">
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
               Protocol Actions
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-border/40" />
+            <DropdownMenuSeparator />
 
             <Link href={`/purchase/purchase-orders/view?id=${po.id}`} passHref>
-              <DropdownMenuItem className="rounded-lg gap-2 cursor-pointer py-2">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">View Protocol</span>
+              <DropdownMenuItem className="cursor-pointer">
+                <Eye className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>View PO</span>
               </DropdownMenuItem>
             </Link>
 
             {po.status !== 'cancelled' && po.status !== 'received' && (
               <Link href={`/purchase/purchase-orders/edit?poid=${po.id}`} passHref>
-                <DropdownMenuItem className="rounded-lg gap-2 cursor-pointer py-2">
-                  <Edit className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Edit Designation</span>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Edit className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>Edit PO</span>
                 </DropdownMenuItem>
               </Link>
             )}
 
-            <DropdownMenuSeparator className="bg-border/40" />
+            <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              className="rounded-lg gap-2 cursor-pointer py-2"
-              onClick={() => {
-                window.open(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders/${po.id}/pdf`, '_blank');
+              className="cursor-pointer"
+              onClick={async () => {
+                if (!session?.accessToken) {
+                  toast.error("Authentication required");
+                  return;
+                }
+                const toastId = toast.loading("Generating PDF...");
+                try {
+                  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders/${po.id}/pdf`, {
+                    headers: { Authorization: `Bearer ${session.accessToken}` }
+                  });
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `PO-${po.po_number}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                    toast.success("PDF downloaded successfully", { id: toastId });
+                  } else {
+                    toast.error("Failed to generate PDF", { id: toastId });
+                  }
+                } catch (error) {
+                  toast.error("Error downloading PDF", { id: toastId });
+                }
               }}
             >
-              <Download className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Download PDF</span>
+              <Download className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>Download PDF</span>
             </DropdownMenuItem>
 
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               className="rounded-lg gap-2 cursor-pointer py-2 text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50/50"
               onClick={() => {
                 // This will be handled by a dialog or state update in the parent component
@@ -203,16 +230,16 @@ export const getColumns = ({ onDelete }) => [
             >
               <Zap className="h-4 w-4" />
               <span className="font-medium">Send via WhatsApp</span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
 
-            <DropdownMenuSeparator className="bg-border/40" />
+            <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              className="rounded-lg gap-2 cursor-pointer py-2 text-red-600 focus:text-red-700 focus:bg-red-50/50"
+              className="cursor-pointer text-red-600 focus:text-red-700"
               onClick={() => onDelete(po.id)}
             >
-              <Trash2 className="h-4 w-4" />
-              <span className="font-medium">Delete Protocol</span>
+              <Trash2 className="h-4 w-4 mr-2" />
+              <span>Delete Protocol</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
