@@ -397,6 +397,8 @@ export default function ProductVariantsPage() {
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState("list");
+  const [sortValue, setSortValue] = useState("newest");
 
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -606,8 +608,19 @@ export default function ProductVariantsPage() {
     [handleDelete, handleBulkDeactivate, handleBulkActivate]
   );
 
-  const [viewMode, setViewMode] = useState("list");
-  const [sortValue, setSortValue] = useState("newest");
+  const sortedVariants = useMemo(() => {
+    let result = [...variants];
+    if (sortValue === "newest") {
+      result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (sortValue === "oldest") {
+      result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sortValue === "price_asc") {
+      result.sort((a, b) => parseFloat(a.price || a.selling_price || 0) - parseFloat(b.price || b.selling_price || 0));
+    } else if (sortValue === "price_desc") {
+      result.sort((a, b) => parseFloat(b.price || b.selling_price || 0) - parseFloat(a.price || a.selling_price || 0));
+    }
+    return result;
+  }, [variants, sortValue]);
 
   const sortOptions = [
     { label: "Newest", value: "newest" },
@@ -623,7 +636,7 @@ export default function ProductVariantsPage() {
       </div>
 
       <ResourceManagementLayout
-        data={variants}
+        data={sortedVariants}
         isLoading={loading || status === "loading"}
         loadingSkeleton={<ProductSkeleton />}
         isError={!!error}
