@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppSettings } from "@/app/hooks/useAppSettings";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { format, subDays, startOfMonth } from "date-fns";
 import {
@@ -47,6 +47,27 @@ import { ResourceManagementLayout } from "@/components/general/resource-manageme
 import { Label } from "../ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 
+// --- MEMOIZED STATS COMPONENT ---
+const StatsSection = React.memo(({ stats }) => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {stats.map((card, idx) => (
+        <div key={idx} className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
+          <div className={`p-3 rounded-lg bg-linear-to-br ${card.gradient} text-white`}>
+            <card.icon className="w-5 h-5 shadow-sm" />
+          </div>
+          <div className="flex flex-col">
+            <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</p>
+            <h3 className="text-2xl font-bold text-foreground">{card.value}</h3>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+StatsSection.displayName = "StatsSection";
+
 export default function SalesReturnHistoryPage() {
   const { data: session } = useSession();
   const { formatCurrency, formatDate } = useAppSettings();
@@ -59,7 +80,7 @@ export default function SalesReturnHistoryPage() {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 1000, // Increase limit for smooth local filtering
     total: 0,
     pages: 1
   });
@@ -95,11 +116,10 @@ export default function SalesReturnHistoryPage() {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams({
-        page: pagination.page,
-        size: pagination.limit,
+        page: 1,
+        size: 1000,
         start_date: date?.from ? format(date.from, "yyyy-MM-dd") : "",
         end_date: date?.to ? format(date.to, "yyyy-MM-dd") : "",
-        search: searchQuery,
       });
 
       const res = await fetch(
@@ -110,7 +130,13 @@ export default function SalesReturnHistoryPage() {
       );
       const result = await res.json();
       if (result.status === "success") {
-        setData(result.data.data || []);
+        const rawData = result.data.data || [];
+        // Flatten data for instant multi-column search
+        const flattenedData = rawData.map(item => ({
+          ...item,
+          searchText: `${item.return_number} ${item.sale?.invoice_number || ""} ${item.customer?.name || ""} ${item.status}`.toLowerCase()
+        }));
+        setData(flattenedData);
         if (result.data.pagination) {
           setPagination(prev => ({ ...prev, ...result.data.pagination }));
         }
@@ -123,7 +149,7 @@ export default function SalesReturnHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [session, date, searchQuery, pagination.page, pagination.limit]);
+  }, [session, date]);
 
   useEffect(() => {
     fetchData();
@@ -203,6 +229,12 @@ export default function SalesReturnHistoryPage() {
           {row.getValue("return_number")}
         </span>
       )
+    },
+    {
+      accessorKey: "searchText",
+      header: "Search",
+      enableHiding: true,
+      cell: () => null,
     },
     {
       accessorKey: "return_date",
@@ -293,21 +325,14 @@ export default function SalesReturnHistoryPage() {
     ];
   }, [data, pagination.total, formatCurrency]);
 
-  const statCards = (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((card, idx) => (
-        <div key={idx} className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4 transition-all hover:shadow-md">
-          <div className={`p-3 rounded-lg bg-linear-to-br ${card.gradient} text-white`}>
-            <card.icon className="w-5 h-5 shadow-sm" />
-          </div>
-          <div className="flex flex-col">
-            <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">{card.label}</p>
-            <h3 className="text-2xl font-bold text-foreground">{card.value}</h3>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  const statCards = useMemo(() => (
+    <StatsSection stats={stats} />
+  ), [stats]);
+
+  const handleSearchChange = useCallback((v) => {
+    setSearchQuery(v);
+    setPagination(p => ({ ...p, page: 1 }));
+  }, []);
 
   return (
     <>
@@ -327,12 +352,9 @@ export default function SalesReturnHistoryPage() {
           </div>
         }
         statCardsComponent={statCards}
-        searchPlaceholder="Return #, Invoice Ref, or Customer..."
-        searchColumn="return_number"
-        onSearchChange={(v) => {
-          setSearchQuery(v);
-          setPagination(p => ({ ...p, page: 1 }));
-        }}
+        searchPlaceholder="Filter by Return #, Invoice, or Customer..."
+        searchColumn="searchText"
+        // onSearchChange removed to allow perfect client-side filtering like Purchase Returns
         onExportClick={null}
         exportData={exportData}
         exportFileName="Sales_Return_Audit_Log"
