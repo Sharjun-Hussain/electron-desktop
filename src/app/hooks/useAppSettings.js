@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 
 export function useAppSettings() {
-    const { useGlobalSettings } = useSettings();
+    const { useGlobalSettings, useModularSettings } = useSettings();
     const { data: response, isLoading, mutate } = useGlobalSettings();
 
     const appSettings = useMemo(() => {
@@ -143,6 +143,7 @@ export function useAppSettings() {
     return {
         ...appSettings,
         isLoading,
+        useModularSettings,
         formatCurrency,
         formatDate,
         formatDateTime,
