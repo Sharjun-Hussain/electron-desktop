@@ -188,7 +188,7 @@ const REPORTS_DATA = [
   },
   {
     id: "stocks-insights",
-    name: "Inventory Insights",
+    name: "Stock Reports",
     href: "/reports/stocks/insights",
     category: "Stocks",
     description: "Advanced analytics on stock aging, ROI performance, and turnover ratios.",

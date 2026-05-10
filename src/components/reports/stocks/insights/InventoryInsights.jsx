@@ -77,7 +77,7 @@ export default function InventoryInsights() {
         setData(result.data);
       }
     } catch (err) {
-      toast.error("Failed to load inventory insights");
+      toast.error("Failed to load stock reports");
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +140,7 @@ export default function InventoryInsights() {
             <TrendingUp className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Inventory Insights</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Stock Reports</h1>
             <p className="text-sm text-muted-foreground mt-1 font-medium flex items-center gap-2">
               <Zap className="size-3.5 text-amber-500 fill-amber-500" /> AI-Driven Stock Performance & Turnover Analytics
             </p>
