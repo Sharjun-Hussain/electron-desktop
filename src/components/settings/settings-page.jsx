@@ -45,7 +45,7 @@ const sidebarItems = [
   { id: "business", label: "Business Identity", icon: Store, desc: "Contact & address details", permission: PERMISSIONS.SETTINGS_BUSINESS },
   { id: "pos", label: "POS Terminal Basis", icon: Monitor, desc: "Checkout & device settings", permission: PERMISSIONS.SETTINGS_POS },
   { id: "communication", label: "Communication Hub", icon: Mail, desc: "Email & SMS gateway setup", permission: PERMISSIONS.SETTINGS_COMMUNICATION },
-  { id: "import", label: "Bulk Data Migration", icon: Database, desc: "Synchronize master products", permission: PERMISSIONS.SETTINGS_IMPORT },
+  { id: "import", label: "Database Management", icon: Database, desc: "System backups & restoration nexus", permission: PERMISSIONS.SETTINGS_IMPORT },
   { id: "ai", label: "AI Intelligence", icon: Brain, desc: "Neural processing & OCR nexus", permission: PERMISSIONS.SETTINGS_AI },
   { id: "loyalty", label: "Loyalty System", icon: Gift, desc: "Points, rewards & customer nexus", permission: PERMISSIONS.SETTINGS_GENERAL },
   { id: "backup", label: "Backup", icon: Database, desc: "Data snapshots & security nexus", permission: PERMISSIONS.BACKUP_CONFIG },
