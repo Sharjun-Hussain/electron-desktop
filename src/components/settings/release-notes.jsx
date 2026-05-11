@@ -18,8 +18,24 @@ import { Badge } from "@/components/ui/badge";
 export function ReleaseNotes() {
   const releases = [
     {
+      version: "1.2.2",
+      date: "May 08, 2026",
+      title: "Unit Measurement Precision Fix",
+      type: "Patch",
+      changes: [
+        {
+          category: "Catalog Maintenance",
+          icon: Zap,
+          items: [
+            "Fixed measurement units creation failure by resolving field naming mismatch (short_code vs short_name) between frontend and backend.",
+            "Synchronized validation schema to ensure consistent unit registration across the system."
+          ]
+        }
+      ]
+    },
+    {
       version: "1.2.1",
-      date: "May 11, 2026",
+      date: "May 07, 2026",
       title: "Data Maintenance & Structural Snapshots",
       type: "Patch",
       changes: [
@@ -36,7 +52,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.2.0",
-      date: "May 11, 2026",
+      date: "May 06, 2026",
       title: "Major Milestone: Multi-Window Ecosystem",
       type: "Major Update",
       changes: [
@@ -61,7 +77,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.9",
-      date: "May 11, 2026",
+      date: "May 05, 2026",
       title: "Multi-Window Asset Integrity",
       type: "Patch",
       changes: [
@@ -77,7 +93,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.8",
-      date: "May 11, 2026",
+      date: "May 04, 2026",
       title: "Desktop Multitasking",
       type: "Patch",
       changes: [
@@ -93,7 +109,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.7",
-      date: "May 11, 2026",
+      date: "May 02, 2026",
       title: "Navigation Stability & Data Integrity",
       type: "Patch",
       changes: [
@@ -110,7 +126,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.5",
-      date: "May 10, 2026",
+      date: "April 30, 2026",
       title: "Settings Standardization & UI Parity",
       type: "Patch",
       changes: [
@@ -135,7 +151,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.4",
-      date: "May 10, 2026",
+      date: "April 28, 2026",
       title: "Offline Stability & Structural Integrity",
       type: "Patch",
       changes: [
@@ -161,7 +177,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.2",
-      date: "May 10, 2026",
+      date: "April 25, 2026",
       title: "UI Standardisation & Insights Refinement",
       type: "Patch",
       changes: [
@@ -179,7 +195,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.1",
-      date: "May 10, 2026",
+      date: "April 22, 2026",
       title: "Authentication & Parity Update",
       type: "Patch",
       changes: [
@@ -196,7 +212,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.0",
-      date: "May 09, 2026",
+      date: "April 20, 2026",
       title: "Organization Empowerment & UI Refinement",
       type: "Major Update",
       changes: [
@@ -231,7 +247,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.0.2",
-      date: "May 08, 2026",
+      date: "April 18, 2026",
       title: "Core Stability Patch",
       type: "Patch",
       changes: [
@@ -257,7 +273,7 @@ export function ReleaseNotes() {
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
           <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.2.1</span>
+          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.2.2</span>
         </div>
       </div>
 
@@ -317,7 +333,7 @@ export function ReleaseNotes() {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-900 dark:text-white leading-none">System Engine Specification</p>
-            <p className="text-[10px] text-slate-500 mt-1">Core build 1.2.1.0511 (Stable)</p>
+            <p className="text-[10px] text-slate-500 mt-1">Core build 1.2.2.0511 (Stable)</p>
           </div>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />

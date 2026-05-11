@@ -30,8 +30,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  short_code: z.string().min(1, "Short code is required"),
-  type: z.string().min(1, "Type is required"),
+  short_name: z.string().min(1, "Short code is required"),
+  type: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -43,7 +43,7 @@ export function MeasurementUnitDialog({ open, onOpenChange, onSuccess, session, 
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      short_code: "",
+      short_name: "",
       type: "",
       description: "",
     },
@@ -56,14 +56,14 @@ export function MeasurementUnitDialog({ open, onOpenChange, onSuccess, session, 
     if (initialData) {
       form.reset({
         name: initialData.name || "",
-        short_code: initialData.short_code || "",
+        short_name: initialData.short_name || "",
         type: initialData.type || "",
         description: initialData.description || "",
       });
     } else {
       form.reset({
         name: "",
-        short_code: "",
+        short_name: "",
         type: "",
         description: "",
       });
@@ -132,7 +132,7 @@ export function MeasurementUnitDialog({ open, onOpenChange, onSuccess, session, 
               </div>
               <SheetDescription className="text-sm text-muted-foreground mt-2">
                 {isEditing
-                  ? "Update the parameters for this measurement unit."
+                   ? "Update the parameters for this measurement unit."
                   : "Define a new standard unit for your inventory catalog."}
               </SheetDescription>
             </div>
@@ -166,7 +166,7 @@ export function MeasurementUnitDialog({ open, onOpenChange, onSuccess, session, 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="short_code"
+                    name="short_name"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-semibold text-foreground">Short Code</FormLabel>
