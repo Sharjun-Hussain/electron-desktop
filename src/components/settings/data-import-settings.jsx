@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import {
@@ -13,7 +13,12 @@ import {
   ArrowRight,
   FileSpreadsheet,
   CheckCircle2,
-  Save
+  Save,
+  RotateCcw,
+  HardDriveDownload,
+  HardDriveUpload,
+  FileQuestion,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -46,11 +51,17 @@ export function DataImportSettings() {
   const isEssential = business?.subscription_tier === 'Essential';
 
   const { data: session } = useSession();
-  const [step, setStep] = useState(1); // 1: Upload, 2: Map, 3: Import
+  const [step, setStep] = useState(1);
   const [fileData, setFileData] = useState({ data: [], headers: [], fileName: "" });
   const [mapping, setMapping] = useState({});
   const [importStats, setImportStats] = useState({ total: 0, current: 0, success: 0, failed: 0 });
   const [logs, setLogs] = useState([]);
+
+  // SQL Restore state
+  const [sqlFile, setSqlFile] = useState(null);
+  const [sqlRestoreStage, setSqlRestoreStage] = useState('idle'); // idle | confirm | restoring | success | error
+  const [sqlRestoreError, setSqlRestoreError] = useState('');
+  const sqlFileRef = useRef(null);
 
   if (isSettingsLoading) return (
     <div className="flex flex-col items-center justify-center p-12 gap-3">
@@ -239,15 +250,30 @@ export function DataImportSettings() {
     }
   };
 
-  const importDatabaseSql = async (file) => {
-    if (!file) return;
-    if (!confirm("CAUTION: This will overwrite the entire database structural basis. This action is irreversible. Proceed?")) return;
+  const handleSqlFileSelect = (file) => {
+    if (!file || !file.name.endsWith('.sql')) {
+      toast.error('Please select a valid .sql file.');
+      return;
+    }
+    setSqlFile(file);
+    setSqlRestoreStage('confirm');
+    setSqlRestoreError('');
+  };
 
+  const cancelRestore = () => {
+    setSqlFile(null);
+    setSqlRestoreStage('idle');
+    setSqlRestoreError('');
+    if (sqlFileRef.current) sqlFileRef.current.value = '';
+  };
+
+  const confirmRestore = async () => {
+    if (!sqlFile) return;
+    setSqlRestoreStage('restoring');
     try {
-      toast.loading("Restoring structural nexus...");
       const token = session?.user?.accessToken || session?.accessToken;
       const formData = new FormData();
-      formData.append('sql', file);
+      formData.append('sql', sqlFile);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/maintenance/db/import`, {
         method: "POST",
@@ -256,14 +282,14 @@ export function DataImportSettings() {
       });
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "Restoration failure");
+      if (!response.ok) throw new Error(result.message || "Restoration failed");
 
-      toast.dismiss();
-      toast.success("Structural restoration finalized. System rebooting...");
-      setTimeout(() => window.location.reload(), 2000);
+      setSqlRestoreStage('success');
+      toast.success("Database restored successfully!");
+      setTimeout(() => window.location.reload(), 3000);
     } catch (err) {
-      toast.dismiss();
-      toast.error(err.message);
+      setSqlRestoreError(err.message || 'Restoration failed. Please check the SQL file and try again.');
+      setSqlRestoreStage('error');
     }
   };
 
@@ -323,50 +349,148 @@ export function DataImportSettings() {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
 
-        {/* LEFT COLUMN: EXTRACTION (SAFE ARCHIVAL) */}
-        <div className="xl:col-span-4 space-y-6">
-          <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-border/50 rounded-lg p-6 space-y-8">
+        {/* LEFT COLUMN: BACKUP & RESTORE */}
+        <div className="xl:col-span-4 space-y-4">
+
+          {/* EXPORT CARD */}
+          <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-border/50 rounded-lg p-5 space-y-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-md bg-blue-500/10 text-blue-600">
-                <Download className="w-5 h-5" />
+                <HardDriveDownload className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-foreground leading-none">Extraction Portal</h3>
-                <p className="text-[10px] text-muted-foreground mt-1.5">Safe structural archival and data backups</p>
+                <h3 className="text-sm font-bold text-foreground leading-none">Backup & Export</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">Download safe copies of your data</p>
               </div>
             </div>
-
-            <div className="space-y-6">
-              {/* CSV EXPORT */}
-              <div className="space-y-2">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-bold text-foreground uppercase tracking-widest opacity-60">Product Hub</h4>
-                  <Badge variant="outline" className="text-[8px] bg-blue-500/5 text-blue-600 border-none px-1.5">CSV FORMAT</Badge>
+                  <p className="text-[11px] font-semibold text-foreground">Product Catalog</p>
+                  <Badge variant="outline" className="text-[8px] bg-blue-500/5 text-blue-600 border-none px-1.5">CSV</Badge>
                 </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">Download your entire product catalog and inventory structural basis in flattened CSV format.</p>
-                <Button variant="outline" onClick={handleExport} className="w-full h-10 border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all text-[11px] font-bold gap-2">
-                  <FileSpreadsheet className="w-4 h-4" /> Export CSV Blueprint
+                <p className="text-[10px] text-muted-foreground">Export all products and inventory as a CSV file.</p>
+                <Button variant="outline" onClick={handleExport} className="w-full h-9 border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all text-[11px] font-bold gap-2">
+                  <FileSpreadsheet className="w-3.5 h-3.5" /> Download CSV
                 </Button>
               </div>
-
               <div className="h-px bg-border/30" />
-
-              {/* SQL EXPORT */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-bold text-foreground uppercase tracking-widest opacity-60">System Database</h4>
-                  <Badge variant="outline" className="text-[8px] bg-blue-600/5 text-blue-700 border-none px-1.5 font-bold">SQL SNAPSHOT</Badge>
+                  <p className="text-[11px] font-semibold text-foreground">Full Database Snapshot</p>
+                  <Badge variant="outline" className="text-[8px] bg-blue-700/5 text-blue-700 border-none px-1.5 font-bold">SQL</Badge>
                 </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">Generate a full native SQL snapshot including architectures, relational data, and system logs.</p>
-                <Button type="button" onClick={exportDatabaseSql} className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white transition-all text-[11px] font-bold gap-2 shadow-md">
-                  <History className="w-4 h-4" /> Sequence SQL Snapshot
+                <p className="text-[10px] text-muted-foreground">Generate a complete SQL backup of the entire database including all records and settings.</p>
+                <Button type="button" onClick={exportDatabaseSql} className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold gap-2 shadow-sm">
+                  <HardDriveDownload className="w-3.5 h-3.5" /> Download SQL Backup
                 </Button>
               </div>
             </div>
           </div>
 
-          <div className="p-4 bg-muted/20 rounded-md border border-dashed border-border/50 text-[10px] text-muted-foreground font-medium italic">
-            Note: Sequential extraction does not modify any active system state. It is safe to run at any time during operational hours.
+          {/* SQL RESTORE CARD */}
+          <div className="border border-rose-200 dark:border-rose-900/40 rounded-lg overflow-hidden">
+            <div className="bg-rose-50 dark:bg-rose-950/20 px-5 py-3 flex items-center gap-3 border-b border-rose-200 dark:border-rose-900/40">
+              <div className="p-1.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-600">
+                <HardDriveUpload className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-rose-700 dark:text-rose-400 leading-none">Restore Database</h3>
+                <p className="text-[10px] text-rose-600/60 dark:text-rose-400/50 mt-0.5">Upload a SQL backup to fully restore the system</p>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-4">
+
+              {/* IDLE: Drop Zone */}
+              {sqlRestoreStage === 'idle' && (
+                <div
+                  className="relative border-2 border-dashed border-rose-200 dark:border-rose-900/40 rounded-lg p-6 text-center hover:bg-rose-50/50 dark:hover:bg-rose-950/10 transition-all cursor-pointer group"
+                  onClick={() => sqlFileRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); handleSqlFileSelect(e.dataTransfer.files[0]); }}
+                >
+                  <input ref={sqlFileRef} type="file" accept=".sql" className="hidden" onChange={(e) => handleSqlFileSelect(e.target.files[0])} />
+                  <HardDriveUpload className="w-8 h-8 text-rose-300 dark:text-rose-700 mx-auto mb-2 group-hover:text-rose-500 transition-colors" />
+                  <p className="text-[12px] font-bold text-rose-700 dark:text-rose-400">Click or drag & drop</p>
+                  <p className="text-[10px] text-rose-500/60 mt-1">Select a .sql backup file to restore</p>
+                </div>
+              )}
+
+              {/* CONFIRM: Show file info + warning */}
+              {sqlRestoreStage === 'confirm' && (
+                <div className="space-y-3 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-md border border-border/50">
+                    <Database className="w-5 h-5 text-slate-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-bold text-foreground truncate">{sqlFile?.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{sqlFile ? `${(sqlFile.size / 1024).toFixed(1)} KB` : ''}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto text-muted-foreground hover:text-rose-500" onClick={cancelRestore}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-md border border-amber-200 dark:border-amber-900/30 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
+                      <strong>Warning:</strong> This will permanently overwrite the entire current database. All existing data will be replaced. This action cannot be undone.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" onClick={cancelRestore} className="h-9 text-[11px] font-bold border-border/50">
+                      Cancel
+                    </Button>
+                    <Button onClick={confirmRestore} className="h-9 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white gap-2">
+                      <RotateCcw className="w-3.5 h-3.5" /> Confirm Restore
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* RESTORING: Progress */}
+              {sqlRestoreStage === 'restoring' && (
+                <div className="space-y-3 py-2 animate-in fade-in duration-300">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="relative">
+                      <RefreshCw className="w-8 h-8 text-rose-500 animate-spin" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-bold text-foreground">Restoring Database...</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">Please do not close this window</p>
+                    </div>
+                  </div>
+                  <Progress className="h-1.5 bg-rose-100 dark:bg-rose-950" />
+                </div>
+              )}
+
+              {/* SUCCESS */}
+              {sqlRestoreStage === 'success' && (
+                <div className="space-y-3 py-2 text-center animate-in zoom-in-95 duration-300">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                  <p className="text-[13px] font-bold text-foreground">Restoration Complete!</p>
+                  <p className="text-[10px] text-muted-foreground">The system is reloading...</p>
+                </div>
+              )}
+
+              {/* ERROR */}
+              {sqlRestoreStage === 'error' && (
+                <div className="space-y-3 animate-in fade-in duration-300">
+                  <div className="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-md border border-rose-200 dark:border-rose-900/40 text-center">
+                    <XCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
+                    <p className="text-[12px] font-bold text-rose-700 dark:text-rose-400">Restoration Failed</p>
+                    <p className="text-[10px] text-rose-600/70 mt-1">{sqlRestoreError}</p>
+                  </div>
+                  <Button variant="outline" onClick={cancelRestore} className="w-full h-9 text-[11px] font-bold border-rose-200 text-rose-600 hover:bg-rose-50">
+                    Try Again
+                  </Button>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+          <div className="p-3 bg-muted/20 rounded-md border border-dashed border-border/50 text-[10px] text-muted-foreground font-medium">
+            Tip: Always export a fresh SQL backup before performing a restore to avoid data loss.
           </div>
         </div>
 
