@@ -415,7 +415,7 @@ function ReportsContent({ isNested }) {
   }, [visibleReports]);
 
   return (
-    <div className="flex flex-col h-screen bg-background font-sans text-foreground overflow-hidden">
+    <div className="flex flex-col h-full bg-background font-sans text-foreground overflow-hidden">
       {/* Page Header */}
       {!isNested && (
         <header className="bg-background border-b border-border px-8 py-5 shrink-0">
@@ -496,7 +496,7 @@ function ReportsContent({ isNested }) {
       <div className="flex flex-1 overflow-hidden max-w-[1600px] mx-auto w-full px-4 md:px-8 py-6 gap-6">
         {/* --- LEFT SIDEBAR --- */}
         <aside className="w-64 bg-card border border-border flex flex-col shrink-0 rounded-xl overflow-hidden shadow-xs">
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto thin-scrollbar">
           <div className="p-5">
             <div className="mb-6">
               <p className="text-sm font-semibold text-muted-foreground mb-4 px-2">View Filters</p>
@@ -577,7 +577,7 @@ function ReportsContent({ isNested }) {
               </div>
             </div>
           </div>
-          </ScrollArea>
+          </div>
           
           <div className="p-4 border-t border-border bg-muted/20">
             <p className="text-xs text-muted-foreground text-center font-semibold">
