@@ -151,15 +151,25 @@ export function SystemBreadcrumb() {
               onClick={() => {
                 const segments = pathname.split("/").filter((segment) => segment !== "" && segment !== "pos");
                 
-                // If we're on a sub-page (like /view, /edit, /create), go back to the parent list
-                if (segments.length > 2 && ["view", "edit", "create", "details"].includes(segments[segments.length - 1])) {
-                   segments.pop();
-                   router.push("/" + segments.join("/"));
+                // 1. Hierarchical Action Navigation
+                // If we're on a sub-page (like /view, /edit, /create, /details), go back to the parent module
+                const actionKeywords = ["view", "edit", "create", "details", "new"];
+                const actionIndex = segments.findIndex(s => actionKeywords.includes(s));
+                
+                if (actionIndex !== -1) {
+                   // Slice up to the module root (before the action)
+                   const parentSegments = segments.slice(0, actionIndex);
+                   router.push("/" + parentSegments.join("/"));
                    return;
                 }
 
-                // If we're on a list page or at the top level, go back to the previous history item if possible, 
-                // or fall back to dashboard.
+                // 2. Report Hub Navigation
+                if (segments[0] === "reports" && segments.length > 1) {
+                  router.push("/reports");
+                  return;
+                }
+
+                // 3. Fallback History Navigation
                 if (window.history.length > 1) {
                   router.back();
                 } else {

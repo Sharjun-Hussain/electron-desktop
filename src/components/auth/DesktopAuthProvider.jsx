@@ -45,8 +45,21 @@ export function DesktopAuthProvider({ children }) {
       return response;
     };
 
+    // Initial route handling for multi-window
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const initRoute = params.get('initRoute');
+      if (initRoute && status === 'authenticated') {
+        // Clear the param from URL to avoid re-navigation on refresh
+        const newUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+        // Use window.location.href for a clean redirect within the new window
+        window.location.href = initRoute;
+      }
+    }
+
     return () => { window.fetch = originalFetch; };
-  }, []);
+  }, [status]);
 
   const value = {
     data: session,
