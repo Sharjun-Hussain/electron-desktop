@@ -246,7 +246,7 @@ const InventoryInsightsDashboard = () => {
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input 
                     placeholder="Search SKU or Name..." 
-                    className="h-10 pl-10 w-72 bg-white border-gray-200 focus-visible:ring-emerald-500 shadow-sm font-medium text-sm transition-all"
+                    className="h-10 pl-10 w-72 bg-background border-border focus-visible:ring-emerald-500 shadow-sm font-medium text-sm transition-all"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -280,14 +280,14 @@ const InventoryInsightsDashboard = () => {
                     stockItems.map((item) => {
                       const status = getStatusInfo(parseFloat(item.quantity), parseFloat(item.variant?.low_stock_threshold || 10));
                       return (
-                        <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50">
+                        <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border/40">
                           <TableCell className="pl-6 py-3">
                             <div className="flex items-center gap-3">
                               <div className={cn("p-2.5 rounded-xl", status.bg, status.text)}>
                                 <Package className="h-5 w-5" />
                               </div>
                               <div>
-                                <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight">{item.product?.name}</h4>
+                                <h4 className="font-bold text-foreground text-sm leading-tight">{item.product?.name}</h4>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-mono font-bold border border-transparent dark:border-slate-700">
                                         {item.variant?.sku || item.product?.code}
@@ -312,7 +312,7 @@ const InventoryInsightsDashboard = () => {
                               <span className={cn("text-base font-bold", status.text)}>
                                 {parseFloat(item.quantity).toFixed(0)}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-semibold">Units</span>
+                              <span className="text-[10px] text-muted-foreground font-semibold">Units</span>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -320,7 +320,7 @@ const InventoryInsightsDashboard = () => {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-40 text-center text-slate-400 dark:text-slate-500 font-medium italic bg-slate-50/30 dark:bg-slate-900/20">
+                      <TableCell colSpan={4} className="h-40 text-center text-muted-foreground font-medium italic bg-muted/20">
                         No products match your current filters.
                       </TableCell>
                     </TableRow>
@@ -331,7 +331,7 @@ const InventoryInsightsDashboard = () => {
             
             {/* Pagination Controls */}
             {!loading && totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-50 dark:border-slate-800">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border/50">
                 <p className="text-[13px] text-slate-500 font-medium">
                   Page <span className="font-bold text-slate-900 dark:text-white">{currentPage}</span> of {totalPages}
                 </p>
@@ -341,7 +341,7 @@ const InventoryInsightsDashboard = () => {
                     size="icon"
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="h-10 w-10 p-0 rounded-xl border-slate-200 dark:border-slate-800 disabled:opacity-50"
+                    className="h-10 w-10 p-0 rounded-xl border-border disabled:opacity-50"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -350,7 +350,7 @@ const InventoryInsightsDashboard = () => {
                     size="icon"
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="h-10 w-10 p-0 rounded-xl border-slate-200 dark:border-slate-800 disabled:opacity-50"
+                    className="h-10 w-10 p-0 rounded-xl border-border disabled:opacity-50"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -395,7 +395,7 @@ const InventoryInsightsDashboard = () => {
                       };
                       const status = getExpiryStatus(item.expiration_status);
                       return (
-                        <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors border-slate-50">
+                        <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border/40">
                           <TableCell className="pl-6 py-3">
                             <div>
                               <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight">{item.product?.name}</h4>
@@ -498,7 +498,7 @@ const InventoryInsightsDashboard = () => {
                       </p>
                     </div>
                  </div>
-                 <div className="mt-7 w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden shadow-inner border border-slate-200/30 dark:border-slate-700/30">
+                 <div className="mt-7 w-full bg-muted rounded-full h-2.5 overflow-hidden shadow-inner border border-border/30">
                     <div 
                       className="bg-emerald-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(16,185,129,0.4)]" 
                       style={{ width: `${summaryStats.totalItems > 0 ? (((summaryStats.totalItems - summaryStats.lowStock - summaryStats.outOfStock) / summaryStats.totalItems) * 100) : 0}%` }}
@@ -547,9 +547,9 @@ const InsightCard = ({ title, value, icon: Icon, gradient, description, isAlert 
 const FilterButton = ({ active, onClick, label, count, color = "indigo" }) => {
     const variants = {
         indigo: active ? "bg-indigo-600 text-white border-indigo-600" : "bg-background text-muted-foreground border-border hover:bg-muted/50",
-        emerald: active ? "bg-emerald-600 text-white border-emerald-600" : "bg-background text-emerald-600 border-emerald-100 hover:bg-emerald-50/50",
-        amber: active ? "bg-amber-600 text-white border-amber-600" : "bg-background text-amber-600 border-amber-100 hover:bg-amber-50/50",
-        red: active ? "bg-red-600 text-white border-red-600" : "bg-background text-red-600 border-red-100 hover:bg-red-50/50",
+        emerald: active ? "bg-emerald-600 text-white border-emerald-600" : "bg-background text-emerald-600 border-emerald-500/20 dark:border-emerald-500/10 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5",
+        amber: active ? "bg-amber-600 text-white border-amber-600" : "bg-background text-amber-600 border-amber-500/20 dark:border-amber-500/10 hover:bg-amber-50/50 dark:hover:bg-amber-500/5",
+        red: active ? "bg-red-600 text-white border-red-600" : "bg-background text-red-600 border-red-500/20 dark:border-red-500/10 hover:bg-red-50/50 dark:hover:bg-red-500/5",
     };
 
     return (
