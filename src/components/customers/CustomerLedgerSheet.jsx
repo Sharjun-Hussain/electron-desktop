@@ -471,7 +471,6 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
                   <DataActions 
                     data={exportData} 
                     fileName={`${customer?.name || 'Customer'}_Ledger_Statement`}
-                    showPrint
                   />
                 </div>
 
