@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signOut } from "@/components/auth/DesktopAuthProvider";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -10,16 +10,30 @@ export default function SessionGuard({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // If we are unauthenticated and not already on the login page, redirect to login
+    // 1. Auth Guarding
     const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-token"];
     if (status === "unauthenticated" && !publicPaths.includes(pathname)) {
       const returnUrl = pathname + window.location.search;
       router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+
+    // 2. Initial route handling for multi-window
+    if (status === "authenticated" && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const initRoute = params.get('initRoute');
+      if (initRoute) {
+        console.log(`🚀 Navigating to initial route: ${initRoute}`);
+        // Clear the param from URL to avoid re-navigation on refresh
+        const newUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+        // Use router.push for smooth client-side navigation that preserves assets
+        router.push(initRoute);
+      }
     }
   }, [status, pathname, router]);
 
   // Don't render protected routes until we know the auth status
-  // This prevents SWR from firing requests before window.fetch is patched
   const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-token"];
   if (status === "loading" && !publicPaths.includes(pathname)) {
     return (
