@@ -245,7 +245,7 @@ function LoginForm() {
         });
       }
     },
-    [updateState, router, searchParams],
+    [updateState, searchParams],
   );
 
   return (

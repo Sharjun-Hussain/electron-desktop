@@ -17,7 +17,19 @@ const LeftPanel = memo(({ title, description, icon: Icon, logo, stats }) => {
       <div className="relative z-10 max-w-lg animate-in fade-in slide-in-from-bottom-5 duration-700 delay-200">
         <div className="mb-6">
           {logo ? (
-            <Image src={logo} alt="Logo" width={120} height={120} className="object-contain rounded-md" />
+            typeof logo === "string" ? (
+              <img src={logo} alt="Logo" className="w-[120px] h-auto object-contain rounded-md" />
+            ) : (
+              <Image 
+                src={logo} 
+                alt="Logo" 
+                width={120} 
+                height={120} 
+                className="object-contain rounded-md" 
+                priority
+                unoptimized
+              />
+            )
           ) : Icon ? (
             <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400">
               <Icon className="h-10 w-10" />
