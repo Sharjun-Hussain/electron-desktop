@@ -76,6 +76,7 @@ export const formSchema = z.object({
   business_mode: z.string({ required_error: "Please select a business mode." }),
   shopify_enabled: z.boolean().optional(),
   whatsapp_enabled: z.boolean().optional(),
+  loyalty_enabled: z.boolean().optional(),
 });
 
 // ── Section header helper ────────────────────────────────
@@ -131,6 +132,7 @@ export function OrganizationForm({ initialData }) {
       business_mode: initialData.business_mode || "Retailer",
       shopify_enabled: !!initialData.shopify_enabled,
       whatsapp_enabled: !!initialData.whatsapp_enabled,
+      loyalty_enabled: !!initialData.loyalty_enabled,
     } : {
       logo: undefined, name: "", phone: "", website: "", address: "", email: "", city: "",
       subscription_plan: undefined, subscription_tier: undefined, billing_cycle: undefined,
@@ -150,11 +152,12 @@ export function OrganizationForm({ initialData }) {
     name: "bank_accounts",
   });
 
-  const { clearSavedData } = useFormRestore(form);
+  const { clearSavedData } = useFormRestore(form, isEditMode ? `org-edit-${initialData.id}` : "org-create");
 
   const logo = form.watch("logo");
   const newLogoPreview = (logo instanceof Blob || logo instanceof File) ? URL.createObjectURL(logo) : null;
-  const previewUrl = newLogoPreview || (initialData?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL.replace('/api/v1', '')}/${initialData.logo}` : "");
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const previewUrl = newLogoPreview || (initialData?.logo ? `${baseUrl.replace('/api/v1', '')}/${initialData.logo}` : "");
 
   async function onSubmit(data) {
     if (!accessToken) { return toast.error("Authentication failed. Please log in again."); }
