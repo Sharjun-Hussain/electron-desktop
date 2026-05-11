@@ -356,8 +356,8 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
                       <p className="text-sm font-semibold text-foreground">Record Manual Settlement</p>
                       <p className="text-sm text-muted-foreground">Log a payment or reconcile the ledger balance.</p>
                     </div>
-                    <Button 
-                      onClick={() => setSettleOpen(true)} 
+                    <Button
+                      onClick={() => setSettleOpen(true)}
                       disabled={!isReceivable}
                       className="gap-2 shadow-sm font-semibold"
                     >
@@ -468,8 +468,8 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
               {/* LEDGER TAB */}
               <TabsContent value="ledger" className="mt-0 space-y-4">
                 <div className="flex items-center justify-end">
-                  <DataActions 
-                    data={exportData} 
+                  <DataActions
+                    data={exportData}
                     fileName={`${customer?.name || 'Customer'}_Ledger_Statement`}
                   />
                 </div>
@@ -520,29 +520,53 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
                 {loading && itemsData.length === 0 ? (
                   <div className="py-12 text-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" /></div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-2">
                     {(!Array.isArray(itemsData) || itemsData.length === 0) ? (
-                      <div className="col-span-2 py-12 text-center border border-dashed border-border rounded-md">
-                        <Package className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                        <h4 className="font-medium text-sm text-muted-foreground">No assets found</h4>
+                      <div className="py-12 text-center border border-dashed border-border rounded-lg bg-muted/5">
+                        <Package className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                        <h4 className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">No structural assets detected</h4>
                       </div>
                     ) : (
                       itemsData.map((item, idx) => (
-                        <Card key={idx} className="p-4 shadow-sm flex items-center justify-between">
+                        <div key={idx} className="group relative flex items-center justify-between p-3 bg-white dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/60 rounded-lg hover:border-emerald-500/30 hover:shadow-md transition-all duration-300 overflow-hidden">
                           <div className="flex items-center gap-4">
-                            <div className="p-2 bg-muted rounded-md text-muted-foreground">
-                              <Package className="h-5 w-5" />
+                            <div className="relative">
+                              <div className="h-10 w-10 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 transition-colors">
+                                <Package className="h-5 w-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                              </div>
+                              <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 text-[9px] font-black text-white rounded-full flex items-center justify-center shadow-sm">
+                                {item.purchase_count}
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-foreground truncate max-w-[150px]">{item.product_name}</p>
-                              <span className="text-xs text-muted-foreground">x{item.purchase_count} units total</span>
+
+                            <div className="flex flex-col">
+                              <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                {item.product_name}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="h-4 px-1.5 text-[8px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 border-none">
+                                  Structural Asset
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground/60 font-medium italic">
+                                  Cumulative Ownership
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Last Purchased</p>
-                            <p className="text-sm font-medium text-foreground">{formatDate(item.last_purchase_date)}</p>
+
+                          <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Last Interaction</span>
+                            <div className="flex items-center gap-1.5">
+                              <Activity className="h-3 w-3 text-emerald-500/50" />
+                              <span className="text-[12px] font-bold text-slate-700 dark:text-slate-300 tabular-nums">
+                                {formatDate(item.last_purchase_date)}
+                              </span>
+                            </div>
                           </div>
-                        </Card>
+
+                          {/* Visual accent */}
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
                       ))
                     )}
                   </div>
