@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useGSAP } from "@gsap/react";
@@ -39,6 +40,7 @@ import gsap from "gsap";
 const InventoryInsightsDashboard = () => {
   const { data: session } = useSession();
   const { formatCurrency } = useAppSettings();
+  const router = useRouter();
   
   // Data States
   const [loading, setLoading] = useState(true);
@@ -435,6 +437,7 @@ const InventoryInsightsDashboard = () => {
 
         {/* Actionable Alerts & Health Dashboard */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 
           <div className="lg:col-span-2 insight-card">
             <Card className="border border-border shadow-xs bg-card overflow-hidden h-full">
               <CardHeader className="pb-2 border-b border-border py-4">
@@ -448,7 +451,11 @@ const InventoryInsightsDashboard = () => {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {lowStockItems.length > 0 ? (
                       lowStockItems.slice(0, 6).map((item) => (
-                        <div key={item.id} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/20 border border-border hover:bg-muted/30 transition-all group cursor-default">
+                        <div 
+                          key={item.id} 
+                          onClick={() => router.push(`/inventory/stock?search=${encodeURIComponent(item.product)}`)}
+                          className="flex items-center justify-between p-3.5 rounded-xl bg-muted/20 border border-border hover:bg-muted/30 transition-all group cursor-pointer active:scale-[0.98]"
+                        >
                           <div className="flex items-center gap-3.5">
                             <div className="size-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)] animate-pulse" />
                             <div>
@@ -460,7 +467,7 @@ const InventoryInsightsDashboard = () => {
                               </p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 rounded-lg h-8 w-8 transition-all group-hover:translate-x-0.5">
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 rounded-lg h-8 w-8 transition-all group-hover:translate-x-0.5 pointer-events-none">
                             <ArrowRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -482,8 +489,9 @@ const InventoryInsightsDashboard = () => {
               </CardContent>
             </Card>
           </div>
+          */}
 
-          <div className="space-y-6 insight-card h-full">
+          <div className="lg:col-span-3 insight-card h-full">
             <Card className="border border-border shadow-xs bg-card overflow-hidden h-full flex flex-col justify-center relative group">
               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 rounded-l-2xl" />
               <CardContent className="p-7">

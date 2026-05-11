@@ -336,7 +336,7 @@ export default function CreatePurchaseOrder({ initialData }) {
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/active/list`, {
             headers: { Authorization: `Bearer ${session.accessToken}` },
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list?branch_id=${form.getValues("branchId") || ""}`, {
             headers: { Authorization: `Bearer ${session.accessToken}` },
           }),
         ]);
@@ -399,7 +399,7 @@ export default function CreatePurchaseOrder({ initialData }) {
     if (session?.accessToken) {
       fetchData();
     }
-  }, [session?.accessToken, isSuperAdmin]);
+  }, [session?.accessToken, isSuperAdmin, form.watch("branchId")]);
 
   // Keyboard Shortcut: Ctrl + n to add new item
   useEffect(() => {

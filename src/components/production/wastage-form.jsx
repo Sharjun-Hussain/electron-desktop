@@ -92,7 +92,7 @@ export default function WastageForm() {
       if (!session?.accessToken) return;
       try {
         const [prodRes, branchRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list?branch_id=${form.getValues("branch_id") || ""}`, {
             headers: { Authorization: `Bearer ${session.accessToken}` },
           }),
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
@@ -158,7 +158,7 @@ export default function WastageForm() {
       }
     };
     fetchData();
-  }, [session]);
+  }, [session, form.watch("branch_id")]);
 
   const onSubmit = async (data) => {
     setSubmitting(true);

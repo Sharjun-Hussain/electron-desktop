@@ -206,7 +206,7 @@ export function OpeningStockSheet({ open, onOpenChange, accessToken }) {
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list?branch_id=${selectedBranch || ""}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
       ]);
@@ -222,13 +222,13 @@ export function OpeningStockSheet({ open, onOpenChange, accessToken }) {
     } finally {
       setMetadataLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, selectedBranch]);
 
   useEffect(() => {
-    if (open && accessToken && branches.length === 0) {
+    if (open && accessToken) {
       fetchMetadata();
     }
-  }, [open, accessToken, branches.length, fetchMetadata]);
+  }, [open, accessToken, fetchMetadata]);
 
   const addItem = () => {
     setItems(prev => [...prev, { productId: "", variantId: "", quantity: "", costPrice: "", sellingPrice: "", wholesalePrice: "", batchNumber: "", expiryDate: "" }]);
