@@ -1,10 +1,11 @@
 "use client";
 
 import React, { memo } from "react";
+import Image from "next/image";
 import { Terminal } from "lucide-react";
 
 // --- MEMOIZED LEFT PANEL ---
-const LeftPanel = memo(({ title, description, icon: Icon, stats }) => {
+const LeftPanel = memo(({ title, description, icon: Icon, logo, stats }) => {
   return (
     <div className="left-panel hidden lg:flex lg:w-1/2 relative bg-zinc-950 items-center justify-center p-12 overflow-hidden border-r border-white/5">
       {/* Dynamic Background */}
@@ -14,11 +15,17 @@ const LeftPanel = memo(({ title, description, icon: Icon, stats }) => {
       </div>
 
       <div className="relative z-10 max-w-lg animate-in fade-in slide-in-from-bottom-5 duration-700 delay-200">
-        <div className="mb-6 inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400">
-          {Icon ? (
-            <Icon className="h-10 w-10" />
+        <div className="mb-6">
+          {logo ? (
+            <Image src={logo} alt="Logo" width={120} height={120} className="object-contain rounded-md" />
+          ) : Icon ? (
+            <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400">
+              <Icon className="h-10 w-10" />
+            </div>
           ) : (
-            <Terminal className="h-10 w-10" />
+            <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 backdrop-blur-md text-emerald-400">
+              <Terminal className="h-10 w-10" />
+            </div>
           )}
         </div>
         <h1 className="text-4xl font-bold text-white mb-4 tracking-tight whitespace-pre-line">
@@ -63,6 +70,7 @@ const AuthLayout = ({
   title,
   description,
   icon,
+  logo,
   stats,
   isRedirecting,
 }) => {
@@ -72,6 +80,7 @@ const AuthLayout = ({
         title={title}
         description={description}
         icon={icon}
+        logo={logo}
         stats={stats}
       />
 

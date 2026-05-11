@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   Eye,
   EyeOff,
-  Terminal,
   ArrowRight,
 } from "lucide-react";
 
@@ -253,7 +252,7 @@ function LoginForm() {
     <AuthLayout
       title={"Advanced POS\nManagement System"}
       description="Secure, real-time access to your industrial operations, inventory management, and financial reporting."
-      icon={Terminal}
+      logo="/logo.png"
       stats={[
         { value: "99.9%", label: "System Uptime" },
         { value: "Secure", label: "End-to-End Encrypted", highlight: true },
