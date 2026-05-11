@@ -90,7 +90,15 @@ export function useSettings() {
                 },
                 body: formData
             });
-            const result = await response.json();
+            const contentType = response.headers.get("content-type");
+            let result;
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                result = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(text || `Server returned ${response.status}`);
+            }
+
             if (result.status === 'success') {
                 mutate(`${process.env.NEXT_PUBLIC_API_BASE_URL}/settings/business`);
                 mutate(`${process.env.NEXT_PUBLIC_API_BASE_URL}/settings/global`);
