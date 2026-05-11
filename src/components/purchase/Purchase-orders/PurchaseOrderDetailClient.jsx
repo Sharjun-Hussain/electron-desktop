@@ -359,7 +359,7 @@ export default function PurchaseOrderView() {
       if (response.ok) {
         toast.success("Attachments uploaded successfully");
         // Refresh data
-        const updated = await fetchPO(params.poid, session.accessToken);
+        const updated = await fetchPO(poid, session.accessToken);
         setPoData(updated);
       } else {
         const err = await response.json();

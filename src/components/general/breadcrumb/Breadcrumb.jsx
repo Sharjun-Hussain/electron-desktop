@@ -150,9 +150,18 @@ export function SystemBreadcrumb() {
               size="sm"
               onClick={() => {
                 const segments = pathname.split("/").filter((segment) => segment !== "" && segment !== "pos");
-                if (segments.length > 1) {
-                  segments.pop();
-                  router.push("/" + segments.join("/"));
+                
+                // If we're on a sub-page (like /view, /edit, /create), go back to the parent list
+                if (segments.length > 2 && ["view", "edit", "create", "details"].includes(segments[segments.length - 1])) {
+                   segments.pop();
+                   router.push("/" + segments.join("/"));
+                   return;
+                }
+
+                // If we're on a list page or at the top level, go back to the previous history item if possible, 
+                // or fall back to dashboard.
+                if (window.history.length > 1) {
+                  router.back();
                 } else {
                   router.push("/");
                 }
