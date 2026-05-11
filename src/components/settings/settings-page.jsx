@@ -150,7 +150,7 @@ export function SettingsPage() {
         <div className="p-4 mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 dark:text-slate-500 px-1">
             <span>Inzeedo POS</span>
-            <span className="tabular-nums opacity-60">v1.2.0</span>
+            <span className="tabular-nums opacity-60">v1.2.1</span>
           </div>
         </div>
       </aside>

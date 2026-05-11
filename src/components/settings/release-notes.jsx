@@ -18,6 +18,97 @@ import { Badge } from "@/components/ui/badge";
 export function ReleaseNotes() {
   const releases = [
     {
+      version: "1.2.1",
+      date: "May 11, 2026",
+      title: "Data Maintenance & Structural Snapshots",
+      type: "Patch",
+      changes: [
+        {
+          category: "System Maintenance",
+          icon: Zap,
+          items: [
+            "Resolved SQL snapshot generation failure by implementing automated directory initialization and path sanitization.",
+            "Hardened shell command execution for database backups with secure credential quoting and enhanced diagnostics.",
+            "Improved database restoration reliability for large-scale structural snapshots."
+          ]
+        }
+      ]
+    },
+    {
+      version: "1.2.0",
+      date: "May 11, 2026",
+      title: "Major Milestone: Multi-Window Ecosystem",
+      type: "Major Update",
+      changes: [
+        {
+          category: "Navigation Architecture",
+          icon: Rocket,
+          items: [
+            "Implemented Full Multi-Window Support with native 'Open in New Window' context menu functionality.",
+            "Engineered root-based window initialization with client-side route hydration to ensure asset integrity across deep links.",
+            "Synchronized authentication state across all independent windows via shared persistent partitions."
+          ]
+        },
+        {
+          category: "UX & Stability",
+          icon: CheckCircle2,
+          items: [
+            "Refactored back-button logic with hierarchical module awareness to prevent application crashes during deep navigation.",
+            "Standardized native desktop context menu actions (Copy/Paste/Cut/Select All)."
+          ]
+        }
+      ]
+    },
+    {
+      version: "1.1.9",
+      date: "May 11, 2026",
+      title: "Multi-Window Asset Integrity",
+      type: "Patch",
+      changes: [
+        {
+          category: "Stability Fixes",
+          icon: Zap,
+          items: [
+            "Resolved 'Broken Window' issue by implementing root-based initialization with auth-gated internal redirects.",
+            "Fixed relative path resolutions for JS/CSS in new windows within static production environments."
+          ]
+        }
+      ]
+    },
+    {
+      version: "1.1.8",
+      date: "May 11, 2026",
+      title: "Desktop Multitasking",
+      type: "Patch",
+      changes: [
+        {
+          category: "Performance & Features",
+          icon: Rocket,
+          items: [
+            "Implemented native context-menu 'Open in New Window' for enhanced multi-tasking across all application modules.",
+            "Optimized multi-window session persistence using dedicated partitions for real-time authentication state sharing."
+          ]
+        }
+      ]
+    },
+    {
+      version: "1.1.7",
+      date: "May 11, 2026",
+      title: "Navigation Stability & Data Integrity",
+      type: "Patch",
+      changes: [
+        {
+          category: "Bug Fixes",
+          icon: Zap,
+          items: [
+            "Resolved application crashes during 'Back' button navigation by implementing hierarchical route parsing.",
+            "Fixed critical JavaScript exceptions (ReferenceError) in Purchase Order detail views during attachment management.",
+            "Verified and standardized Main/Sub Category Sales reports with audited revenue share calculations."
+          ]
+        }
+      ]
+    },
+    {
       version: "1.1.5",
       date: "May 10, 2026",
       title: "Settings Standardization & UI Parity",
@@ -166,7 +257,7 @@ export function ReleaseNotes() {
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
           <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.1.5</span>
+          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.2.1</span>
         </div>
       </div>
 
@@ -226,7 +317,7 @@ export function ReleaseNotes() {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-900 dark:text-white leading-none">System Engine Specification</p>
-            <p className="text-[10px] text-slate-500 mt-1">Core build 1.1.5.83152 (Stable)</p>
+            <p className="text-[10px] text-slate-500 mt-1">Core build 1.2.1.0511 (Stable)</p>
           </div>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
