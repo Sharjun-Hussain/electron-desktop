@@ -565,8 +565,8 @@ function ReportsContent({ isNested }) {
                         className={cn(
                           "text-[10px] px-2 py-0.5 rounded-md font-semibold",
                           isActive 
-                            ? "bg-white/20 text-white border-none" 
-                            : "bg-muted text-muted-foreground border-none group-hover:bg-emerald-600/10 group-hover:text-emerald-600"
+                            ? "bg-primary/20 text-foreground border-none" 
+                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-none"
                         )}
                       >
                         {originalCount}
@@ -594,7 +594,7 @@ function ReportsContent({ isNested }) {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-600 transition-colors" />
               <Input
                 placeholder="Search report library..."
-                className="h-10 pl-11 bg-white border-border focus:bg-white shadow-sm rounded-lg font-medium text-sm transition-all focus-visible:ring-1 focus-visible:ring-emerald-500 placeholder:text-muted-foreground/60"
+                className="h-10 pl-11 bg-muted/10 border-border focus:bg-card shadow-sm rounded-lg font-medium text-sm transition-all focus-visible:ring-1 focus-visible:ring-emerald-500 placeholder:text-muted-foreground/60"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

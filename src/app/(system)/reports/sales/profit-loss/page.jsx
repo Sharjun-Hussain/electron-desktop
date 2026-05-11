@@ -157,11 +157,11 @@ export default function ProfitLossReportPage() {
 
   const MetricItem = ({ label, value, color, tooltip, icon: Icon, isBold = false }) => (
     <div className={cn(
-      "flex items-center justify-between py-4 border-b border-gray-100 last:border-0 group transition-all px-3 rounded-md hover:bg-gray-50",
-      isBold && "bg-gray-50 my-2 py-5 border-none"
+      "flex items-center justify-between py-4 border-b border-border last:border-0 group transition-all px-3 rounded-md hover:bg-muted/50",
+      isBold && "bg-muted/50 my-2 py-5 border-none"
     )}>
       <div className="flex items-center gap-4">
-        <div className={cn("p-2.5 rounded-md shrink-0", color.replace('bg-', 'bg-').replace('-500', '-50'), color.replace('bg-', 'text-'))}>
+        <div className={cn("p-2.5 rounded-md shrink-0", color.replace('bg-', 'bg-') + "/[0.15]", color.replace('bg-', 'text-'))}>
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex flex-col gap-0.5">
@@ -172,7 +172,7 @@ export default function ProfitLossReportPage() {
                 <TooltipTrigger asChild>
                   <div className="cursor-help"><Info className="h-3.5 w-3.5 text-muted-foreground opacity-60" /></div>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-[240px] text-xs font-semibold leading-relaxed p-3 rounded-lg border-gray-200 shadow-xl" side="right">
+                <TooltipContent className="max-w-[240px] text-xs font-semibold leading-relaxed p-3 rounded-lg border-border bg-card shadow-xl text-foreground" side="right">
                   {tooltip}
                 </TooltipContent>
               </Tooltip>
@@ -273,9 +273,9 @@ export default function ProfitLossReportPage() {
         </div>
 
         {/* Embedded Filters and Dashboards Wrapper */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Main Filters Top Header Bar */}
-          <div className="bg-white border-b border-gray-100 p-4">
+          <div className="bg-card border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
 
               <div className="w-full space-y-1.5">
@@ -284,14 +284,14 @@ export default function ProfitLossReportPage() {
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-500/5 hover:border-emerald-500/20 p-2">
                       <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                       <span className="truncate">
                         {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select horizon</span>}
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                  <PopoverContent className="w-auto p-0 rounded-md border-border bg-card shadow-xl" align="start">
                     <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                   </PopoverContent>
                 </Popover>
@@ -303,12 +303,12 @@ export default function ProfitLossReportPage() {
                 </label>
                 <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                    <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-500/5 hover:border-emerald-500/20 p-2">
                       <span className="truncate">{branchId === "all" ? "Whole Organization" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                  <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border bg-card" align="start">
                     <Command>
                       <CommandInput placeholder="Search administrative units..." className="h-9" />
                       <CommandList>
@@ -332,23 +332,23 @@ export default function ProfitLossReportPage() {
               </div>
 
               <div className="flex justify-start">
-                <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm" disabled={isLoading}>
+                <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-border hover:border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm" disabled={isLoading}>
                   <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                 </Button>
               </div>
             </div>
           </div>
 
-          <CardContent className="p-6 bg-gray-50/50">
+          <CardContent className="p-6 bg-muted/20">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
               {/* Financial Recapitulation Statement */}
               <div className="lg:col-span-7 space-y-6">
-                <Card className="border border-gray-200 shadow-sm bg-white rounded-lg overflow-hidden h-full">
-                  <CardHeader className="pb-4 border-b border-gray-100 bg-gray-50/50">
+                <Card className="border border-border shadow-sm bg-card rounded-lg overflow-hidden h-full">
+                  <CardHeader className="pb-4 border-b border-border bg-muted/30">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-md bg-emerald-100 flex items-center justify-center text-emerald-600">
+                        <div className="size-8 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                           <Activity className="size-4" />
                         </div>
                         <div>
@@ -359,7 +359,7 @@ export default function ProfitLossReportPage() {
                       {!isLoading && (
                         <Badge variant="outline" className={cn(
                           "px-2 py-1 text-[10px] font-semibold border-none shadow-none rounded-md",
-                          (data?.netProfit || 0) >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                          (data?.netProfit || 0) >= 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"
                         )}>
                           {(data?.netProfit || 0) >= 0 ? 'Surplus Equilibrium' : 'Fiscal Deficit Warning'}
                         </Badge>
@@ -369,7 +369,7 @@ export default function ProfitLossReportPage() {
                   <CardContent className="p-6">
                     {isLoading ? (
                       <div className="space-y-4">
-                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-14 w-full rounded-md bg-gray-100 opacity-40" />)}
+                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-14 w-full rounded-md bg-muted opacity-40" />)}
                       </div>
                     ) : (
                       <div className="space-y-1">
@@ -405,7 +405,7 @@ export default function ProfitLossReportPage() {
                           tooltip="Combined secondary costs including human capital, utilities, rent, and miscellaneous administrative outlays."
                         />
 
-                        <div className="mt-8 pt-6 border-t border-gray-100">
+                        <div className="mt-8 pt-6 border-t border-border">
                           <div className="flex justify-between items-end mb-2 px-1">
                             <div>
                               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1 italic">Fiscal Efficiency Index</p>
@@ -414,13 +414,13 @@ export default function ProfitLossReportPage() {
                             <div className="text-right">
                               <span className={cn(
                                 "text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm border",
-                                (data?.margin || 0) > 15 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
+                                (data?.margin || 0) > 15 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                               )}>
                                 {(data?.margin || 0) > 15 ? 'High Capital Efficiency' : 'Resource Optimization Required'}
                               </span>
                             </div>
                           </div>
-                          <Progress value={Math.max(0, Math.min(100, data?.margin || 0))} className="h-2 rounded-full bg-gray-100 [&>div]:bg-emerald-500" />
+                          <Progress value={Math.max(0, Math.min(100, data?.margin || 0))} className="h-2 rounded-full bg-muted [&>div]:bg-emerald-500" />
                         </div>
                       </div>
                     )}
@@ -430,10 +430,10 @@ export default function ProfitLossReportPage() {
 
               {/* Visual Fiscal Distribution */}
               <div className="lg:col-span-5 space-y-6">
-                <Card className="border border-gray-200 shadow-sm bg-white rounded-lg overflow-hidden flex flex-col min-h-[420px]">
-                  <CardHeader className="pb-4 border-b border-gray-100 bg-gray-50/50">
+                <Card className="border border-border shadow-sm bg-card rounded-lg overflow-hidden flex flex-col min-h-[420px]">
+                  <CardHeader className="pb-4 border-b border-border bg-muted/30">
                     <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-md bg-indigo-50 flex items-center justify-center text-indigo-600">
+                      <div className="size-8 rounded-md bg-indigo-500/10 flex items-center justify-center text-indigo-600">
                         <PieChartIcon className="size-4" />
                       </div>
                       <div>
@@ -445,7 +445,7 @@ export default function ProfitLossReportPage() {
                   <CardContent className="p-6 flex-1 flex flex-col justify-center">
                     {isLoading ? (
                       <div className="flex flex-col items-center gap-4">
-                        <Skeleton className="h-64 w-64 rounded-full bg-gray-100 opacity-40 animate-pulse" />
+                        <Skeleton className="h-64 w-64 rounded-full bg-muted opacity-40 animate-pulse" />
                       </div>
                     ) : chartData.length > 0 ? (
                       <div className="w-full flex flex-col items-center">
@@ -466,14 +466,14 @@ export default function ProfitLossReportPage() {
                             </Pie>
                             <RechartsTooltip
                               contentStyle={{
-                                backgroundColor: 'white',
+                                backgroundColor: 'hsl(var(--card))',
                                 borderRadius: '8px',
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid hsl(var(--border))',
                                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                                 fontSize: '12px',
                                 fontWeight: '600',
+                                color: 'hsl(var(--foreground))'
                               }}
-                              labelStyle={{ color: '#000', marginBottom: '4px' }}
                               itemStyle={{ padding: '2px 0' }}
                               formatter={(value) => formatCurrency(value)}
                             />
@@ -500,10 +500,10 @@ export default function ProfitLossReportPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+                <Card className="border shadow-none bg-emerald-500/5 border-emerald-500/10 rounded-lg overflow-hidden">
                   <CardContent className="p-6">
                     <div className="flex gap-4">
-                      <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
+                      <div className="p-2.5 rounded-md bg-emerald-500/10 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
                         <Info className="h-5 w-5" />
                       </div>
                       <div>

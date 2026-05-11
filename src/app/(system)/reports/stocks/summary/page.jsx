@@ -6,9 +6,5 @@ const page = () => {
   return <StockSummaryReportPage />;
 };
 
-export default page;
 
-export const metadata = {
-  title: "Stock Report | Current Stock Summary | Inzeedo POS  ",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
-};
+export default page;

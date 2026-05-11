@@ -60,7 +60,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -69,7 +69,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +87,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -96,7 +96,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -126,7 +126,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -141,7 +141,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -150,7 +150,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -292,7 +292,7 @@ export default function EmployeePerformancePage() {
               variant="outline"
               size="icon"
               onClick={() => fetchData(1)}
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9"
+              className="border-border hover:border-emerald-500/20 hover:bg-muted/50 text-emerald-600 h-9 w-9 bg-transparent"
               disabled={isLoading}
             >
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
@@ -326,9 +326,9 @@ export default function EmployeePerformancePage() {
         </div>
 
         {/* Dynamic Leaderboard Card */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Main Filters inside Table Top */}
-          <div className="bg-white border-b border-gray-100 p-4">
+          <div className="bg-card border-b border-border p-4">
             <div className="flex items-end max-w-xs">
               <div className="w-full space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -336,14 +336,14 @@ export default function EmployeePerformancePage() {
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-muted/50 hover:border-emerald-500/20 p-2 bg-transparent">
                       <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                       <span className="truncate">
                         {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select horizon</span>}
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                  <PopoverContent className="w-auto p-0 rounded-md border-border bg-card shadow-xl" align="start">
                     <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                   </PopoverContent>
                 </Popover>
@@ -360,8 +360,8 @@ export default function EmployeePerformancePage() {
               </div>
             ) : (
               <Table>
-                <TableHeader className="bg-gray-50">
-                  <TableRow className="border-gray-100 hover:bg-transparent">
+                <TableHeader className="bg-muted/50">
+                  <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="w-[80px] pl-6 py-4 text-xs font-semibold text-muted-foreground">Position</TableHead>
                     <TableHead className="py-4 text-xs font-semibold text-muted-foreground">Authorized Personnel</TableHead>
                     <TableHead className="text-right py-4 text-xs font-semibold text-muted-foreground">Sales Velocity</TableHead>
@@ -373,24 +373,24 @@ export default function EmployeePerformancePage() {
                 <TableBody>
                   {isLoading ? (
                     Array.from({ length: pageSize }).map((_, i) => (
-                      <TableRow key={i} className="border-b border-gray-100">
-                        <TableCell className="pl-6"><Skeleton className="h-7 w-7 rounded-md bg-gray-100" /></TableCell>
-                        <TableCell><div className="flex items-center gap-3"><Skeleton className="h-9 w-9 rounded-md bg-gray-100" /><div><Skeleton className="h-4 w-32 mb-1.5 bg-gray-50" /><Skeleton className="h-3 w-40 bg-gray-50" /></div></div></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto rounded bg-gray-50" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto rounded bg-gray-100" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto rounded bg-gray-50" /></TableCell>
-                        <TableCell className="text-right pr-6"><Skeleton className="h-6 w-28 ml-auto rounded-md bg-gray-100" /></TableCell>
+                      <TableRow key={i} className="border-b border-border">
+                        <TableCell className="pl-6"><Skeleton className="h-7 w-7 rounded-md bg-muted" /></TableCell>
+                        <TableCell><div className="flex items-center gap-3"><Skeleton className="h-9 w-9 rounded-md bg-muted" /><div><Skeleton className="h-4 w-32 mb-1.5 bg-muted/50" /><Skeleton className="h-3 w-40 bg-muted/50" /></div></div></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto rounded bg-muted/50" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-5 w-12 ml-auto rounded bg-muted" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto rounded bg-muted/50" /></TableCell>
+                        <TableCell className="text-right pr-6"><Skeleton className="h-6 w-28 ml-auto rounded-md bg-muted" /></TableCell>
                       </TableRow>
                     ))
                   ) : data.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="py-24 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-3">
-                          <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
+                          <div className="size-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground/30">
                             <Trophy className="size-8" />
                           </div>
                           <h4 className="font-bold text-foreground uppercase tracking-tight">Zero personnel movement</h4>
-                          <p className="text-sm font-medium italic">Adjust reporting horizon to expand visibility</p>
+                          <p className="text-sm font-medium italic text-muted-foreground">Adjust reporting horizon to expand visibility</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -398,23 +398,23 @@ export default function EmployeePerformancePage() {
                     data.map((emp, index) => {
                       const rank = (pagination.page - 1) * pageSize + index + 1;
                       return (
-                        <TableRow key={emp.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                        <TableRow key={emp.id} className="hover:bg-muted/30 transition-colors border-b border-border group">
                           <TableCell className="pl-6 py-3.5">
                             <div className={cn(
                               "flex items-center justify-center w-7 h-7 rounded border font-semibold text-[11px] transition-transform group-hover:scale-105",
-                              rank === 1 ? "bg-amber-100 border-amber-200 text-amber-700" :
-                                rank === 2 ? "bg-gray-200 border-gray-300 text-gray-700" :
-                                  rank === 3 ? "bg-orange-100 border-orange-200 text-orange-700" :
-                                    "bg-gray-50 border-gray-100 text-muted-foreground"
+                              rank === 1 ? "bg-amber-500/10 border-amber-500/20 text-amber-600" :
+                                rank === 2 ? "bg-slate-500/10 border-slate-500/20 text-slate-600" :
+                                  rank === 3 ? "bg-orange-500/10 border-orange-500/20 text-orange-600" :
+                                    "bg-muted border-border text-muted-foreground"
                             )}>
                               #{rank}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9 rounded-md border border-gray-200 shadow-sm group-hover:border-emerald-300 transition-colors">
+                              <Avatar className="h-9 w-9 rounded-md border border-border shadow-sm group-hover:border-emerald-500/30 transition-colors">
                                 <AvatarImage src={emp.profile_image} />
-                                <AvatarFallback className="bg-emerald-50 text-emerald-600 font-bold text-xs rounded-md">
+                                <AvatarFallback className="bg-emerald-500/10 text-emerald-600 font-bold text-xs rounded-md">
                                   {emp.name?.substring(0, 2).toUpperCase() || 'EMP'}
                                 </AvatarFallback>
                               </Avatar>
