@@ -34,7 +34,7 @@ import {
   ShoppingBag,
   BarChart3
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -242,7 +242,7 @@ export default function InventoryInsights() {
                   tickFormatter={(val) => `Rs.${(val / 1000).toFixed(0)}k`}
                 />
                 <Tooltip
-                  cursor={{ fill: '#f8fafc' }}
+                  cursor={false}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
                   formatter={(val) => [formatCurrency(val), 'Value']}
                 />
@@ -254,7 +254,7 @@ export default function InventoryInsights() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid grid-cols-4 gap-4 mt-8 pt-8 border-t border-gray-50 dark:border-slate-800">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t border-gray-50 dark:border-slate-800">
             {agingData.map((d, i) => (
               <div key={d.name} className="flex flex-col gap-1">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
@@ -280,7 +280,7 @@ export default function InventoryInsights() {
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Last 30 Days</span>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-x-auto">
             <Table>
               <TableHeader className="bg-gray-50/50 dark:bg-slate-800/30 rounded-xl overflow-hidden">
                 <TableRow className="border-none font-sans">
@@ -299,7 +299,17 @@ export default function InventoryInsights() {
                   <TableRow key={i} className="border-gray-50 dark:border-slate-800 hover:bg-gray-50/50 dark:hover:bg-slate-800/20 group h-14">
                     <TableCell className="px-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 flex items-center justify-center text-[10px] font-bold">{i + 1}</div>
+                        {p.image ? (
+                          <img
+                            src={getImageUrl(p.image)}
+                            alt={p.name}
+                            className="size-8 rounded-lg object-cover bg-gray-50 border border-gray-100 shadow-xs"
+                          />
+                        ) : (
+                          <div className="size-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 flex items-center justify-center text-[10px] font-bold">
+                            {i + 1}
+                          </div>
+                        )}
                         <span className="text-[13px] font-bold text-slate-900 dark:text-white tracking-tight">{p.name}</span>
                       </div>
                     </TableCell>
