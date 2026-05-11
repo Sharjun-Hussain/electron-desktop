@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import {
   Printer,
@@ -187,16 +187,16 @@ export default function NonStockSalesPage() {
     to: endOfMonth(new Date()),
   });
   const [data, setData] = useState([]);
-  const [summary, setSummary] = useState({ 
-    totalItems: 0, 
-    grandTotalRevenue: 0 
+  const [summary, setSummary] = useState({
+    totalItems: 0,
+    grandTotalRevenue: 0
   });
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
-  
+
   const [branchId, setBranchId] = useState("all");
   const [branches, setBranches] = useState([]);
   const [isBranchOpen, setIsBranchOpen] = useState(false);
@@ -217,16 +217,16 @@ export default function NonStockSalesPage() {
           headers: { Authorization: `Bearer ${session.accessToken}` }
         })
       ]);
-      
+
       const branchResult = await branchRes.json();
       const productResult = await productRes.json();
-      
+
       if (branchResult.status === 'success') setBranches(branchResult.data);
       if (productResult.status === 'success') {
         const nonStockProducts = productResult.data.filter(p => !p.is_stock_managed);
         setProducts(nonStockProducts);
       }
-      
+
     } catch (err) {
       console.error("Failed to fetch metadata", err);
     }
@@ -238,7 +238,7 @@ export default function NonStockSalesPage() {
 
   const fetchData = useCallback(async () => {
     if (!session?.accessToken) return;
-    
+
     setIsLoading(true);
     try {
       const queryParams = new URLSearchParams({
@@ -264,8 +264,8 @@ export default function NonStockSalesPage() {
           grandTotalRevenue: result.data.pagination?.grandTotalRevenue || 0
         });
         setPagination({
-            total: result.data.pagination?.total || 0,
-            totalPages: result.data.pagination?.totalPages || 1
+          total: result.data.pagination?.total || 0,
+          totalPages: result.data.pagination?.totalPages || 1
         });
       } else {
         toast.error(result.message || "Failed to fetch non-stock sales data");
@@ -282,7 +282,7 @@ export default function NonStockSalesPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        fetchData();
+      fetchData();
     }, 300);
     return () => clearTimeout(timer);
   }, [fetchData]);
@@ -328,7 +328,7 @@ export default function NonStockSalesPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
-      
+
       <div className="flex flex-col gap-6 max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -343,8 +343,8 @@ export default function NonStockSalesPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <DataActions 
-              data={exportData} 
+            <DataActions
+              data={exportData}
               fileName="Service_NonStock_Analysis_Report"
               onPrint={() => window.print()}
               showPrint={true}
@@ -382,92 +382,92 @@ export default function NonStockSalesPage() {
           {/* Main Filters Top Header Bar */}
           <div className="bg-card border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
-              
+
               <div className="w-full space-y-1.5 lg:col-span-2">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <CalendarDays className="size-3.5 text-emerald-600" /> Analysis Horizon
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
-                        <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
-                        <span className="truncate">
-                          {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select period</span>}
-                        </span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
-                      <Calendar mode="range" selected={date} onSelect={(d) => {setDate(d); setCurrentPage(1);}} numberOfMonths={2} />
-                    </PopoverContent>
-                  </Popover>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <CalendarDays className="size-3.5 text-emerald-600" /> Analysis Horizon
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
+                      <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
+                      <span className="truncate">
+                        {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select period</span>}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
+                    <Calendar mode="range" selected={date} onSelect={(d) => { setDate(d); setCurrentPage(1); }} numberOfMonths={2} />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="w-full space-y-1.5 lg:col-span-1">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <Store className="size-3.5 text-emerald-600" /> Store Facility
-                  </label>
-                  <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
-                        <span className="truncate">{branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search locations..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No location found.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem onSelect={() => {setBranchId("all"); setCurrentPage(1); setIsBranchOpen(false)}} className="cursor-pointer">
-                              <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branchId === "all" ? "opacity-100" : "opacity-0")} />
-                              All Locations
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Store className="size-3.5 text-emerald-600" /> Store Facility
+                </label>
+                <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
+                      <span className="truncate">{branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search locations..." className="h-9" />
+                      <CommandList>
+                        <CommandEmpty>No location found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem onSelect={() => { setBranchId("all"); setCurrentPage(1); setIsBranchOpen(false) }} className="cursor-pointer">
+                            <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branchId === "all" ? "opacity-100" : "opacity-0")} />
+                            All Locations
+                          </CommandItem>
+                          {branches.map((b) => (
+                            <CommandItem key={b.id} onSelect={() => { setBranchId(b.id); setCurrentPage(1); setIsBranchOpen(false) }} className="cursor-pointer">
+                              <Check className={cn("mr-2 h-4 w-4 text-emerald-600", String(branchId) === String(b.id) ? "opacity-100" : "opacity-0")} />
+                              {b.name}
                             </CommandItem>
-                            {branches.map((b) => (
-                              <CommandItem key={b.id} onSelect={() => {setBranchId(b.id); setCurrentPage(1); setIsBranchOpen(false)}} className="cursor-pointer">
-                                <Check className={cn("mr-2 h-4 w-4 text-emerald-600", String(branchId) === String(b.id) ? "opacity-100" : "opacity-0")} />
-                                {b.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="w-full space-y-1.5 lg:col-span-1">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <Box className="size-3.5 text-emerald-600" /> Service Filter
-                  </label>
-                  <Popover open={isProductOpen} onOpenChange={setIsProductOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
-                        <span className="truncate">{productId === "all" ? "All Non-Stock Logic" : products.find((p) => String(p.id) === String(productId))?.name}</span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search service items..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No service identified.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem onSelect={() => {setProductId("all"); setCurrentPage(1); setIsProductOpen(false)}} className="cursor-pointer">
-                              <Check className={cn("mr-2 h-4 w-4 text-emerald-600", productId === "all" ? "opacity-100" : "opacity-0")} />
-                              All Non-Stock Logic
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Box className="size-3.5 text-emerald-600" /> Service Filter
+                </label>
+                <Popover open={isProductOpen} onOpenChange={setIsProductOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
+                      <span className="truncate">{productId === "all" ? "All Non-Stock Logic" : products.find((p) => String(p.id) === String(productId))?.name}</span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search service items..." className="h-9" />
+                      <CommandList>
+                        <CommandEmpty>No service identified.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem onSelect={() => { setProductId("all"); setCurrentPage(1); setIsProductOpen(false) }} className="cursor-pointer">
+                            <Check className={cn("mr-2 h-4 w-4 text-emerald-600", productId === "all" ? "opacity-100" : "opacity-0")} />
+                            All Non-Stock Logic
+                          </CommandItem>
+                          {products.map((p) => (
+                            <CommandItem key={p.id} onSelect={() => { setProductId(p.id); setCurrentPage(1); setIsProductOpen(false) }} className="cursor-pointer">
+                              <Check className={cn("mr-2 h-4 w-4 text-emerald-600", String(productId) === String(p.id) ? "opacity-100" : "opacity-0")} />
+                              {p.name}
                             </CommandItem>
-                            {products.map((p) => (
-                              <CommandItem key={p.id} onSelect={() => {setProductId(p.id); setCurrentPage(1); setIsProductOpen(false)}} className="cursor-pointer">
-                                <Check className={cn("mr-2 h-4 w-4 text-emerald-600", String(productId) === String(p.id) ? "opacity-100" : "opacity-0")} />
-                                {p.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="flex justify-start lg:col-span-1">
@@ -511,31 +511,31 @@ export default function NonStockSalesPage() {
                   data.map((item, index) => (
                     <TableRow key={index} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
-                         <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-semibold text-foreground tracking-tight">{item.sale?.invoice_number}</span>
-                            <span className="text-xs font-medium text-muted-foreground lowercase leading-none">{formatDate(item.sale?.created_at)}</span>
-                         </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold text-foreground tracking-tight">{item.sale?.invoice_number}</span>
+                          <span className="text-xs font-medium text-muted-foreground lowercase leading-none">{formatDate(item.sale?.created_at)}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
-                         <div className="flex items-center gap-3.5">
-                            <div className="p-1.5 rounded-md border border-gray-200 group-hover:bg-emerald-50 group-hover:border-emerald-200 transition-all text-muted-foreground group-hover:text-emerald-600">
-                               <PackageOpen className="size-4" />
-                            </div>
-                            <div className="flex flex-col">
-                               <span className="text-sm font-medium text-foreground tracking-tight leading-none">{item.product?.name}</span>
-                               <span className="text-xs font-medium font-mono text-muted-foreground tracking-tight mt-1">{item.product?.code}</span>
-                            </div>
-                         </div>
+                        <div className="flex items-center gap-3.5">
+                          <div className="p-1.5 rounded-md border border-gray-200 group-hover:bg-emerald-50 group-hover:border-emerald-200 transition-all text-muted-foreground group-hover:text-emerald-600">
+                            <PackageOpen className="size-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-foreground tracking-tight leading-none">{item.product?.name}</span>
+                            <span className="text-xs font-medium font-mono text-muted-foreground tracking-tight mt-1">{item.product?.code}</span>
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
-                         <Badge variant="outline" className="bg-white border-gray-200 text-muted-foreground font-semibold text-[10px] px-2.5 py-0.5 rounded-md shadow-sm tabular-nums">
-                            {parseFloat(item.quantity || 0).toFixed(0)}
-                         </Badge>
+                        <Badge variant="outline" className="bg-white border-gray-200 text-muted-foreground font-semibold text-[10px] px-2.5 py-0.5 rounded-md shadow-sm tabular-nums">
+                          {parseFloat(item.quantity || 0).toFixed(0)}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right pr-6">
-                         <span className="text-sm font-semibold text-foreground tabular-nums tracking-tight">
-                            {formatCurrency(item.total_amount || 0)}
-                         </span>
+                        <span className="text-sm font-semibold text-foreground tabular-nums tracking-tight">
+                          {formatCurrency(item.total_amount || 0)}
+                        </span>
                       </TableCell>
                     </TableRow>
                   ))
@@ -543,7 +543,7 @@ export default function NonStockSalesPage() {
               </TableBody>
             </Table>
           </div>
-          
+
           <PaginationControls
             currentPage={currentPage - 1}
             totalPages={pagination.totalPages || 0}
@@ -559,17 +559,17 @@ export default function NonStockSalesPage() {
         {/* Audited Disclosure Bottom Card */}
         <Card className="border shadow-none bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20 rounded-lg overflow-hidden">
           <CardContent className="p-6">
-             <div className="flex gap-4">
-                <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
-                   <Info className="h-5 w-5" />
-                </div>
-                <div>
-                   <h4 className="font-semibold text-emerald-800 text-[11px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5 leading-none italic"><Activity className="size-3" /> Service Performance Intelligence</h4>
-                   <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
-                      Monitoring revenue attribution from non-stock logic units like labor, structural consulting, or digital recognitions helps isolate high-margin structural utility from core product turnover metrics.
-                   </p>
-                </div>
-             </div>
+            <div className="flex gap-4">
+              <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-emerald-800 text-[11px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5 leading-none italic"><Activity className="size-3" /> Service Performance Intelligence</h4>
+                <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
+                  Monitoring revenue attribution from non-stock logic units like labor, structural consulting, or digital recognitions helps isolate high-margin structural utility from core product turnover metrics.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
