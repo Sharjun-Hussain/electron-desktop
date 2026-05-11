@@ -87,7 +87,7 @@ export function AddCustomerSheet({ open, onOpenChange, onAdd }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[540px] p-0 flex flex-col h-full border-l border-border/50">
-        <SheetHeader className="px-8 py-6 border-b border-border bg-background shrink-0">
+        <SheetHeader className="px-8 py-6 shrink-0 border-none">
           <div className="flex items-center gap-3 mb-1">
             <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md">
               <UserPlus className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -97,17 +97,17 @@ export function AddCustomerSheet({ open, onOpenChange, onAdd }) {
             </SheetTitle>
           </div>
           <SheetDescription className="text-sm text-muted-foreground">
-            Register a new client relationship in the registry.
+            Create a new profile for your customer.
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 min-h-0 bg-card">
+        <ScrollArea className="flex-1 min-h-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-8 space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="p-8 pt-0 space-y-8">
               <div className="space-y-6">
                 <div className="flex items-center gap-2 pb-2 border-b border-border">
                   <User className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="text-sm font-bold text-foreground">Core Identity</h3>
+                  <h3 className="text-sm font-bold text-foreground">Customer Details</h3>
                 </div>
 
                 <FormField
@@ -178,7 +178,7 @@ export function AddCustomerSheet({ open, onOpenChange, onAdd }) {
 
                 <div className="flex items-center gap-2 pt-4 pb-2 border-b border-border">
                   <MapPin className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="text-sm font-bold text-foreground">Geographical Anchor</h3>
+                  <h3 className="text-sm font-bold text-foreground">Address & Location</h3>
                 </div>
 
                 <FormField
@@ -198,40 +198,40 @@ export function AddCustomerSheet({ open, onOpenChange, onAdd }) {
                     </FormItem>
                   )}
                 />
+
+                <div className="pt-4 flex flex-col gap-3">
+                  <Button
+                    className="w-full h-11 font-bold shadow-sm text-sm"
+                    disabled={isSubmitting}
+                    type="submit"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Registering...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Register Customer
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    className="w-full h-11 font-bold border-dashed border-2"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                  </Button>
+                </div>
               </div>
             </form>
           </Form>
         </ScrollArea>
-
-        <SheetFooter className="px-8 py-5 border-t border-border bg-background flex flex-row items-center justify-end gap-3 shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="w-full sm:w-auto font-semibold"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Cancel
-          </Button>
-
-          <Button
-            className="w-full sm:w-auto min-w-[120px] font-semibold shadow-sm"
-            disabled={isSubmitting}
-            onClick={form.handleSubmit(onSubmit)}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Registering...
-              </>
-            ) : (
-              <>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Register Customer
-              </>
-            )}
-          </Button>
-        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
