@@ -31,7 +31,8 @@ import {
   RefreshCw,
   LayoutGrid,
   PieChart as PieIcon,
-  ShoppingBag
+  ShoppingBag,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -131,36 +132,32 @@ export default function InventoryInsights() {
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950 p-4 md:p-8 space-y-8 font-sans transition-all duration-500 max-w-[1600px] mx-auto">
       {/* ── Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-1000 pointer-events-none">
-          <Activity className="size-48" />
-        </div>
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="p-3 bg-emerald-100 dark:bg-emerald-500/20 rounded-2xl shadow-lg shadow-emerald-500/10">
-            <TrendingUp className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card p-6 rounded-xl border border-border shadow-xs relative">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg">
+            <BarChart3 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Stock Reports</h1>
-            <p className="text-sm text-muted-foreground mt-1 font-medium flex items-center gap-2">
-              <Zap className="size-3.5 text-amber-500 fill-amber-500" /> AI-Driven Stock Performance & Turnover Analytics
+            <h1 className="text-xl font-bold text-foreground tracking-tight">Stock Performance Insights</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Analyze inventory valuation, turnover, and performance ROI
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 relative z-10">
           <Select value={branch} onValueChange={setBranch}>
-            <SelectTrigger className="w-[200px] h-10 rounded-xl border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 shadow-none font-bold text-[11px] uppercase tracking-widest gap-2">
-              <MapPin className="size-3.5 text-emerald-500" />
+            <SelectTrigger className="w-[220px] h-10 border-border bg-background shadow-none">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-gray-100 shadow-2xl">
-              <SelectItem value="all" className="text-xs font-bold uppercase tracking-widest">Aggregated View</SelectItem>
+            <SelectContent className="rounded-xl border-border shadow-lg">
+              <SelectItem value="all">Aggregated View</SelectItem>
               {branches.map(b => (
-                <SelectItem key={b.id} value={b.id.toString()} className="text-xs font-bold uppercase tracking-widest">{b.name}</SelectItem>
+                <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={fetchData} className="rounded-xl h-10 w-10 border-gray-100 hover:bg-emerald-50 hover:text-emerald-600">
+          <Button variant="outline" size="icon" onClick={fetchData} className="h-10 w-10 border-border">
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
           </Button>
         </div>
@@ -199,10 +196,10 @@ export default function InventoryInsights() {
           }
         ].map((card, idx) => (
           <div key={idx} className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-gray-100 dark:border-slate-800 shadow-xs flex items-center gap-4 transition-all hover:shadow-md group">
-            <div className={cn("p-3 rounded-lg bg-gradient-to-br text-white shadow-sm ring-4 ring-offset-0 transition-all group-hover:ring-offset-2", 
+            <div className={cn("p-3 rounded-lg bg-gradient-to-br text-white shadow-sm ring-4 ring-offset-0 transition-all group-hover:ring-offset-2",
               idx === 0 ? "from-indigo-600 to-indigo-400 ring-indigo-500/10" :
-              idx === 1 ? "from-emerald-600 to-emerald-400 ring-emerald-500/10" :
-              idx === 2 ? "from-blue-600 to-blue-400 ring-blue-500/10" : "from-amber-600 to-amber-400 ring-amber-500/10"
+                idx === 1 ? "from-emerald-600 to-emerald-400 ring-emerald-500/10" :
+                  idx === 2 ? "from-blue-600 to-blue-400 ring-blue-500/10" : "from-amber-600 to-amber-400 ring-amber-500/10"
             )}>
               <card.icon className="w-5 h-5" />
             </div>
