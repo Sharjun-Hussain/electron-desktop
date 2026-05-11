@@ -135,6 +135,19 @@
     -moz-appearance: textfield;
   }
 
+  ::selection {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: inherit;
+  }
+
+  .dark ::selection {
+    background-color: rgba(0,
+        0,
+        0,
+        0.1);
+    color: #000000 !important;
+  }
+
   /* Ultra-thin & Premium Scrollbars */
   ::-webkit-scrollbar {
     width: 3px;
@@ -231,8 +244,15 @@
   }
 
   @keyframes bounce-subtle {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-3px);
+    }
   }
 
   .animate-bounce-subtle {

@@ -1339,8 +1339,8 @@ export default function CreatePurchaseOrder({ initialData }) {
                           </div>
 
                           {/* 4. Line Total & Actions */}
-                          <div className="col-span-1 md:col-span-2 text-right">
-                            <p className="font-bold text-foreground text-[13px]">
+                          <div className="col-span-1 md:col-span-2 text-right overflow-hidden">
+                            <p className="font-bold text-foreground text-[13px] break-all">
                               {lineTotal}
                             </p>
                           </div>
@@ -1446,20 +1446,20 @@ export default function CreatePurchaseOrder({ initialData }) {
 
               {/* Summary Section (High Density) */}
               <div className="mt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-6 rounded-lg bg-muted/30 border border-border/30 shadow-inner">
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 w-full md:w-auto">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Subtotal (Net)</p>
-                    <p className="text-lg font-bold text-foreground leading-none pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full md:w-auto flex-1 overflow-hidden">
+                  <div className="space-y-1 overflow-hidden">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase truncate">Subtotal (Net)</p>
+                    <p className="text-lg font-bold text-foreground leading-none pt-1 break-all">
                       LKR {subtotal.toLocaleString("en-LK", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Tax (VAT 0%)</p>
-                    <p className="text-lg font-bold text-foreground leading-none pt-1">LKR 0.00</p>
+                  <div className="space-y-1 overflow-hidden">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase truncate">Tax (VAT 0%)</p>
+                    <p className="text-lg font-bold text-foreground leading-none pt-1 break-all">LKR 0.00</p>
                   </div>
-                  <div className="space-y-1 col-span-2 lg:col-span-1">
-                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase">Grand Total Amount</p>
-                    <p className="text-2xl font-black text-foreground leading-none pt-1">
+                  <div className="space-y-1 col-span-1 sm:col-span-2 lg:col-span-1 overflow-hidden">
+                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase truncate">Grand Total Amount</p>
+                    <p className="text-xl md:text-2xl font-black text-foreground leading-tight pt-1 break-all">
                       LKR {total.toLocaleString("en-LK", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
