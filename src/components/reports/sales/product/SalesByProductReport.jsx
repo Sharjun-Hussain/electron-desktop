@@ -66,6 +66,7 @@ import {
 import { SalesByProductPrintTemplate } from "@/components/Template/sales/SalesByProductTemplate";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
+import { DataActions } from "@/components/general/DataActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // ── Pagination — identical to ResourceManagementLayout ──────────────────────
@@ -76,7 +77,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -85,7 +86,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -103,7 +104,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -112,7 +113,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -142,7 +143,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -157,7 +158,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -166,7 +167,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -314,30 +315,20 @@ export default function SalesByProductPage() {
     documentTitle: "Sales_By_Product_Report",
   });
 
-  // --- EXPORT LOGIC ---
-  const handleExportCSV = () => {
-    const exportData = data.map(item => ({
+  const exportData = useMemo(() => {
+    return (data || []).map(item => ({
       "Product Name": item.name,
       "SKU": item.sku,
-      "Qty Sold": item.sold,
-      "Unit Price": item.price,
-      "Total Sales": item.sales,
-      "Total Profit": item.profit
+      "Quantity Sold": item.sold,
+      "Average Unit Price": Number(item.price || 0),
+      "Total Revenue": Number(item.sales || 0),
+      "Total Profit": Number(item.profit || 0),
+      "Operational Unit": store === 'all' ? 'All Branches' : branches.find(b => b.id === store)?.name || store,
+      "Classification": category === 'all' ? 'All Categories' : categories.find(c => c.id === category)?.name || category,
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Horizon": date?.from ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : "Global"
     }));
-    exportToCSV(exportData, "Sales_By_Product_Report");
-  };
-
-  const handleExportExcel = () => {
-    const exportData = data.map(item => ({
-      "Product Name": item.name,
-      "SKU": item.sku,
-      "Qty Sold": item.sold,
-      "Unit Price": item.price,
-      "Total Sales": item.sales,
-      "Total Profit": item.profit
-    }));
-    exportToExcel(exportData, "Sales_By_Product_Report");
-  };
+  }, [data, store, branches, category, categories, session, date]);
 
   const statsCards = [
     {
@@ -407,32 +398,20 @@ export default function SalesByProductPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DataActions 
+              data={exportData} 
+              fileName="Product_Sales_Performance_Report"
+              onPrint={handlePrint}
+              showPrint={true}
+            />
             <Button 
                 variant="outline" 
-                onClick={handlePrint} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                size="icon" 
+                className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 rounded-lg" 
+                onClick={() => fetchData(pagination.page)} 
+                disabled={isLoading}
             >
-              <FileText className="h-4 w-4" /> PDF
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-                onClick={handlePrint} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Printer className="h-4 w-4" /> Print
+              <RefreshCw className={cn("size-3.5", isLoading && "animate-spin")} />
             </Button>
           </div>
         </div>
@@ -464,8 +443,8 @@ export default function SalesByProductPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Performance Visualization */}
-          <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col min-h-[450px]">
-            <CardHeader className="pb-4 border-b border-gray-100 bg-gray-50/50">
+          <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col min-h-[450px] bg-card">
+            <CardHeader className="pb-4 border-b border-border bg-muted/30">
               <div className="flex items-center gap-3">
                  <div className="size-8 rounded-md bg-emerald-100 flex items-center justify-center text-emerald-600">
                     <BarChart3 className="size-4" />
@@ -518,9 +497,9 @@ export default function SalesByProductPage() {
           </Card>
 
           {/* Movement Ledger + Filters embedded */}
-          <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden lg:col-span-2 flex flex-col">
+          <Card className="border border-border shadow-sm rounded-lg overflow-hidden lg:col-span-2 flex flex-col bg-card">
             {/* Filters Bar inside standard Table Layout */}
-            <div className="bg-white border-b border-gray-100 p-4">
+            <div className="bg-card border-b border-border p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                 
                 {/* Time Horizon */}
@@ -530,14 +509,14 @@ export default function SalesByProductPage() {
                     </label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                           <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                           <span className="truncate">
                             {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select horizon</span>}
                           </span>
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                        <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                         <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                       </PopoverContent>
                     </Popover>
@@ -550,12 +529,12 @@ export default function SalesByProductPage() {
                     </label>
                     <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm">
+                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent">
                           <span className="truncate">{category === "all" ? "All Categories" : categories.find((c) => String(c.id) === String(category))?.name}</span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                        <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border" align="start">
                         <Command>
                           <CommandInput placeholder="Search category..." className="h-9" />
                           <CommandList>
@@ -585,12 +564,12 @@ export default function SalesByProductPage() {
                     </label>
                     <Popover open={subCategoryOpen} onOpenChange={setSubCategoryOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm">
+                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent">
                           <span className="truncate">{subCategory === "all" ? "All Sub-Classes" : subCategories.find((sc) => String(sc.id) === String(subCategory))?.name}</span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                        <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border" align="start">
                         <Command>
                           <CommandInput placeholder="Search sub-category..." className="h-9" />
                           <CommandList>
@@ -620,12 +599,12 @@ export default function SalesByProductPage() {
                     </label>
                     <Popover open={brandOpen} onOpenChange={setBrandOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm">
+                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent">
                           <span className="truncate">{brand === "all" ? "Global Brands" : brands.find((b) => String(b.id) === String(brand))?.name}</span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                        <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border" align="start">
                         <Command>
                           <CommandInput placeholder="Search brand..." className="h-9" />
                           <CommandList>
@@ -655,12 +634,12 @@ export default function SalesByProductPage() {
                     </label>
                     <Popover open={storeOpen} onOpenChange={setStoreOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm">
+                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent">
                           <span className="truncate">{store === "all" ? "All Global Units" : branches.find((b) => String(b.id) === String(store))?.name}</span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                        <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border" align="start">
                         <Command>
                           <CommandInput placeholder="Search store..." className="h-9" />
                           <CommandList>
@@ -692,7 +671,7 @@ export default function SalesByProductPage() {
                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                        <Input 
                            placeholder="Refine by SKU or content..." 
-                           className="pl-9 h-9 rounded-md border-gray-200 shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
+                           className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
                            value={searchQuery}
                            onChange={(e)=>setSearchQuery(e.target.value)}
                        />
@@ -704,8 +683,8 @@ export default function SalesByProductPage() {
 
             <div className="overflow-x-auto flex-1">
               <Table>
-                <TableHeader className="bg-gray-50">
-                  <TableRow className="border-gray-100 hover:bg-transparent">
+                <TableHeader className="bg-muted/50">
+                  <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">SKU Entity</TableHead>
                     <TableHead className="text-center text-xs font-semibold text-muted-foreground">Quantity</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">Unit Price</TableHead>
@@ -715,7 +694,7 @@ export default function SalesByProductPage() {
                 <TableBody>
                   {isLoading ? (
                     Array.from({ length: pageSize }).map((_, i) => (
-                      <TableRow key={i} className="border-b border-gray-100">
+                      <TableRow key={i} className="border-b border-border">
                         <TableCell className="pl-6 py-4">
                           <Skeleton className="h-4 w-48 mb-2 rounded bg-gray-100" />
                           <Skeleton className="h-3 w-24 rounded bg-gray-50" />
@@ -727,16 +706,16 @@ export default function SalesByProductPage() {
                     ))
                   ) : data.length > 0 ? (
                     data.map((item, idx) => (
-                      <TableRow key={idx} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                      <TableRow key={idx} className="hover:bg-muted/30 transition-colors border-b border-border group">
                         <TableCell className="pl-6 py-3.5">
                           <p className="font-semibold text-sm text-foreground group-hover:text-emerald-600 transition-colors">{item.name}</p>
                           <p className="text-xs font-medium text-muted-foreground mt-1 flex items-center gap-1.5">
-                             <Badge variant="outline" className="h-5 px-1.5 pointer-events-none rounded text-[10px] font-semibold bg-gray-50/50 border-gray-200 text-muted-foreground">{item.sku}</Badge>
+                             <Badge variant="outline" className="h-5 px-1.5 pointer-events-none rounded text-[10px] font-semibold bg-muted border-border text-muted-foreground">{item.sku}</Badge>
                              <span className="italic">Stock Keeping Unit</span>
                           </p>
                         </TableCell>
                         <TableCell className="text-center">
-                           <span className="font-semibold text-sm bg-gray-100 px-2.5 py-1 rounded-md text-foreground">{item.sold}</span>
+                           <span className="font-semibold text-sm bg-muted px-2.5 py-1 rounded-md text-foreground">{item.sold}</span>
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.price)}</TableCell>
                         <TableCell className="text-right pr-6">

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
+import { DataActions } from "@/components/general/DataActions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -57,7 +58,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -66,7 +67,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -84,7 +85,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -93,7 +94,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -123,7 +124,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -138,7 +139,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -147,7 +148,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -198,31 +199,20 @@ export default function ChequeSummaryPage() {
     }
   }, [session?.accessToken, type]);
 
-  const handleExportCSV = () => {
-    const exportData = (data.details || []).map((item) => ({
+  const exportData = useMemo(() => {
+    return (data.details || []).map((item) => ({
       "Cheque #": item.cheque_number,
-      Bank: item.bank_name,
+      "Bank Name": item.bank_name,
       "Payee/Payor": item.payee_payor_name || "N/A",
-      Date: formatDate(item.cheque_date),
-      Amount: item.amount,
-      Status: item.status,
-      Branch: item.branch?.name,
+      "Cheque Date": formatDate(item.cheque_date),
+      "Amount": Number(item.amount || 0),
+      "Status": item.status?.toUpperCase(),
+      "Origin Branch": item.branch?.name || "N/A",
+      "Report Type": type === 'receivable' ? 'Customer Cheques' : 'Supplier Cheques',
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Timestamp": new Date().toLocaleString()
     }));
-    exportToCSV(exportData, `Cheque_${type}_Report`);
-  };
-
-  const handleExportExcel = () => {
-    const exportData = (data.details || []).map((item) => ({
-      "Cheque #": item.cheque_number,
-      Bank: item.bank_name,
-      "Payee/Payor": item.payee_payor_name || "N/A",
-      Date: formatDate(item.cheque_date),
-      Amount: item.amount,
-      Status: item.status,
-      Branch: item.branch?.name,
-    }));
-    exportToExcel(exportData, `Cheque_${type}_Report`);
-  };
+  }, [data.details, formatDate, type, session]);
 
   useEffect(() => {
     fetchData();
@@ -232,19 +222,19 @@ export default function ChequeSummaryPage() {
     switch (status) {
       case 'cleared':
         return (
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-100 px-2 py-0.5 rounded-md font-semibold gap-1 uppercase tracking-wider text-[10px]">
+          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-2 py-0.5 rounded-md font-semibold gap-1 uppercase tracking-wider text-[10px]">
             <CheckCircle2 className="w-3 h-3" /> Cleared
           </Badge>
         );
       case 'pending':
         return (
-          <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-100 px-2 py-0.5 rounded-md font-semibold gap-1 uppercase tracking-wider text-[10px]">
+          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-2 py-0.5 rounded-md font-semibold gap-1 uppercase tracking-wider text-[10px]">
             <Clock className="w-3 h-3" /> Pending
           </Badge>
         );
       case 'bounced':
         return (
-          <Badge variant="outline" className="bg-rose-50 text-rose-600 border-rose-100 px-2 py-0.5 rounded-md font-semibold gap-1 uppercase tracking-wider text-[10px]">
+          <Badge variant="outline" className="bg-rose-500/10 text-rose-600 border-rose-500/20 px-2 py-0.5 rounded-md font-semibold gap-1 uppercase tracking-wider text-[10px]">
             <Ban className="w-3 h-3" /> Bounced
           </Badge>
         );
@@ -276,7 +266,7 @@ export default function ChequeSummaryPage() {
 
   const statsCards = [
     {
-      label: "Total Portfolio Basis",
+      label: "Total Portfolio",
       val: isLoading ? null : formatCurrency(data.summary?.total || 0),
       desc: "Aggregate portfolio holding",
       icon: CreditCard,
@@ -284,7 +274,7 @@ export default function ChequeSummaryPage() {
       badge: "Primary"
     },
     {
-      label: "Cleared Recognition",
+      label: "Cleared Amount",
       val: isLoading ? null : formatCurrency(data.summary?.cleared || 0),
       desc: "Verified & settled capital",
       icon: CheckCircle2,
@@ -292,7 +282,7 @@ export default function ChequeSummaryPage() {
       badge: "Verified"
     },
     {
-      label: "Pending Settlement",
+      label: "Pending Amount",
       val: isLoading ? null : formatCurrency(data.summary?.pending || 0),
       desc: "Capital inherently in transit",
       icon: Clock,
@@ -300,7 +290,7 @@ export default function ChequeSummaryPage() {
       badge: "In Transit"
     },
     {
-      label: "Bounced Recognition",
+      label: "Bounced Amount",
       val: isLoading ? null : formatCurrency(data.summary?.bounced || 0),
       desc: "Total value requiring audit",
       icon: Ban,
@@ -326,39 +316,26 @@ export default function ChequeSummaryPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DataActions 
+              data={exportData} 
+              fileName={`Cheque_${type}_Audit_Report`}
+              onPrint={() => window.print()}
+              showPrint={true}
+            />
             <Button 
                 variant="outline" 
-                onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-                onClick={() => window.print()} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Printer className="h-4 w-4" /> Print Registry
-            </Button>
-            <Button 
-                variant="outline" 
+                size="icon"
                 onClick={fetchData} 
-                className="h-10 w-10 p-0 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 border" 
+                className="h-9 w-9 p-0 border-border hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 border bg-transparent rounded-lg" 
                 disabled={isLoading}
             >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <RefreshCw className={cn("size-3.5", isLoading && "animate-spin")} />
             </Button>
           </div>
         </div>
 
         {/* Portfolio Selection Tabs */}
-        <div className="flex border-b border-gray-200 w-full">
+        <div className="flex border-b border-border w-full">
           <Tabs value={type} onValueChange={setType} className="w-full">
             <TabsList className="flex bg-transparent rounded-none p-0 h-11 w-full justify-start items-end">
               <TabsTrigger 
@@ -382,34 +359,34 @@ export default function ChequeSummaryPage() {
           {statsCards.map((card, idx) => (
             <div
               key={idx}
-              className="bg-card rounded-xl p-5 border border-border shadow-xs flex flex-col gap-4 relative"
+              className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4"
             >
-              <div className="flex justify-between items-start">
-                 <div className={`p-2.5 rounded-lg bg-gradient-to-br ${card.gradient} text-white shrink-0`}>
-                    <card.icon className="w-5 h-5" />
-                 </div>
-                 <Badge variant="outline" className="bg-gray-50 text-muted-foreground border-gray-200 text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm">
-                    {card.badge}
-                 </Badge>
+              <div className={`p-3 rounded-lg bg-gradient-to-br ${card.gradient} text-white shrink-0 self-start`}>
+                <card.icon className="w-5 h-5" />
               </div>
-              <div className="flex flex-col min-w-0 w-full mt-1">
-                 <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col min-w-0 w-full">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
                     {card.label}
-                 </p>
-                 {isLoading ? (
-                    <Skeleton className="h-7 w-28 mt-1" />
-                 ) : (
-                    <h3 className="text-2xl font-bold text-foreground truncate mt-0.5">{card.val}</h3>
-                 )}
-                 <p className="text-[11px] text-muted-foreground/70 mt-1">{card.desc}</p>
+                  </p>
+                  <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0 rounded-md shadow-sm whitespace-nowrap">
+                    {card.badge}
+                  </Badge>
+                </div>
+                {isLoading ? (
+                  <Skeleton className="h-7 w-28 mt-1" />
+                ) : (
+                  <h3 className="text-2xl font-bold text-foreground truncate mt-0.5">{card.val}</h3>
+                )}
+                <p className="text-[11px] text-muted-foreground/70 mt-0.5">{card.desc}</p>
               </div>
             </div>
           ))}
         </div>
 
         {/* Cheque Transaction Registry */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
-          <CardHeader className="p-4 border-b border-gray-100 bg-white">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+          <CardHeader className="p-4 border-b border-border bg-card">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                   <div className="p-1.5 rounded-md text-emerald-600 bg-emerald-50 border border-emerald-100">
@@ -427,15 +404,15 @@ export default function ChequeSummaryPage() {
                   placeholder="Search cheques..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white border-gray-200 h-9 pl-9 pr-4 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full bg-transparent border-border h-9 pl-9 pr-4 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>
             </div>
           </CardHeader>
           <div className="overflow-x-auto flex-1">
             <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground border-b-0">Cheque Identification</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground px-4 border-b-0">Payee / Payor Basis</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground px-4 text-center border-b-0">Due Recognition</TableHead>
@@ -446,19 +423,19 @@ export default function ChequeSummaryPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-gray-100">
-                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-32 bg-gray-100" /><Skeleton className="h-3 w-20 mt-1 bg-gray-50" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24 bg-gray-100" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24 bg-gray-50 mx-auto" /></TableCell>
-                      <TableCell className="pr-6"><Skeleton className="h-4 w-20 ml-auto bg-gray-100" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-6 w-20 mx-auto rounded-md bg-gray-100" /></TableCell>
-                      <TableCell className="pr-6"><Skeleton className="h-4 w-16 ml-auto bg-gray-50" /></TableCell>
-                    </TableRow>
-                  ))
+                    Array.from({ length: pageSize }).map((_, i) => (
+                      <TableRow key={i} className="border-b border-border">
+                        <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-32 bg-muted rounded" /><Skeleton className="h-3 w-20 mt-1 bg-muted/50 rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24 bg-muted rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24 bg-muted/50 mx-auto rounded" /></TableCell>
+                        <TableCell className="pr-6"><Skeleton className="h-4 w-20 ml-auto bg-muted rounded" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-6 w-20 mx-auto rounded-md bg-muted/50" /></TableCell>
+                        <TableCell className="pr-6"><Skeleton className="h-4 w-16 ml-auto bg-muted/50 rounded" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : paginatedDetails.length > 0 ? (
                   paginatedDetails.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
                         <div className="font-semibold text-sm text-emerald-600 mb-0.5 tracking-tight">#{item.cheque_number}</div>
                         <div className="text-[11px] font-medium text-muted-foreground uppercase flex items-center gap-1.5 leading-none">
@@ -484,7 +461,7 @@ export default function ChequeSummaryPage() {
                         {getStatusBadge(item.status)}
                       </TableCell>
                       <TableCell className="text-right pr-6 min-w-[120px]">
-                        <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground px-2 py-0.5 rounded-md border-gray-200 shadow-none leading-none">
+                        <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground px-2 py-0.5 rounded-md border-border bg-muted/50 shadow-none leading-none">
                           {item.branch?.name}
                         </Badge>
                       </TableCell>
@@ -523,7 +500,7 @@ export default function ChequeSummaryPage() {
         </Card>
 
         {/* Cheque Management Protocol Disclaimer */}
-        <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+        <Card className="border shadow-none bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20 rounded-lg overflow-hidden">
           <CardContent className="p-6">
             <div className="flex gap-4">
               <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">

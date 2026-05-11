@@ -209,7 +209,7 @@ export default function LoyaltyReportPage() {
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">{card.label}</p>
-                  <h3 className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-20" /> : card.val.toLocaleString()}</h3>
+                  <h3 className="text-2xl font-bold text-foreground">{isLoading ? <Skeleton className="h-8 w-20" /> : card.val.toLocaleString()}</h3>
                   <p className="text-[10px] text-muted-foreground font-medium">{card.desc}</p>
                 </div>
               </CardContent>
@@ -227,7 +227,7 @@ export default function LoyaltyReportPage() {
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full md:w-[240px] justify-start text-left h-9 border-border text-xs"><CalendarIcon className="mr-2 h-4 w-4" /> {date?.from ? (date.to ? <>{format(date.from, "MMM dd")} - {format(date.to, "MMM dd")}</> : format(date.from, "MMM dd")) : "Select Range"}</Button>
+                    <Button variant="outline" className="w-full md:w-[240px] justify-start text-left h-9 border-border text-xs bg-transparent"><CalendarIcon className="mr-2 h-4 w-4" /> {date?.from ? (date.to ? <>{format(date.from, "MMM dd")} - {format(date.to, "MMM dd")}</> : format(date.from, "MMM dd")) : "Select Range"}</Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 border-border"><Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} /></PopoverContent>
                 </Popover>
@@ -235,13 +235,13 @@ export default function LoyaltyReportPage() {
               <div className="w-full md:w-[200px] space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Location</label>
                 <Select value={branch} onValueChange={setBranch}>
-                  <SelectTrigger className="h-9 border-border text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 border-border text-xs bg-transparent"><SelectValue /></SelectTrigger>
                   <SelectContent>{[{id:'all', name:'Global View'}, ...branches].map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="w-full md:flex-1 space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter flex items-center gap-1.5"><Search className="h-3 w-3" /> Explorer</label>
-                <Input placeholder="Search members or invoices..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-9 border-border text-xs pl-8" />
+                <Input placeholder="Search members or invoices..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-9 border-border text-xs pl-8 bg-transparent" />
               </div>
               <Button size="icon" variant="outline" className="h-9 w-9 border-border" onClick={fetchData} disabled={isLoading}><RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} /></Button>
             </div>
@@ -266,14 +266,14 @@ export default function LoyaltyReportPage() {
                         <TableCell className="text-xs font-bold text-foreground">{tx.invoice_number}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-xs font-bold">{tx.customer?.name}</span>
+                            <span className="text-xs font-bold text-foreground">{tx.customer?.name}</span>
                             <span className="text-[10px] text-muted-foreground">{tx.customer?.phone}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-col items-end gap-1">
-                            {tx.earned_points > 0 && <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-none font-bold text-[10px]">+{tx.earned_points} pts</Badge>}
-                            {tx.redeemed_points > 0 && <Badge variant="secondary" className="bg-rose-50 text-rose-600 border-none font-bold text-[10px]">-{tx.redeemed_points} pts</Badge>}
+                             {tx.earned_points > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-none font-bold text-[10px]">+{tx.earned_points} pts</Badge>}
+                             {tx.redeemed_points > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-600 border-none font-bold text-[10px]">-{tx.redeemed_points} pts</Badge>}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -299,9 +299,9 @@ export default function LoyaltyReportPage() {
                   {data.topCustomers.map((customer, idx) => (
                     <div key={idx} className="p-4 flex items-center justify-between hover:bg-muted/10 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">{idx + 1}</div>
+                        <div className="size-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-xs font-bold text-emerald-600">{idx + 1}</div>
                         <div>
-                          <p className="text-xs font-bold">{customer.name}</p>
+                          <p className="text-xs font-bold text-foreground">{customer.name}</p>
                           <p className="text-[10px] text-muted-foreground">{customer.phone || 'No phone'}</p>
                         </div>
                       </div>

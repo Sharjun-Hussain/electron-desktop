@@ -59,7 +59,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -68,7 +68,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -86,7 +86,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -95,7 +95,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -125,7 +125,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -140,7 +140,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -149,7 +149,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -270,7 +270,7 @@ export default function CustomerHistoryPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md">
+            <div className="p-2 bg-emerald-500/10 rounded-md">
               <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
@@ -288,7 +288,7 @@ export default function CustomerHistoryPage() {
             <Button 
                 variant="outline" 
                 onClick={fetchData} 
-                className="h-9 w-9 p-0 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600" 
+                className="h-9 w-9 p-0 border-border hover:border-emerald-500/20 hover:bg-muted/50 text-emerald-600 bg-transparent" 
                 disabled={isLoading}
             >
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
@@ -314,11 +314,11 @@ export default function CustomerHistoryPage() {
         </div>
 
         {/* Engagement Ledger */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
-          <CardHeader className="p-4 border-b border-gray-100 bg-white">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+          <CardHeader className="p-4 border-b border-border bg-card">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-md text-emerald-600 bg-emerald-50 border border-emerald-100">
+                  <div className="p-1.5 rounded-md text-emerald-600 bg-emerald-500/10 border border-emerald-500/20">
                     <Activity className="size-4" />
                   </div>
                   <div>
@@ -331,7 +331,7 @@ export default function CustomerHistoryPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                             placeholder="Search by name or phone..." 
-                            className="h-9 pl-9 pr-4 rounded-md border-gray-200 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
+                            className="h-9 pl-9 pr-4 rounded-md border-border text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-transparent" 
                             value={searchQuery}
                             onChange={(e)=>setSearchQuery(e.target.value)}
                         />
@@ -341,8 +341,8 @@ export default function CustomerHistoryPage() {
           </CardHeader>
           <div className="overflow-x-auto flex-1">
             <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground border-b-0">Client Identity</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground px-4 border-b-0">Communication Basis</TableHead>
                   <TableHead className="text-center h-11 text-xs font-semibold text-muted-foreground px-4 border-b-0">Frequency</TableHead>
@@ -353,21 +353,21 @@ export default function CustomerHistoryPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-gray-100">
-                      <TableCell className="pl-6 py-4"><div className="flex items-center gap-3"><Skeleton className="h-9 w-9 rounded-full bg-gray-100" /><Skeleton className="h-4 w-32 bg-gray-50" /></div></TableCell>
-                      <TableCell><Skeleton className="h-4 w-40 bg-gray-100" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto rounded-md bg-gray-50" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-20 ml-auto bg-gray-100" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-28 bg-gray-100" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-8 w-20 ml-auto bg-gray-50" /></TableCell>
-                    </TableRow>
-                  ))
+                    Array.from({ length: pageSize }).map((_, i) => (
+                      <TableRow key={i} className="border-b border-border">
+                        <TableCell className="pl-6 py-4"><div className="flex items-center gap-3"><Skeleton className="h-9 w-9 rounded-full bg-muted" /><Skeleton className="h-4 w-32 bg-muted/50 rounded" /></div></TableCell>
+                        <TableCell><Skeleton className="h-4 w-40 bg-muted rounded" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto rounded-md bg-muted/50" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-20 ml-auto bg-muted rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-28 bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-right pr-6"><Skeleton className="h-8 w-20 ml-auto bg-muted rounded" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : paginatedData.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="py-24 text-center">
                        <div className="flex flex-col items-center justify-center gap-3">
-                          <div className="p-4 rounded-xl bg-gray-50 text-muted-foreground opacity-50">
+                          <div className="p-4 rounded-xl bg-muted text-muted-foreground opacity-50">
                             <Users className="w-10 h-10" />
                           </div>
                           <div>
@@ -379,11 +379,11 @@ export default function CustomerHistoryPage() {
                   </TableRow>
                 ) : (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
                         <div className="flex items-center gap-3.5">
-                          <Avatar className="h-9 w-9 border border-gray-200 group-hover:border-emerald-200 transition-all duration-300 shadow-sm">
-                            <AvatarFallback className="bg-gray-50 text-muted-foreground font-semibold text-xs group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all">
+                          <Avatar className="h-9 w-9 border border-border group-hover:border-emerald-500/20 transition-all duration-300 shadow-sm">
+                            <AvatarFallback className="bg-muted text-muted-foreground font-semibold text-xs group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-all">
                               {item.name?.substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -400,7 +400,7 @@ export default function CustomerHistoryPage() {
                           </div>
                       </TableCell>
                       <TableCell className="text-center px-4">
-                          <Badge variant="outline" className="bg-white text-muted-foreground border-gray-200 font-semibold text-xs px-2.5 py-0.5 rounded-md shadow-sm tabular-nums">
+                          <Badge variant="outline" className="bg-transparent text-muted-foreground border-border font-semibold text-xs px-2.5 py-0.5 rounded-md shadow-sm tabular-nums">
                               {item.totalSales} <span className="ml-1 font-medium capitalize text-[10px]">Visits</span>
                           </Badge>
                       </TableCell>
@@ -414,7 +414,7 @@ export default function CustomerHistoryPage() {
                          <Button 
                            variant="outline" 
                            size="sm" 
-                           className="text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 gap-1.5 h-8 rounded-md font-semibold text-[11px] transition-all"
+                           className="text-muted-foreground hover:text-emerald-600 hover:bg-muted/50 hover:border-emerald-500/20 gap-1.5 h-8 rounded-md font-semibold text-[11px] transition-all bg-transparent"
                            onClick={() => router.push(`/customers?id=${item.id}`)}
                          >
                              Profile <ArrowRight className="h-3 w-3" />

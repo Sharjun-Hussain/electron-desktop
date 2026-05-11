@@ -42,11 +42,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
@@ -92,42 +92,42 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
   const { shift, stats, paymentBreakdown } = data;
 
   return (
-    <div className="flex flex-col gap-6 selection:bg-emerald-500/30 selection:text-emerald-900 font-sans">
-      <div className="flex justify-between items-center px-8 pt-6">
-          <Badge className="bg-emerald-500/10 text-emerald-600 border-none px-4 py-1.5 font-bold text-[10px] tracking-widest flex items-center gap-2 uppercase">
-            <ShieldCheck className="size-3" /> Secure Session Audit
+    <div className="flex flex-col gap-6 font-sans">
+      <div className="flex justify-between items-center px-1 pt-2">
+          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-3 py-1 text-[11px] font-medium flex items-center gap-2">
+            <ShieldCheck className="size-3.5" /> Secure Session Audit
           </Badge>
-          <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-emerald-50 hover:text-emerald-600 transition-all font-semibold text-xs uppercase tracking-tight rounded-lg px-4 h-9 shadow-sm">
-            <Printer className="size-3.5" /> Print Audit
+          <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 border-border hover:bg-muted text-sm font-medium rounded-lg h-9">
+            <Printer className="size-4" /> Print Audit
           </Button>
       </div>
 
-      <div ref={printRef} className="px-8 pb-10 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+      <div ref={printRef} className="px-1 pb-10 bg-card text-foreground font-sans">
         <style type="text/css" media="print">
           {`@page { size: auto; margin: 10mm; } 
             body { -webkit-print-color-adjust: exact; }`}
         </style>
 
         {/* Header Section */}
-        <div className="flex justify-between items-start border-b border-gray-100 dark:border-slate-800 pb-10 mb-10 relative">
-          <div className="flex flex-col text-slate-900 dark:text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-900/10">
-                <ClipboardList className="size-6" />
+        <div className="flex justify-between items-start border-b border-border pb-8 mb-8 relative">
+          <div className="flex flex-col text-foreground">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/10">
+                <ClipboardList className="size-5" />
               </div>
-              <h2 className="text-2xl font-bold uppercase tracking-tight">Audit Statement</h2>
+              <h2 className="text-2xl font-bold tracking-tight">Audit Statement</h2>
             </div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] pl-1 flex items-center gap-2">
-              <Activity className="size-3" /> Authorized Official Verification • Ledger Sync Enabled
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-2 pl-1">
+              <Activity className="size-3.5" /> Authorized Official Verification • Ledger Sync Enabled
             </p>
             
-            <div className="flex items-center gap-3 mt-8">
-               <div className="bg-gray-50 dark:bg-slate-900 px-4 py-2 rounded-xl border border-gray-100 dark:border-slate-800">
-                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-0.5">Voucher Reference</span>
-                  <span className="text-xs font-bold tabular-nums tracking-wider font-mono">#{shift.id.substring(0,12).toUpperCase()}</span>
+            <div className="flex items-center gap-3 mt-6">
+               <div className="bg-muted/50 px-3 py-2 rounded-lg border border-border">
+                  <span className="text-[10px] font-medium text-muted-foreground block mb-0.5">Voucher Reference</span>
+                  <span className="text-sm font-mono font-bold tracking-tight">#{shift.id.substring(0,12).toUpperCase()}</span>
                </div>
                <Badge className={cn(
-                 "h-10 px-5 rounded-xl font-bold text-[11px] uppercase tracking-widest border-none shadow-sm",
+                 "h-9 px-4 rounded-lg font-bold text-[11px] border-none shadow-sm uppercase",
                  shift.status === 'open' ? "bg-emerald-500 text-white animate-pulse" : "bg-slate-900 text-white"
                )}>
                  {shift.status}
@@ -135,129 +135,129 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
             </div>
           </div>
           
-          <div className="text-right flex flex-col items-end pt-2">
-             <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-100 dark:border-emerald-500/20 mb-4">
-                <MapPin className="size-6 text-emerald-600" />
+          <div className="text-right flex flex-col items-end pt-1">
+             <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 mb-3">
+                <MapPin className="size-5 text-emerald-600" />
              </div>
-             <p className="font-bold text-lg uppercase tracking-tight text-slate-900 dark:text-white leading-none">{shift.branch.name}</p>
-             <p className="text-[10px] text-emerald-600 font-bold mt-2 uppercase tracking-[0.2em]">Operational Terminal Sector</p>
+             <p className="font-bold text-lg tracking-tight text-foreground leading-none">{shift.branch.name}</p>
+             <p className="text-xs text-emerald-600 font-medium mt-2">Operational Terminal Sector</p>
           </div>
         </div>
 
         {/* Intelligence Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl p-6 shadow-none flex flex-col gap-4">
-             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-               <UserIcon className="size-3 text-indigo-500" /> Authorized Personnel
+        <div className="grid grid-cols-1 gap-5 mb-8">
+          <div className="bg-muted/30 border border-border rounded-xl p-6 shadow-none flex flex-col gap-4">
+             <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+               <UserIcon className="size-4 text-indigo-500" /> Authorized Personnel
              </span>
              <div className="flex items-center gap-4">
-                <div className="size-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-indigo-600/20 uppercase">
+                <div className="size-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-indigo-600/20">
                    {shift.cashier.name.substring(0,1)}
                 </div>
                 <div className="flex flex-col">
-                   <span className="text-base font-bold text-slate-900 dark:text-white leading-none mb-1.5">{shift.cashier.name}</span>
-                   <span className="text-[10px] font-medium text-slate-500 lowercase tracking-tight">{shift.cashier.email}</span>
+                   <span className="text-base font-bold text-foreground leading-none mb-1.5">{shift.cashier.name}</span>
+                   <span className="text-[11px] font-medium text-muted-foreground lowercase">{shift.cashier.email}</span>
                 </div>
              </div>
           </div>
 
-          <div className="bg-gray-50/50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-2xl p-6 shadow-none flex flex-col gap-4">
-             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-               <CalendarIcon className="size-3 text-emerald-500" /> Temporal Chrono
+          <div className="bg-muted/30 border border-border rounded-xl p-6 shadow-none flex flex-col gap-4">
+             <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+               <CalendarIcon className="size-4 text-emerald-500" /> Temporal Log
              </span>
-             <div className="space-y-3.5">
+             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-2.5">
-                      <div className="size-1.5 rounded-full bg-emerald-500" />
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Inception</span>
+                      <div className="size-2 rounded-full bg-emerald-500" />
+                      <span className="text-xs font-medium text-muted-foreground">Inception</span>
                    </div>
-                   <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-white">{formatDateTime(shift.opening_time)}</span>
+                   <span className="text-sm font-bold tabular-nums text-foreground">{formatDateTime(shift.opening_time)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-2.5">
-                      <div className="size-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Termination</span>
+                      <div className="size-2 rounded-full bg-muted-foreground/30" />
+                      <span className="text-xs font-medium text-muted-foreground">Termination</span>
                    </div>
-                   <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-white">{shift.closing_time ? formatDateTime(shift.closing_time) : 'Active Stream'}</span>
+                   <span className="text-sm font-bold tabular-nums text-foreground">{shift.closing_time ? formatDateTime(shift.closing_time) : 'Active Stream'}</span>
                 </div>
              </div>
           </div>
 
-          <div className="bg-slate-900 dark:bg-emerald-900/20 border border-slate-900 dark:border-emerald-500/30 text-white p-7 rounded-2xl flex flex-col justify-between shadow-xl shadow-slate-900/10 overflow-hidden relative group">
-             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
-                <Receipt className="size-24" />
+          <div className="bg-emerald-500/10 border border-emerald-500/20 text-foreground p-6 rounded-xl flex flex-col justify-between shadow-none overflow-hidden relative group">
+             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
+                <Receipt className="size-16" />
              </div>
              <div className="flex justify-between items-start relative z-10">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Cleared Proceeds</span>
-                <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
-                   <TrendingUp className="size-4" />
+                <span className="text-[11px] font-medium opacity-70">Cleared Proceeds</span>
+                <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500">
+                   <TrendingUp className="size-5" />
                 </div>
              </div>
-             <div className="mt-8 relative z-10">
+             <div className="mt-6 relative z-10">
                 <h4 className="text-3xl font-bold tabular-nums tracking-tighter">
-                  {formatCurrency(stats.totalSales)}
+                   {formatCurrency(stats.totalSales)}
                 </h4>
-                <p className="text-[10px] opacity-50 font-bold mt-2 uppercase tracking-[0.2em] leading-none flex items-center gap-1.5">
-                  <Zap className="size-3 text-amber-400 fill-amber-400" /> Real-time Settlement Matrix
+                <p className="text-[11px] opacity-60 font-medium mt-1.5 flex items-center gap-2">
+                   <Zap className="size-4 text-amber-500 fill-amber-500" /> Real-time Settlement Matrix
                 </p>
              </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+        <div className="grid grid-cols-1 gap-8 mb-8">
            {/* Section 1: Yield Logic */}
-           <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between px-1 border-b border-gray-100 dark:border-slate-800 pb-4">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-900 dark:text-slate-200 flex items-center gap-2">
+           <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
                    <Receipt className="size-4 text-indigo-500" /> Yield Analysis Ledger
                 </h3>
-                <Badge variant="outline" className="text-[10px] font-bold border-gray-200 dark:border-slate-800 uppercase bg-gray-50/50 dark:bg-slate-900 text-muted-foreground">{stats.transactionCount} Events</Badge>
+                <Badge variant="outline" className="text-[10px] font-medium border-border bg-muted/50 text-muted-foreground">{stats.transactionCount} Events</Badge>
               </div>
-              <div className="space-y-4 px-1 text-slate-900 dark:text-white">
-                 <div className="flex justify-between items-center group">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest transition-colors">Gross Transaction Flow</span>
-                    <span className="text-sm font-bold tabular-nums tracking-tight">{formatCurrency(stats.totalSales + stats.totalDiscount)}</span>
+              <div className="space-y-4 text-foreground">
+                 <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">Gross Transaction Flow</span>
+                    <span className="text-base font-bold tabular-nums">{formatCurrency(stats.totalSales + stats.totalDiscount)}</span>
                  </div>
-                 <div className="flex justify-between items-center group">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest transition-colors">Operational Incentives</span>
-                    <span className="text-sm font-bold tabular-nums text-rose-600 tracking-tight">- {formatCurrency(stats.totalDiscount)}</span>
+                 <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">Operational Incentives</span>
+                    <span className="text-base font-bold tabular-nums text-rose-500">- {formatCurrency(stats.totalDiscount)}</span>
                  </div>
-                 <div className="flex justify-between items-center group">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest transition-colors">Fiscal Liability (Tax)</span>
-                    <span className="text-sm font-bold tabular-nums tracking-tight">{formatCurrency(stats.totalTax)}</span>
+                 <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">Fiscal Liability (Tax)</span>
+                    <span className="text-base font-bold tabular-nums">{formatCurrency(stats.totalTax)}</span>
                  </div>
-                 <div className="pt-6 mt-4 border-t-2 border-slate-900 dark:border-white/20 flex justify-between items-center">
-                    <span className="text-[13px] font-bold uppercase tracking-widest text-slate-900 dark:text-white underline decoration-emerald-500 decoration-2 underline-offset-8">Final Net Equity</span>
-                    <span className="text-2xl font-bold tabular-nums tracking-tighter">{formatCurrency(stats.totalSales)}</span>
+                 <div className="pt-5 mt-2 border-t border-border flex justify-between items-center">
+                    <span className="text-base font-bold text-foreground">Final Net Equity</span>
+                    <span className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600">{formatCurrency(stats.totalSales)}</span>
                  </div>
               </div>
            </div>
 
            {/* Section 2: Settlement Breakdown */}
-           <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between px-1 border-b border-gray-100 dark:border-slate-800 pb-4">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-900 dark:text-slate-200 flex items-center gap-2">
+           <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
                    <CreditCard className="size-4 text-emerald-500" /> Liquidity Channels
                 </h3>
               </div>
-              <div className="bg-gray-50/50 dark:bg-slate-900/50 rounded-2xl p-6 space-y-4 border border-gray-100 dark:border-slate-800">
+              <div className="bg-muted/30 rounded-xl p-6 space-y-4 border border-border">
                  {Object.entries(paymentBreakdown || {}).map(([method, amount]) => (
-                   <div key={method} className="flex justify-between items-center group text-slate-900 dark:text-white">
+                   <div key={method} className="flex justify-between items-center group text-foreground">
                       <div className="flex items-center gap-4">
                          <div className={cn(
                            "size-2 rounded-full",
                            method.toLowerCase() === 'cash' ? "bg-emerald-500" :
                            method.toLowerCase() === 'card' ? "bg-indigo-500" : "bg-amber-500"
                          )} />
-                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{method}</span>
+                         <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">{method}</span>
                       </div>
-                      <span className="text-sm font-bold tabular-nums tracking-tight">{formatCurrency(amount)}</span>
+                      <span className="text-base font-bold tabular-nums">{formatCurrency(amount)}</span>
                    </div>
                  ))}
                  {(!paymentBreakdown || Object.keys(paymentBreakdown || {}).length === 0) && (
-                    <div className="flex flex-col items-center py-6 opacity-30 text-slate-900 dark:text-white">
+                    <div className="flex flex-col items-center py-6 opacity-30 text-foreground">
                        <AlertCircle className="size-8 mb-2" />
-                       <span className="text-[10px] font-bold uppercase tracking-widest">No Channel Data Logged</span>
+                       <span className="text-xs font-medium">No Channel Data Logged</span>
                     </div>
                  )}
               </div>
@@ -265,70 +265,69 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
         </div>
 
         {/* Reconciliation Matrix */}
-        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-8 rounded-2xl shadow-sm relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12 pointer-events-none">
-              <Scale className="size-32" />
+        <div className="bg-card border border-border p-6 rounded-xl shadow-none relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12 pointer-events-none">
+              <Scale className="size-24" />
            </div>
-           <div className="flex items-center gap-3 mb-10 relative z-10">
-              <div className="size-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-md">
+           <div className="flex items-center gap-4 mb-6 relative z-10">
+              <div className="size-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-md">
                  <Scale className="size-5" />
               </div>
               <div>
-                <h3 className="text-[11px] uppercase font-bold tracking-[0.2em] text-slate-900 dark:text-white">Physical Reconciliation Matrix</h3>
-                <p className="text-[10px] text-muted-foreground font-medium mt-1">Verification of physical drawer against digital ledger projection</p>
+                <h3 className="text-xs font-bold text-foreground">Physical Reconciliation Matrix</h3>
+                <p className="text-[11px] text-muted-foreground font-medium mt-1">Verification of physical drawer against digital ledger projection</p>
               </div>
            </div>
            
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
-              <div className="flex flex-col gap-2">
-                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Search className="size-3 text-indigo-500" /> Digital Ledger Basis
-                 </span>
-                 <span className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-200 tracking-tighter">{formatCurrency(shift.expected_cash || 0)}</span>
-                 <p className="text-[9px] text-muted-foreground mt-2 font-bold uppercase tracking-tight">Automated System Projection</p>
-              </div>
-              <div className="flex flex-col gap-2">
-                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Fingerprint className="size-3 text-emerald-500" /> User Counter Recon
-                 </span>
-                 <span className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-200 tracking-tighter">{formatCurrency(shift.closing_cash || 0)}</span>
-                 <p className="text-[9px] text-muted-foreground mt-2 font-bold uppercase tracking-tight">Physically Counted Recognition</p>
-              </div>
-              <div className={cn(
-                 "flex flex-col p-6 rounded-2xl border transition-all duration-500",
-                 (shift.variance || 0) === 0 ? "bg-emerald-50/50 border-emerald-100/50 dark:bg-emerald-500/5 dark:border-emerald-500/20" : (shift.variance || 0) < 0 ? "bg-rose-50/50 border-rose-100/50 dark:bg-rose-500/5 dark:border-rose-500/20" : "bg-amber-50/50 border-amber-100/50 dark:bg-amber-500/5 dark:border-amber-500/20"
-              )}>
-                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-2">
-                    {(shift.variance || 0) < 0 ? <TrendingDown className="size-3 text-rose-500" /> : <TrendingUp className="size-3 text-emerald-500" />} 
-                    Audit Divergence
-                 </span>
-                 <div className="flex flex-col">
-                    <span className={cn(
-                      "text-3xl font-bold tabular-nums tracking-tighter mb-4",
-                      (shift.variance || 0) < 0 ? "text-rose-600" : (shift.variance || 0) > 0 ? "text-amber-500" : "text-emerald-600"
-                    )}>
-                       {(shift.variance || 0) > 0 ? "+" : ""}{formatCurrency(shift.variance || 0)}
+           <div className="grid grid-cols-1 gap-8 relative z-10">
+              <div className="flex justify-between items-center px-1">
+                 <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                       <Search className="size-3.5 text-indigo-500" /> Digital Ledger
                     </span>
-                    <Badge className={cn(
-                      "w-fit text-[9px] font-bold uppercase tracking-widest border-none px-3 py-1 shadow-sm",
-                      (shift.variance || 0) === 0 ? "bg-emerald-600 text-white" : "bg-slate-900 text-white"
+                    <span className="text-2xl font-bold tabular-nums text-foreground">{formatCurrency(shift.expected_cash || 0)}</span>
+                 </div>
+                 <div className="flex flex-col gap-1.5 text-right">
+                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 justify-end">
+                       <Fingerprint className="size-3.5 text-emerald-500" /> User Counter
+                    </span>
+                    <span className="text-2xl font-bold tabular-nums text-foreground">{formatCurrency(shift.closing_cash || 0)}</span>
+                 </div>
+              </div>
+
+              <div className={cn(
+                 "flex flex-col p-6 rounded-xl border transition-all duration-500",
+                 (shift.variance || 0) === 0 ? "bg-emerald-500/5 border-emerald-500/10" : (shift.variance || 0) < 0 ? "bg-rose-500/5 border-rose-500/10" : "bg-amber-500/5 border-amber-500/10"
+              )}>
+                 <div className="flex justify-between items-center mb-4">
+                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                       {(shift.variance || 0) < 0 ? <TrendingDown className="size-4 text-rose-500" /> : <TrendingUp className="size-4 text-emerald-500" />} 
+                       Audit Divergence
+                    </span>
+                    <Badge variant="outline" className={cn(
+                       "text-[10px] font-bold border-none px-3 py-1 shadow-none",
+                       (shift.variance || 0) === 0 ? "bg-emerald-500 text-white" : "bg-primary text-primary-foreground"
                     )}>
-                       {(shift.variance || 0) === 0 ? "RECON STATUS: SECURE" : "RECON STATUS: ANOMALY"}
+                       {(shift.variance || 0) === 0 ? "SECURE" : "ANOMALY"}
                     </Badge>
                  </div>
+                 <span className={cn(
+                   "text-3xl font-bold tabular-nums tracking-tighter",
+                   (shift.variance || 0) < 0 ? "text-rose-600" : (shift.variance || 0) > 0 ? "text-amber-600" : "text-emerald-600"
+                 )}>
+                    {(shift.variance || 0) > 0 ? "+" : ""}{formatCurrency(shift.variance || 0)}
+                 </span>
               </div>
            </div>
         </div>
 
-        <div className="mt-20 pt-10 border-t border-gray-100 dark:border-slate-800 flex flex-col items-center gap-4 text-center">
-           <div className="flex items-center gap-4 opacity-30 text-slate-900 dark:text-white font-mono scale-90">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Quantum POS Audit Engine</span>
-              <div className="size-1 rounded-full bg-slate-400" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Node-Hash: {shift.id.substring(0,8).toUpperCase()}</span>
-           </div>
-           <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-[0.1em] mt-2 italic max-w-md mx-auto">
-             This document is a confidential internal intelligence summary generated by the core financial node. Unauthorized duplication or distribution is strictly prohibited.
+        <div className="mt-12 pt-8 border-t border-border flex flex-col items-center gap-3 text-center">
+           <p className="text-[10px] text-muted-foreground font-medium italic max-w-sm mx-auto">
+             This document is a confidential internal intelligence summary. Unauthorized duplication or distribution is prohibited.
            </p>
+           <div className="flex items-center gap-3 opacity-30 text-foreground font-mono scale-90">
+              <span className="text-xs font-medium">Shift Ref: {shift.id.substring(0,8).toUpperCase()}</span>
+           </div>
         </div>
       </div>
     </div>
@@ -422,10 +421,29 @@ export default function ShiftHistoryPage() {
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
     return data.filter(s => 
-      s.cashier?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.id.toLowerCase().includes(searchQuery.toLowerCase())
+      s.cashier?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.branch?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [data, searchQuery]);
+
+  const exportData = useMemo(() => {
+    return (filteredData || []).map((item) => ({
+      "Shift Reference": item.id.toUpperCase(),
+      "Personnel Name": item.cashier?.name || "N/A",
+      "Staff ID": item.cashier?.id || "N/A",
+      "Branch Location": item.branch?.name || "N/A",
+      "Branch ID": item.branch?.id || "N/A",
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Opening Time": item.opening_time ? formatDateTime(item.opening_time) : "N/A",
+      "Closing Time": item.closing_time ? formatDateTime(item.closing_time) : (item.status === "open" ? "Active" : "N/A"),
+      "Status": item.status?.toUpperCase() || "UNKNOWN",
+      "Expected Revenue": Number(item.expected_cash || 0),
+      "Physical Recognition": item.status === "closed" ? Number(item.closing_cash || 0) : 0,
+      "Audit Divergence": item.status === "closed" ? Number(item.variance || 0) : 0,
+      "Currency": session?.currency || "Rs"
+    }));
+  }, [filteredData, session, formatDateTime]);
 
   const statsProps = useMemo(() => {
     const closedShifts = (data || []).filter(s => s.status === 'closed');
@@ -499,7 +517,7 @@ export default function ShiftHistoryPage() {
                   <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-bold uppercase tracking-widest">
                     <MapPin className="size-2.5" /> {item.branch?.name}
                   </span>
-                  <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-none bg-gray-100 dark:bg-slate-800 text-muted-foreground font-mono">
+                  <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-none bg-muted text-muted-foreground font-mono">
                     #{item.id.substring(0,8).toUpperCase()}
                   </Badge>
                </div>
@@ -613,8 +631,9 @@ export default function ShiftHistoryPage() {
         searchColumn="cashier"
         searchPlaceholder="Search Personnel, IDs, or Branch..."
         exportFileName="Shift_History_Audit_Report"
+        exportData={exportData}
         extraActions={
-          <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg border-gray-200 hover:bg-emerald-50 hover:text-emerald-600" onClick={fetchData} disabled={isLoading}>
+          <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg border-border hover:bg-emerald-50 hover:text-emerald-600" onClick={fetchData} disabled={isLoading}>
             <RefreshCw className={cn("size-3.5", isLoading && "animate-spin")} />
           </Button>
         }
@@ -623,7 +642,7 @@ export default function ShiftHistoryPage() {
              {/* Time Horizon */}
              <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 px-3 border-border bg-background hover:bg-muted text-[11px] font-bold uppercase tracking-wider gap-2.5">
+                <Button variant="outline" className="h-9 px-3 border-border bg-background hover:bg-muted text-xs font-normal gap-2.5">
                   <CalendarIcon className="size-3.5 text-emerald-500" />
                   {date?.from ? (date.to ? <>{format(date.from, "MMM dd")} - {format(date.to, "MMM dd")}</> : format(date.from, "MMM dd")) : <span>Select range</span>}
                 </Button>
@@ -636,24 +655,24 @@ export default function ShiftHistoryPage() {
             {/* Branch Selection */}
             <Popover open={branchOpen} onOpenChange={setBranchOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 px-3 border-border bg-background hover:bg-muted text-[11px] font-bold uppercase tracking-wider gap-2.5">
+                <Button variant="outline" className="h-9 px-3 border-border bg-background hover:bg-muted text-xs font-normal gap-2.5">
                   <MapPin className="size-3.5 text-emerald-500" />
                   {branch === "all" ? "Whole organization" : branches.find((b) => String(b.id) === String(branch))?.name || "All Branches"}
                   <ChevronsUpDown className="ml-1 size-3 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[240px] p-0 shadow-2xl border-gray-100" align="start">
+              <PopoverContent className="w-[240px] p-0 shadow-2xl border-border" align="start">
                 <Command className="rounded-lg shadow-xl border border-border">
-                  <CommandInput placeholder="Audit locations..." className="h-10 text-xs font-bold" />
+                  <CommandInput placeholder="Audit locations..." className="h-10 text-xs" />
                   <CommandList>
-                    <CommandEmpty className="text-xs p-4 font-bold text-muted-foreground text-center">No location discovered</CommandEmpty>
+                    <CommandEmpty className="text-xs p-4 text-muted-foreground text-center">No location discovered</CommandEmpty>
                     <CommandGroup>
-                      <CommandItem className="text-xs font-bold" onSelect={() => { setBranch("all"); setBranchOpen(false); }}>
+                      <CommandItem className="text-xs" onSelect={() => { setBranch("all"); setBranchOpen(false); }}>
                         <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branch === "all" ? "opacity-100" : "opacity-0")} />
                         Global Aggregated
                       </CommandItem>
                       {branches.map((b) => (
-                        <CommandItem key={b.id} className="text-xs font-bold" onSelect={() => { setBranch(b.id); setBranchOpen(false); }}>
+                        <CommandItem key={b.id} className="text-xs" onSelect={() => { setBranch(b.id); setBranchOpen(false); }}>
                           <Check className={cn("mr-2 h-4 w-4 text-emerald-600", String(branch) === String(b.id) ? "opacity-100" : "opacity-0")} />
                           {b.name}
                         </CommandItem>
@@ -667,24 +686,24 @@ export default function ShiftHistoryPage() {
             {/* Cashier Selection */}
             <Popover open={userOpen} onOpenChange={setUserOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 px-3 border-border bg-background hover:bg-muted text-[11px] font-bold uppercase tracking-wider gap-2.5">
+                <Button variant="outline" className="h-9 px-3 border-border bg-background hover:bg-muted text-xs font-normal gap-2.5">
                   <UserIcon className="size-3.5 text-emerald-500" />
                   {user === "all" ? "All personnel" : sellers.find((s) => String(s.id) === String(user))?.name || "All Users"}
                   <ChevronsUpDown className="ml-1 size-3 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[240px] p-0 shadow-2xl border-gray-100" align="start">
+              <PopoverContent className="w-[240px] p-0 shadow-2xl border-border" align="start">
                 <Command className="rounded-lg shadow-xl border border-border">
-                  <CommandInput placeholder="Staff identification..." className="h-10 text-xs font-bold" />
+                  <CommandInput placeholder="Staff identification..." className="h-10 text-xs" />
                   <CommandList>
-                    <CommandEmpty className="text-xs p-4 font-bold text-muted-foreground text-center">Unauthorized Identity</CommandEmpty>
+                    <CommandEmpty className="text-xs p-4 text-muted-foreground text-center">Unauthorized Identity</CommandEmpty>
                     <CommandGroup>
-                      <CommandItem className="text-xs font-bold" onSelect={() => { setUser("all"); setUserOpen(false); }}>
+                      <CommandItem className="text-xs" onSelect={() => { setUser("all"); setUserOpen(false); }}>
                         <Check className={cn("mr-2 h-4 w-4 text-emerald-600", user === "all" ? "opacity-100" : "opacity-0")} />
                         Authorized Roster
                       </CommandItem>
                       {sellers.map((s) => (
-                        <CommandItem key={s.id} className="text-xs font-bold" onSelect={() => { setUser(s.id); setUserOpen(false); }}>
+                        <CommandItem key={s.id} className="text-xs" onSelect={() => { setUser(s.id); setUserOpen(false); }}>
                           <Check className={cn("mr-2 h-4 w-4 text-emerald-600", String(user) === String(s.id) ? "opacity-100" : "opacity-0")} />
                           {s.name}
                         </CommandItem>
@@ -698,23 +717,23 @@ export default function ShiftHistoryPage() {
         )}
       />
 
-      {/* Shift Detail Dialog */}
-      <Dialog open={!!selectedShiftId} onOpenChange={(open) => !open && setSelectedShiftId(null)}>
-        <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto p-0 border-none shadow-2xl rounded-3xl bg-white dark:bg-slate-950">
-           <DialogHeader className="p-8 pb-0 flex flex-row items-center justify-between">
-              <DialogTitle className="text-xl font-bold flex items-center gap-3">
-                 <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg">
+      {/* Shift Detail Sheet */}
+      <Sheet open={!!selectedShiftId} onOpenChange={(open) => !open && setSelectedShiftId(null)}>
+        <SheetContent className="sm:max-w-xl w-full overflow-y-auto p-6 border-l border-border bg-card shadow-2xl">
+           <SheetHeader className="pb-6">
+              <SheetTitle className="text-xl font-bold flex items-center gap-3">
+                 <div className="p-2 bg-emerald-500/10 rounded-lg">
                     <ClipboardList className="size-5 text-emerald-600" />
                  </div>
-                 Session Intelligence Summary
-              </DialogTitle>
-           </DialogHeader>
+                 Session Intelligence
+              </SheetTitle>
+           </SheetHeader>
            <ShiftDetailReport 
              shiftId={selectedShiftId} 
              onClose={() => setSelectedShiftId(null)} 
            />
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

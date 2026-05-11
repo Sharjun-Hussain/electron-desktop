@@ -94,11 +94,11 @@ export default function DistributionReport() {
   const fetchBranches = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
         headers: { Authorization: `Bearer ${session.accessToken}` },
       });
       const result = await res.json();
-      if (result.status === "success") setBranches(result.data);
+      if (result.status === "success") setBranches(result.data || []);
     } catch (e) { console.error(e); }
   }, [session]);
 
@@ -190,7 +190,7 @@ export default function DistributionReport() {
             <Button
               variant="outline"
               size="icon"
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9"
+              className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 bg-transparent"
               onClick={fetchData}
               disabled={isLoading}
             >
@@ -234,14 +234,14 @@ export default function DistributionReport() {
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                       <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                       <span className="truncate">
                         {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select range</span>}
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                  <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                     <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                   </PopoverContent>
                 </Popover>
@@ -256,13 +256,13 @@ export default function DistributionReport() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
                     >
                       <span className="truncate">{branch === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branch))?.name || "All Locations"}</span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                  <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                     <Command>
                       <CommandInput placeholder="Search branches..." className="h-9" />
                       <CommandList>
@@ -306,10 +306,10 @@ export default function DistributionReport() {
                 </label>
                 <div className="relative group flex gap-2">
                   <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                     <Input
                       placeholder="Invoice # or Distributor Name..."
-                      className="pl-9 h-9 rounded-md border-gray-200 shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent"
+                      className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -336,7 +336,7 @@ export default function DistributionReport() {
                   Array.from({ length: 5 }).map((_, idx) => (
                     <TableRow key={idx}>
                       {Array.from({ length: 6 }).map((__, i) => (
-                        <TableCell key={i}><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell key={i}><Skeleton className="h-6 w-full bg-muted rounded" /></TableCell>
                       ))}
                     </TableRow>
                   ))
@@ -351,7 +351,7 @@ export default function DistributionReport() {
                   </TableRow>
                 ) : (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100 group">
+                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border group">
                       <TableCell className="pl-6 py-3.5">
                         <div className="font-semibold text-sm text-foreground flex items-center gap-2 group-hover:text-emerald-600 transition-colors">
                           {item.invoice_number}
@@ -370,7 +370,7 @@ export default function DistributionReport() {
                         <div className="flex justify-center">
                            <span className={cn(
                              "px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter",
-                             item.payment_status === 'paid' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                             item.payment_status === 'paid' ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"
                            )}>
                              {item.payment_status}
                            </span>

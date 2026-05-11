@@ -69,11 +69,11 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">Page {currentPage + 1} of {totalPages}</p>
         <Select value={String(pageSize)} onValueChange={(value) => onPageSizeChange(Number(value))}>
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent"><SelectValue /></SelectTrigger>
           <SelectContent>
             {[10, 20, 30, 40, 50].map((size) => (
               <SelectItem key={size} value={String(size)}>{size}</SelectItem>
@@ -84,10 +84,10 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
       </div>
 
       <div className="flex items-center gap-1">
-        <Button variant="outline" size="icon" className="h-8 w-8 border-gray-200" onClick={() => onPageChange(0)} disabled={!canPrev}><ChevronsLeft className="h-4 w-4" /></Button>
-        <Button variant="outline" size="icon" className="h-8 w-8 border-gray-200" onClick={() => onPageChange(currentPage - 1)} disabled={!canPrev}><ChevronLeft className="h-4 w-4" /></Button>
-        <Button variant="outline" size="icon" className="h-8 w-8 border-gray-200" onClick={() => onPageChange(currentPage + 1)} disabled={!canNext}><ChevronRight className="h-4 w-4" /></Button>
-        <Button variant="outline" size="icon" className="h-8 w-8 border-gray-200" onClick={() => onPageChange(totalPages - 1)} disabled={!canNext}><ChevronsRight className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" className="h-8 w-8 border-border bg-transparent" onClick={() => onPageChange(0)} disabled={!canPrev}><ChevronsLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" className="h-8 w-8 border-border bg-transparent" onClick={() => onPageChange(currentPage - 1)} disabled={!canPrev}><ChevronLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" className="h-8 w-8 border-border bg-transparent" onClick={() => onPageChange(currentPage + 1)} disabled={!canNext}><ChevronRight className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" className="h-8 w-8 border-border bg-transparent" onClick={() => onPageChange(totalPages - 1)} disabled={!canNext}><ChevronsRight className="h-4 w-4" /></Button>
       </div>
     </div>
   );
@@ -212,7 +212,7 @@ export default function ProductionSummaryReport() {
             <Button
               variant="outline"
               size="icon"
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9"
+              className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 bg-transparent"
               onClick={fetchData}
               disabled={isLoading}
             >
@@ -247,9 +247,9 @@ export default function ProductionSummaryReport() {
         </div>
 
         {/* ── Main Table Card Wrap ── */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Filters Bar */}
-          <div className="bg-white dark:bg-slate-900 border-b border-gray-100 p-4">
+          <div className="bg-card border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               {/* Date Filter */}
               <div className="w-full space-y-1.5">
@@ -258,14 +258,14 @@ export default function ProductionSummaryReport() {
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                       <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                       <span className="truncate">
                         {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select range</span>}
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                  <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                     <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                   </PopoverContent>
                 </Popover>
@@ -280,13 +280,13 @@ export default function ProductionSummaryReport() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
                     >
                       <span className="truncate">{branch === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branch))?.name || "All Locations"}</span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                  <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                     <Command>
                       <CommandInput placeholder="Search branches..." className="h-9" />
                       <CommandList>
@@ -330,10 +330,10 @@ export default function ProductionSummaryReport() {
                 </label>
                 <div className="relative group flex gap-2">
                   <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                     <Input
                       placeholder="Order # or Product..."
-                      className="pl-9 h-9 rounded-md border-gray-200 shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent"
+                      className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -345,8 +345,8 @@ export default function ProductionSummaryReport() {
 
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/80">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 py-3.5 text-[13px] font-semibold text-muted-foreground">Order Ref</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">Product Specification</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">Planned</TableHead>
@@ -357,21 +357,21 @@ export default function ProductionSummaryReport() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-gray-100 animate-pulse">
-                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-24 bg-gray-100 rounded" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48 bg-gray-50 rounded" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-gray-100 rounded ml-auto" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-gray-100 rounded ml-auto" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-6 w-20 mx-auto rounded-md bg-gray-50" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-28 ml-auto bg-gray-100 rounded" /></TableCell>
-                    </TableRow>
-                  ))
+                    Array.from({ length: pageSize }).map((_, i) => (
+                      <TableRow key={i} className="border-border animate-pulse">
+                        <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-24 bg-muted rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-48 bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-6 w-20 mx-auto rounded-md bg-muted/50" /></TableCell>
+                        <TableCell className="text-right pr-6"><Skeleton className="h-4 w-28 ml-auto bg-muted rounded" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => {
                     const efficiency = (item.quantity_produced / item.quantity_planned) * 100;
                     return (
-                      <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100 group">
+                      <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border group">
                         <TableCell className="pl-6 py-3.5">
                           <div className="font-semibold text-sm text-foreground flex items-center gap-2 group-hover:text-emerald-600 transition-colors">
                             {item.order_number}

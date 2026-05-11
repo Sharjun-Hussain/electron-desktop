@@ -73,7 +73,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -82,7 +82,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -100,7 +100,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -109,7 +109,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -139,7 +139,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -154,7 +154,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -163,7 +163,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -339,14 +339,14 @@ export default function SoldItemCountPage() {
             <Button 
                 variant="outline" 
                 onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
             >
               <Download className="h-4 w-4" /> CSV
             </Button>
             <Button 
                 variant="outline" 
                 onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
             >
               <FileText className="h-4 w-4" /> Excel
             </Button>
@@ -385,9 +385,9 @@ export default function SoldItemCountPage() {
         </div>
 
         {/* Extended Filters & Table Card */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Main Filters Top Header Bar */}
-          <div className="bg-white border-b border-gray-100 p-4">
+          <div className="bg-card border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
               
               <div className="w-full space-y-1.5 lg:col-span-2">
@@ -396,14 +396,14 @@ export default function SoldItemCountPage() {
                   </label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                         <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                         <span className="truncate">
                           {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select period</span>}
                         </span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                    <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                       <Calendar mode="range" selected={date} onSelect={(d) => {setDate(d); setCurrentPage(1);}} numberOfMonths={2} />
                     </PopoverContent>
                   </Popover>
@@ -415,12 +415,12 @@ export default function SoldItemCountPage() {
                   </label>
                   <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                         <span className="truncate">{branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
                       <Command>
                         <CommandInput placeholder="Search locations..." className="h-9" />
                         <CommandList>
@@ -449,12 +449,12 @@ export default function SoldItemCountPage() {
                   </label>
                   <Popover open={isProductOpen} onOpenChange={setIsProductOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                         <span className="truncate">{productId === "all" ? "Entire Repository" : products.find((p) => String(p.id) === String(productId))?.name}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
                       <Command>
                         <CommandInput placeholder="Search technical codes..." className="h-9" />
                         <CommandList>
@@ -478,7 +478,7 @@ export default function SoldItemCountPage() {
               </div>
 
               <div className="flex justify-start lg:col-span-1">
-                <Button variant="outline" onClick={() => { setCurrentPage(1); fetchData(); }} className="h-9 w-9 p-0 rounded-md border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm" disabled={isLoading}>
+                <Button variant="outline" onClick={() => { setCurrentPage(1); fetchData(); }} className="h-9 w-9 p-0 rounded-md border-border hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm bg-transparent" disabled={isLoading}>
                   <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                 </Button>
               </div>
@@ -487,8 +487,8 @@ export default function SoldItemCountPage() {
 
           <div className="overflow-x-auto flex-1">
             <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground">Product Identification</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground">Technical Code</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground">Structural Variant</TableHead>
@@ -498,11 +498,11 @@ export default function SoldItemCountPage() {
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-gray-100">
-                      <TableCell className="pl-6"><Skeleton className="h-4 w-48 bg-gray-100" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32 bg-gray-50" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24 bg-gray-100" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-12 ml-auto bg-gray-100" /></TableCell>
+                    <TableRow key={i} className="border-b border-border">
+                      <TableCell className="pl-6"><Skeleton className="h-4 w-48 bg-muted rounded" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32 bg-muted/50 rounded" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24 bg-muted/50 rounded" /></TableCell>
+                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-12 ml-auto bg-muted rounded" /></TableCell>
                     </TableRow>
                   ))
                 ) : (data?.length || 0) === 0 ? (
@@ -516,10 +516,10 @@ export default function SoldItemCountPage() {
                   </TableRow>
                 ) : (
                   data.map((item, index) => (
-                    <TableRow key={index} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={index} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
                          <div className="flex items-center gap-3.5">
-                            <div className="p-1.5 rounded-md border border-gray-200 group-hover:bg-emerald-50 group-hover:border-emerald-200 transition-all text-muted-foreground group-hover:text-emerald-600">
+                            <div className="p-1.5 rounded-md border border-border group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 group-hover:border-emerald-200 transition-all text-muted-foreground group-hover:text-emerald-600">
                                <Package className="size-4" />
                             </div>
                             <div className="flex flex-col">
@@ -528,12 +528,12 @@ export default function SoldItemCountPage() {
                          </div>
                       </TableCell>
                       <TableCell>
-                         <span className="text-xs font-medium font-mono bg-gray-100 text-muted-foreground py-0.5 px-2 rounded-md">
+                         <span className="text-xs font-medium font-mono bg-muted text-muted-foreground py-0.5 px-2 rounded-md">
                             {item.product?.code || item.variant?.sku || "N/A"}
                          </span>
                       </TableCell>
                       <TableCell>
-                         <Badge variant="outline" className="bg-white border-gray-200 text-muted-foreground font-semibold text-[10px] px-2.5 py-0.5 rounded-md shadow-sm uppercase">
+                         <Badge variant="outline" className="bg-transparent border-border text-muted-foreground font-semibold text-[10px] px-2.5 py-0.5 rounded-md shadow-sm uppercase">
                             {item.variant?.name || "Standard_Logic"}
                          </Badge>
                       </TableCell>
@@ -562,7 +562,7 @@ export default function SoldItemCountPage() {
         </Card>
 
         {/* Audited Disclosure Bottom Card */}
-        <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+        <Card className="border shadow-none bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20 rounded-lg overflow-hidden">
           <CardContent className="p-6">
              <div className="flex gap-4">
                 <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">

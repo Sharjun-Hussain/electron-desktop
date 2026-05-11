@@ -66,7 +66,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -75,7 +75,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -93,7 +93,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -102,7 +102,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -132,7 +132,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -147,7 +147,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -156,7 +156,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -362,7 +362,7 @@ export default function StockTransferReportPage() {
             <Button 
               variant="outline" 
               size="icon" 
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50" 
+              className="border-border hover:border-emerald-200 hover:bg-emerald-50" 
               onClick={fetchData} 
               disabled={isLoading}
             >
@@ -397,9 +397,9 @@ export default function StockTransferReportPage() {
         </div>
 
         {/* ── Intelligence Filters (Main Table Wrap) ── */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Card Config Header containing Filters */}
-          <div className="bg-white dark:bg-slate-900 border-b border-gray-100 p-4">
+          <div className="bg-muted/10 border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                {/* Period Filter */}
                <div className="w-full space-y-1.5">
@@ -408,12 +408,12 @@ export default function StockTransferReportPage() {
                   </label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200">
+                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200">
                         <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                         {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select period</span>}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                    <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                       <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                     </PopoverContent>
                   </Popover>
@@ -428,13 +428,13 @@ export default function StockTransferReportPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200"
+                        className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200"
                       >
                         <span className="truncate text-sm">{fromBranch === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(fromBranch))?.name || "All Locations"}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                       <Command>
                         <CommandInput placeholder="Search origins..." className="h-9" />
                         <CommandList>
@@ -480,13 +480,13 @@ export default function StockTransferReportPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200"
+                        className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200"
                       >
                         <span className="truncate text-sm">{toBranch === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(toBranch))?.name || "All Locations"}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                       <Command>
                         <CommandInput placeholder="Search destinations..." className="h-9" />
                         <CommandList>
@@ -532,7 +532,7 @@ export default function StockTransferReportPage() {
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                       <Input 
                           placeholder="Transaction # or branch..." 
-                          className="pl-9 h-9 rounded-md border-gray-200 shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
+                          className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
                           value={searchQuery}
                           onChange={(e)=>setSearchQuery(e.target.value)}
                       />
@@ -543,8 +543,8 @@ export default function StockTransferReportPage() {
 
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/80">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 py-3.5 text-[13px] font-semibold text-muted-foreground">Transaction #</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">Execution Date</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">Distribution Route</TableHead>
@@ -567,7 +567,7 @@ export default function StockTransferReportPage() {
                   ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100 group">
+                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border group">
                       <TableCell className="pl-6 py-3.5">
                         <div className="font-semibold text-sm text-foreground flex items-center gap-2 group-hover:text-emerald-600 transition-colors">
                           <Layers className="size-3.5 opacity-40 text-muted-foreground group-hover:text-emerald-600" />
@@ -580,14 +580,14 @@ export default function StockTransferReportPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <span className="text-[13px] font-medium text-foreground">{item.from_branch?.name}</span>
-                          <div className="p-1 rounded-full bg-gray-100 text-gray-400 group-hover:text-emerald-600 group-hover:bg-emerald-50 transition-all">
+                          <div className="p-1 rounded-full bg-muted text-muted-foreground group-hover:text-emerald-600 group-hover:bg-emerald-50 transition-all">
                             <ArrowRight className="h-3 w-3" />
                           </div>
                           <span className="text-[13px] font-medium text-emerald-600">{item.to_branch?.name}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="secondary" className="bg-gray-100 text-muted-foreground border-none px-2.5 h-6 text-[11px] font-medium shadow-none rounded-md">
+                        <Badge variant="secondary" className="bg-muted text-muted-foreground border-none px-2.5 h-6 text-[11px] font-medium shadow-none rounded-md">
                           {item.items?.length || 0} Products
                         </Badge>
                       </TableCell>

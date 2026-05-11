@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import {
   Printer,
@@ -61,6 +61,7 @@ import {
 } from "@/components/ui/select";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
+import { DataActions } from "@/components/general/DataActions";
 import { toast } from "sonner";
 
 // ── Pagination — identical to ResourceManagementLayout ──────────────────────
@@ -71,7 +72,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -80,7 +81,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -98,7 +99,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -107,7 +108,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -137,7 +138,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -152,7 +153,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -161,7 +162,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -184,10 +185,10 @@ export default function CategorySalesReportPage({ type = "main" }) {
   const [data, setData] = useState([]);
   const [summary, setSummary] = useState({ totalItems: 0, grandTotalRevenue: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   const [branchId, setBranchId] = useState("all");
   const [branches, setBranches] = useState([]);
   const [isBranchOpen, setIsBranchOpen] = useState(false);
@@ -201,7 +202,7 @@ export default function CategorySalesReportPage({ type = "main" }) {
         });
         const result = await response.json();
         if (result.status === 'success') {
-          setBranches(result.data);
+          setBranches(result.data || []);
         }
       } catch (err) {
         console.error("Failed to fetch branches", err);
@@ -212,7 +213,7 @@ export default function CategorySalesReportPage({ type = "main" }) {
 
   const fetchData = useCallback(async () => {
     if (!session?.accessToken) return;
-    
+
     setIsLoading(true);
     try {
       const queryParams = new URLSearchParams({
@@ -250,52 +251,44 @@ export default function CategorySalesReportPage({ type = "main" }) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        fetchData();
+      fetchData();
     }, 300);
     return () => clearTimeout(timer);
   }, [fetchData]);
 
   const totalPages = Math.ceil(summary.totalItems / pageSize);
 
-  const handleExportCSV = () => {
-    const exportData = data.map((item) => ({
+  const exportData = useMemo(() => {
+    return (data || []).map((item) => ({
       "Category Name": item.category_name || "Uncategorized",
-      "Total Quantity Sold": parseFloat(item.total_quantity).toFixed(0),
-      "Total Revenue": parseFloat(item.total_revenue).toFixed(2),
-      "Revenue Share (%)": ((parseFloat(item.total_revenue) / (summary.grandTotalRevenue || 1)) * 100).toFixed(1),
+      "Total Quantity Sold": Number(item.total_quantity || 0),
+      "Total Revenue": Number(item.total_revenue || 0),
+      "Revenue Share (%)": Number(((parseFloat(item.total_revenue) / (summary.grandTotalRevenue || 1)) * 100).toFixed(2)),
+      "Store facility": branchId === "all" ? "All Stores" : branches.find((b) => b.id === branchId)?.name || "N/A",
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Horizon": date?.from ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : "Global"
     }));
-    exportToCSV(exportData, `${type}_Category_Sales_Report`);
-  };
-
-  const handleExportExcel = () => {
-    const exportData = data.map((item) => ({
-      "Category Name": item.category_name || "Uncategorized",
-      "Total Quantity Sold": parseFloat(item.total_quantity).toFixed(0),
-      "Total Revenue": parseFloat(item.total_revenue).toFixed(2),
-      "Revenue Share (%)": ((parseFloat(item.total_revenue) / (summary.grandTotalRevenue || 1)) * 100).toFixed(1),
-    }));
-    exportToExcel(exportData, `${type}_Category_Sales_Report`);
-  };
+  }, [data, summary.grandTotalRevenue, branchId, branches, session, date]);
 
   const statsCards = [
     {
-      label: "Categorical Presence",
+      label: "Total Categories",
       val: isLoading ? null : summary.totalItems,
-      desc: "Distinct categories evaluated",
+      desc: "Distinct groups analyzed",
       icon: Activity,
       gradient: "from-blue-500 to-indigo-400",
     },
     {
-      label: "Aggregate Sales Volume",
+      label: "Total Revenue",
       val: isLoading ? null : formatCurrency(summary.grandTotalRevenue || 0),
       desc: "Total recognized revenue",
       icon: TrendingUp,
       gradient: "from-emerald-500 to-teal-400",
     },
     {
-      label: "Mean Categorical Value",
+      label: "Average per Category",
       val: isLoading ? null : formatCurrency((summary.grandTotalRevenue / (summary.totalItems || 1)) || 0),
-      desc: "Average yield per sector",
+      desc: "Mean revenue per sector",
       icon: Scale,
       gradient: "from-purple-500 to-fuchsia-400",
     },
@@ -303,7 +296,7 @@ export default function CategorySalesReportPage({ type = "main" }) {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
-      
+
       <div className="flex flex-col gap-6 max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -318,26 +311,12 @@ export default function CategorySalesReportPage({ type = "main" }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button 
-                variant="outline" 
-                onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-                onClick={() => window.print()} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Printer className="h-4 w-4" /> Print Ledger
-            </Button>
+            <DataActions
+              data={exportData}
+              fileName={`${type}_Category_Sales_Report`}
+              onPrint={() => window.print()}
+              showPrint={true}
+            />
           </div>
         </div>
 
@@ -367,66 +346,66 @@ export default function CategorySalesReportPage({ type = "main" }) {
         </div>
 
         {/* Filters & Table Card */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Main Filters Top Header Bar */}
-          <div className="bg-white border-b border-gray-100 p-4">
+          <div className="bg-card border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-              
+
               <div className="w-full space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <CalendarDays className="size-3.5 text-emerald-600" /> Analysis Period
-                  </label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
-                        <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
-                        <span className="truncate">
-                          {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select horizon</span>}
-                        </span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
-                      <Calendar mode="range" selected={date} onSelect={(d) => { setDate(d); setCurrentPage(1); }} numberOfMonths={2} />
-                    </PopoverContent>
-                  </Popover>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <CalendarDays className="size-3.5 text-emerald-600" /> Analysis Period
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
+                      <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
+                      <span className="truncate">
+                        {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select horizon</span>}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
+                    <Calendar mode="range" selected={date} onSelect={(d) => { setDate(d); setCurrentPage(1); }} numberOfMonths={2} />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="w-full space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <Store className="size-3.5 text-emerald-600" /> Store Name
-                  </label>
-                  <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
-                        <span className="truncate">{branchId === "all" ? "All Stores" : branches.find((b) => b.id === branchId)?.name}</span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search store..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No store found.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem onSelect={() => {setBranchId("all"); setCurrentPage(1); setIsBranchOpen(false)}} className="cursor-pointer">
-                              <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branchId === "all" ? "opacity-100" : "opacity-0")} />
-                              All Stores
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Store className="size-3.5 text-emerald-600" /> Store Name
+                </label>
+                <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
+                      <span className="truncate">{branchId === "all" ? "All Stores" : branches.find((b) => b.id === branchId)?.name}</span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search store..." className="h-9" />
+                      <CommandList>
+                        <CommandEmpty>No store found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem onSelect={() => { setBranchId("all"); setCurrentPage(1); setIsBranchOpen(false) }} className="cursor-pointer">
+                            <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branchId === "all" ? "opacity-100" : "opacity-0")} />
+                            All Stores
+                          </CommandItem>
+                          {branches.map((b) => (
+                            <CommandItem key={b.id} onSelect={() => { setBranchId(b.id); setCurrentPage(1); setIsBranchOpen(false) }} className="cursor-pointer">
+                              <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branchId === b.id ? "opacity-100" : "opacity-0")} />
+                              {b.name}
                             </CommandItem>
-                            {branches.map((b) => (
-                              <CommandItem key={b.id} onSelect={() => {setBranchId(b.id); setCurrentPage(1); setIsBranchOpen(false)}} className="cursor-pointer">
-                                <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branchId === b.id ? "opacity-100" : "opacity-0")} />
-                                {b.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="flex justify-start">
-                <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm" disabled={isLoading}>
+                <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-border hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm bg-transparent" disabled={isLoading}>
                   <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                 </Button>
               </div>
@@ -435,8 +414,8 @@ export default function CategorySalesReportPage({ type = "main" }) {
 
           <div className="overflow-x-auto flex-1">
             <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground">Category Name</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground text-center">Qty Sold</TableHead>
                   <TableHead className="text-right h-11 text-xs font-semibold text-muted-foreground">Total Revenue</TableHead>
@@ -446,11 +425,11 @@ export default function CategorySalesReportPage({ type = "main" }) {
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-gray-100">
-                      <TableCell className="pl-6"><Skeleton className="h-4 w-40 bg-gray-100" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-4 w-12 mx-auto bg-gray-50" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-gray-50" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-32 ml-auto bg-gray-100" /></TableCell>
+                    <TableRow key={i} className="border-b border-border">
+                      <TableCell className="pl-6"><Skeleton className="h-4 w-40 bg-muted rounded" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-4 w-12 mx-auto bg-muted/50 rounded" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-muted/50 rounded" /></TableCell>
+                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-32 ml-auto bg-muted rounded" /></TableCell>
                     </TableRow>
                   ))
                 ) : data.length === 0 ? (
@@ -464,10 +443,10 @@ export default function CategorySalesReportPage({ type = "main" }) {
                   </TableRow>
                 ) : (
                   data.map((item, index) => (
-                    <TableRow key={index} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={index} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="p-1.5 rounded-md border border-gray-200 group-hover:bg-emerald-50 group-hover:border-emerald-200 transition-all">
+                          <div className="p-1.5 rounded-md border border-border group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 group-hover:border-emerald-200 transition-all">
                             <Tag className="h-3.5 w-3.5 text-muted-foreground group-hover:text-emerald-600" />
                           </div>
                           <span className="text-sm font-medium text-foreground">{item.category_name || "Uncategorized"}</span>
@@ -484,9 +463,9 @@ export default function CategorySalesReportPage({ type = "main" }) {
                           <span className="text-[11px] font-semibold text-muted-foreground tabular-nums">
                             {((parseFloat(item.total_revenue) / (summary.grandTotalRevenue || 1)) * 100).toFixed(1)}%
                           </span>
-                          <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-emerald-500 shadow-sm" 
+                          <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500 shadow-sm"
                               style={{ width: `${(parseFloat(item.total_revenue) / (summary.grandTotalRevenue || 1)) * 100}%` }}
                             />
                           </div>
@@ -498,7 +477,7 @@ export default function CategorySalesReportPage({ type = "main" }) {
               </TableBody>
             </Table>
           </div>
-          
+
           <PaginationControls
             currentPage={currentPage - 1}
             totalPages={totalPages}
@@ -512,19 +491,19 @@ export default function CategorySalesReportPage({ type = "main" }) {
         </Card>
 
         {/* Audited Disclosure Bottom Card */}
-        <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+        <Card className="border shadow-none bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20 rounded-lg overflow-hidden">
           <CardContent className="p-6">
-             <div className="flex gap-4">
-                <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
-                   <Info className="h-5 w-5" />
-                </div>
-                <div>
-                   <h4 className="font-semibold text-emerald-800 text-[11px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5 leading-none italic"><Activity className="size-3" /> Performance Insights</h4>
-                   <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
-                      Revenue share percentage is calculated relative to the **grand total revenue** across all categories for the selected period and store. Use this data to identify your primary revenue drivers.
-                   </p>
-                </div>
-             </div>
+            <div className="flex gap-4">
+              <div className="p-2.5 rounded-md bg-emerald-500/20 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
+                <Info className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-emerald-800 text-[11px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5 leading-none italic"><Activity className="size-3" /> Performance Insights</h4>
+                <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
+                  Revenue share percentage is calculated relative to the **grand total revenue** across all categories for the selected period and store. Use this data to identify your primary revenue drivers.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

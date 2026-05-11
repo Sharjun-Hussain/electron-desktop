@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
+import { DataActions } from "@/components/general/DataActions";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -64,27 +66,21 @@ export default function CapitalBalancePage() {
     }
   }, [session?.accessToken]);
 
-  const handleExportCSV = () => {
+  const exportData = useMemo(() => {
     const allAccounts = [
-      ...data.assets.map(a => ({ ...a, Category: 'Asset' })),
-      ...data.liabilities.map(a => ({ ...a, Category: 'Liability' })),
-      ...data.equity.map(a => ({ ...a, Category: 'Equity' }))
+      ...(data.assets || []).map(a => ({ ...a, Category: 'Asset' })),
+      ...(data.liabilities || []).map(a => ({ ...a, Category: 'Liability' })),
+      ...(data.equity || []).map(a => ({ ...a, Category: 'Equity' }))
     ];
-    exportToCSV(allAccounts.map(item => ({
-      Account: item.name, Code: item.code, Category: item.Category, Balance: item.balance
-    })), "Capital_Balance_Report");
-  };
-
-  const handleExportExcel = () => {
-    const allAccounts = [
-      ...data.assets.map(a => ({ ...a, Category: 'Asset' })),
-      ...data.liabilities.map(a => ({ ...a, Category: 'Liability' })),
-      ...data.equity.map(a => ({ ...a, Category: 'Equity' }))
-    ];
-    exportToExcel(allAccounts.map(item => ({
-      Account: item.name, Code: item.code, Category: item.Category, Balance: item.balance
-    })), "Capital_Balance_Report");
-  };
+    return allAccounts.map(item => ({
+      "Account Name": item.name,
+      "Account Code": item.code,
+      "Category": item.Category,
+      "Ledger Balance": Number(item.balance || 0),
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Timestamp": new Date().toLocaleString()
+    }));
+  }, [data, session]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -105,33 +101,20 @@ export default function CapitalBalancePage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DataActions 
+              data={exportData} 
+              fileName="Capital_Balance_Audit_Report"
+              onPrint={() => window.print()}
+              showPrint={true}
+            />
             <Button 
                 variant="outline" 
-                onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-                onClick={() => window.print()} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Printer className="h-4 w-4" /> Print Ledger
-            </Button>
-            <Button 
-                variant="outline" 
+                size="icon"
                 onClick={fetchData} 
-                className="h-10 w-10 p-0 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600" 
+                className="h-9 w-9 p-0 border-border hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 bg-transparent rounded-lg" 
                 disabled={isLoading}
             >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <RefreshCw className={cn("size-3.5", isLoading && "animate-spin")} />
             </Button>
           </div>
         </div>
@@ -144,7 +127,7 @@ export default function CapitalBalancePage() {
                   <TrendingUp className="w-5 h-5" />
               </div>
               <div className="flex flex-col min-w-0 w-full">
-                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Total Assets Basis</p>
+                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Total Assets</p>
                   {isLoading ? (
                     <Skeleton className="h-7 w-28 mt-1" />
                   ) : (
@@ -160,7 +143,7 @@ export default function CapitalBalancePage() {
                   <TrendingDown className="w-5 h-5" />
               </div>
               <div className="flex flex-col min-w-0 w-full">
-                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Total Fiscal Liabilities</p>
+                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Total Liabilities</p>
                   {isLoading ? (
                     <Skeleton className="h-7 w-28 mt-1" />
                   ) : (
@@ -176,7 +159,7 @@ export default function CapitalBalancePage() {
                   <Scale className="w-5 h-5" />
               </div>
               <div className="flex flex-col min-w-0 w-full">
-                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Business Net Worth</p>
+                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">Net Worth</p>
                   {isLoading ? (
                     <Skeleton className="h-7 w-28 mt-1" />
                   ) : (
@@ -191,8 +174,8 @@ export default function CapitalBalancePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* ASSETS REGISTRY */}
-          <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
-            <CardHeader className="p-4 border-b border-gray-100 bg-white">
+          <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+            <CardHeader className="p-4 border-b border-border bg-card">
               <div className="flex items-center gap-3">
                 <div className="p-1.5 rounded-md text-emerald-600 bg-emerald-50 border border-emerald-100">
                   <Activity className="size-4" />
@@ -205,8 +188,8 @@ export default function CapitalBalancePage() {
             </CardHeader>
             <div className="overflow-x-auto flex-1">
               <Table>
-                <TableHeader className="bg-gray-50">
-                  <TableRow className="border-gray-100 hover:bg-transparent">
+                <TableHeader className="bg-muted/50">
+                  <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground border-b-0">Account Identifier</TableHead>
                     <TableHead className="h-11 text-xs font-semibold text-muted-foreground border-b-0">Code</TableHead>
                     <TableHead className="text-right pr-6 h-11 text-xs font-semibold text-muted-foreground border-b-0">Ledger Balance</TableHead>
@@ -215,19 +198,19 @@ export default function CapitalBalancePage() {
                 <TableBody>
                   {isLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
-                      <TableRow key={i} className="border-b border-gray-100">
+                      <TableRow key={i} className="border-b border-border">
                         <TableCell className="pl-6 py-3.5"><Skeleton className="h-4 w-40 bg-gray-100" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-12 bg-gray-100" /></TableCell>
                         <TableCell className="pr-6"><Skeleton className="h-4 w-24 ml-auto bg-gray-100" /></TableCell>
                       </TableRow>
                     ))
                   ) : (data.assets || []).length > 0 ? data.assets.map((acc) => (
-                    <TableRow key={acc.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={acc.id} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
                          <span className="text-sm font-semibold text-foreground tracking-tight">{acc.name}</span>
                       </TableCell>
                       <TableCell>
-                         <span className="text-xs font-medium font-mono py-0.5 px-2 rounded-md bg-gray-100 text-muted-foreground">{acc.code}</span>
+                         <span className="text-xs font-medium font-mono py-0.5 px-2 rounded-md bg-muted text-muted-foreground">{acc.code}</span>
                       </TableCell>
                       <TableCell className="text-right pr-6">
                          <span className="text-sm font-semibold text-blue-600 tabular-nums">
@@ -248,7 +231,7 @@ export default function CapitalBalancePage() {
                 </TableBody>
               </Table>
             </div>
-            <div className="px-6 py-4 flex justify-between items-center border-t border-gray-100 bg-gray-50/50">
+            <div className="px-6 py-4 flex justify-between items-center border-t border-border bg-muted/30">
               <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground leading-none">Aggregate Assets Value</span>
               <span className="text-sm font-bold text-blue-600 tabular-nums">{isLoading ? <Skeleton className="h-5 w-28 bg-gray-200" /> : formatCurrency(data.summary?.totalAssets || 0)}</span>
             </div>
@@ -258,8 +241,8 @@ export default function CapitalBalancePage() {
           <div className="space-y-6">
 
             {/* Liabilities Registry */}
-            <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
-              <CardHeader className="p-4 border-b border-gray-100 bg-white">
+            <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+              <CardHeader className="p-4 border-b border-border bg-card">
                 <div className="flex items-center gap-3">
                   <div className="p-1.5 rounded-md text-emerald-600 bg-emerald-50 border border-emerald-100">
                     <Activity className="size-4" />
@@ -272,8 +255,8 @@ export default function CapitalBalancePage() {
               </CardHeader>
               <div className="overflow-x-auto flex-1">
                 <Table>
-                  <TableHeader className="bg-gray-50">
-                    <TableRow className="border-gray-100 hover:bg-transparent">
+                  <TableHeader className="bg-muted/50">
+                    <TableRow className="border-border hover:bg-transparent">
                       <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground border-b-0">Account Identifier</TableHead>
                       <TableHead className="h-11 text-xs font-semibold text-muted-foreground border-b-0">Code</TableHead>
                       <TableHead className="text-right pr-6 h-11 text-xs font-semibold text-muted-foreground border-b-0">Ledger Balance</TableHead>
@@ -282,19 +265,19 @@ export default function CapitalBalancePage() {
                   <TableBody>
                     {isLoading ? (
                       Array.from({ length: 3 }).map((_, i) => (
-                        <TableRow key={i} className="border-b border-gray-100">
+                        <TableRow key={i} className="border-b border-border">
                           <TableCell className="pl-6 py-3.5"><Skeleton className="h-4 w-40 bg-gray-100" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-12 bg-gray-100" /></TableCell>
                           <TableCell className="pr-6"><Skeleton className="h-4 w-24 ml-auto bg-gray-100" /></TableCell>
                         </TableRow>
                       ))
                     ) : (data.liabilities || []).length > 0 ? data.liabilities.map((acc) => (
-                      <TableRow key={acc.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                      <TableRow key={acc.id} className="hover:bg-muted/30 transition-colors border-b border-border group">
                         <TableCell className="pl-6 py-3.5">
                            <span className="text-sm font-semibold text-foreground tracking-tight">{acc.name}</span>
                         </TableCell>
                         <TableCell>
-                           <span className="text-xs font-medium font-mono py-0.5 px-2 rounded-md bg-gray-100 text-muted-foreground">{acc.code}</span>
+                           <span className="text-xs font-medium font-mono py-0.5 px-2 rounded-md bg-muted text-muted-foreground">{acc.code}</span>
                         </TableCell>
                         <TableCell className="text-right pr-6">
                            <span className="text-sm font-semibold text-rose-600 tabular-nums">
@@ -315,22 +298,22 @@ export default function CapitalBalancePage() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="px-6 py-4 flex justify-between items-center border-t border-gray-100 bg-gray-50/50">
+              <div className="px-6 py-4 flex justify-between items-center border-t border-border bg-muted/30">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground leading-none">Aggregate Liabilities Value</span>
                 <span className="text-sm font-bold text-rose-600 tabular-nums">{isLoading ? <Skeleton className="h-5 w-28 bg-gray-200" /> : formatCurrency(data.summary?.totalLiabilities || 0)}</span>
               </div>
             </Card>
 
             {/* Business Equity Matrix */}
-            <Card className="border border-emerald-200 bg-emerald-50/50 shadow-sm rounded-lg overflow-hidden transition-all hover:-translate-y-0.5">
+            <Card className="border border-emerald-500/20 bg-emerald-500/5 dark:bg-emerald-500/10 shadow-sm rounded-lg overflow-hidden transition-all hover:-translate-y-0.5">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-emerald-800 uppercase tracking-widest mb-1.5 leading-none">Total Retained Capital</p>
-                    <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1.5"><Activity className="size-3" /> Cumulative Growth Recognition</p>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5"><Activity className="size-3" /> Cumulative Growth Recognition</p>
                   </div>
                   <div className="text-right">
-                    <h2 className="text-2xl font-bold text-emerald-700 tabular-nums tracking-tighter">
+                    <h2 className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 tabular-nums tracking-tighter">
                       {isLoading ? <Skeleton className="h-8 w-36 bg-emerald-200" /> : formatCurrency(data.summary?.netWorth || 0)}
                     </h2>
                   </div>
@@ -341,7 +324,7 @@ export default function CapitalBalancePage() {
         </div>
 
         {/* Capital Balance Intelligence Disclaimer */}
-        <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+        <Card className="border shadow-none bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20 rounded-lg overflow-hidden">
           <CardContent className="p-6">
             <div className="flex gap-4">
               <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">

@@ -73,7 +73,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -82,7 +82,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -100,7 +100,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -109,7 +109,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -139,7 +139,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -154,7 +154,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -163,7 +163,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -203,7 +203,7 @@ export default function TaxLiabilityReportPage() {
       });
       const result = await response.json();
       if (result.status === 'success') {
-        setBranches(result.data);
+        setBranches(result.data || []);
       }
     } catch (err) {
       console.error("Failed to fetch branches", err);
@@ -306,7 +306,7 @@ export default function TaxLiabilityReportPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md">
+            <div className="p-2 bg-emerald-500/10 rounded-md">
               <Receipt className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
@@ -356,9 +356,9 @@ export default function TaxLiabilityReportPage() {
         </div>
 
         {/* Transaction Records Ledger / Filters */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Filters Bar inside Table */}
-          <div className="bg-white border-b border-gray-100 p-4">
+          <div className="bg-card border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               
               <div className="w-full space-y-1.5">
@@ -367,14 +367,14 @@ export default function TaxLiabilityReportPage() {
                   </label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-muted/50 hover:border-emerald-500/20 p-2 bg-transparent">
                         <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                         <span className="truncate">
                           {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select horizon</span>}
                         </span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                    <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                       <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                     </PopoverContent>
                   </Popover>
@@ -386,12 +386,12 @@ export default function TaxLiabilityReportPage() {
                   </label>
                   <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-muted/50 hover:border-emerald-500/20 p-2 bg-transparent">
                         <span className="truncate">{branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
                       <Command>
                         <CommandInput placeholder="Search locations..." className="h-9" />
                         <CommandList>
@@ -415,7 +415,7 @@ export default function TaxLiabilityReportPage() {
               </div>
 
               <div className="flex justify-start">
-                <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm" disabled={isLoading}>
+                <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-border hover:bg-muted/50 hover:border-emerald-500/20 text-emerald-600 shadow-sm bg-transparent" disabled={isLoading}>
                   <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                 </Button>
               </div>
@@ -424,8 +424,8 @@ export default function TaxLiabilityReportPage() {
 
           <div className="overflow-x-auto flex-1">
             <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground">Invoice No</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground text-center">Audited Date</TableHead>
                   <TableHead className="text-right h-11 text-xs font-semibold text-muted-foreground">Taxable Capital</TableHead>
@@ -435,15 +435,15 @@ export default function TaxLiabilityReportPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-gray-100">
-                      <TableCell className="pl-6"><Skeleton className="h-4 w-24 bg-gray-100" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32 mx-auto bg-gray-50" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-20 ml-auto bg-gray-50" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto bg-gray-100" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-24 ml-auto bg-gray-50" /></TableCell>
-                    </TableRow>
-                  ))
+                    Array.from({ length: pageSize }).map((_, i) => (
+                      <TableRow key={i} className="border-b border-border">
+                        <TableCell className="pl-6"><Skeleton className="h-4 w-24 bg-muted rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32 mx-auto bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-20 ml-auto bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto bg-muted rounded" /></TableCell>
+                        <TableCell className="text-right pr-6"><Skeleton className="h-4 w-24 ml-auto bg-muted/50 rounded" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : paginatedData.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="py-24 text-center">
@@ -455,7 +455,7 @@ export default function TaxLiabilityReportPage() {
                   </TableRow>
                 ) : (
                   paginatedData.map((item, index) => (
-                    <TableRow key={index} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={index} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
                          <span className="text-sm font-semibold text-foreground group-hover:text-emerald-600 transition-colors">{item.invoice_number}</span>
                       </TableCell>
@@ -488,15 +488,15 @@ export default function TaxLiabilityReportPage() {
         </Card>
 
         {/* Audited Disclosure Bottom Card */}
-        <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+        <Card className="border shadow-none bg-emerald-500/10 border-emerald-500/20 rounded-lg overflow-hidden">
           <CardContent className="p-6">
              <div className="flex gap-4">
-                <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
+                <div className="p-2.5 rounded-md bg-emerald-500/10 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
                    <Info className="h-5 w-5" />
                 </div>
                 <div>
                    <h4 className="font-semibold text-emerald-800 text-[11px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5 leading-none italic"><Activity className="size-3" /> Audited Integrity Disclosure</h4>
-                   <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
+                   <p className="text-xs text-emerald-600 dark:text-emerald-400 leading-relaxed font-medium">
                       This automated recapitulation is provided for informational VAT/NBT estimation benchmarks. Final fiscal liability and statutory compliance must be verified against primary tax records and regional regulatory frameworks.
                    </p>
                 </div>

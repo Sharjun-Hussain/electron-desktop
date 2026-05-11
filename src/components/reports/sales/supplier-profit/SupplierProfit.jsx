@@ -63,6 +63,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
+import { DataActions } from "@/components/general/DataActions";
+import { useMemo } from "react";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { toast } from "sonner";
 
@@ -74,7 +76,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -83,7 +85,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +103,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -110,7 +112,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -140,7 +142,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -155,7 +157,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -164,7 +166,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-500/20 hover:bg-muted/50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -221,8 +223,8 @@ export default function SupplierProfitPage() {
       const branchResult = await branchRes.json();
       const supplierResult = await supplierRes.json();
       
-      if (branchResult.status === 'success') setBranches(branchResult.data);
-      if (supplierResult.status === 'success') setSuppliers(supplierResult.data);
+      if (branchResult.status === 'success') setBranches(branchResult.data || []);
+      if (supplierResult.status === 'success') setSuppliers(supplierResult.data || []);
       
     } catch (err) {
       console.error("Failed to fetch metadata", err);
@@ -281,45 +283,37 @@ export default function SupplierProfitPage() {
     return () => clearTimeout(timer);
   }, [fetchData]);
 
-  const handleExportCSV = () => {
-    const exportData = (data || []).map((item) => ({
-      Supplier: item.supplier_name,
-      Revenue: item.totalRevenue,
-      Cost: item.cost,
-      Profit: item.profit,
-      "Margin (%)": (item.margin || 0).toFixed(2),
+  const exportData = useMemo(() => {
+    return (data || []).map((item) => ({
+      "Supplier Name": item.supplier_name,
+      "Total Revenue": Number(item.totalRevenue || 0),
+      "Acquisition Cost": Number(item.cost || 0),
+      "Gross Yield": Number(item.profit || 0),
+      "Margin Coefficient (%)": Number((item.margin || 0).toFixed(2)),
+      "Store Facility": branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name || "N/A",
+      "Analysis Horizon": date?.from ? `${format(date.from, "LLL dd")} - ${format(date.to, "LLL dd, yyyy")}` : "N/A",
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Timestamp": new Date().toLocaleString()
     }));
-    exportToCSV(exportData, "Supplier_Profit_Analysis");
-  };
-
-  const handleExportExcel = () => {
-    const exportData = (data || []).map((item) => ({
-      Supplier: item.supplier_name,
-      Revenue: item.totalRevenue,
-      Cost: item.cost,
-      Profit: item.profit,
-      "Margin (%)": (item.margin || 0).toFixed(2),
-    }));
-    exportToExcel(exportData, "Supplier_Profit_Analysis");
-  };
+  }, [data, branchId, branches, date, session]);
 
   const statsCards = [
     {
-      label: "Aggregate Revenue",
+      label: "Total Revenue",
       val: isLoading ? null : formatCurrency(summary?.totalRevenue || 0),
       desc: "Total sourced generation",
       icon: Receipt,
       gradient: "from-blue-500 to-indigo-400",
     },
     {
-      label: "Consolidated Net Profit",
+      label: "Total Profit",
       val: isLoading ? null : formatCurrency(summary?.totalProfit || 0),
       desc: "Net fiscal performance",
       icon: TrendingUp,
       gradient: "from-emerald-500 to-teal-400",
     },
     {
-      label: "Active Entities",
+      label: "Active Suppliers",
       val: isLoading ? null : (summary?.activeSuppliers || 0),
       desc: "Suppliers actively sourced",
       icon: Activity,
@@ -351,26 +345,12 @@ export default function SupplierProfitPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button 
-                variant="outline" 
-                onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-                onClick={() => window.print()} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Printer className="h-4 w-4" /> Print Ledger
-            </Button>
+            <DataActions 
+              data={exportData} 
+              fileName="Supplier_Profit_Audit_Report" 
+              onPrint={() => window.print()}
+              showPrint={true}
+            />
           </div>
         </div>
 
@@ -400,25 +380,25 @@ export default function SupplierProfitPage() {
         </div>
 
         {/* Extended Filters & Table Card */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Main Filters Top Header Bar */}
-          <div className="bg-white border-b border-gray-100 p-4">
+          <div className="bg-card border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
               
               <div className="w-full space-y-1.5 lg:col-span-2">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <CalendarDays className="size-3.5 text-emerald-600" /> Analysis Horizon
+                     <CalendarDays className="size-3.5 text-emerald-600" /> Analysis Period
                   </label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-muted/50 hover:border-emerald-500/20 p-2 bg-transparent">
                         <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                         <span className="truncate">
                           {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select period</span>}
                         </span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                    <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                       <Calendar mode="range" selected={date} onSelect={(d) => {setDate(d); setCurrentPage(1);}} numberOfMonths={2} />
                     </PopoverContent>
                   </Popover>
@@ -426,16 +406,16 @@ export default function SupplierProfitPage() {
 
               <div className="w-full space-y-1.5 lg:col-span-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <Store className="size-3.5 text-emerald-600" /> Store Facility
+                     <Store className="size-3.5 text-emerald-600" /> Select Store
                   </label>
                   <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
-                        <span className="truncate">{branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
+                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-muted/50 hover:border-emerald-500/20 p-2 bg-transparent">
+                        <span className="truncate">{branchId === "all" ? "All Stores" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
                       <Command>
                         <CommandInput placeholder="Search locations..." className="h-9" />
                         <CommandList>
@@ -443,7 +423,7 @@ export default function SupplierProfitPage() {
                           <CommandGroup>
                             <CommandItem onSelect={() => {setBranchId("all"); setCurrentPage(1); setIsBranchOpen(false)}} className="cursor-pointer">
                               <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branchId === "all" ? "opacity-100" : "opacity-0")} />
-                              All Locations
+                              All Stores
                             </CommandItem>
                             {branches.map((b) => (
                               <CommandItem key={b.id} onSelect={() => {setBranchId(b.id); setCurrentPage(1); setIsBranchOpen(false)}} className="cursor-pointer">
@@ -460,16 +440,16 @@ export default function SupplierProfitPage() {
 
               <div className="w-full space-y-1.5 lg:col-span-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                     <Building2 className="size-3.5 text-emerald-600" /> Supplier Entity
+                     <Building2 className="size-3.5 text-emerald-600" /> Select Supplier
                   </label>
                   <Popover open={isSupplierOpen} onOpenChange={setIsSupplierOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
-                        <span className="truncate">{supplierId === "all" ? "Entire Supply Chain" : suppliers.find((s) => String(s.id) === String(supplierId))?.name}</span>
+                      <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-muted/50 hover:border-emerald-500/20 p-2 bg-transparent">
+                        <span className="truncate">{supplierId === "all" ? "All Suppliers" : suppliers.find((s) => String(s.id) === String(supplierId))?.name}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                    <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
                       <Command>
                         <CommandInput placeholder="Search supplier vendors..." className="h-9" />
                         <CommandList>
@@ -477,7 +457,7 @@ export default function SupplierProfitPage() {
                           <CommandGroup>
                             <CommandItem onSelect={() => {setSupplierId("all"); setCurrentPage(1); setIsSupplierOpen(false)}} className="cursor-pointer">
                               <Check className={cn("mr-2 h-4 w-4 text-emerald-600", supplierId === "all" ? "opacity-100" : "opacity-0")} />
-                              Entire Supply Chain
+                              All Suppliers
                             </CommandItem>
                             {suppliers.map((s) => (
                               <CommandItem key={s.id} onSelect={() => {setSupplierId(s.id); setCurrentPage(1); setIsSupplierOpen(false)}} className="cursor-pointer">
@@ -493,7 +473,7 @@ export default function SupplierProfitPage() {
               </div>
 
               <div className="flex justify-start lg:col-span-1">
-                <Button variant="outline" onClick={() => { setCurrentPage(1); fetchData(); }} className="h-9 w-9 p-0 rounded-md border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm" disabled={isLoading}>
+                <Button variant="outline" onClick={() => { setCurrentPage(1); fetchData(); }} className="h-9 w-9 p-0 rounded-md border-border hover:bg-muted/50 hover:border-emerald-500/20 text-emerald-600 shadow-sm bg-transparent" disabled={isLoading}>
                   <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                 </Button>
               </div>
@@ -502,26 +482,26 @@ export default function SupplierProfitPage() {
 
           <div className="overflow-x-auto flex-1">
             <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow className="border-gray-100 hover:bg-transparent">
-                  <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground">Supplier Identity</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground">Supplier Name</TableHead>
                   <TableHead className="text-right h-11 text-xs font-semibold text-muted-foreground">Revenue</TableHead>
                   <TableHead className="text-right h-11 text-xs font-semibold text-muted-foreground">Acquisition Cost</TableHead>
-                  <TableHead className="text-right h-11 text-xs font-semibold text-muted-foreground">Gross Yield</TableHead>
-                  <TableHead className="text-right pr-6 h-11 text-xs font-semibold text-muted-foreground">Margin Coefficient</TableHead>
+                  <TableHead className="text-right h-11 text-xs font-semibold text-muted-foreground">Total Profit</TableHead>
+                  <TableHead className="text-right pr-6 h-11 text-xs font-semibold text-muted-foreground">Profit Margin</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-gray-100">
-                      <TableCell className="pl-6"><Skeleton className="h-4 w-48 bg-gray-100" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-gray-50" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-gray-50" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-gray-100" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-6 w-16 ml-auto rounded-md bg-gray-100" /></TableCell>
-                    </TableRow>
-                  ))
+                    Array.from({ length: pageSize }).map((_, i) => (
+                      <TableRow key={i} className="border-b border-border">
+                        <TableCell className="pl-6"><Skeleton className="h-4 w-48 bg-muted rounded" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto bg-muted rounded" /></TableCell>
+                        <TableCell className="text-right pr-6"><Skeleton className="h-6 w-16 ml-auto rounded-md bg-muted/50" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : (data?.length || 0) === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="py-24 text-center">
@@ -533,10 +513,10 @@ export default function SupplierProfitPage() {
                   </TableRow>
                 ) : (
                   data.map((item, index) => (
-                    <TableRow key={index} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={index} className="hover:bg-muted/30 transition-colors border-b border-border group">
                       <TableCell className="pl-6 py-3.5">
                          <div className="flex items-center gap-3.5">
-                            <div className="p-1.5 rounded-md border border-gray-200 group-hover:bg-emerald-50 group-hover:border-emerald-200 transition-all text-muted-foreground group-hover:text-emerald-600">
+                            <div className="p-1.5 rounded-md border border-border group-hover:bg-muted/50 group-hover:border-emerald-500/20 transition-all text-muted-foreground group-hover:text-emerald-600">
                                <Building2 className="size-4" />
                             </div>
                             <div className="flex flex-col">
@@ -561,9 +541,9 @@ export default function SupplierProfitPage() {
                       <TableCell className="text-right pr-6">
                           <div className={cn(
                               "inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold shadow-sm border",
-                              (item.margin || 0) >= 20 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
-                              (item.margin || 0) >= 0 ? "bg-orange-50 text-orange-600 border-orange-100" : 
-                              "bg-rose-50 text-rose-600 border-rose-100"
+                              (item.margin || 0) >= 20 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : 
+                              (item.margin || 0) >= 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : 
+                              "bg-rose-500/10 text-rose-600 border-rose-500/20"
                           )}>
                              {(item.margin || 0).toFixed(1)}% <ArrowUpRight className="ml-1 size-3" />
                           </div>
@@ -588,15 +568,15 @@ export default function SupplierProfitPage() {
         </Card>
 
         {/* Audited Disclosure Bottom Card */}
-        <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+        <Card className="border shadow-none bg-emerald-500/10 border-emerald-500/20 rounded-lg overflow-hidden">
           <CardContent className="p-6">
              <div className="flex gap-4">
-                <div className="p-2.5 rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
+                <div className="p-2.5 rounded-md bg-emerald-500/10 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
                    <Info className="h-5 w-5" />
                 </div>
                 <div>
                    <h4 className="font-semibold text-emerald-800 text-[11px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5 leading-none italic"><Activity className="size-3" /> Profitability Intelligence Disclaimer</h4>
-                   <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
+                   <p className="text-xs text-emerald-600 dark:text-emerald-400 leading-relaxed font-medium">
                       Acquisition yield analysis is based on aggregated procurement metrics and sales recognition. Final net margins should be validated against actual overhead allocations and regional fiscal adjustments.
                    </p>
                 </div>

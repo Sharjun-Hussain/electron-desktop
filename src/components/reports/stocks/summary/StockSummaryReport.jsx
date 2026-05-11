@@ -57,7 +57,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -66,7 +66,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -84,7 +84,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -93,7 +93,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -123,7 +123,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -138,7 +138,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -147,7 +147,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -338,7 +338,7 @@ export default function StockSummaryReportPage() {
         {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-md">
+            <div className="p-2 bg-indigo-500/10 rounded-md">
               <Package className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
@@ -352,14 +352,14 @@ export default function StockSummaryReportPage() {
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
-              className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+              className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
               onClick={handleExportCSV} 
             >
               <Download className="h-4 w-4" /> CSV
             </Button>
             <Button 
               variant="outline" 
-              className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+              className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
               onClick={handleExportExcel} 
             >
               <FileText className="h-4 w-4" /> Excel
@@ -373,7 +373,7 @@ export default function StockSummaryReportPage() {
             <Button 
               variant="outline" 
               size="icon" 
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50" 
+              className="border-border hover:border-emerald-200 hover:bg-emerald-50" 
               onClick={fetchData} 
               disabled={isLoading}
             >
@@ -408,9 +408,9 @@ export default function StockSummaryReportPage() {
         </div>
 
         {/* ── Intelligence Filters (Main Table Wrap) ── */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Card Config Header containing Filters */}
-          <div className="bg-white dark:bg-slate-900 border-b border-gray-100 p-4">
+          <div className="bg-muted/10 border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                {/* Branch Filter */}
                <div className="w-full space-y-1.5">
@@ -421,7 +421,7 @@ export default function StockSummaryReportPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200"
+                        className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 bg-transparent"
                       >
                         <span className="truncate text-sm">
                           {branch === "all" ? "All Branches" : branches.find((b) => String(b.id) === String(branch))?.name || "All Branches"}
@@ -429,7 +429,7 @@ export default function StockSummaryReportPage() {
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                       <Command>
                         <CommandInput placeholder="Search branch..." className="h-9" />
                         <CommandList>
@@ -475,7 +475,7 @@ export default function StockSummaryReportPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200"
+                        className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 bg-transparent"
                       >
                         <span className="truncate text-sm">
                           {category === "all" ? "All Categories" : categories.find((c) => String(c.id) === String(category))?.name || "All Categories"}
@@ -483,7 +483,7 @@ export default function StockSummaryReportPage() {
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                       <Command>
                         <CommandInput placeholder="Search category..." className="h-9" />
                         <CommandList>
@@ -531,7 +531,7 @@ export default function StockSummaryReportPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 disabled:opacity-50"
+                        className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 disabled:opacity-50 bg-transparent"
                         disabled={category === "all"}
                       >
                         <span className="truncate text-sm">
@@ -540,7 +540,7 @@ export default function StockSummaryReportPage() {
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                       <Command>
                         <CommandInput placeholder="Search sub-category..." className="h-9" />
                         <CommandList>
@@ -585,10 +585,10 @@ export default function StockSummaryReportPage() {
                      <Search className="h-3.5 w-3.5 text-emerald-600" /> Explorer
                   </label>
                   <div className="relative group">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                       <Input 
                           placeholder="Search product or SKU..." 
-                          className="pl-9 h-9 rounded-md border-gray-200 shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
+                          className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
                           value={searchQuery}
                           onChange={(e)=>setSearchQuery(e.target.value)}
                       />
@@ -599,8 +599,8 @@ export default function StockSummaryReportPage() {
 
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/80">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 py-3.5 text-[13px] font-semibold text-muted-foreground">Product & Variant Identity</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">Classification</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">Location</TableHead>
@@ -611,24 +611,24 @@ export default function StockSummaryReportPage() {
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-gray-100 animate-pulse">
-                      <TableCell className="pl-6 py-4"><div className="flex items-center gap-3"><div className="h-8 w-8 rounded-md bg-gray-100 dark:bg-slate-800" /><div className="space-y-1.5"><div className="h-4 w-40 bg-gray-100 dark:bg-slate-800 rounded" /><div className="h-3 w-24 bg-gray-50 dark:bg-slate-900 rounded" /></div></div></TableCell>
-                      <TableCell><div className="h-5 w-24 bg-gray-100 dark:bg-slate-800 rounded-md" /></TableCell>
-                      <TableCell><div className="h-4 w-32 bg-gray-50 dark:bg-slate-900 rounded" /></TableCell>
-                      <TableCell className="text-center"><div className="h-4 w-12 bg-gray-100 dark:bg-slate-800 rounded mx-auto" /></TableCell>
-                      <TableCell className="text-right pr-6"><div className="h-5 w-16 bg-gray-100 dark:bg-slate-800 rounded ml-auto" /></TableCell>
+                    <TableRow key={i} className="border-border animate-pulse">
+                      <TableCell className="pl-6 py-4"><div className="flex items-center gap-3"><div className="h-8 w-8 rounded-md bg-muted" /><div className="space-y-1.5"><div className="h-4 w-40 bg-muted rounded" /><div className="h-3 w-24 bg-muted/50 rounded" /></div></div></TableCell>
+                      <TableCell><div className="h-5 w-24 bg-muted/50 rounded-md" /></TableCell>
+                      <TableCell><div className="h-4 w-32 bg-muted rounded" /></TableCell>
+                      <TableCell className="text-center"><div className="h-4 w-12 bg-muted/50 rounded mx-auto" /></TableCell>
+                      <TableCell className="text-right pr-6"><div className="h-5 w-16 bg-muted rounded ml-auto" /></TableCell>
                     </TableRow>
                   ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => {
                     const isLow = parseFloat(item.quantity) <= parseFloat(item.product?.reorder_level || 0);
                     return (
-                      <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
+                      <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border">
                       <TableCell className="pl-6 py-3.5">
                           <div className="flex items-center gap-3">
                               <div className={cn(
                                   "size-8 rounded-md flex items-center justify-center border transition-all",
-                                  isLow ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-gray-50 text-gray-400 border-gray-200"
+                                  isLow ? "bg-amber-500/10 text-amber-600 border-amber-200/50" : "bg-muted text-muted-foreground border-border"
                               )}>
                                   <Package className="h-4 w-4" />
                               </div>
@@ -639,7 +639,7 @@ export default function StockSummaryReportPage() {
                           </div>
                       </TableCell>
                       <TableCell>
-                          <Badge variant="outline" className="text-[10px] font-medium bg-gray-50 text-muted-foreground border-gray-200 px-2 py-0.5 rounded-md shadow-none">
+                          <Badge variant="outline" className="text-[10px] font-medium bg-muted/30 text-muted-foreground border-border px-2 py-0.5 rounded-md shadow-none">
                               {item.product?.main_category?.name || "General"}
                           </Badge>
                       </TableCell>
@@ -669,8 +669,8 @@ export default function StockSummaryReportPage() {
                   <TableRow>
                     <TableCell colSpan={5} className="py-24 text-center">
                        <div className="flex flex-col items-center justify-center gap-3">
-                          <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
-                             <Search className="size-8" />
+                          <div className="size-14 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
+                             <Search className="size-8 opacity-20" />
                           </div>
                           <h4 className="font-bold text-foreground">No records detected</h4>
                           <p className="text-sm text-muted-foreground italic">Adjust filters or search query to find specific stock records</p>

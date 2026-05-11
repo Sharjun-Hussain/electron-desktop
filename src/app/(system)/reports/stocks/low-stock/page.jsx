@@ -59,7 +59,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -68,7 +68,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +87,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -97,7 +97,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -128,7 +128,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -144,7 +144,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -154,7 +154,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -325,7 +325,7 @@ export default function LowStockSummaryPage() {
             <Button 
               variant="outline" 
               size="icon" 
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50" 
+              className="border-border hover:border-emerald-200 hover:bg-emerald-50" 
               onClick={fetchData} 
               disabled={isLoading}
             >
@@ -360,9 +360,9 @@ export default function LowStockSummaryPage() {
         </div>
 
         {/* ── Main Table Card ── */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden bg-card">
           {/* Toolbar */}
-          <div className="border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2">
+          <div className="border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2 bg-muted/10">
             <div className="flex items-center gap-3">
               <div className="size-2 rounded-full bg-amber-500" />
               <div>
@@ -386,8 +386,8 @@ export default function LowStockSummaryPage() {
           {/* Table */}
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/80">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 font-semibold text-muted-foreground py-3 text-[13px]">Product & Identity</TableHead>
                   <TableHead className="font-semibold text-muted-foreground text-[13px]">Branch</TableHead>
                   <TableHead className="text-right font-semibold text-muted-foreground text-[13px]">Current Stock</TableHead>
@@ -422,10 +422,10 @@ export default function LowStockSummaryPage() {
                   </TableRow>
                 ) : (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors border-gray-100 group">
+                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border group">
                       <TableCell className="pl-6 py-3.5">
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-10 w-10 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 overflow-hidden shadow-sm">
+                          <Avatar className="h-10 w-10 rounded-xl border border-border bg-muted overflow-hidden shadow-sm">
                             <AvatarImage src={item.image} className="object-cover" />
                             <AvatarFallback className="bg-transparent text-muted-foreground"><Package className="h-4 w-4" /></AvatarFallback>
                           </Avatar>
@@ -438,7 +438,7 @@ export default function LowStockSummaryPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground bg-gray-50 dark:bg-slate-800/30 border-gray-200 dark:border-slate-700 px-2.5 py-0.5 rounded-md shadow-none">
+                        <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground bg-muted/30 border-border px-2.5 py-0.5 rounded-md shadow-none">
                           {item.branch}
                         </Badge>
                       </TableCell>

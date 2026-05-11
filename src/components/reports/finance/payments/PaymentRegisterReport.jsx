@@ -251,7 +251,7 @@ export default function PaymentRegisterReport() {
                 setSearchQuery("");
             }}
             extraActions={
-                <Button onClick={fetchData} variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-gray-200">
+                <Button onClick={fetchData} variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-border bg-transparent">
                     <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                 </Button>
             }
@@ -261,7 +261,7 @@ export default function PaymentRegisterReport() {
                          <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest pl-1">Audit Window</label>
                          <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="h-9 px-4 rounded-lg border-gray-200 bg-background hover:bg-muted text-[12px] font-bold transition-all gap-2.5 shadow-xs w-[240px] justify-between">
+                                 <Button variant="outline" className="h-9 px-4 rounded-lg border-border bg-transparent hover:bg-muted text-[12px] font-bold transition-all gap-2.5 shadow-xs w-[240px] justify-between">
                                     <div className="flex items-center gap-2">
                                         <Clock className="h-3.5 w-3.5 text-indigo-500 opacity-70" />
                                         {date?.from ? (date.to ? <>{format(date.from, "MMM dd")} - {format(date.to, "MMM dd")}</> : format(date.from, "MMM dd")) : "Temporal Range"}

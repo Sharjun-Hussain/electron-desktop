@@ -67,6 +67,7 @@ import {
 } from "@/components/ui/select";
 import { SalesBySupplierPrintTemplate } from "@/components/Template/sales/SalesBySupplierTemplate";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
+import { DataActions } from "@/components/general/DataActions";
 
 // ── Pagination — identical to ResourceManagementLayout ──────────────────────
 const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, onPageSizeChange }) => {
@@ -76,7 +77,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -85,7 +86,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -103,7 +104,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -112,7 +113,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -142,7 +143,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -157,7 +158,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -166,7 +167,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -236,7 +237,7 @@ export default function SalesBySupplierPage() {
       });
       const result = await res.json();
       if (result.status === "success") {
-        setBranches(result.data);
+        setBranches(result.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch branches", error);
@@ -262,59 +263,48 @@ export default function SalesBySupplierPage() {
     documentTitle: "Sales_By_Supplier_Report",
   });
 
-  // --- EXPORT LOGIC ---
-  const handleExportCSV = () => {
-    const exportData = data.map(item => ({
+  const exportData = useMemo(() => {
+    return (data || []).map(item => ({
       "Supplier Name": item.supplier_name,
-      "Items Sold": item.sold,
-      "Total Sales": item.totalSales,
-      "Discount": item.discount,
-      "Net Sales": item.netSales,
-      "Total Profit": item.profit,
-      "Avg Sale/Product": (item.netSales / (item.sold || 1)).toFixed(2)
+      "Items Sold": item.sold || 0,
+      "Gross Sales": Number(item.totalSales || 0),
+      "Discount Value": Number(item.discount || 0),
+      "Net Revenue": Number(item.netSales || 0),
+      "Net Profit": Number(item.profit || 0),
+      "Margin Yield (%)": Number((item.margin || 0).toFixed(2)),
+      "Avg Revenue per Item": Number((item.netSales / (item.sold || 1)).toFixed(2)),
+      "Operational Unit": store === 'all' ? 'All Global Units' : branches.find(b => String(b.id) === String(store))?.name || 'Unit',
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Horizon": date?.from ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : "Global"
     }));
-    exportToCSV(exportData, "Sales_By_Supplier_Report");
-  };
-
-  const handleExportExcel = () => {
-    const exportData = data.map(item => ({
-      "Supplier Name": item.supplier_name,
-      "Items Sold": item.sold,
-      "Total Sales": item.totalSales,
-      "Discount": item.discount,
-      "Net Sales": item.netSales,
-      "Total Profit": item.profit,
-      "Avg Sale/Product": (item.netSales / (item.sold || 1)).toFixed(2)
-    }));
-    exportToExcel(exportData, "Sales_By_Supplier_Report");
-  };
+  }, [data, store, branches, session, date]);
 
   const statsCards = [
     {
-      label: "Gross Sales Revenue",
+      label: "Total Sales",
       val: isLoading ? null : formatCurrency(summary.totalSales || 0),
-      desc: "Total vendor-matched revenue",
+      desc: "Total revenue from all suppliers",
       icon: TrendingUp,
       gradient: "from-emerald-500 to-teal-400",
     },
     {
-      label: "Elite Performance Vendor",
+      label: "Top Supplier",
       val: isLoading ? null : summary.topSupplier?.supplier_name || "-",
-      desc: "Highest earning relationship",
+      desc: "Supplier with the most sales",
       icon: Building2,
       gradient: "from-blue-500 to-indigo-400",
     },
     {
-      label: "Active Vendor Partners",
+      label: "Active Suppliers",
       val: isLoading ? null : (summary.activeSuppliers || 0).toLocaleString(),
-      desc: "Suppliers with recorded sales",
+      desc: "Total suppliers with recorded sales",
       icon: Warehouse,
       gradient: "from-purple-500 to-fuchsia-400",
     },
     {
-      label: "Gross Margin Yield",
+      label: "Total Profit",
       val: isLoading ? null : formatCurrency(summary.totalProfit || 0),
-      desc: "Net retained earnings",
+      desc: "Total profit earned from these sales",
       icon: BadgePercent,
       gradient: "from-amber-500 to-orange-400",
     },
@@ -347,32 +337,20 @@ export default function SalesBySupplierPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DataActions 
+              data={exportData} 
+              fileName="Supplier_Performance_Audit_Report"
+              onPrint={handlePrint}
+              showPrint={true}
+            />
             <Button 
                 variant="outline" 
-                onClick={handlePrint} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                size="icon" 
+                className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 rounded-lg" 
+                onClick={() => fetchData(pagination.page)} 
+                disabled={isLoading}
             >
-              <FileText className="h-4 w-4" /> PDF
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-                onClick={handlePrint} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Printer className="h-4 w-4" /> Print
+              <RefreshCw className={cn("size-3.5", isLoading && "animate-spin")} />
             </Button>
           </div>
         </div>
@@ -404,8 +382,8 @@ export default function SalesBySupplierPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Performance Visualization */}
-          <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col min-h-[420px]">
-            <CardHeader className="pb-4 border-b border-gray-100 bg-gray-50/50">
+          <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col min-h-[420px] bg-card">
+            <CardHeader className="pb-4 border-b border-border bg-muted/30">
               <div className="flex items-center gap-3">
                  <div className="size-8 rounded-md bg-blue-50 flex items-center justify-center text-blue-600">
                     <Briefcase className="size-4" />
@@ -459,9 +437,9 @@ export default function SalesBySupplierPage() {
           </Card>
 
           {/* Movement Ledger + Filters embedded */}
-          <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden lg:col-span-2 flex flex-col">
+          <Card className="border border-border shadow-sm rounded-lg overflow-hidden lg:col-span-2 flex flex-col bg-card">
             {/* Filters Bar inside standard Table Layout */}
-            <div className="bg-white border-b border-gray-100 p-4">
+            <div className="bg-card border-b border-border p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                 
                 {/* Time Horizon */}
@@ -471,14 +449,14 @@ export default function SalesBySupplierPage() {
                     </label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                        <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                           <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                           <span className="truncate">
                             {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select range</span>}
                           </span>
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                        <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                         <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                       </PopoverContent>
                     </Popover>
@@ -491,12 +469,12 @@ export default function SalesBySupplierPage() {
                     </label>
                     <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm">
+                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent">
                           <span className="truncate">{store === "all" ? "All Global Units" : branches.find((b) => String(b.id) === String(store))?.name}</span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                        <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border" align="start">
                         <Command>
                           <CommandInput placeholder="Search branches..." className="h-9" />
                           <CommandList>
@@ -529,7 +507,7 @@ export default function SalesBySupplierPage() {
                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                          <Input 
                              placeholder="Find supplier..." 
-                             className="pl-9 h-9 rounded-md border-gray-200 shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
+                             className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
                              value={searchQuery}
                              onChange={(e)=>setSearchQuery(e.target.value)}
                          />
@@ -542,8 +520,8 @@ export default function SalesBySupplierPage() {
 
             <div className="overflow-x-auto flex-1">
               <Table>
-                <TableHeader className="bg-gray-50">
-                  <TableRow className="border-gray-100 hover:bg-transparent">
+                <TableHeader className="bg-muted/50">
+                  <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">Vendor Entity</TableHead>
                     <TableHead className="text-center text-xs font-semibold text-muted-foreground">Qty Sold</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">Net Revenue</TableHead>
@@ -554,7 +532,7 @@ export default function SalesBySupplierPage() {
                 <TableBody>
                   {isLoading ? (
                     Array.from({ length: pageSize }).map((_, i) => (
-                      <TableRow key={i} className="border-b border-gray-100">
+                      <TableRow key={i} className="border-b border-border">
                         <TableCell className="pl-6 py-4">
                           <Skeleton className="h-4 w-40 mb-2 rounded bg-gray-100" />
                           <Skeleton className="h-3 w-20 rounded bg-gray-50" />
@@ -567,13 +545,13 @@ export default function SalesBySupplierPage() {
                     ))
                   ) : data.length > 0 ? (
                     data.filter(item => item.supplier_name.toLowerCase().includes(searchQuery.toLowerCase())).map((item, idx) => (
-                      <TableRow key={idx} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                      <TableRow key={idx} className="hover:bg-muted/30 transition-colors border-b border-border group">
                         <TableCell className="pl-6 py-3.5">
                           <p className="font-semibold text-sm text-foreground group-hover:text-emerald-600 transition-colors">{item.supplier_name}</p>
                           <p className="text-[10px] font-semibold text-muted-foreground mt-1 uppercase tracking-tighter italic">Vendor Partner</p>
                         </TableCell>
                         <TableCell className="text-center">
-                           <span className="font-medium text-sm text-foreground bg-gray-50 px-2 py-1 rounded border border-gray-100">{item.sold || 0}</span>
+                           <span className="font-medium text-sm text-foreground bg-muted px-2 py-1 rounded border border-border">{item.sold || 0}</span>
                         </TableCell>
                         <TableCell className="text-right text-foreground font-semibold tabular-nums text-sm">{formatCurrency(item.netSales || 0)}</TableCell>
                         <TableCell className="text-right font-semibold text-emerald-600 tabular-nums text-sm">{formatCurrency(item.profit || 0)}</TableCell>

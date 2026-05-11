@@ -58,7 +58,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -67,7 +67,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -85,7 +85,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -94,7 +94,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -124,7 +124,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -139,7 +139,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -148,7 +148,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -270,19 +270,21 @@ export default function SupplierPerformancePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <DataActions 
               data={exportData} 
-              fileName="Supplier_Performance_Report" 
+              fileName="Supplier_Performance_Audit_Report" 
               onPrint={() => window.print()}
+              showPrint={true}
             />
             <Button 
                 variant="outline" 
+                size="icon"
                 onClick={fetchData} 
-                className="h-9 w-9 p-0 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600" 
+                className="h-9 w-9 p-0 border-border hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 bg-transparent rounded-lg" 
                 disabled={isLoading}
             >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <RefreshCw className={cn("size-3.5", isLoading && "animate-spin")} />
             </Button>
           </div>
         </div>
@@ -295,9 +297,9 @@ export default function SupplierPerformancePage() {
                 <stat.icon className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">{stat.label}</p>
-                <h3 className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
-                  {isLoading ? <Skeleton className="h-7 w-24 opacity-20" /> : stat.value}
+                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+                <h3 className="text-2xl font-bold text-foreground tabular-nums tracking-tight mt-0.5">
+                  {isLoading ? <Skeleton className="h-7 w-24" /> : stat.value}
                 </h3>
               </div>
             </div>
@@ -305,11 +307,11 @@ export default function SupplierPerformancePage() {
         </div>
 
         {/* Vendor Performance Ledger */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
-          <CardHeader className="p-4 border-b border-gray-100 bg-white">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+          <CardHeader className="p-4 border-b border-border bg-card">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-md text-emerald-600 bg-emerald-50 border border-emerald-100">
+                  <div className="p-1.5 rounded-md text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
                     <Activity className="size-4" />
                   </div>
                   <div>
@@ -322,7 +324,7 @@ export default function SupplierPerformancePage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                             placeholder="Search by name or company..." 
-                            className="h-9 pl-9 pr-4 rounded-md border-gray-200 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
+                            className="h-9 pl-9 pr-4 rounded-md border-border bg-transparent text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
                             value={searchQuery}
                             onChange={(e)=>setSearchQuery(e.target.value)}
                         />
@@ -332,8 +334,8 @@ export default function SupplierPerformancePage() {
           </CardHeader>
           <div className="overflow-x-auto flex-1">
             <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground border-b-0">Supplier Identity</TableHead>
                   <TableHead className="h-11 text-xs font-semibold text-muted-foreground border-b-0">Affiliated Organization</TableHead>
                   <TableHead className="text-center h-11 text-xs font-semibold text-muted-foreground border-b-0">SKU Diversity</TableHead>
@@ -344,20 +346,20 @@ export default function SupplierPerformancePage() {
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-gray-100">
-                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-48 bg-gray-100" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32 bg-gray-100" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto rounded-md bg-gray-50" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto rounded-md bg-gray-50" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-32 ml-auto bg-gray-100" /></TableCell>
+                    <TableRow key={i} className="border-b border-border">
+                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-48 bg-muted" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32 bg-muted" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto rounded-md bg-muted" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto rounded-md bg-muted" /></TableCell>
+                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-32 ml-auto bg-muted" /></TableCell>
                     </TableRow>
                   ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border group">
                         <TableCell className="pl-6 py-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-md bg-white border border-gray-200 text-muted-foreground group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all duration-300">
+                                <div className="p-2 rounded-md bg-background border border-border text-muted-foreground group-hover:bg-emerald-50 dark:group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-all duration-300">
                                     <Building2 className="h-4 w-4" />
                                 </div>
                                 <div>
@@ -373,7 +375,7 @@ export default function SupplierPerformancePage() {
                             </div>
                         </TableCell>
                         <TableCell className="text-center">
-                            <Badge variant="outline" className="bg-white text-muted-foreground border-gray-200 text-[11px] font-semibold tracking-tight px-2 py-0.5 rounded-md shadow-sm">
+                            <Badge variant="outline" className="bg-background text-muted-foreground border-border text-[11px] font-semibold tracking-tight px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap">
                                 {item.productCount} <span className="ml-1 font-medium capitalize text-[10px]">SKUs</span>
                             </Badge>
                         </TableCell>
@@ -384,7 +386,7 @@ export default function SupplierPerformancePage() {
                         </TableCell>
                         <TableCell className="text-right pr-6">
                             <p className="text-sm font-bold text-emerald-600 tabular-nums tracking-tight">{formatCurrency(item.totalPurchase || 0)}</p>
-                            <p className="text-[10px] text-muted-foreground/70 font-medium uppercase tracking-widest mt-0.5">Fiscal Assessment Complete</p>
+                            <p className="text-[10px] text-muted-foreground/70 font-medium uppercase tracking-widest mt-0.5 tabular-nums">Fiscal Assessment Complete</p>
                         </TableCell>
                     </TableRow>
                   ))
@@ -392,12 +394,12 @@ export default function SupplierPerformancePage() {
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={5} className="py-24 text-center">
                        <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="p-4 rounded-xl bg-gray-50 text-muted-foreground opacity-50">
-                          <Building2 className="w-10 h-10" />
+                        <div className="p-4 rounded-xl bg-muted text-muted-foreground opacity-50">
+                           <Building2 className="w-10 h-10" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-muted-foreground uppercase tracking-widest text-xs">No vendor records found</h4>
-                          <p className="text-[11px] text-muted-foreground/80 font-medium mt-1">Clear search terms to refresh the performance ledger.</p>
+                          <h4 className="font-semibold text-muted-foreground uppercase tracking-widest text-xs leading-none">No vendor records found</h4>
+                          <p className="text-[11px] text-muted-foreground/80 font-medium mt-2 italic leading-none">Clear search terms to refresh the performance ledger.</p>
                         </div>
                       </div>
                     </TableCell>

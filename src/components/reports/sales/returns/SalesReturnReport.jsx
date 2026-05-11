@@ -61,7 +61,7 @@ const getColumns = (formatCurrency, formatDateTime) => [
     header: "Return Reference",
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <div className="size-8 rounded-md bg-gray-100 dark:bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10 group-hover:text-orange-600 transition-all">
+        <div className="size-8 rounded-md bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10 group-hover:text-orange-600 transition-all">
           <Receipt className="size-4" />
         </div>
         <div>
@@ -111,7 +111,7 @@ const getColumns = (formatCurrency, formatDateTime) => [
       <div className="flex justify-center">
         <Badge
           variant="outline"
-          className="bg-gray-50 dark:bg-muted/30 text-muted-foreground border-gray-200 dark:border-border/50 px-2.5 py-1 text-[10px] font-semibold rounded-md shadow-none group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10 group-hover:text-orange-600 dark:group-hover:text-orange-400 group-hover:border-orange-200 dark:group-hover:border-orange-500/30 transition-all"
+          className="bg-muted/30 text-muted-foreground border-border px-2.5 py-1 text-[10px] font-semibold rounded-md shadow-none group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10 group-hover:text-orange-600 dark:group-hover:text-orange-400 group-hover:border-orange-200 dark:group-hover:border-orange-500/30 transition-all"
         >
           {row.getValue("refund_method")?.charAt(0).toUpperCase() +
             row.getValue("refund_method")?.slice(1)}
@@ -390,7 +390,7 @@ export default function SalesReturnReport() {
               variant="outline"
               size="icon"
               onClick={fetchData}
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9"
+              className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9"
               disabled={isLoading}
             >
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
@@ -421,7 +421,7 @@ export default function SalesReturnReport() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2"
+                    className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                     <span className="truncate">
@@ -440,10 +440,7 @@ export default function SalesReturnReport() {
                     </span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0 rounded-md border-gray-200 shadow-xl"
-                  align="start"
-                >
+                <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                   <Calendar
                     mode="range"
                     selected={date}
@@ -462,7 +459,7 @@ export default function SalesReturnReport() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2"
+                    className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent"
                   >
                     <span className="truncate">
                       {branch === "all"
@@ -473,10 +470,7 @@ export default function SalesReturnReport() {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent
-                  className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-gray-200"
-                  align="start"
-                >
+                <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search branches..."
@@ -536,7 +530,7 @@ export default function SalesReturnReport() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                    className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
                   >
                     <span className="truncate">
                       {user === "all"
@@ -547,10 +541,7 @@ export default function SalesReturnReport() {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent
-                  className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-gray-200"
-                  align="start"
-                >
+                <PopoverContent className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border" align="start">
                   <Command>
                     <CommandInput
                       placeholder="Search personnel..."
@@ -607,10 +598,10 @@ export default function SalesReturnReport() {
                 <Filter className="size-3.5 text-emerald-600" /> Refund Protocol
               </label>
               <Select value={refundMethod} onValueChange={setRefundMethod}>
-                <SelectTrigger className="h-9 rounded-md border-gray-200 font-normal text-sm hover:bg-emerald-50 hover:border-emerald-200">
+                <SelectTrigger className="h-9 rounded-md border-border font-normal text-sm hover:bg-emerald-50 hover:border-emerald-200 bg-transparent">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="rounded-md border-gray-200 shadow-lg">
+                <SelectContent className="rounded-md border-border shadow-lg">
                   <SelectItem value="all">All Protocols</SelectItem>
                   <SelectItem value="cash">Fiscal: Cash</SelectItem>
                   <SelectItem value="card">Digital: Card</SelectItem>

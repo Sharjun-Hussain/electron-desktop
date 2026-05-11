@@ -81,7 +81,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -90,7 +90,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -108,7 +108,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -117,7 +117,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -147,7 +147,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -162,7 +162,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -171,7 +171,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -211,7 +211,7 @@ export default function CardReconciliationPage() {
       });
       const result = await response.json();
       if (result.status === 'success') {
-        setBranches(result.data);
+        setBranches(result.data || []);
       }
     } catch (err) {
       console.error("Failed to fetch branches", err);
@@ -345,14 +345,14 @@ export default function CardReconciliationPage() {
             <Button 
                 variant="outline" 
                 onClick={handleExportCSV} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
             >
               <Download className="h-4 w-4" /> CSV
             </Button>
             <Button 
                 variant="outline" 
                 onClick={handleExportExcel} 
-                className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
             >
               <FileText className="h-4 w-4" /> Excel
             </Button>
@@ -393,9 +393,9 @@ export default function CardReconciliationPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           
           {/* Main Table + Filters */}
-          <Card className="lg:col-span-3 border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+          <Card className="lg:col-span-3 border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
             {/* Embedded Filter Bar */}
-            <div className="bg-white border-b border-gray-100 p-4">
+            <div className="bg-card border-b border-border p-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 xl:gap-8 items-end">
                 
                 <div className="w-full space-y-1.5">
@@ -404,14 +404,14 @@ export default function CardReconciliationPage() {
                     </label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                        <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                           <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                           <span className="truncate">
                             {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select horizon</span>}
                           </span>
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                        <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                         <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                       </PopoverContent>
                     </Popover>
@@ -423,12 +423,12 @@ export default function CardReconciliationPage() {
                     </label>
                     <Popover open={isBranchOpen} onOpenChange={setIsBranchOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                        <Button variant="outline" className="w-full justify-between h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 bg-transparent">
                           <span className="truncate">{branchId === "all" ? "Whole Organization" : branches.find((b) => String(b.id) === String(branchId))?.name}</span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-gray-200" align="start">
+                        <PopoverContent className="w-[300px] p-0 rounded-md shadow-lg border-border" align="start">
                         <Command>
                           <CommandInput placeholder="Search locations..." className="h-9" />
                           <CommandList>
@@ -452,7 +452,7 @@ export default function CardReconciliationPage() {
                 </div>
 
                 <div className="flex justify-start">
-                  <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm" disabled={isLoading}>
+                  <Button variant="outline" onClick={() => fetchData()} className="h-9 w-9 p-0 rounded-md border-border hover:border-emerald-200 hover:bg-emerald-50 text-emerald-600 shadow-sm bg-transparent" disabled={isLoading}>
                     <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
                   </Button>
                 </div>
@@ -461,8 +461,8 @@ export default function CardReconciliationPage() {
 
             <div className="overflow-x-auto flex-1">
               <Table>
-                <TableHeader className="bg-gray-50">
-                  <TableRow className="border-gray-100 hover:bg-transparent">
+                <TableHeader className="bg-muted/50">
+                  <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="pl-6 h-11 text-xs font-semibold text-muted-foreground">Invoice No</TableHead>
                     <TableHead className="h-11 text-xs font-semibold text-muted-foreground text-center">Settlement Date</TableHead>
                     <TableHead className="h-11 text-xs font-semibold text-muted-foreground">Administrative Store</TableHead>
@@ -473,12 +473,12 @@ export default function CardReconciliationPage() {
                 <TableBody>
                   {isLoading ? (
                     Array.from({ length: pageSize }).map((_, i) => (
-                      <TableRow key={i} className="border-b border-gray-100">
-                        <TableCell className="pl-6"><Skeleton className="h-4 w-24 bg-gray-100" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-32 mx-auto bg-gray-50" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-32 bg-gray-100" /></TableCell>
-                        <TableCell className="text-center"><Skeleton className="h-4 w-20 mx-auto bg-gray-50" /></TableCell>
-                        <TableCell className="text-right pr-6"><Skeleton className="h-4 w-24 ml-auto bg-gray-100" /></TableCell>
+                      <TableRow key={i} className="border-b border-border">
+                        <TableCell className="pl-6"><Skeleton className="h-4 w-24 bg-muted rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32 mx-auto bg-muted/50 rounded" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32 bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-4 w-20 mx-auto bg-muted/50 rounded" /></TableCell>
+                        <TableCell className="text-right pr-6"><Skeleton className="h-4 w-24 ml-auto bg-muted rounded" /></TableCell>
                       </TableRow>
                     ))
                   ) : paginatedData.length === 0 ? (
@@ -492,7 +492,7 @@ export default function CardReconciliationPage() {
                     </TableRow>
                   ) : (
                     paginatedData.map((item, index) => (
-                      <TableRow key={index} className="hover:bg-gray-50 transition-colors border-b border-gray-100 group">
+                      <TableRow key={index} className="hover:bg-muted/30 transition-colors border-b border-border group">
                         <TableCell className="pl-6 py-3.5">
                            <span className="text-sm font-semibold text-foreground group-hover:text-emerald-600 transition-colors underline underline-offset-4 decoration-gray-200">{item.invoice_number}</span>
                         </TableCell>
@@ -503,7 +503,7 @@ export default function CardReconciliationPage() {
                            <span className="text-sm font-medium text-foreground">{item.branch?.name || 'N/A'}</span>
                         </TableCell>
                         <TableCell className="text-center">
-                           <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-100 font-semibold text-[10px] py-1 px-2.5 rounded-md">Settled_Success</Badge>
+                           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold text-[10px] py-1 px-2.5 rounded-md">Settled_Success</Badge>
                         </TableCell>
                         <TableCell className="text-right pr-6">
                            <span className="text-sm font-semibold text-foreground tabular-nums">{formatCurrency(item.payable_amount)}</span>
@@ -525,8 +525,8 @@ export default function CardReconciliationPage() {
 
           {/* Side Charts / Details */}
           <div className="lg:col-span-1 space-y-6">
-            <Card className="border border-gray-200 shadow-sm bg-white rounded-lg overflow-hidden flex flex-col h-fit">
-              <CardHeader className="pb-4 border-b border-gray-100 bg-gray-50/50">
+            <Card className="border border-border shadow-sm bg-card rounded-lg overflow-hidden flex flex-col h-fit">
+              <CardHeader className="pb-4 border-b border-border bg-muted/30">
                 <CardTitle className="text-sm font-bold text-foreground flex items-center gap-3">
                    <Activity className="size-4 text-emerald-500" /> Settlement Distribution
                 </CardTitle>
@@ -551,24 +551,27 @@ export default function CardReconciliationPage() {
                     </Pie>
                     <RechartsTooltip 
                        contentStyle={{ 
-                          backgroundColor: 'white', 
+                          backgroundColor: 'hsl(var(--card))', 
                           borderRadius: '8px', 
-                          border: '1px solid #e5e7eb', 
+                          border: '1px solid hsl(var(--border))', 
                           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                           fontSize: '12px',
                           fontWeight: '600',
+                          color: 'hsl(var(--foreground))'
                        }} 
                        formatter={(value) => formatCurrency(value)}
+                       itemStyle={{ color: 'hsl(var(--foreground))' }}
+                       labelStyle={{ color: 'hsl(var(--foreground))' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card className="border shadow-none bg-emerald-50/50 border-emerald-100 rounded-lg overflow-hidden">
+            <Card className="border shadow-none bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20 rounded-lg overflow-hidden">
               <CardContent className="p-6">
                  <div className="flex gap-3">
-                    <div className="p-2 w-8 h-8 flex items-center justify-center rounded-md bg-emerald-100 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
+                    <div className="p-2 w-8 h-8 flex items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform">
                        <Info className="h-4 w-4" />
                     </div>
                     <div className="flex-1">

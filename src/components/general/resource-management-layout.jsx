@@ -54,7 +54,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-border/50 bg-gray-50/30 dark:bg-muted/10">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -65,7 +65,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
             table.setPageSize(Number(value));
           }}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200 dark:border-border/50 dark:bg-transparent">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +83,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
+          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
           onClick={() => table.setPageIndex(0)}
           disabled={!canPreviousPage}
         >
@@ -92,7 +92,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
+          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
           onClick={() => table.previousPage()}
           disabled={!canPreviousPage}
         >
@@ -123,7 +123,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
+                      : "border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
                   )}
                   onClick={() => table.setPageIndex(pageNum)}
                 >
@@ -138,7 +138,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
+          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
           onClick={() => table.nextPage()}
           disabled={!canNextPage}
         >
@@ -147,7 +147,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
+          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
           onClick={() => table.setPageIndex(totalPages - 1)}
           disabled={!canNextPage}
         >
@@ -212,7 +212,7 @@ const ResourceTableToolbar = ({
               onCheckedChange={(val) => table.toggleAllPageRowsSelected(!!val)}
               className="h-4 w-4 rounded border-gray-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 data-[state=indeterminate]:bg-emerald-600 data-[state=indeterminate]:border-emerald-600 shrink-0"
             />
-            <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-0.5 shrink-0" />
+            <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
           </>
         )}
 
@@ -225,13 +225,13 @@ const ResourceTableToolbar = ({
                 variant="outline"
                 size="sm"
                 disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-                className="h-8 px-3 text-sm font-medium border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-md shadow-none gap-1.5 shrink-0"
+                className="h-8 px-3 text-sm font-medium border-border bg-card hover:bg-muted text-foreground rounded-md shadow-none gap-1.5 shrink-0"
               >
                 Bulk Actions {table.getFilteredSelectedRowModel().rows.length > 0 && `(${table.getFilteredSelectedRowModel().rows.length})`}
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-1.5 animate-in zoom-in-95">
+            <DropdownMenuContent align="start" className="w-48 rounded-xl border-border bg-card shadow-2xl p-1.5 animate-in zoom-in-95">
               {bulkActionsComponent}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -240,14 +240,14 @@ const ResourceTableToolbar = ({
             variant="outline"
             size="sm"
             disabled
-            className="h-8 px-3 text-sm font-medium border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-400 dark:text-slate-600 rounded-md shadow-none gap-1.5 shrink-0 opacity-60 cursor-default"
+            className="h-8 px-3 text-sm font-medium border-border bg-card text-muted-foreground rounded-md shadow-none gap-1.5 shrink-0 opacity-60 cursor-default"
           >
             Bulk Actions
             <ChevronDown className="h-3.5 w-3.5 opacity-40" />
           </Button>
         ) : null}
 
-        {enableBulkActions && <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-0.5 shrink-0" />}
+        {enableBulkActions && <div className="w-px h-5 bg-border mx-0.5 shrink-0" />}
 
         {/* Search */}
         <div id="inventory-search" className="relative flex-1 min-w-0 group">
@@ -260,7 +260,7 @@ const ResourceTableToolbar = ({
           />
         </div>
 
-        <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-0.5 shrink-0" />
+        <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
 
         {/* Filters toggle */}
         {filterComponents && (
@@ -293,7 +293,7 @@ const ResourceTableToolbar = ({
               <span className="text-gray-400 dark:text-slate-500 font-normal mr-0.5">Sort:</span>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in zoom-in-95">
+            <SelectContent className="rounded-xl border-border bg-card shadow-2xl animate-in zoom-in-95">
               {sortOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value} className="text-sm font-medium rounded-md">
                   {opt.label}
@@ -304,7 +304,7 @@ const ResourceTableToolbar = ({
           </div>
         )}
 
-        <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-0.5 shrink-0" />
+        <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
 
         {/* View-mode toggle */}
         {onViewModeChange && (
@@ -355,7 +355,7 @@ const ResourceTableToolbar = ({
 
       {/* Collapsible filter panel */}
       {filtersOpen && filterComponents && (
-        <div className="flex items-center gap-3 flex-wrap px-4 pt-2 pb-3 border-t border-gray-100 dark:border-white/5 animate-in slide-in-from-top-1 fade-in duration-200">
+        <div className="flex items-center gap-3 flex-wrap px-4 pt-2 pb-3 border-t border-border animate-in slide-in-from-top-1 fade-in duration-200">
           {filterComponents(table)}
         </div>
       )}
@@ -500,7 +500,7 @@ export const ResourceManagementLayout = ({
                 {onExportClick ? (
                   <Button
                     variant="outline"
-                    className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                    className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
                     onClick={onExportClick}
                   >
                     <Download className="h-4 w-4" />
@@ -543,9 +543,9 @@ export const ResourceManagementLayout = ({
         )}
 
         {/* Main Content Card */}
-        <Card className="border border-gray-200 dark:border-white/5 shadow-sm rounded-lg overflow-hidden bg-white dark:bg-card">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden bg-card">
           <CardContent className="p-0">
-            <div className="border-b border-gray-100 dark:border-white/10 bg-white dark:bg-card">
+            <div className="border-b border-border bg-card">
               <ResourceTableToolbar
                 table={table}
                 searchColumn={searchColumn}
@@ -566,7 +566,7 @@ export const ResourceManagementLayout = ({
 
             <div className={cn(
               "transition-all duration-300",
-              viewMode === "grid" && "bg-gray-50/30 dark:bg-slate-950/20"
+              viewMode === "grid" && "bg-muted/30"
             )}>
               {viewMode === "grid" && renderGridItem ? (
                 <DataGrid

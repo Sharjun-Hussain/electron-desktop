@@ -61,6 +61,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { SalesSummaryPrintTemplate } from "@/components/Template/sales/SalesSummaryPrintTemplate";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DataActions } from "@/components/general/DataActions";
 
 import { signOut, useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
@@ -74,7 +75,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
   const canNext = currentPage < totalPages - 1;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -83,7 +84,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
           value={String(pageSize)}
           onValueChange={(value) => onPageSizeChange(Number(value))}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +102,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(0)}
           disabled={!canPrev}
         >
@@ -110,7 +111,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canPrev}
         >
@@ -140,7 +141,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+                      : "border-border hover:border-emerald-200 hover:bg-emerald-50"
                   )}
                   onClick={() => onPageChange(pageNum)}
                 >
@@ -155,7 +156,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canNext}
         >
@@ -164,7 +165,7 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, o
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
+          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={!canNext}
         >
@@ -309,33 +310,22 @@ export default function DailySalesSummaryPage() {
     documentTitle: "Sales_Report",
   });
 
-  const handleExportCSV = () => {
-    const exportData = filteredData.map(item => ({
+  const exportData = useMemo(() => {
+    return (filteredData || []).map(item => ({
       "Invoice No": item.id,
-      "Date": formatDateTime(item.date),
-      "Customer": item.customer,
-      "Total": item.subtotal,
-      "Discount": item.discount,
-      "Net Total": item.total,
-      "Payment Type": item.type,
-      "Cashier": item.cashier
+      "Date": item.date ? formatDateTime(item.date) : "N/A",
+      "Customer Profile": item.customer || "Walk-in Market",
+      "Gross Total": Number(item.subtotal || 0),
+      "Marketing Discount": Number(item.discount || 0),
+      "Net Revenue": Number(item.total || 0),
+      "Settlement Channel": item.type || "N/A",
+      "Payment Status": item.payment_status || "N/A",
+      "Authorized Personnel": item.cashier || "N/A",
+      "Branch Location": branch === "all" ? "All" : branches.find(b => String(b.id) === String(branch))?.name || "N/A",
+      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Currency": currencySymbol
     }));
-    exportToCSV(exportData, "Daily_Sales_Report");
-  };
-
-  const handleExportExcel = () => {
-    const exportData = filteredData.map(item => ({
-      "Invoice No": item.id,
-      "Date": formatDateTime(item.date),
-      "Customer": item.customer,
-      "Total": item.subtotal,
-      "Discount": item.discount,
-      "Net Total": item.total,
-      "Payment Type": item.type,
-      "Cashier": item.cashier
-    }));
-    exportToExcel(exportData, "Daily_Sales_Report");
-  };
+  }, [filteredData, formatDateTime, branch, branches, session, currencySymbol]);
 
   useEffect(() => {
     let result = Array.isArray(data) ? data : [];
@@ -390,7 +380,7 @@ export default function DailySalesSummaryPage() {
 
     return (
       <div className="w-full flex flex-col justify-center gap-3">
-        <div className="h-2 w-full flex rounded-full bg-gray-100 shadow-inner overflow-hidden">
+        <div className="h-2 w-full flex rounded-full bg-muted shadow-inner overflow-hidden">
           {methods.map((method) => (
             breakdown[method] > 0 && (
               <div 
@@ -479,30 +469,16 @@ export default function DailySalesSummaryPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-              onClick={handleExportCSV} 
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-              variant="outline" 
-              className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50"
-              onClick={handleExportExcel} 
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" 
-              onClick={handlePrint}
-            >
-              <Printer className="h-4 w-4" /> Print
-            </Button>
+            <DataActions 
+              data={exportData} 
+              fileName="Daily_Sales_Summary_Report"
+              onPrint={handlePrint}
+              showPrint={true}
+            />
             <Button 
               variant="outline" 
               size="icon" 
-              className="border-gray-200 hover:border-emerald-200 hover:bg-emerald-50" 
+              className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 rounded-lg" 
               onClick={fetchData} 
               disabled={isLoading}
             >
@@ -541,9 +517,9 @@ export default function DailySalesSummaryPage() {
         </div>
 
         {/* ── Main Table Card Wrap ── */}
-        <Card className="border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Filters Bar */}
-          <div className="bg-white dark:bg-slate-900 border-b border-gray-100 p-4">
+          <div className="bg-muted/10 border-b border-border p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-end">
               {/* Date Filter */}
               <div className="w-full space-y-1.5">
@@ -552,14 +528,14 @@ export default function DailySalesSummaryPage() {
                   </label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-gray-200 text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
+                      <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
                         <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                         <span className="truncate">
                           {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select range</span>}
                         </span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-gray-200 shadow-xl" align="start">
+                    <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
                       <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
                     </PopoverContent>
                   </Popover>
@@ -574,13 +550,13 @@ export default function DailySalesSummaryPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                        className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
                       >
                         <span className="truncate">{branch === "all" ? "All Branches" : branches.find((b) => String(b.id) === String(branch))?.name || "All Branches"}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                       <Command>
                         <CommandInput placeholder="Search branches..." className="h-9" />
                         <CommandList>
@@ -626,13 +602,13 @@ export default function DailySalesSummaryPage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-9 rounded-md border-gray-200 font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                        className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
                       >
                         <span className="truncate">{user === "all" ? "All Users" : sellers.find((s) => String(s.id) === String(user))?.name || "All Users"}</span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-gray-200 shadow-lg" align="start">
+                    <PopoverContent className="w-full min-w-[200px] p-0 rounded-md border-border shadow-lg" align="start">
                       <Command>
                         <CommandInput placeholder="Search users..." className="h-9" />
                         <CommandList>
@@ -676,11 +652,11 @@ export default function DailySalesSummaryPage() {
                 </label>
                  <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full h-9 rounded-md border border-gray-200 text-muted-foreground text-sm font-normal gap-2 hover:bg-gray-50 focus:ring-0">
+                      <Button variant="outline" className="w-full h-9 rounded-md border border-border text-muted-foreground text-sm font-normal gap-2 hover:bg-muted focus:ring-0 bg-transparent">
                         <SlidersHorizontal className="size-4" /> Advanced
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 p-6 rounded-md border-gray-200 shadow-xl" align="center">
+                    <PopoverContent className="w-80 p-6 rounded-md border-border shadow-xl" align="center">
                       <div className="space-y-6">
                         <div className="space-y-4">
                           <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -688,15 +664,15 @@ export default function DailySalesSummaryPage() {
                           </Label>
                           <Slider defaultValue={[0, 1000]} max={5000} step={10} value={amountRange} onValueChange={setAmountRange} className="py-2" />
                           <div className="flex justify-between text-xs font-semibold tabular-nums text-muted-foreground">
-                            <span className="bg-gray-100 px-2 py-1 rounded-md">{currencySymbol} {amountRange[0]}</span>
-                            <span className="bg-gray-100 px-2 py-1 rounded-md">{currencySymbol} {amountRange[1]}</span>
+                            <span className="bg-muted/50 px-2 py-1 rounded-md">{currencySymbol} {amountRange[0]}</span>
+                            <span className="bg-muted/50 px-2 py-1 rounded-md">{currencySymbol} {amountRange[1]}</span>
                           </div>
                         </div>
                         <div className="space-y-3">
                           <Label className="text-sm font-semibold text-foreground">Settlement Channel</Label>
                           <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                            <SelectTrigger className="h-9 rounded-md border-gray-200 font-normal text-sm"><SelectValue /></SelectTrigger>
-                            <SelectContent className="rounded-md border-gray-200 shadow-lg">
+                            <SelectTrigger className="h-9 rounded-md border-border font-normal text-sm"><SelectValue /></SelectTrigger>
+                            <SelectContent className="rounded-md border-border shadow-lg">
                               <SelectItem value="all">Global (All Channels)</SelectItem>
                               {paymentMethods.map(method => (
                                 <SelectItem key={method.toLowerCase()} value={method.toLowerCase()}>{method}</SelectItem>
@@ -717,10 +693,10 @@ export default function DailySalesSummaryPage() {
                   </label>
                   <div className="relative group flex gap-2">
                       <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                         <Input 
                             placeholder="Customers or invoices..." 
-                            className="pl-9 h-9 rounded-md border-gray-200 shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
+                            className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent" 
                             value={searchQuery}
                             onChange={(e)=>setSearchQuery(e.target.value)}
                         />
@@ -732,8 +708,8 @@ export default function DailySalesSummaryPage() {
 
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/80">
-                <TableRow className="border-gray-100 hover:bg-transparent">
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="pl-6 py-3.5 text-[13px] font-semibold text-muted-foreground">Execution Date</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">Reference #</TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">Customer Profile</TableHead>
@@ -745,13 +721,13 @@ export default function DailySalesSummaryPage() {
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-gray-100 animate-pulse">
-                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-32 bg-gray-100 rounded" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24 bg-gray-50 rounded" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-40 bg-gray-100 rounded" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-28 bg-gray-100 rounded ml-auto" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-6 w-20 mx-auto rounded-md bg-gray-50" /></TableCell>
-                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-28 ml-auto bg-gray-100 rounded" /></TableCell>
+                    <TableRow key={i} className="border-border animate-pulse">
+                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-32 bg-muted rounded" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24 bg-muted/50 rounded" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-40 bg-muted rounded" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-28 bg-muted rounded ml-auto" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-6 w-20 mx-auto rounded-md bg-muted/50" /></TableCell>
+                      <TableCell className="text-right pr-6"><Skeleton className="h-4 w-28 ml-auto bg-muted rounded" /></TableCell>
                     </TableRow>
                   ))
                 ) : paginatedData.length > 0 ? (
@@ -762,7 +738,7 @@ export default function DailySalesSummaryPage() {
                     
                     return (
                       <TableRow key={item.id} className={cn(
-                        "hover:bg-gray-50/50 transition-colors border-gray-100 group relative overflow-hidden",
+                        "hover:bg-muted/30 transition-colors border-border group relative overflow-hidden",
                         isCredit && "bg-amber-500/[0.02]"
                       )}>
                         <TableCell className="pl-6 py-3.5 relative">
@@ -777,10 +753,10 @@ export default function DailySalesSummaryPage() {
                         </TableCell>
                         <TableCell>
                             <div className="flex items-center gap-3">
-                               <div className="size-6 rounded-md bg-gray-100 flex items-center justify-center text-[10px] font-bold text-muted-foreground group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-all">
-                                  {item.customer?.substring(0, 2)}
-                               </div>
-                               <span className="text-[13px] font-medium text-foreground">{item.customer || "Walk-in Market"}</span>
+                             <div className="size-6 rounded-md bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-all border border-border">
+                                {item.customer?.substring(0, 2)}
+                             </div>
+                             <span className="text-[13px] font-medium text-foreground">{item.customer || "Walk-in Market"}</span>
                             </div>
                         </TableCell>
                         <TableCell className="text-right">
