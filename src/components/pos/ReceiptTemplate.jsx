@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useTranslation } from "@/hooks/useTranslation";
 import { QRCodeSVG } from "qrcode.react";
+import Barcode from "react-barcode";
 
 export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, terminalName }, ref) => {
   if (!sale) return null;
@@ -236,27 +237,17 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
         )}
       </div>
 
-      {/* QR Code Section */}
-      <div className="mt-4 flex flex-col items-center justify-center space-y-1">
-        <QRCodeSVG
-          value={JSON.stringify({
-            invoice: sale.invoice_number || "Draft",
-            date: sale.created_at ? format(new Date(sale.created_at), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-            total: (sale.payable_amount || sale.net_total || 0).toString()
-          })}
-          size={80}
-          level={"L"}
-          includeMargin={false}
-          imageSettings={{
-            src: business?.logo ? getLogoUrl(business.logo) : "",
-            x: undefined,
-            y: undefined,
-            height: 15,
-            width: 15,
-            excavate: true,
-          }}
+      {/* Barcode Section for Returns */}
+      <div className="mt-4 flex flex-col items-center justify-center space-y-1 overflow-hidden">
+        <Barcode 
+          value={sale.invoice_number || "000000"} 
+          width={1.2} 
+          height={40} 
+          fontSize={10}
+          margin={0}
+          background="transparent"
         />
-        <p className="text-[7px] font-bold opacity-40 uppercase tracking-widest">{t("pos.scan_for_verification")}</p>
+        <p className="text-[7px] font-bold opacity-40 uppercase tracking-widest">Scan for returns & verification</p>
       </div>
 
       {/* Footer */}

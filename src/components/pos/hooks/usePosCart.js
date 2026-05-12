@@ -5,12 +5,13 @@ import { useReducer, useCallback } from "react";
 function cartReducer(state, action) {
   switch (action.type) {
     case "ADD_ITEM": {
-      const { product, quantity: payloadQty, batchId } = action.payload;
+      const { product, quantity: payloadQty, batchId: pbId, batch } = action.payload;
+      const bId = pbId || batch?.id || null;
       const qtyToAdd = payloadQty !== undefined ? parseFloat(payloadQty) : 1;
-      const price = action.payload.price || (state.isWholesale ? (product.wholesalePrice || 0) : (product.retailPrice || 0)) || 0;
+      const price = action.payload.price || batch?.selling_price || (state.isWholesale ? (product.wholesalePrice || 0) : (product.retailPrice || 0)) || 0;
       
       // Items are now unique by (variantId + batchId)
-      const itemKey = `${product.variantId || product.id}_${batchId || 'default'}`;
+      const itemKey = `${product.variantId || product.id}_${bId || 'default'}`;
       const existingIndex = state.cart.findIndex((i) => `${i.variantId}_${i.batchId || 'default'}` === itemKey);
 
       if (existingIndex > -1) {
@@ -26,14 +27,16 @@ function cartReducer(state, action) {
             id: itemKey, // Unique key for cart items
             productId: product.productId,
             variantId: product.variantId || product.id,
-            batchId: batchId || null,
+            batchId: bId || null,
             barcode: product.barcode,
+            item_code: product.item_code || product.barcode,
             name: product.name,
             size: product.size,
             quantity: qtyToAdd,
             price,
             discount: 0,
             unit: product.unit || 'pc',
+            expiry_date: batch?.expiry_date || null,
           },
         ],
       };

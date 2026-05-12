@@ -1,13 +1,18 @@
+"use client";
+
 import PosPage from "@/components/pos/main-page";
+import ClassicPosPage from "@/components/pos/classic-page";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import React from "react";
 
-const page = () => {
+const Page = () => {
+  const posLayout = useSettingsStore((state) => state.global?.posLayout || "modern");
+
+  if (posLayout === "classic") {
+    return <ClassicPosPage />;
+  }
+
   return <PosPage />;
 };
 
-export default page;
-
-export const metadata = {
-  title: "Point of Sale | Inzeedo POS",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
-};
+export default Page;

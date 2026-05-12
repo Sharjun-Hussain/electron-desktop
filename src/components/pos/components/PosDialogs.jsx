@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -215,15 +215,39 @@ HoldListDialog.displayName = "HoldListDialog";
 export const SaleListDialog = memo(({
   isOpen, onOpenChange, salesData, isLoadingSales,
   setPrintableSale, setSelectedReturnSale, setIsReturnDialogOpen,
+  searchSales
 }) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "created_at", direction: "desc" });
+  const [localSales, setLocalSales] = useState([]);
+  const [isFilteredByProduct, setIsFilteredByProduct] = useState(false);
+  const [dateFilter, setDateFilter] = useState("all"); // all, today, yesterday, 7days
+
+  useEffect(() => {
+    if (salesData) setLocalSales(salesData);
+  }, [salesData]);
 
   const filteredAndSortedSales = useMemo(() => {
-    let result = [...(salesData || [])];
+    let result = [...(localSales || [])];
 
-    // Filter
+    // Filter by Date
+    if (dateFilter !== "all") {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const yesterday = today - 86400000;
+      const sevenDays = today - 86400000 * 7;
+
+      result = result.filter(s => {
+        const sTime = new Date(s.created_at).getTime();
+        if (dateFilter === "today") return sTime >= today;
+        if (dateFilter === "yesterday") return sTime >= yesterday && sTime < today;
+        if (dateFilter === "7days") return sTime >= sevenDays;
+        return true;
+      });
+    }
+
+    // Filter by Search Text
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(s => 
@@ -257,6 +281,58 @@ export const SaleListDialog = memo(({
       direction: prev.key === key && prev.direction === "desc" ? "asc" : "desc"
     }));
   };
+
+  // -- Barcode Scanning logic within the Dialog --
+  const barcodeBuffer = useRef("");
+  const lastKeyTime = useRef(0);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = async (e) => {
+      const now = Date.now();
+      const diff = now - lastKeyTime.current;
+      lastKeyTime.current = now;
+
+      // Handle Enter (end of scan)
+      if (e.key === "Enter") {
+        const code = barcodeBuffer.current;
+        barcodeBuffer.current = "";
+
+        if (code.startsWith("INV") || code.length >= 10 && code.includes("-")) {
+          // It's likely an invoice number
+          const sales = await searchSales(code);
+          if (sales.length > 0) {
+            setSelectedReturnSale(sales[0]);
+            setIsReturnDialogOpen(true);
+            onOpenChange(false);
+          }
+        } else if (code.length >= 4) {
+          // It's likely a product barcode - search for sales containing this product
+          const sales = await searchSales(code);
+          if (sales.length > 0) {
+            setLocalSales(sales);
+            setIsFilteredByProduct(true);
+          } else {
+            setLocalSales([]);
+            setIsFilteredByProduct(true);
+          }
+        }
+        return;
+      }
+
+      // Buffer fast keystrokes (scanners)
+      if (diff < 50 && e.key.length === 1) {
+        barcodeBuffer.current += e.key;
+      } else {
+        barcodeBuffer.current = e.key.length === 1 ? e.key : "";
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, searchSales, setSelectedReturnSale, setIsReturnDialogOpen, onOpenChange]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="min-w-7xl w-[95vw] h-[85vh] flex flex-col p-0 overflow-hidden">
@@ -265,7 +341,9 @@ export const SaleListDialog = memo(({
             <DialogTitle className="text-lg font-black flex items-center gap-2 text-foreground leading-none mb-1">
               <List className="h-5 w-5 text-emerald-600" /> {t("pos.recent_completed_sales_title")}
             </DialogTitle>
-            <DialogDescription className="text-[10px] font-bold opacity-60 leading-none">{t("pos.recent_completed_sales_desc")}</DialogDescription>
+            <DialogDescription className="text-[10px] font-bold opacity-60 leading-none">
+              {t("pos.recent_completed_sales_desc")} — Scan receipt barcode to initiate return instantly.
+            </DialogDescription>
           </div>
         </DialogHeader>
       <Separator />
@@ -279,6 +357,33 @@ export const SaleListDialog = memo(({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
+        <div className="flex items-center gap-1 bg-background/50 p-1 rounded-lg border border-border/50">
+          {[
+            { id: "all", label: "All Time" },
+            { id: "today", label: "Today" },
+            { id: "yesterday", label: "Yesterday" },
+            { id: "7days", label: "7 Days" },
+          ].map((d) => (
+            <Button
+              key={d.id}
+              variant={dateFilter === d.id ? "secondary" : "ghost"}
+              size="sm"
+              className={clsx("h-6 px-3 text-[9px] font-bold uppercase tracking-wider transition-all", 
+                dateFilter === d.id ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm" : "text-muted-foreground")}
+              onClick={() => setDateFilter(d.id)}
+            >
+              {d.label}
+            </Button>
+          ))}
+        </div>
+
+        {isFilteredByProduct && (
+          <Button variant="outline" size="sm" className="h-8 text-[10px] font-bold border-emerald-500/50 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 animate-in fade-in slide-in-from-right-2"
+            onClick={() => { setLocalSales(salesData); setIsFilteredByProduct(false); setDateFilter("all"); setSearch(""); }}>
+            <RotateCcw className="h-3 w-3 mr-1" /> Clear Product Filter
+          </Button>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {isLoadingSales ? (

@@ -17,6 +17,7 @@ export const useSettingsStore = create(
                 theme: 'light',
                 zoomLevel: 1,
                 sidebarCollapsed: false,
+                posLayout: 'modern', // 'modern' or 'classic'
             },
             // Business Settings (Synced from backend)
             business: {},

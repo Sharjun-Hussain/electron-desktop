@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useTranslation } from "@/hooks/useTranslation";
+import Barcode from "react-barcode";
 
 export const InvoiceA4Template = forwardRef(({ sale, settings, business, branch, terminalName }, ref) => {
   if (!sale) return null;
@@ -221,6 +222,16 @@ export const InvoiceA4Template = forwardRef(({ sale, settings, business, branch,
                   <span>{(totals.payable - totals.paid).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
              )}
+          </div>
+
+          <div className="mt-6 flex justify-center pt-4 border-t border-slate-100">
+             <Barcode 
+               value={sale.invoice_number || "000000"} 
+               width={1.2} 
+               height={40} 
+               fontSize={10}
+               margin={0}
+             />
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ import {
   FileText, ScrollText, CheckCircle2, Settings2, Loader2, Eye,
   Fingerprint, Type, Layout, AlignLeft, AlignCenter, RotateCcw, Image as ImageIcon,
   Usb, Scan, Activity, Zap, Info, ShieldCheck, Monitor,
-  Fullscreen, Package, Lock, ArrowUpCircle
+  Fullscreen, Package, Lock, ArrowUpCircle, LayoutGrid
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermission } from "@/hooks/use-permission";
@@ -31,6 +31,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 const AVAILABLE_PAYMENTS = [
   { id: "cash", label: "Cash", icon: Banknote, desc: "Physical currency" },
@@ -85,6 +86,8 @@ export function PosSettings() {
 
   const { playBeep } = useBeep();
   const [terminalName, setTerminalName] = useState("");
+  const posLayout = useSettingsStore((state) => state.global?.posLayout || "modern");
+  const setGlobalSettings = useSettingsStore((state) => state.setGlobalSettings);
 
   useEffect(() => {
     const saved = localStorage.getItem("pos_terminal_id");
@@ -134,7 +137,8 @@ export function PosSettings() {
     enableBatchSelection: false,
     showUser: true, showCustomer: true, showDateTime: true, showSalesType: true,
     autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false,
-    receiptPrinterName: "", barcodePrinterName: ""
+    receiptPrinterName: "", barcodePrinterName: "",
+    posTableColumns: ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]
   });
 
   const [peripherals, setPeripherals] = useState({
@@ -434,6 +438,38 @@ export function PosSettings() {
                   />
 
                   <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
+                    <SectionHeader icon={Layout} title="Interface & Layout" description="Select the primary visual structural basis for the POS workstation" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { id: "modern", label: "Modern Desktop", desc: "Touch-friendly & Visual", icon: Monitor },
+                        { id: "classic", label: "Classic Industrial", desc: "Keyboard-first & Compact", icon: LayoutGrid },
+                      ].map((layout) => {
+                        const isActive = posLayout === layout.id;
+                        return (
+                          <div
+                            key={layout.id}
+                            onClick={() => {
+                              setGlobalSettings({ posLayout: layout.id });
+                              toast.success(`POS layout switched to ${layout.label}`);
+                            }}
+                            className={cn(
+                              "relative cursor-pointer rounded-xl border p-4 transition-all outline-none",
+                              isActive
+                                ? "border-emerald-600 bg-emerald-50/10 dark:bg-emerald-500/5 shadow-sm ring-1 ring-emerald-600/20"
+                                : "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                            )}
+                          >
+                            {isActive && <div className="absolute top-3 right-3 p-0.5 rounded-full bg-emerald-600 text-white shadow-sm"><CheckCircle2 className="w-2.5 h-2.5" /></div>}
+                            <layout.icon className={cn("w-4 h-4 mb-3", isActive ? "text-emerald-600" : "text-slate-400 dark:text-slate-500")} />
+                            <h4 className={cn("font-medium text-[12px]", isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400")}>{layout.label}</h4>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-1 leading-none ">{layout.desc}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
                     <SectionHeader icon={Package} title="Inventory & Pricing Strategy" description="Configure how the system identifies and prices products with multiple batches" />
                     <div className="space-y-4">
                       <div className="space-y-1.5">
@@ -471,6 +507,48 @@ export function PosSettings() {
                         <Info className="w-3.5 h-3.5 text-amber-600" />
                         <span className="text-[9px] font-medium text-amber-800/60 ">Local Persistence Active</span>
                       </div>
+                    </div>
+                  </div>
+                  <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
+                    <SectionHeader icon={LayoutGrid} title="Workstation Table Columns" description="Configure which data points are visible in the product grid" />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {[
+                        { id: "barcode", label: "ItemCode" },
+                        { id: "name", label: "ItemName" },
+                        { id: "quantity", label: "Quantity" },
+                        { id: "mrp", label: "MRP" },
+                        { id: "price", label: "Price" },
+                        { id: "discount", label: "Discount (Amt)" },
+                        { id: "discount_percent", label: "Disc (%)" },
+                        { id: "total", label: "Net Total" },
+                        { id: "expire", label: "Expire Date" },
+                      ].map((col) => {
+                        const isChecked = formData.posTableColumns?.includes(col.id);
+                        return (
+                          <div
+                            key={col.id}
+                            onClick={() => {
+                              const current = formData.posTableColumns || [];
+                              const next = isChecked ? current.filter(id => id !== col.id) : [...current, col.id];
+                              updateField('posTableColumns', next);
+                            }}
+                            className={cn(
+                              "flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all",
+                              isChecked 
+                                ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400" 
+                                : "bg-transparent border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-3.5 h-3.5 rounded border flex items-center justify-center transition-all",
+                              isChecked ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-300 dark:border-slate-600"
+                            )}>
+                              {isChecked && <CheckCircle2 className="w-2.5 h-2.5" />}
+                            </div>
+                            <span className="text-[11px] font-medium leading-none">{col.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

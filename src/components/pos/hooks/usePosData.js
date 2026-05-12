@@ -175,7 +175,7 @@ export function usePosData() {
               mrpPrice: parseFloat(v.mrp_price) || 0,
               wholesalePrice: parseFloat(v.wholesale_price) || 0,
               image: getImageUrl(v.image) || getImageUrl(p.image),
-              stock: v.stock || 0,
+              stock: (v.stocks || []).reduce((sum, s) => sum + parseFloat(s.quantity || 0), 0),
             };
           }),
         }));

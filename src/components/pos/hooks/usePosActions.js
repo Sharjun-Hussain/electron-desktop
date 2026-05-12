@@ -258,6 +258,23 @@ export function usePosActions({
     } catch { toast.error("Failed to fetch sales"); }
     finally { setIsLoadingSales(false); }
   }, [session]);
+  
+  const searchSales = useCallback(async (query) => {
+    if (!session?.accessToken || !query) return [];
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/sales?search=${encodeURIComponent(query)}&size=50`,
+        { headers: { Authorization: `Bearer ${session.accessToken}` } }
+      );
+      const result = await res.json();
+      if (result.status === "success") {
+        return result.data.data || [];
+      }
+    } catch { 
+      console.error("Failed to search sales");
+    }
+    return [];
+  }, [session]);
 
   // ── Delete Sale ───────────────────────────────────────────────────────────
   const deleteSale = useCallback(async (id) => {
@@ -378,7 +395,7 @@ export function usePosActions({
 
   return {
     handlePayNow, handleHoldSale,
-    fetchSales, deleteSale, resumeSale,
+    fetchSales, deleteSale, resumeSale, searchSales,
     fetchStock, clearStockData, syncPendingSales,
     salesData, isLoadingSales,
     stockData, isLoadingStock,
