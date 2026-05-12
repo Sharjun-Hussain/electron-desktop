@@ -474,8 +474,8 @@ export default function OrganizationDetailSheet({
   };
 
   const handleResetData = async () => {
-    if (confirmationName !== org?.name) {
-      toast.error("Confirmation Mismatch: Please enter the exact organization name.");
+    if (confirmationName !== "Institutional Safety Operations") {
+      toast.error("Security Protocol Violation: Invalid confirmation phrase.");
       return;
     }
 
@@ -486,8 +486,10 @@ export default function OrganizationDetailSheet({
         {
           method: "POST",
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
+          body: JSON.stringify({ confirmation: "Institutional Safety Operations" }),
         }
       );
 
@@ -1167,14 +1169,14 @@ export default function OrganizationDetailSheet({
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest text-center block">
-                Type the organization name to confirm
+              <label className="text-xs font-bold text-rose-500 uppercase tracking-widest text-center block">
+                Type "Institutional Safety Operations" to confirm
               </label>
               <Input
                 value={confirmationName}
                 onChange={(e) => setConfirmationName(e.target.value)}
-                placeholder={org?.name}
-                className="h-12 text-center font-bold text-lg border-rose-200 focus-visible:ring-rose-500 bg-slate-50"
+                placeholder="Institutional Safety Operations"
+                className="h-12 text-center font-bold text-sm border-rose-200 focus-visible:ring-rose-500 bg-rose-50/30"
               />
             </div>
           </div>
@@ -1191,7 +1193,7 @@ export default function OrganizationDetailSheet({
             <Button
               variant="destructive"
               onClick={handleResetData}
-              disabled={isResettingData || confirmationName !== org?.name}
+              disabled={isResettingData || confirmationName !== "Institutional Safety Operations"}
               className="rounded-xl px-8 font-bold bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-500/20"
             >
               {isResettingData ? (
