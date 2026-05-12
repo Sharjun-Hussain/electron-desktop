@@ -65,6 +65,7 @@ import { useRouter } from "next/navigation";
 import { useCurrency } from "@/hooks/useCurrency";
 import { ProductFormSkeleton } from "@/app/skeletons/products/product-form-skeleton";
 import { Badge } from "@/components/ui/badge";
+import { ProductInsightSheet } from "../../products/ProductInsightSheet";
 import {
   Table,
   TableBody,
@@ -109,6 +110,7 @@ const variantFormSchema = z.object({
   price: z.coerce.number().min(0).default(0),
   wholesale_price: z.coerce.number().min(0).default(0),
   cost_price: z.coerce.number().min(0).default(0),
+  mrp_price: z.coerce.number().min(0).default(0),
   stock_quantity: z.coerce.number().min(0).default(0),
   description: z.string().optional(),
   is_active: z.boolean().default(true),
@@ -282,6 +284,9 @@ const SettingsCard = ({
 export function ProductVariantForm({ initialData = null }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [insightOpen, setInsightOpen] = useState(false);
+  const [insightData, setInsightData] = useState(null);
+  const [isCheckingBarcode, setIsCheckingBarcode] = useState(false);
   const { currency } = useCurrency();
   const [parentProducts, setParentProducts] = useState([]);
   const [detailedParent, setDetailedParent] = useState(null);
@@ -446,6 +451,42 @@ export function ProductVariantForm({ initialData = null }) {
     form.setValue("code", code);
     form.setValue("sku", sku);
   };
+
+  // --- Barcode Insight Logic ---
+  const checkBarcodeInsight = useCallback(async (barcode) => {
+    if (!barcode || barcode.length < 3 || isEditing) return;
+    
+    try {
+      setIsCheckingBarcode(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/barcode/${barcode}`, {
+        headers: { Authorization: `Bearer ${session?.accessToken}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === "success") {
+          setInsightData(data.data);
+          setInsightOpen(true);
+        }
+      }
+    } catch (err) {
+      console.error("Barcode check failed", err);
+    } finally {
+      setIsCheckingBarcode(false);
+    }
+  }, [session?.accessToken, isEditing]);
+
+  // Auto-trigger insight when barcode is scanned/entered
+  const barcodeValue = form.watch("barcode");
+  useEffect(() => {
+    if (!barcodeValue || barcodeValue.length < 3 || isEditing) return;
+    
+    const timer = setTimeout(() => {
+      checkBarcodeInsight(barcodeValue);
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [barcodeValue, checkBarcodeInsight, isEditing]);
 
   const generateNumericBarcode = (length = 5) => {
     // Generate a numeric code (Scale-Ready 5-digit OR Standard 13-digit)
@@ -832,6 +873,52 @@ export function ProductVariantForm({ initialData = null }) {
                     </div>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
+                    <FormField
+                      name="barcode"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Barcode <span className="text-muted-foreground font-normal">(Scannable)</span></FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2 group/barcode">
+                              <div className="relative flex-1">
+                                <Barcode className={cn("absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground/30 transition-colors", isCheckingBarcode && "animate-pulse text-emerald-500")} />
+                                 <Input 
+                                   placeholder="Scan or enter barcode number" 
+                                   className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold" 
+                                   {...field} 
+                                 />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => generateNumericBarcode(5)}
+                                className="h-11 px-4 rounded-xl bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-bold"
+                                title="Generate 5-digit code for weighing scales"
+                              >
+                                <RefreshCw className="size-4" />
+                                <span className="text-xs">Scale</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => generateNumericBarcode(13)}
+                                className="h-11 px-4 rounded-xl bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-bold"
+                                title="Generate standard 13-digit barcode"
+                                >
+                                <Zap className="size-4" />
+                                <span className="text-xs">Std</span>
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-[11px]" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Separator className="bg-slate-100 dark:bg-slate-800" />
                     {/* Redesigned Attributes UX: Property Cards */}
                     {form.watch("attributes")?.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -889,51 +976,40 @@ export function ProductVariantForm({ initialData = null }) {
                         <span className="text-sm">No attributes available. Please select a product with defined properties.</span>
                       </div>
                     )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-5 pt-4 border-t border-border/40">
                       <FormField
                         name="cost_price"
                         control={form.control}
                         render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-xs font-semibold text-slate-900 dark:text-white ml-0.5">
-                              Cost Price
-                            </FormLabel>
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Cost Price</FormLabel>
                             <FormControl>
-                              <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 font-bold text-xs group-focus-within:text-emerald-600 transition-colors uppercase">{currency || "$"}</div>
-                                <Input
-                                  type="number"
-                                  placeholder="0.00"
-                                  className="h-9 pl-12 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all"
-                                  {...field}
-                                />
+                              <div className="relative group/field">
+                                <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-slate-200 dark:border-slate-800 text-slate-400 group-focus-within/field:text-emerald-500 transition-colors">
+                                  <span className="text-xs font-bold font-mono">LKR</span>
+                                </div>
+                                <Input type="number" step="0.01" className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" {...field} />
                               </div>
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-[11px]" />
                           </FormItem>
                         )}
                       />
                       <FormField
-                        name="wholesale_price"
+                        name="mrp_price"
                         control={form.control}
                         render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-xs font-semibold text-slate-900 dark:text-white ml-0.5">
-                              Wholesale
-                            </FormLabel>
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="text-[13px] font-bold text-slate-700 dark:text-slate-300">MRP Price</FormLabel>
                             <FormControl>
-                              <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 font-bold text-xs group-focus-within:text-emerald-600 transition-colors uppercase">{currency || "$"}</div>
-                                <Input
-                                  type="number"
-                                  placeholder="0.00"
-                                  className="h-9 pl-12 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all"
-                                  {...field}
-                                />
+                              <div className="relative group/field">
+                                <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-slate-200 dark:border-slate-800 text-slate-400 group-focus-within/field:text-emerald-500 transition-colors">
+                                  <span className="text-xs font-bold font-mono">LKR</span>
+                                </div>
+                                <Input type="number" step="0.01" className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" {...field} />
                               </div>
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-[11px]" />
                           </FormItem>
                         )}
                       />
@@ -941,49 +1017,64 @@ export function ProductVariantForm({ initialData = null }) {
                         name="price"
                         control={form.control}
                         render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-xs font-semibold text-slate-900 dark:text-white ml-0.5">
-                              Sale Price
-                            </FormLabel>
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="text-[13px] font-bold text-emerald-600">Selling Price</FormLabel>
                             <FormControl>
-                              <div className="relative group">
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600/40 font-bold text-xs group-focus-within:text-emerald-600 transition-colors uppercase">{currency || "$"}</div>
-                                <Input
-                                  type="number"
-                                  placeholder="0.00"
-                                  className="h-9 pl-12 bg-emerald-500/5 border-emerald-500/20 rounded-md focus:ring-emerald-500/20 font-medium text-sm text-emerald-600 shadow-sm transition-all"
-                                  {...field}
-                                />
+                              <div className="relative group/field">
+                                <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-emerald-100 dark:border-emerald-900/30 text-emerald-500/50 group-focus-within/field:text-emerald-600 transition-colors">
+                                  <span className="text-xs font-bold font-mono">LKR</span>
+                                </div>
+                                <Input type="number" step="0.01" className="pl-12 h-11 bg-emerald-50/10 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-900/30 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-emerald-700 dark:text-emerald-400 font-bold" {...field} />
                               </div>
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-[11px]" />
                           </FormItem>
                         )}
                       />
                       <FormField
-                        name="stock_quantity"
+                        name="wholesale_price"
                         control={form.control}
                         render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-xs font-semibold text-slate-900 dark:text-white ml-0.5">
-                              Opening Stock {detailedParent?.unit?.name ? `(${detailedParent.unit.name})` : ""}
-                            </FormLabel>
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Wholesale Price</FormLabel>
                             <FormControl>
-                              <div className="relative group">
-                                <Box className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/40 group-focus-within:text-emerald-600 transition-colors" />
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  className="h-9 pl-9 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all"
-                                  {...field}
-                                />
+                              <div className="relative group/field">
+                                <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-slate-200 dark:border-slate-800 text-slate-400 group-focus-within/field:text-emerald-500 transition-colors">
+                                  <span className="text-xs font-bold font-mono">LKR</span>
+                                </div>
+                                <Input type="number" step="0.01" className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" {...field} />
                               </div>
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-[11px]" />
                           </FormItem>
                         )}
                       />
                     </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-border/40">
+                        <FormField
+                          name="stock_quantity"
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0.5">
+                              <FormLabel className="text-xs font-semibold text-slate-900 dark:text-white ml-0.5">
+                                Opening Stock {detailedParent?.unit?.name ? `(${detailedParent.unit.name})` : ""}
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative group">
+                                  <Box className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/40 group-focus-within:text-emerald-600 transition-colors" />
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    className="h-9 pl-9 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                     {/* Description */}
                     <FormField
@@ -1081,52 +1172,6 @@ export function ProductVariantForm({ initialData = null }) {
                       />
                     </div>
 
-                    <FormField
-                      name="barcode"
-                      control={form.control}
-                      render={({ field }) => (
-                        <FormItem className="space-y-0.5">
-                          <FormLabel className="text-sm font-semibold text-slate-900 dark:text-white ml-0.5">
-                            POS Scannable Barcode
-                          </FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2 group/barcode">
-                              <div className="relative flex-1">
-                                <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground/30 group-focus-within:text-emerald-600 transition-colors" />
-                                <Input
-                                  className="h-9 pl-12 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-semibold  shadow-sm group-focus-within:border-emerald-500/40 transition-all"
-                                  placeholder="Scan or input barcode..."
-                                  {...field}
-                                />
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => generateNumericBarcode(5)}
-                                className="h-9 px-3 rounded-md bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                title="Generate 5-digit code for weighing scales"
-                              >
-                                <RefreshCw className="size-3.5" />
-                                <span className="text-xs">Scale Mode</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => generateNumericBarcode(13)}
-                                className="h-9 px-3 rounded-md bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                title="Generate standard 13-digit barcode"
-                              >
-                                <Zap className="size-3.5" />
-                                <span className="text-xs">Standard</span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </CardContent>
                 </Card>
 
@@ -1349,6 +1394,11 @@ export function ProductVariantForm({ initialData = null }) {
           </div>
         </form>
       </Form>
+      <ProductInsightSheet 
+        isOpen={insightOpen}
+        onClose={() => setInsightOpen(false)}
+        insightData={insightData}
+      />
     </div>
   );
 }

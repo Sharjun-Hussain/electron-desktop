@@ -97,6 +97,7 @@ import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useRouter } from "next/navigation";
 
 import { ProductFormSkeleton } from "@/app/skeletons/products/product-form-skeleton";
+import { ProductInsightSheet } from "../ProductInsightSheet";
 
 import { toast } from "sonner";
 import { useFormRestore } from "@/hooks/use-form-restore";
@@ -122,6 +123,7 @@ const formSchema = z.object({
   price: z.string().optional(),
   wholesale_price: z.string().optional(),
   cost_price: z.string().optional(),
+  mrp_price: z.string().optional(),
   stock_quantity: z.string().optional(),
   sku: z.string().optional(),
   barcode: z.string().optional(),
@@ -309,6 +311,9 @@ const SearchableSelect = ({
 export function ProductForm({ initialData = null }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [insightOpen, setInsightOpen] = useState(false);
+  const [insightData, setInsightData] = useState(null);
+  const [isCheckingBarcode, setIsCheckingBarcode] = useState(false);
   const { data: session } = useSession();
   const { business } = useAppSettings();
   const router = useRouter();
@@ -394,6 +399,7 @@ export function ProductForm({ initialData = null }) {
         price: initialData.variants?.[0]?.price?.toString() || "",
         wholesale_price: initialData.variants?.[0]?.wholesale_price?.toString() || "",
         cost_price: initialData.variants?.[0]?.cost_price?.toString() || "",
+        mrp_price: initialData.variants?.[0]?.mrp_price?.toString() || "",
         stock_quantity: initialData.variants?.[0]?.stock_quantity?.toString() || "",
         sku: initialData.variants?.[0]?.sku || "",
         barcode: initialData.variants?.[0]?.barcode || "",
@@ -419,6 +425,7 @@ export function ProductForm({ initialData = null }) {
         price: "",
         wholesale_price: "",
         cost_price: "",
+        mrp_price: "",
         stock_quantity: "",
         sku: "",
         barcode: "",
@@ -441,6 +448,42 @@ export function ProductForm({ initialData = null }) {
     form.setValue("code", newCode);
     form.clearErrors("code");
   }, [form]);
+
+  // --- Barcode Insight Logic ---
+  const checkBarcodeInsight = useCallback(async (barcode) => {
+    if (!barcode || barcode.length < 3 || isEditing) return;
+    
+    try {
+      setIsCheckingBarcode(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/barcode/${barcode}`, {
+        headers: { Authorization: `Bearer ${session?.accessToken}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === "success") {
+          setInsightData(data.data);
+          setInsightOpen(true);
+        }
+      }
+    } catch (err) {
+      console.error("Barcode check failed", err);
+    } finally {
+      setIsCheckingBarcode(false);
+    }
+  }, [session?.accessToken, isEditing]);
+
+  // Auto-trigger insight when barcode is scanned/entered
+  const barcodeValue = form.watch("barcode");
+  useEffect(() => {
+    if (!barcodeValue || barcodeValue.length < 3 || isEditing) return;
+    
+    const timer = setTimeout(() => {
+      checkBarcodeInsight(barcodeValue);
+    }, 500); // 500ms debounce to allow for scanning/typing
+    
+    return () => clearTimeout(timer);
+  }, [barcodeValue, checkBarcodeInsight, isEditing]);
 
   const generateNumericBarcode = (length = 5) => {
     // Generate a numeric code (Scale-Ready 5-digit OR Standard 13-digit)
@@ -757,6 +800,7 @@ export function ProductForm({ initialData = null }) {
           price: "",
           wholesale_price: "",
           cost_price: "",
+          mrp_price: "",
           stock_quantity: "",
           sku: "",
           barcode: "",
@@ -921,6 +965,9 @@ export function ProductForm({ initialData = null }) {
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       name="name"
                       control={form.control}
@@ -935,6 +982,86 @@ export function ProductForm({ initialData = null }) {
                               className="h-9 bg-background border-border rounded-md px-3 font-medium text-sm text-foreground shadow-sm focus:ring-emerald-500/20"
                               {...field}
                             />
+                          </FormControl>
+                          <FormMessage className="text-xs font-medium text-red-500/80 ml-0.5 " />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name="barcode"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem className="space-y-0.5">
+                          <FormLabel className="text-sm font-semibold text-slate-900 dark:text-white ml-0.5">Barcode <span className="text-muted-foreground font-normal">(Scannable)</span></FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2 group/barcode">
+                              <div className="relative flex-1">
+                                <Barcode className={cn("absolute left-3 top-2.5 h-4 w-4 text-muted-foreground", isCheckingBarcode && "animate-pulse text-emerald-500")} />
+                                <Input 
+                                  placeholder="Scan or enter barcode" 
+                                  className="pl-9 h-9" 
+                                  {...field} 
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => generateNumericBarcode(5)}
+                                className="h-9 px-3 rounded-md bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
+                                title="Generate 5-digit code for weighing scales"
+                              >
+                                <RefreshCw className="size-3.5" />
+                                <span className="text-xs">Scale</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => generateNumericBarcode(13)}
+                                className="h-9 px-3 rounded-md bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
+                                title="Generate standard 13-digit barcode"
+                              >
+                                <Zap className="size-3.5" />
+                                <span className="text-xs">Std</span>
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-xs font-medium text-red-500/80 ml-0.5 " />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      name="sku"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem className="space-y-0.5">
+                          <FormLabel className="text-sm font-semibold">SKU <span className="text-muted-foreground font-normal">(Internal Code)</span></FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <Hash className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input placeholder="e.g. PRD-001 (auto if empty)" className="pl-9 h-9" {...field} />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const code = form.getValues("code") || "PRD";
+                                  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+                                  form.setValue("sku", `${code}-${random}`);
+                                }}
+                                className="h-9 px-3 rounded-md bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
+                                title="Generate unique SKU"
+                              >
+                                <RefreshCw className="size-3.5" />
+                                <span className="text-xs">Gen</span>
+                              </Button>
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs font-medium text-red-500/80 ml-0.5 " />
                         </FormItem>
@@ -1169,7 +1296,7 @@ export function ProductForm({ initialData = null }) {
                     </div>
                   </CardHeader>
                   <CardContent className="p-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <FormField
                         name="cost_price"
                         control={form.control}
@@ -1187,15 +1314,31 @@ export function ProductForm({ initialData = null }) {
                         )}
                       />
                       <FormField
+                        name="mrp_price"
+                        control={form.control}
+                        render={({ field }) => (
+                          <FormItem className="space-y-0.5">
+                            <FormLabel className="text-sm font-semibold">MRP Price</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <FileText className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input type="number" step="0.01" placeholder="0.00" className="pl-9 h-9" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
                         name="price"
                         control={form.control}
                         render={({ field }) => (
                           <FormItem className="space-y-0.5">
-                            <FormLabel className="text-sm font-semibold">Retail Price</FormLabel>
+                            <FormLabel className="text-sm font-semibold text-emerald-600">Selling Price</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input type="number" step="0.01" placeholder="0.00" className="pl-9 h-9" {...field} />
+                                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600" />
+                                <Input type="number" step="0.01" placeholder="0.00" className="pl-9 h-9 border-emerald-500/20 focus-visible:ring-emerald-500" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage className="text-xs" />
@@ -1234,84 +1377,6 @@ export function ProductForm({ initialData = null }) {
                               </div>
                             </FormControl>
                             <FormDescription className="text-[10px]">Initial quantity available in your branch.</FormDescription>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        name="sku"
-                        control={form.control}
-                        render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-sm font-semibold">SKU <span className="text-muted-foreground font-normal">(Internal Code)</span></FormLabel>
-                            <FormControl>
-                              <div className="flex gap-2">
-                                <div className="relative flex-1">
-                                  <Hash className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="e.g. PRD-001 (auto if empty)" className="pl-9 h-9" {...field} />
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    const code = form.getValues("code") || "PRD";
-                                    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-                                    form.setValue("sku", `${code}-${random}`);
-                                  }}
-                                  className="h-9 px-3 rounded-md bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                  title="Generate unique SKU"
-                                >
-                                  <RefreshCw className="size-3.5" />
-                                  <span className="text-xs">Gen SKU</span>
-                                </Button>
-                              </div>
-                            </FormControl>
-                            <FormDescription className="text-[10px]">Unique internal stock-keeping unit identifier.</FormDescription>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                      <FormField
-                        name="barcode"
-                        control={form.control}
-                        render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-sm font-semibold">Barcode <span className="text-muted-foreground font-normal">(Scannable)</span></FormLabel>
-                            <FormControl>
-                              <div className="flex gap-2 group/barcode">
-                                <div className="relative flex-1">
-                                  <Barcode className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="Scan or enter barcode number" className="pl-9 h-9" {...field} />
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => generateNumericBarcode(5)}
-                                  className="h-9 px-3 rounded-md bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                  title="Generate 5-digit code for weighing scales"
-                                >
-                                  <RefreshCw className="size-3.5" />
-                                  <span className="text-xs">Scale Mode</span>
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => generateNumericBarcode(13)}
-                                  className="h-9 px-3 rounded-md bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                  title="Generate standard 13-digit barcode"
-                                >
-                                  <Zap className="size-3.5" />
-                                  <span className="text-xs">Standard</span>
-                                </Button>
-                              </div>
-                            </FormControl>
-                            <FormDescription className="text-[10px]">EAN-13, UPC, QR or any scannable barcode. Leave empty if not applicable.</FormDescription>
                             <FormMessage className="text-xs" />
                           </FormItem>
                         )}
@@ -1599,6 +1664,11 @@ export function ProductForm({ initialData = null }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ProductInsightSheet 
+        isOpen={insightOpen}
+        onClose={() => setInsightOpen(false)}
+        insightData={insightData}
+      />
     </div>
   );
 }

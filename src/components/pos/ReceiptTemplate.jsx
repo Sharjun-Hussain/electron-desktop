@@ -139,6 +139,11 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
                 {(item.product_variant?.name || item.variant_name) && (
                   <div className="text-[10px] opacity-70">{item.product_variant?.name || item.variant_name}</div>
                 )}
+                {item.mrp_price > item.unit_price && (
+                  <div className="text-[9px] text-gray-500 italic">
+                    MRP: {parseFloat(item.mrp_price).toLocaleString()} (Save: {parseFloat(item.mrp_price - item.unit_price).toLocaleString()})
+                  </div>
+                )}
               </td>
               <td className="text-right py-2 whitespace-nowrap">{parseFloat(item.unit_price || item.price || 0).toLocaleString()}</td>
               {showTax && (
@@ -173,6 +178,23 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
             <span>{parseFloat(sale.discount_amount).toLocaleString()}</span>
           </div>
         )}
+        {(() => {
+          const totalMrpSavings = sale.items?.reduce((sum, item) => {
+            if (item.mrp_price > item.unit_price) {
+              return sum + (item.mrp_price - item.unit_price) * item.quantity;
+            }
+            return sum;
+          }, 0);
+          if (totalMrpSavings > 0) {
+            return (
+              <div className="flex justify-between text-[10px] font-bold text-gray-600 border-b border-dashed border-black/20 pb-1 mb-1">
+                <span>YOU SAVED (MRP):</span>
+                <span>{totalMrpSavings.toLocaleString()}</span>
+              </div>
+            );
+          }
+          return null;
+        })()}
         {showTax && parseFloat(sale.tax_amount || 0) > 0 && (
           <div className="flex justify-between">
             <span>TAX:</span>

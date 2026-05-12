@@ -336,7 +336,7 @@ const VariantSelectorDialog = ({ isOpen, onOpenChange, product, onSelect }) => {
                   onSelect({
                     variantId: v.id, productId: v.productId, barcode: v.barcode,
                     name: v.fullName, size: v.variantName, unit: v.unit,
-                    retailPrice: v.retailPrice, wholesalePrice: v.wholesalePrice
+                    retailPrice: v.retailPrice, mrpPrice: v.mrpPrice, wholesalePrice: v.wholesalePrice
                   });
                   onOpenChange(false);
                 }}>
@@ -344,8 +344,13 @@ const VariantSelectorDialog = ({ isOpen, onOpenChange, product, onSelect }) => {
                   <span className="font-normal group-hover:text-emerald-700 transition-colors">{v.variantName}</span>
                   <span className="text-[10px] text-muted-foreground font-mono mt-0.5">{v.barcode || "N/A"}</span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-lg font-normal text-emerald-600">LKR {v.retailPrice.toFixed(2)}</p>
+                <div className="flex items-center gap-4 text-right">
+                  <div className="flex flex-col">
+                    <p className="text-lg font-black text-emerald-600">LKR {v.retailPrice.toFixed(2)}</p>
+                    {v.mrpPrice > v.retailPrice && (
+                      <p className="text-[10px] text-muted-foreground line-through decoration-red-500/50">MRP: {v.mrpPrice.toFixed(2)}</p>
+                    )}
+                  </div>
                   <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
                     <Plus className="h-5 w-5 text-emerald-600" />
                   </div>
@@ -583,7 +588,7 @@ export default function PosPage() {
         handleAddToCart({
           variantId: v.id, productId: v.productId, barcode: v.barcode,
           name: v.fullName, size: v.variantName, unit: v.unit,
-          retailPrice: v.retailPrice, wholesalePrice: v.wholesalePrice
+          retailPrice: v.retailPrice, mrpPrice: v.mrpPrice, wholesalePrice: v.wholesalePrice
         }, quantity);
       } else {
         setSelectedProductForVariants(item);

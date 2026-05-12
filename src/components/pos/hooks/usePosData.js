@@ -172,6 +172,7 @@ export function usePosData() {
               fullName: variantLabel ? `${p.name} - ${variantLabel}` : p.name,
               barcode: v.barcode || p.barcode,
               retailPrice: parseFloat(v.price) || 0,
+              mrpPrice: parseFloat(v.mrp_price) || 0,
               wholesalePrice: parseFloat(v.wholesale_price) || 0,
               image: getImageUrl(v.image) || getImageUrl(p.image),
               stock: v.stock || 0,
