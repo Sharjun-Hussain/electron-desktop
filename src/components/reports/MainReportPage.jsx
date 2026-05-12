@@ -293,6 +293,31 @@ const REPORTS_DATA = [
     description: "Wholesale performance, shipment tracking, and distributor volume analysis.",
     isFavorite: true,
   },
+  // ── Advanced Reports (temporarily disabled — uncomment when backend routes are re-enabled) ──
+  // {
+  //   id: "advanced-transactions",
+  //   name: "Advanced Transactions",
+  //   href: "/reports/stocks/advanced-transactions",
+  //   category: "Stocks",
+  //   description: "Detailed audit of all inventory movements with dynamic column selection.",
+  //   isFavorite: true,
+  // },
+  // {
+  //   id: "advanced-inventory",
+  //   name: "Advanced Stock Report",
+  //   href: "/reports/stocks/advanced-inventory",
+  //   category: "Stocks",
+  //   description: "Valuation, batch tracking, and expiry analysis for advanced inventory control.",
+  //   isFavorite: true,
+  // },
+  // {
+  //   id: "advanced-sales",
+  //   name: "Advanced Sale Report",
+  //   href: "/reports/sales/advanced-sales",
+  //   category: "Sales",
+  //   description: "Item-level sales analytics with comprehensive filtering and deep insights.",
+  //   isFavorite: true,
+  // },
 ];
 
 const CATEGORIES_BASE = [

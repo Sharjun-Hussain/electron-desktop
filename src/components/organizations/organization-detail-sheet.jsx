@@ -19,7 +19,8 @@ import {
   Layout, FileText, Bell, Repeat, PackageCheck,
   BookOpen, Users2, Receipt, Map, QrCode, CloudUpload, Download,
   ShoppingCart, Truck, Wallet, Filter, BarChart3, PieChart,
-  Rocket, Crown, AlertCircle, CalendarDays, Lock
+  Rocket, Crown, AlertCircle, CalendarDays, Lock,
+  Trash2
 } from "lucide-react";
 import {
   Dialog,
@@ -151,6 +152,9 @@ export default function OrganizationDetailSheet({
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [isResetDataDialogOpen, setIsResetDataDialogOpen] = useState(false);
+  const [confirmationName, setConfirmationName] = useState("");
+  const [isResettingData, setIsResettingData] = useState(false);
 
   const fetchDetails = async () => {
     if (!organizationId || !accessToken) return;
@@ -469,6 +473,40 @@ export default function OrganizationDetailSheet({
     }
   };
 
+  const handleResetData = async () => {
+    if (confirmationName !== org?.name) {
+      toast.error("Confirmation Mismatch: Please enter the exact organization name.");
+      return;
+    }
+
+    try {
+      setIsResettingData(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}/reset-data`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success("Institutional Reset Successful: All transactional and master data has been wiped.");
+        setIsResetDataDialogOpen(false);
+        setConfirmationName("");
+        fetchDetails();
+      } else {
+        throw new Error(resData.message || "Reset failure.");
+      }
+    } catch (err) {
+      toast.error(err.message || "A system error occurred during the reset protocol.");
+    } finally {
+      setIsResettingData(false);
+    }
+  };
+
   const org = data?.organization;
   const stats = data?.stats;
 
@@ -746,6 +784,36 @@ export default function OrganizationDetailSheet({
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* Institutional Reset Section (Danger Zone) */}
+                <div className="space-y-5">
+                  <SectionHeader 
+                    icon={ShieldAlert} 
+                    title="Institutional Safety Operations" 
+                    description="High-priority actions requiring executive authorization" 
+                  />
+
+                  <div className="p-5 rounded-2xl border border-rose-500/20 bg-rose-500/5 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-rose-600 mt-0.5 shrink-0" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-rose-900 dark:text-rose-400">Institutional Data Reset</p>
+                        <p className="text-[11px] font-medium text-rose-700/70 leading-relaxed">
+                          This operation will permanently erase all transactional data, products, stocks, and financial records for this organization. 
+                          <span className="font-bold underline ml-1 text-rose-900 dark:text-rose-300">User accounts and login credentials will be preserved.</span>
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => setIsResetDataDialogOpen(true)}
+                      className="w-full h-11 rounded-xl bg-rose-600 hover:bg-rose-700 font-bold text-sm shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Execute Data Purge
+                    </Button>
                   </div>
                 </div>
 
@@ -1078,6 +1146,61 @@ export default function OrganizationDetailSheet({
                   <ShieldCheck className="h-4 w-4" />
                   Update Credentials
                 </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Institutional Reset Confirmation Dialog */}
+      <Dialog open={isResetDataDialogOpen} onOpenChange={setIsResetDataDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-3xl border-rose-500/20 bg-white dark:bg-slate-900 shadow-2xl">
+          <DialogHeader className="space-y-3">
+            <div className="mx-auto size-14 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+              <ShieldAlert className="h-7 w-7 text-rose-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-center text-rose-950 dark:text-rose-400">Security Authorization Required</DialogTitle>
+            <DialogDescription className="text-center text-slate-500 font-medium">
+              You are about to initiate an institutional reset. This action is irreversible. All inventory, sales, and accounts for <span className="font-bold text-slate-900 dark:text-slate-200">"{org?.name}"</span> will be deleted.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest text-center block">
+                Type the organization name to confirm
+              </label>
+              <Input
+                value={confirmationName}
+                onChange={(e) => setConfirmationName(e.target.value)}
+                placeholder={org?.name}
+                className="h-12 text-center font-bold text-lg border-rose-200 focus-visible:ring-rose-500 bg-slate-50"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="sm:justify-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setIsResetDataDialogOpen(false)}
+              className="rounded-xl font-bold px-6"
+              disabled={isResettingData}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleResetData}
+              disabled={isResettingData || confirmationName !== org?.name}
+              className="rounded-xl px-8 font-bold bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-500/20"
+            >
+              {isResettingData ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Purging Data...
+                </>
+              ) : (
+                "Authorize Purge"
               )}
             </Button>
           </DialogFooter>
