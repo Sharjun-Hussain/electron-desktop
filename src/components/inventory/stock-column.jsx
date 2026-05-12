@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, Warehouse, AlertCircle, SlidersHorizontal, MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { Package, Warehouse, AlertCircle, SlidersHorizontal, MoreHorizontal, ArrowUpDown, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,7 @@ function getImageUrl(imageField) {
   return null;
 }
 
-export const getStockColumns = ({ onAdjust, hasEditPermission }) => [
+export const getStockColumns = ({ onAdjust, onViewBatches, hasEditPermission }) => [
   {
     accessorKey: "searchText",
     header: () => null,
@@ -184,6 +184,16 @@ export const getStockColumns = ({ onAdjust, hasEditPermission }) => [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 rounded-2xl border-border/60 bg-background/95 backdrop-blur-xl shadow-2xl p-2 animate-in slide-in-from-top-2 duration-200">
+              <DropdownMenuItem
+                onClick={() => onViewBatches(stock)}
+                className="cursor-pointer rounded-xl px-3 py-2 focus:bg-indigo-500/10 focus:text-indigo-600 group transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <Layers className="size-4 opacity-40 group-hover:scale-110 transition-transform" />
+                  <span className="text-[12px] font-bold">View Batch Details</span>
+                </div>
+              </DropdownMenuItem>
+
               <DropdownMenuItem
                 onClick={() => onAdjust(stock)}
                 className="cursor-pointer rounded-xl px-3 py-2 focus:bg-emerald-500/10 focus:text-emerald-600 group transition-all"

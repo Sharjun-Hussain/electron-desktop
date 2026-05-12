@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-import { 
-    Sheet, 
-    SheetContent, 
-    SheetHeader, 
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
     SheetTitle,
     SheetFooter,
     SheetDescription
@@ -22,24 +22,57 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { 
-    Box, 
-    PlusCircle, 
-    MinusCircle, 
+import {
+    Box,
+    PlusCircle,
+    MinusCircle,
     Equal,
     AlertTriangle,
     CheckCircle2,
-    Loader2
+    Loader2,
+    History,
+    Barcode
 } from "lucide-react";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 export const StockAdjustmentSheet = ({ open, onOpenChange, stock, onSuccess }) => {
     const { data: session } = useSession();
     const [submitting, setSubmitting] = useState(false);
+    const [batches, setBatches] = useState([]);
+    const [fetchingBatches, setFetchingBatches] = useState(false);
     const [formData, setFormData] = useState({
         type: "addition",
         quantity: "",
-        reason: ""
+        reason: "",
+        batchId: "all"
     });
+
+    useEffect(() => {
+        const fetchBatches = async () => {
+            if (!stock || !open || !session?.accessToken) return;
+
+            setFetchingBatches(true);
+            try {
+                const params = new URLSearchParams({
+                    branch_id: stock.branch_id,
+                });
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/variants/${stock.product_variant_id}/batches?${params.toString()}`, {
+                    headers: { Authorization: `Bearer ${session.accessToken}` },
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    setBatches(data.data || []);
+                }
+            } catch (error) {
+                console.error("Error fetching batches:", error);
+            } finally {
+                setFetchingBatches(false);
+            }
+        };
+
+        fetchBatches();
+    }, [stock, open, session]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -52,14 +85,15 @@ export const StockAdjustmentSheet = ({ open, onOpenChange, stock, onSuccess }) =
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stocks/adjust`, {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.accessToken}` 
+                    Authorization: `Bearer ${session.accessToken}`
                 },
                 body: JSON.stringify({
                     branch_id: stock.branch_id,
                     product_id: stock.product_id,
                     product_variant_id: stock.product_variant_id,
+                    product_batch_id: formData.batchId === "all" ? null : formData.batchId,
                     quantity: formData.quantity,
                     type: formData.type,
                     reason: formData.reason
@@ -75,7 +109,8 @@ export const StockAdjustmentSheet = ({ open, onOpenChange, stock, onSuccess }) =
                 setFormData({
                     type: "addition",
                     quantity: "",
-                    reason: ""
+                    reason: "",
+                    batchId: "all"
                 });
             } else {
                 toast.error(data.message || "Failed to adjust stock");
@@ -127,43 +162,37 @@ export const StockAdjustmentSheet = ({ open, onOpenChange, stock, onSuccess }) =
                             </div>
                         </div>
                         <div className="mt-4 pt-3 border-t border-emerald-500/10 text-xs text-muted-foreground font-semibold flex items-center gap-2">
-                             <AlertTriangle className="h-3.5 w-3.5 text-amber-500/70" />
-                             <span>Recording for <strong className="text-foreground font-bold">{stock.branch?.name}</strong> warehouse.</span>
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500/70" />
+                            <span>Recording for <strong className="text-foreground font-bold">{stock.branch?.name}</strong> warehouse.</span>
                         </div>
                     </div>
 
                     <form id="stock-adjust-form" onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-1.5">
-                            <Label className="text-xs font-bold text-muted-foreground/70 ml-1">Adjustment Type</Label>
-                            <Select 
-                                value={formData.type} 
-                                onValueChange={(val) => setFormData({...formData, type: val})}
+                        <div className="space-y-2">
+                            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Adjustment Type</Label>
+                            <Select
+                                value={formData.type}
+                                onValueChange={(val) => setFormData({ ...formData, type: val })}
                             >
-                                <SelectTrigger className="h-9 bg-background border-border/60 rounded-md font-semibold text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all">
+                                <SelectTrigger className="h-11 bg-background border-border/60 rounded-xl px-4 shadow-sm focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all">
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-md shadow-lg border-border/60">
-                                    <SelectItem value="addition" className="py-2 cursor-pointer">
+                                <SelectContent className="rounded-xl border-border/60 bg-background/95 backdrop-blur-xl shadow-2xl animate-in slide-in-from-top-2 duration-200">
+                                    <SelectItem value="addition" className="cursor-pointer py-2.5">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-1 rounded-md bg-emerald-500/10">
-                                                <PlusCircle className="h-3.5 w-3.5 text-emerald-500" />
-                                            </div>
+                                            <PlusCircle className="h-4 w-4 text-emerald-500" />
                                             <span className="font-semibold text-sm">Stock Addition</span>
                                         </div>
                                     </SelectItem>
-                                    <SelectItem value="subtraction" className="py-2 cursor-pointer">
+                                    <SelectItem value="subtraction" className="cursor-pointer py-2.5">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-1 rounded-md bg-red-500/10">
-                                                <MinusCircle className="h-3.5 w-3.5 text-red-500" />
-                                            </div>
+                                            <MinusCircle className="h-4 w-4 text-rose-500" />
                                             <span className="font-semibold text-sm">Stock Subtraction</span>
                                         </div>
                                     </SelectItem>
-                                    <SelectItem value="set_to" className="py-2 cursor-pointer">
+                                    <SelectItem value="set_to" className="cursor-pointer py-2.5">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-1 rounded-md bg-emerald-500/10">
-                                                <Equal className="h-3.5 w-3.5 text-emerald-600" />
-                                            </div>
+                                            <Equal className="h-4 w-4 text-indigo-600" />
                                             <span className="font-semibold text-sm">Inventory Override</span>
                                         </div>
                                     </SelectItem>
@@ -171,42 +200,77 @@ export const StockAdjustmentSheet = ({ open, onOpenChange, stock, onSuccess }) =
                             </Select>
                         </div>
 
+                        <div className="space-y-2">
+                            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Target Batch (Optional)</Label>
+                            <Select
+                                value={formData.batchId}
+                                onValueChange={(val) => setFormData({ ...formData, batchId: val })}
+                                disabled={fetchingBatches}
+                            >
+                                <SelectTrigger className="h-11 bg-background border-border/60 rounded-xl px-4 shadow-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/40 transition-all">
+                                    <SelectValue placeholder="Select batch" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-border/60 bg-background/95 backdrop-blur-xl shadow-2xl animate-in slide-in-from-top-2 duration-200">
+                                    <SelectItem value="all" className="cursor-pointer py-2.5">
+                                        <div className="flex items-center gap-3">
+                                            <History className="h-4 w-4 text-slate-500" />
+                                            <span className="font-semibold text-sm">General Inventory</span>
+                                        </div>
+                                    </SelectItem>
+                                    {batches.map((batch) => (
+                                        <SelectItem key={batch.id} value={batch.id} className="cursor-pointer py-2.5">
+                                            <div className="flex items-center gap-3">
+                                                <Barcode className="h-4 w-4 text-indigo-600" />
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-sm">Batch #{batch.batch_number}</span>
+                                                    <span className="text-[10px] text-muted-foreground">
+                                                        Qty: {parseFloat(batch.quantity).toFixed(2)} {batch.expiry_date && `• Exp: ${format(new Date(batch.expiry_date), 'dd MMM')}`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {fetchingBatches && <p className="text-[10px] text-indigo-600 font-bold animate-pulse mt-1 ml-1 flex items-center gap-1.5"><Loader2 className="size-3 animate-spin" /> Synchronizing batch data...</p>}
+                        </div>
+
                         <div className="space-y-1.5">
                             <Label className="text-xs font-bold text-muted-foreground/70 ml-1">Quantity</Label>
-                            <Input 
-                                type="number" 
+                            <Input
+                                type="number"
                                 step="0.01"
-                                placeholder="0.00" 
+                                placeholder="0.00"
                                 className="h-9 bg-background border-border/60 rounded-md px-4 font-bold text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all"
                                 value={formData.quantity}
-                                onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                                 required
                             />
                         </div>
 
                         <div className="space-y-1.5">
                             <Label className="text-xs font-bold text-muted-foreground/70 ml-1">Reason / Notes</Label>
-                            <Textarea 
-                                placeholder="State the reason for this adjustment..." 
+                            <Textarea
+                                placeholder="State the reason for this adjustment..."
                                 className="min-h-[100px] bg-background border-border/60 rounded-md px-4 py-3 font-semibold text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all resize-none leading-relaxed"
                                 value={formData.reason}
-                                onChange={(e) => setFormData({...formData, reason: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                             />
                         </div>
                     </form>
                 </div>
 
                 <SheetFooter className="p-6 pt-4 pb-6 bg-muted/20 border-t border-border/40 grid grid-cols-2 gap-4">
-                    <Button 
-                        type="button" 
-                        variant="ghost" 
+                    <Button
+                        type="button"
+                        variant="ghost"
                         onClick={() => onOpenChange(false)}
                         className="h-9 rounded-md font-bold text-xs text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all active:scale-95 border border-border/40"
                     >
                         Dismiss
                     </Button>
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         form="stock-adjust-form"
                         className="h-9 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all active:scale-95 gap-2"
                         disabled={submitting}

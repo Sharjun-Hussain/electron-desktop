@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { usePermission } from "@/hooks/use-permission";
 import { PERMISSIONS } from "@/lib/permissions";
 import { StockAdjustmentSheet } from "./StockAdjustmentSheet";
+import { StockBatchSheet } from "./StockBatchSheet";
 import { ResourceManagementLayout } from "@/components/general/resource-management-layout";
 import { getStockColumns } from "./stock-column";
 import { Button } from "../ui/button";
@@ -51,6 +52,7 @@ const StockManagement = () => {
     
     // Dialog States
     const [adjustmentOpen, setAdjustmentOpen] = useState(false);
+    const [batchSheetOpen, setBatchSheetOpen] = useState(false);
     const [selectedStock, setSelectedStock] = useState(null);
 
     const hasEditPermission = hasPermission(PERMISSIONS.STOCK_EDIT);
@@ -121,10 +123,16 @@ const StockManagement = () => {
         setAdjustmentOpen(true);
     }, []);
 
+    const openBatchSheet = useCallback((stock) => {
+        setSelectedStock(stock);
+        setBatchSheetOpen(true);
+    }, []);
+
     const columns = useMemo(() => getStockColumns({ 
         onAdjust: openAdjustment, 
+        onViewBatches: openBatchSheet,
         hasEditPermission 
-    }), [openAdjustment, hasEditPermission]);
+    }), [openAdjustment, openBatchSheet, hasEditPermission]);
 
     // Custom Branch Filter injected into Layout
     const branchFilter = (table) => (
@@ -176,6 +184,14 @@ const StockManagement = () => {
                     onOpenChange={setAdjustmentOpen} 
                     stock={selectedStock}
                     onSuccess={() => fetchData()}
+                />
+            )}
+
+            {batchSheetOpen && (
+                <StockBatchSheet 
+                    isOpen={batchSheetOpen} 
+                    onClose={() => setBatchSheetOpen(false)} 
+                    stock={selectedStock}
                 />
             )}
         </>
