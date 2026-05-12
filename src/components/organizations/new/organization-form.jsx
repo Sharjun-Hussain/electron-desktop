@@ -135,8 +135,8 @@ export function OrganizationForm({ initialData }) {
       loyalty_enabled: !!initialData.loyalty_enabled,
     } : {
       logo: undefined, name: "", phone: "", website: "", address: "", email: "", city: "",
-      subscription_plan: undefined, subscription_tier: undefined, billing_cycle: undefined,
-      subscription_status: undefined, subscription_expiry_date: "", amount: "", payment_method: "",
+      subscription_plan: undefined, subscription_tier: "Essential", billing_cycle: "Monthly",
+      subscription_status: "Active", subscription_expiry_date: "", amount: "", payment_method: "Bank Transfer",
       status: "active", owner_name: "", owner_password: "", owner_phone: "",
       branch_name: "Main Branch", bank_accounts: [],
       loyalty_enabled: false,
@@ -415,8 +415,7 @@ export function OrganizationForm({ initialData }) {
         )}
 
         {/* ── Subscription Status ── */}
-        {isEditMode && (
-          <Card className="border-border/40 rounded-xl shadow-sm">
+        <Card className="border-border/40 rounded-xl shadow-sm">
             <CardContent className="p-6">
               <SectionHeader icon={Calendar} title="Subscription Setup" description="Plan management and billing cycles" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -474,7 +473,7 @@ export function OrganizationForm({ initialData }) {
               </div>
             </CardContent>
           </Card>
-        )}
+
 
         {/* ── Brand Identity & Operational Status ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -524,8 +523,7 @@ export function OrganizationForm({ initialData }) {
                   </FormItem>
                 )} />
 
-                {isEditMode && (
-                  <FormField control={form.control} name="subscription_status" render={({ field }) => (
+                <FormField control={form.control} name="subscription_status" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium">Payment Status</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
@@ -540,7 +538,7 @@ export function OrganizationForm({ initialData }) {
                       <FormMessage className="text-xs" />
                     </FormItem>
                   )} />
-                )}
+
 
                 <FormField control={form.control} name="loyalty_enabled" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-amber-50/5 mt-4">
