@@ -3,7 +3,7 @@
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
-import { format, subDays } from "date-fns";
+import { format, subDays, subYears, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import {
   Printer,
   FileText,
@@ -200,6 +200,46 @@ export default function DailySalesSummaryPage() {
     from: subDays(new Date(), 7),
     to: new Date(),
   });
+  const [dateOpen, setDateOpen] = useState(false);
+  const [activePreset, setActivePreset] = useState("");
+
+  const handlePresetClick = (preset) => {
+    let from, to;
+    const now = new Date();
+    
+    switch (preset) {
+      case 'today':
+        from = startOfDay(now);
+        to = endOfDay(now);
+        break;
+      case 'week':
+        from = startOfWeek(now, { weekStartsOn: 1 });
+        to = endOfWeek(now, { weekStartsOn: 1 });
+        break;
+      case 'month':
+        from = startOfMonth(now);
+        to = endOfMonth(now);
+        break;
+      case 'year':
+        from = startOfYear(now);
+        to = endOfYear(now);
+        break;
+      case 'lastYear':
+        from = startOfYear(subYears(now, 1));
+        to = endOfYear(subYears(now, 1));
+        break;
+      case 'all':
+        from = null;
+        to = null;
+        break;
+      default:
+        return;
+    }
+    
+    setDate({ from, to });
+    setActivePreset(preset);
+    setDateOpen(false);
+  };
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [apiStats, setApiStats] = useState(null);
@@ -526,17 +566,114 @@ export default function DailySalesSummaryPage() {
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                      <CalendarDays className="h-3.5 w-3.5 text-emerald-600" /> Date Range
                   </label>
-                  <Popover>
+                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start text-left h-9 rounded-md border-border text-sm font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2">
                         <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                         <span className="truncate">
-                          {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select range</span>}
+                          {activePreset === "all" ? (
+                            <span>All Time</span>
+                          ) : date?.from ? (
+                            date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")
+                          ) : (
+                            <span>All Time</span>
+                          )}
                         </span>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-md border-border shadow-xl" align="start">
-                      <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
+                    <PopoverContent className="w-auto p-0 flex flex-col md:flex-row rounded-md border border-border bg-card shadow-xl" align="start">
+                      <div className="flex flex-col border-b md:border-b-0 md:border-r border-border p-3 space-y-1.5 shrink-0 w-full md:w-40 bg-muted/10">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">Shortcuts</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                            activePreset === 'today'
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                          onClick={() => handlePresetClick('today')}
+                        >
+                          Today
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                            activePreset === 'week'
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                          onClick={() => handlePresetClick('week')}
+                        >
+                          This Week
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                            activePreset === 'month'
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                          onClick={() => handlePresetClick('month')}
+                        >
+                          This Month
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                            activePreset === 'year'
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                          onClick={() => handlePresetClick('year')}
+                        >
+                          This Year
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                            activePreset === 'lastYear'
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                          onClick={() => handlePresetClick('lastYear')}
+                        >
+                          Last Year
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                            activePreset === 'all'
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                              : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                          onClick={() => handlePresetClick('all')}
+                        >
+                          All Time
+                        </Button>
+                      </div>
+                      <div className="p-1">
+                        <Calendar
+                          mode="range"
+                          selected={date}
+                          onSelect={(val) => {
+                            setDate(val);
+                            setActivePreset("");
+                          }}
+                          numberOfMonths={2}
+                        />
+                      </div>
                     </PopoverContent>
                   </Popover>
               </div>

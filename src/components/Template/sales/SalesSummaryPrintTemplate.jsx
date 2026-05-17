@@ -22,7 +22,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
         </div>
         <div className="text-right text-sm">
           <p><strong>Generated:</strong> {format(new Date(), "PPP p")}</p>
-          <p><strong>Period:</strong> {dateRange?.from ? format(dateRange.from, "PPP") : "Start"} - {dateRange?.to ? format(dateRange.to, "PPP") : "End"}</p>
+          <p><strong>Period:</strong> {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}` : format(dateRange.from, "PPP")) : "All Time"}</p>
           <p><strong>Branch:</strong> {stats.branchName || "All Branches"}</p>
         </div>
       </div>
