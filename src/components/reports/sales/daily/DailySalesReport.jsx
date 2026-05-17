@@ -745,6 +745,64 @@ export default function DailySalesSummaryPage() {
               onPrint={handlePrint}
               showPrint={true}
             />
+            {isSetupComplete && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 px-3 rounded-lg text-xs font-medium text-muted-foreground hover:text-emerald-600 gap-1.5"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Columns
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2 rounded-md border-border shadow-lg bg-card" align="end">
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-xs px-2 py-1.5 border-b border-border text-foreground mb-1">
+                      Toggle Columns
+                    </h4>
+                    <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                      {Object.keys(selectedColumns).map((key) => {
+                        const labels = {
+                          executionDate: "Date",
+                          reference: "Reference",
+                          customer: "Customer",
+                          cost: "Cost",
+                          mrp: "MRP",
+                          wholesale: "Wholesale",
+                          selling: "Selling",
+                          netRevenue: "Revenue",
+                          profit: "Profit",
+                          settlement: "Payment Method",
+                          cashier: "Cashier",
+                        };
+                        return (
+                          <div
+                            key={key}
+                            className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                            onClick={() => toggleColumn(key)}
+                          >
+                            <div
+                              className={cn(
+                                "flex h-3.5 w-3.5 items-center justify-center rounded-sm border border-primary transition-all",
+                                selectedColumns[key]
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "opacity-50 border-muted-foreground [&_svg]:invisible"
+                              )}
+                            >
+                              <Check className="h-2.5 w-2.5" />
+                            </div>
+                            <span className="text-[11px] font-medium text-foreground select-none">
+                              {labels[key] || key}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
             <Button
               variant="outline"
               size="icon"
