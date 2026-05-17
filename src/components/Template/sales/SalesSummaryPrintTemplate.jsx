@@ -61,6 +61,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
             <th className="py-2 px-2 text-right font-bold">Wholesale</th>
             <th className="py-2 px-2 text-right font-bold">Selling</th>
             <th className="py-2 px-2 text-right font-bold">Total</th>
+            <th className="py-2 px-2 text-right font-bold">Profit</th>
           </tr>
         </thead>
         <tbody>
@@ -97,6 +98,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
                   </div>
                 )}
               </td>
+              <td className="py-2 px-2 text-right font-semibold text-emerald-700">LKR {(item.total - (item.total_cost || 0)).toFixed(2)}</td>
             </tr>
             );
           })}
