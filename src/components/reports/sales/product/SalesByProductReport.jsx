@@ -267,6 +267,10 @@ export default function SalesByProductPage() {
              sold: Number(item.total_quantity),
              sales: Number(item.total_revenue),
              price: Number(item.total_revenue) / (Number(item.total_quantity) || 1),
+             cost_price: Number(item.variant?.cost_price || 0),
+             mrp_price: Number(item.variant?.mrp_price || 0),
+             wholesale_price: Number(item.variant?.wholesale_price || 0),
+             selling_price: Number(item.variant?.price || 0),
              profit: 0
         }));
         setData(mappedData);
@@ -320,6 +324,10 @@ export default function SalesByProductPage() {
       "Product Name": item.name,
       "SKU": item.sku,
       "Quantity Sold": item.sold,
+      "Cost Price": item.cost_price,
+      "MRP": item.mrp_price,
+      "Wholesale Price": item.wholesale_price,
+      "Base Selling Price": item.selling_price,
       "Average Unit Price": Number(item.price || 0),
       "Total Revenue": Number(item.sales || 0),
       "Total Profit": Number(item.profit || 0),
@@ -687,7 +695,10 @@ export default function SalesByProductPage() {
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">SKU Entity</TableHead>
                     <TableHead className="text-center text-xs font-semibold text-muted-foreground">Quantity</TableHead>
-                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Unit Price</TableHead>
+                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Cost</TableHead>
+                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">MRP</TableHead>
+                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Wholesale</TableHead>
+                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Selling</TableHead>
                     <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">Total Yield</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -700,7 +711,10 @@ export default function SalesByProductPage() {
                           <Skeleton className="h-3 w-24 rounded bg-gray-50" />
                         </TableCell>
                         <TableCell><Skeleton className="h-5 w-10 mx-auto rounded bg-gray-100" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-24 ml-auto rounded bg-gray-50" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
                         <TableCell className="pr-6"><Skeleton className="h-5 w-28 ml-auto rounded bg-gray-100" /></TableCell>
                       </TableRow>
                     ))
@@ -717,7 +731,10 @@ export default function SalesByProductPage() {
                         <TableCell className="text-center">
                            <span className="font-semibold text-sm bg-muted px-2.5 py-1 rounded-md text-foreground">{item.sold}</span>
                         </TableCell>
-                        <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.price)}</TableCell>
+                        <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.cost_price)}</TableCell>
+                        <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.mrp_price)}</TableCell>
+                        <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.wholesale_price)}</TableCell>
+                        <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.selling_price)}</TableCell>
                         <TableCell className="text-right pr-6">
                            <p className="font-semibold text-foreground tabular-nums">{formatCurrency(item.sales)}</p>
                            <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">Gross Yield</p>
@@ -726,7 +743,7 @@ export default function SalesByProductPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-24 text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="py-24 text-center text-muted-foreground">
                          <div className="flex flex-col items-center gap-3">
                             <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
                                <Layers className="size-8" />

@@ -41,7 +41,10 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                 <th className="py-3 px-2 font-bold">Product Name</th>
                 <th className="py-3 px-2 font-bold">SKU</th>
                 <th className="py-3 px-2 font-bold text-right">Qty Sold</th>
-                <th className="py-3 px-2 font-bold text-right">Unit Price</th>
+                <th className="py-3 px-2 font-bold text-right">Cost</th>
+                <th className="py-3 px-2 font-bold text-right">MRP</th>
+                <th className="py-3 px-2 font-bold text-right">Wholesale</th>
+                <th className="py-3 px-2 font-bold text-right">Selling</th>
                 <th className="py-3 px-2 font-bold text-right">Revenue</th>
                 <th className="py-3 px-2 font-bold text-right">Profit</th>
               </tr>
@@ -52,7 +55,10 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                   <td className="font-medium">{item.name}</td>
                   <td className="text-slate-500">{item.sku}</td>
                   <td className="text-right">{(item.sold || 0)}</td>
-                  <td className="text-right text-slate-600">{formatCurrency(item.price || 0)}</td>
+                  <td className="text-right text-slate-600">{formatCurrency(item.cost_price || 0)}</td>
+                  <td className="text-right text-slate-600">{formatCurrency(item.mrp_price || 0)}</td>
+                  <td className="text-right text-slate-600">{formatCurrency(item.wholesale_price || 0)}</td>
+                  <td className="text-right text-slate-600">{formatCurrency(item.selling_price || 0)}</td>
                   <td className="text-right font-medium">{formatCurrency(item.sales || 0)}</td>
                   <td className="text-right font-bold text-emerald-700">{formatCurrency(item.profit || 0)}</td>
                 </tr>
