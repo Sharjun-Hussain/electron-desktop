@@ -1,0 +1,259 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { 
+    Barcode as BarcodeIcon, 
+    Save, 
+    Loader2, 
+    Maximize, 
+    ScanLine, 
+    Ruler, 
+    ScrollText, 
+    Sheet,
+    Settings,
+    ZoomIn,
+    ZoomOut,
+    Eye
+} from "lucide-react";
+import { BarcodeSticker } from "@/components/barcode/barcode-sticker";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
+import { useSettings } from "@/app/hooks/swr/useSettings";
+
+const DEFAULT_SETTINGS = {
+    paperType: "roll",
+    labelWidth: 50,
+    labelHeight: 30,
+    perRow: 1,
+    marginTop: 10,
+    marginLeft: 10,
+    gapX: 2,
+    gapY: 2,
+    qtyMode: "custom",
+    customQty: 1,
+    barcodeFormat: "CODE128",
+    barThickness: 1.5,
+    barHeight: 30,
+    barFontSize: 12,
+    showFields: {
+        name: true,
+        variant: true,
+        sku: true,
+        barcode: true,
+        barcodeImage: true,
+        price: true,
+        supplierCode: false,
+        customText: false,
+    },
+    customTextContent: "",
+    layoutMode: "classic",
+};
+
+const SAMPLE_PRODUCT = {
+    name: "Premium Cotton T-Shirt",
+    variant: "L / Navy Blue",
+    sku: "TSH-NVY-L",
+    barcode: "890123456789",
+    price: 1250,
+    supplier_code: "SUP-001",
+};
+
+export function BarcodeSettings() {
+    const { data: session } = useSession();
+    const { useModularSettings, updateModularSettings } = useSettings();
+    const { data: barcodeSettings, isLoading, mutate } = useModularSettings("barcode");
+    
+    const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+    const [isSaving, setIsSaving] = useState(false);
+    const [zoomLevel, setZoomLevel] = useState([1]);
+
+    useEffect(() => {
+        if (barcodeSettings?.data) {
+            setSettings({ ...DEFAULT_SETTINGS, ...barcodeSettings.data });
+        }
+    }, [barcodeSettings]);
+
+    const updateSetting = (key, value) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+    };
+
+    const toggleField = (field) => {
+        setSettings(prev => ({
+            ...prev,
+            showFields: { ...prev.showFields, [field]: !prev.showFields[field] }
+        }));
+    };
+
+    const handleSave = async () => {
+        if (!session?.accessToken) return;
+        setIsSaving(true);
+        try {
+            await updateModularSettings("barcode", settings);
+            toast.success("Barcode settings updated successfully");
+            mutate();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to save barcode settings");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-96 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Paper & Layout Settings */}
+                    <Card className="p-4 border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div className="flex items-center gap-2.5 mb-4">
+                            <div className="p-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-md">
+                                <ScrollText className="h-3.5 w-3.5 text-emerald-600" />
+                            </div>
+                            <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">Paper & Layout</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <Tabs value={settings.paperType} onValueChange={(v) => updateSetting('paperType', v)} className="w-full">
+                                    <TabsList className="w-full grid grid-cols-2 bg-slate-100 dark:bg-slate-900 h-8">
+                                        <TabsTrigger value="roll" className="text-[10px] font-bold py-1">Label Roll</TabsTrigger>
+                                        <TabsTrigger value="a4" className="text-[10px] font-bold py-1">A4 Sheet</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[9px] text-slate-500 font-bold uppercase">Width (mm)</Label>
+                                        <Input type="number" value={settings.labelWidth} onChange={(e) => updateSetting('labelWidth', Number(e.target.value))} className="h-8 text-[11px] font-semibold" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-[9px] text-slate-500 font-bold uppercase">Height (mm)</Label>
+                                        <Input type="number" value={settings.labelHeight} onChange={(e) => updateSetting('labelHeight', Number(e.target.value))} className="h-8 text-[11px] font-semibold" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 content-end">
+                                <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Top Mar (mm)</Label><Input type="number" value={settings.marginTop} onChange={(e) => updateSetting('marginTop', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
+                                <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Left Mar (mm)</Label><Input type="number" value={settings.marginLeft} onChange={(e) => updateSetting('marginLeft', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
+                                <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Gap X (mm)</Label><Input type="number" value={settings.gapX} onChange={(e) => updateSetting('gapX', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
+                                <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Gap Y (mm)</Label><Input type="number" value={settings.gapY} onChange={(e) => updateSetting('gapY', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Content Toggles */}
+                        <Card className="p-4 border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div className="flex items-center gap-2.5 mb-4">
+                                <div className="p-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-md">
+                                    <ScanLine className="h-3.5 w-3.5 text-emerald-600" />
+                                </div>
+                                <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">Display Fields</h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-y-2.5 bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                                {Object.keys(settings.showFields).filter(k => k !== 'customTextContent').map((key) => {
+                                    const labelMap = {
+                                        name: "Product Name", variant: "Variant Info", sku: "SKU Number",
+                                        barcode: "Barcode ID", barcodeImage: "Barcode Graphic", price: "Selling Price",
+                                        supplierCode: "Supplier Code", customText: "Custom Footer"
+                                    };
+                                    return (
+                                        <div key={key} className="flex items-center space-x-2.5">
+                                            <Checkbox id={`setting-field-${key}`} checked={settings.showFields[key]} onCheckedChange={() => toggleField(key)} className="h-3.5 w-3.5" />
+                                            <Label htmlFor={`setting-field-${key}`} className="text-[11px] cursor-pointer select-none font-bold text-slate-700 dark:text-slate-300">{labelMap[key] || key}</Label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {!settings.showFields.barcodeImage && (
+                                <div className="space-y-2 mt-4 animate-in fade-in duration-300">
+                                    <Label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Sticker Design Layout</Label>
+                                    <Tabs value={settings.layoutMode || "classic"} onValueChange={(v) => updateSetting('layoutMode', v)} className="w-full">
+                                        <TabsList className="w-full flex border-b border-slate-200 dark:border-slate-800 bg-transparent h-auto p-0 rounded-none gap-6">
+                                            <TabsTrigger value="classic" className="text-[10px] font-bold py-2 bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 text-slate-500 dark:text-slate-400 p-0 shadow-none">Classic Stack</TabsTrigger>
+                                            <TabsTrigger value="price-tag" className="text-[10px] font-bold py-2 bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 text-slate-500 dark:text-slate-400 p-0 shadow-none">Retail Price Tag</TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
+                                </div>
+                            )}
+                        </Card>
+
+                        {/* Barcode Styling */}
+                        <Card className="p-4 border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div className="flex items-center gap-2.5 mb-4">
+                                <div className="p-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-md">
+                                    <BarcodeIcon className="h-3.5 w-3.5 text-emerald-600" />
+                                </div>
+                                <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">Barcode Styling</h3>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-[10px] font-bold text-slate-500"><span>Thickness</span><span>{settings.barThickness}</span></div>
+                                    <Slider value={[settings.barThickness]} onValueChange={(v) => updateSetting('barThickness', v[0])} min={1} max={4} step={0.5} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-[10px] font-bold text-slate-500"><span>Height</span><span>{settings.barHeight}px</span></div>
+                                    <Slider value={[settings.barHeight]} onValueChange={(v) => updateSetting('barHeight', v[0])} min={10} max={100} step={5} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-[10px] font-bold text-slate-500"><span>Font Size</span><span>{settings.barFontSize}px</span></div>
+                                    <Slider value={[settings.barFontSize]} onValueChange={(v) => updateSetting('barFontSize', v[0])} min={8} max={24} step={1} />
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-1">
+                    {/* Compact Live Preview */}
+                    <div className="sticky top-24 space-y-4 border-l border-slate-200 dark:border-slate-800 pl-6 h-fit">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                                <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Live Design</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-0.5 rounded-md">
+                                <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setZoomLevel([Math.max(0.5, zoomLevel[0] - 0.1)])}><ZoomOut className="h-2.5 w-2.5" /></Button>
+                                <Slider value={zoomLevel} onValueChange={setZoomLevel} min={0.5} max={2.0} step={0.1} className="w-12" />
+                                <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setZoomLevel([Math.min(2.0, zoomLevel[0] + 0.1)])}><ZoomIn className="h-2.5 w-2.5" /></Button>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center items-start pt-2 transition-all duration-300 overflow-visible" style={{ transform: `scale(${zoomLevel[0]})`, transformOrigin: 'top center' }}>
+                            <BarcodeSticker product={SAMPLE_PRODUCT} settings={settings} scale={1} showRulers={true} />
+                        </div>
+
+                        <div className="pt-8 space-y-3">
+                            <Separator />
+                            <Button onClick={handleSave} disabled={isSaving} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 text-xs rounded-lg shadow-sm">
+                                {isSaving ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Save className="mr-2 h-3 w-3" />}
+                                {isSaving ? "Saving..." : "Apply Config"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

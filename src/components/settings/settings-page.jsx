@@ -17,7 +17,8 @@ import {
   FileText,
   Gift,
   Lock,
-  History
+  History,
+  Barcode as BarcodeIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ import { LoyaltySettings } from "./loyalty-settings";
 import { BackupSettings } from "./backup-settings";
 import { SubscriptionDetails } from "./subscription-details";
 import { ReleaseNotes } from "./release-notes";
+import { BarcodeSettings } from "./barcode-settings";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
 import { PERMISSIONS } from "@/lib/permissions";
@@ -47,6 +49,7 @@ const sidebarItems = [
   { id: "communication", label: "Communication Hub", icon: Mail, desc: "Email & SMS gateway setup", permission: PERMISSIONS.SETTINGS_COMMUNICATION },
   { id: "import", label: "Database Management", icon: Database, desc: "System backups & restoration nexus", permission: PERMISSIONS.SETTINGS_IMPORT },
   { id: "ai", label: "AI Intelligence", icon: Brain, desc: "Neural processing & OCR nexus", permission: PERMISSIONS.SETTINGS_AI },
+  { id: "barcode", label: "Barcode Setup", icon: BarcodeIcon, desc: "Label dimensions & layout nexus", permission: PERMISSIONS.SETTINGS_POS },
   { id: "loyalty", label: "Loyalty System", icon: Gift, desc: "Points, rewards & customer nexus", permission: PERMISSIONS.SETTINGS_GENERAL },
   { id: "backup", label: "Backup", icon: Database, desc: "Data snapshots & security nexus", permission: PERMISSIONS.BACKUP_CONFIG },
   { id: "subscription", label: "Plan & Subscription", icon: Sparkles, desc: "Billing details & resource limits", permission: PERMISSIONS.SETTINGS_GENERAL },
@@ -187,6 +190,7 @@ export function SettingsPage() {
           {activeTab === "communication" && hasPermission(PERMISSIONS.SETTINGS_COMMUNICATION) && <CommunicationSettings />}
           {activeTab === "import" && hasPermission(PERMISSIONS.SETTINGS_IMPORT) && <DataImportSettings />}
           {activeTab === "ai" && hasPermission(PERMISSIONS.SETTINGS_AI) && <AiSettings />}
+          {activeTab === "barcode" && hasPermission(PERMISSIONS.SETTINGS_POS) && <BarcodeSettings />}
           {activeTab === "loyalty" && isLoyaltyEnabled && <LoyaltySettings />}
           {activeTab === "backup" && isBackupEnabled && <BackupSettings />}
           {activeTab === "subscription" && <SubscriptionDetails />}
