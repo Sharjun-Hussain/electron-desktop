@@ -40,6 +40,7 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
               <tr className="text-[10px] uppercase tracking-wider">
                 <th className="py-3 px-2 font-bold">Product Name</th>
                 <th className="py-3 px-2 font-bold">SKU</th>
+                <th className="py-3 px-2 font-bold">Batch / Exp</th>
                 <th className="py-3 px-2 font-bold text-right">Qty Sold</th>
                 <th className="py-3 px-2 font-bold text-right">Cost</th>
                 <th className="py-3 px-2 font-bold text-right">MRP</th>
@@ -54,6 +55,10 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                 <tr key={index} className="break-inside-avoid">
                   <td className="font-medium">{item.name}</td>
                   <td className="text-slate-500">{item.sku}</td>
+                  <td className="text-slate-500">
+                    <div>{item.batch !== 'N/A' ? item.batch : '-'}</div>
+                    {item.expiry !== 'N/A' && <div className="text-[9px]">{item.expiry}</div>}
+                  </td>
                   <td className="text-right">{(item.sold || 0)}</td>
                   <td className="text-right text-slate-600">{formatCurrency(item.cost_price || 0)}</td>
                   <td className="text-right text-slate-600">{formatCurrency(item.mrp_price || 0)}</td>

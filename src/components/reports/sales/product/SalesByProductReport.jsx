@@ -261,7 +261,9 @@ export default function SalesByProductPage() {
       const result = await response.json();
       if (result.status === 'success') {
         const mappedData = result.data.data.map(item => ({
-             id: item.product_id + (item.product_variant_id || ''),
+             id: item.product_id + (item.product_variant_id || '') + (item.product_batch_id || ''),
+             batch: item.batch?.batch_number || 'N/A',
+             expiry: item.batch?.expiry_date ? item.batch.expiry_date.split('T')[0] : 'N/A',
              name: item.product.name + (item.variant ? ` (${item.variant.name})` : ''),
              sku: item.variant?.sku || item.product.code,
              sold: Number(item.total_quantity),
@@ -323,6 +325,8 @@ export default function SalesByProductPage() {
     return (data || []).map(item => ({
       "Product Name": item.name,
       "SKU": item.sku,
+      "Batch Number": item.batch,
+      "Expiry Date": item.expiry,
       "Quantity Sold": item.sold,
       "Cost Price": item.cost_price,
       "MRP": item.mrp_price,
@@ -694,6 +698,7 @@ export default function SalesByProductPage() {
                 <TableHeader className="bg-muted/50">
                   <TableRow className="border-border hover:bg-transparent">
                     <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">SKU Entity</TableHead>
+                    <TableHead className="text-left text-xs font-semibold text-muted-foreground">Batch / Expiry</TableHead>
                     <TableHead className="text-center text-xs font-semibold text-muted-foreground">Quantity</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">Cost</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">MRP</TableHead>
@@ -711,6 +716,7 @@ export default function SalesByProductPage() {
                           <Skeleton className="h-4 w-48 mb-2 rounded bg-gray-100" />
                           <Skeleton className="h-3 w-24 rounded bg-gray-50" />
                         </TableCell>
+                        <TableCell><Skeleton className="h-5 w-20 rounded bg-gray-50" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-10 mx-auto rounded bg-gray-100" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
@@ -730,6 +736,12 @@ export default function SalesByProductPage() {
                              <span className="italic">Stock Keeping Unit</span>
                           </p>
                         </TableCell>
+                        <TableCell className="text-left">
+                           <div className="flex flex-col">
+                             <span className="font-semibold text-sm text-foreground">{item.batch !== 'N/A' ? item.batch : 'General'}</span>
+                             {item.expiry !== 'N/A' && <span className="text-[10px] font-medium text-muted-foreground">Exp: {item.expiry}</span>}
+                           </div>
+                        </TableCell>
                         <TableCell className="text-center">
                            <span className="font-semibold text-sm bg-muted px-2.5 py-1 rounded-md text-foreground">{item.sold}</span>
                         </TableCell>
@@ -748,7 +760,7 @@ export default function SalesByProductPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-24 text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="py-24 text-center text-muted-foreground">
                          <div className="flex flex-col items-center gap-3">
                             <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
                                <Layers className="size-8" />
