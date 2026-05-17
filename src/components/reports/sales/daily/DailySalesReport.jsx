@@ -219,15 +219,7 @@ export default function DailySalesSummaryPage() {
     );
   }, [localization]);
 
-  const paymentMethods = useMemo(() => {
-    const baseMethods = pos?.paymentMethods || [
-      "Cash",
-      "Card",
-      "Cheque",
-      "Voucher",
-    ];
-    return [...baseMethods, "Credit", "Return"];
-  }, [pos]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
 
   const [date, setDate] = useState({
     from: subDays(new Date(), 7),
@@ -325,7 +317,7 @@ export default function DailySalesSummaryPage() {
   const fetchMetadata = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
-      const [branchRes, sellerRes, mainCatRes, subCatRes, brandRes] = await Promise.all([
+      const [branchRes, sellerRes, mainCatRes, subCatRes, brandRes, paymentMethodsRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         }),
@@ -350,6 +342,12 @@ export default function DailySalesSummaryPage() {
             headers: { Authorization: `Bearer ${session.accessToken}` },
           },
         ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/sales/payment-methods`,
+          {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          },
+        ),
       ]);
 
       const branchData = await branchRes.json();
@@ -357,6 +355,7 @@ export default function DailySalesSummaryPage() {
       const mainCatData = await mainCatRes.json();
       const subCatData = await subCatRes.json();
       const brandData = await brandRes.json();
+      const paymentMethodsData = await paymentMethodsRes.json();
 
       if (branchData.status === "success") setBranches(branchData.data || []);
       if (sellerData.status === "success") setSellers(sellerData.data || []);
@@ -366,6 +365,8 @@ export default function DailySalesSummaryPage() {
         setSubCategories(subCatData.data || []);
       if (brandData.status === "success")
         setBrands(brandData.data || []);
+      if (paymentMethodsData.status === "success")
+        setPaymentMethods(paymentMethodsData.data || []);
     } catch (err) {
       console.error("Failed to fetch metadata", err);
     }
@@ -499,7 +500,12 @@ export default function DailySalesSummaryPage() {
       result = result.filter((item) => item.status === "Return");
     } else if (paymentFilter !== "all") {
       result = result.filter(
-        (item) => item.type?.toLowerCase() === paymentFilter,
+        (item) => {
+           if (item.payments && item.payments.length > 0) {
+              return item.payments.some(p => p.payment_method?.toLowerCase() === paymentFilter);
+           }
+           return item.type?.toLowerCase() === paymentFilter;
+        }
       );
     }
     result = result.filter(
@@ -1366,12 +1372,14 @@ export default function DailySalesSummaryPage() {
                             </SelectItem>
                             {paymentMethods.map((method) => (
                               <SelectItem
-                                key={method.toLowerCase()}
-                                value={method.toLowerCase()}
+                                key={method.id}
+                                value={method.id.toLowerCase()}
                               >
-                                {method}
+                                {method.name}
                               </SelectItem>
                             ))}
+                            <SelectItem value="credit">Credit</SelectItem>
+                            <SelectItem value="return">Return</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
