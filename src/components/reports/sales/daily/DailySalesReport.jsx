@@ -295,6 +295,9 @@ export default function DailySalesSummaryPage() {
   const [selectedSubCategories, setSelectedSubCategories] = useState([]);
   const [mainCategoriesOpen, setMainCategoriesOpen] = useState(false);
   const [subCategoriesOpen, setSubCategoriesOpen] = useState(false);
+  const [brands, setBrands] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [brandsOpen, setBrandsOpen] = useState(false);
 
   const filteredSubCategories = useMemo(() => {
     if (selectedMainCategories.length === 0) return subCategories;
@@ -322,7 +325,7 @@ export default function DailySalesSummaryPage() {
   const fetchMetadata = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
-      const [branchRes, sellerRes, mainCatRes, subCatRes] = await Promise.all([
+      const [branchRes, sellerRes, mainCatRes, subCatRes, brandRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         }),
@@ -341,12 +344,19 @@ export default function DailySalesSummaryPage() {
             headers: { Authorization: `Bearer ${session.accessToken}` },
           },
         ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands/active/list`,
+          {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          },
+        ),
       ]);
 
       const branchData = await branchRes.json();
       const sellerData = await sellerRes.json();
       const mainCatData = await mainCatRes.json();
       const subCatData = await subCatRes.json();
+      const brandData = await brandRes.json();
 
       if (branchData.status === "success") setBranches(branchData.data || []);
       if (sellerData.status === "success") setSellers(sellerData.data || []);
@@ -354,6 +364,8 @@ export default function DailySalesSummaryPage() {
         setMainCategories(mainCatData.data || []);
       if (subCatData.status === "success")
         setSubCategories(subCatData.data || []);
+      if (brandData.status === "success")
+        setBrands(brandData.data || []);
     } catch (err) {
       console.error("Failed to fetch metadata", err);
     }
@@ -370,6 +382,7 @@ export default function DailySalesSummaryPage() {
         user_id: user,
         main_category_ids: selectedMainCategories.join(","),
         sub_category_ids: selectedSubCategories.join(","),
+        brand_ids: selectedBrands.join(","),
       });
 
       const res = await fetch(
@@ -404,6 +417,7 @@ export default function DailySalesSummaryPage() {
     user,
     selectedMainCategories,
     selectedSubCategories,
+    selectedBrands,
   ]);
 
   useEffect(() => {
@@ -701,7 +715,7 @@ export default function DailySalesSummaryPage() {
         <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
           {/* Filters Bar */}
           <div className="bg-muted/10 border-b border-border p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 items-end">
               {/* Date Filter */}
               <div className="w-full space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -1165,6 +1179,109 @@ export default function DailySalesSummaryPage() {
                                   } else {
                                     setSelectedSubCategories([
                                       ...selectedSubCategories,
+                                      String(c.id),
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {c.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Brand Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-emerald-600" /> Brand
+                </label>
+                <Popover
+                  open={brandsOpen}
+                  onOpenChange={setBrandsOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                    >
+                      <span className="truncate">
+                        {selectedBrands.length === 0
+                          ? "All Brands"
+                          : selectedBrands.length === 1
+                            ? brands.find(
+                                (c) =>
+                                  String(c.id) ===
+                                  String(selectedBrands[0]),
+                              )?.name || "1 Brand"
+                            : `${selectedBrands.length} Brands`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search brands..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No brand found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedBrands([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedBrands.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Brands
+                          </CommandItem>
+                          {brands.map((c) => {
+                            const isSelected = selectedBrands.includes(
+                              String(c.id),
+                            );
+                            return (
+                              <CommandItem
+                                key={c.id}
+                                value={c.name}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedBrands(
+                                      selectedBrands.filter(
+                                        (id) => id !== String(c.id),
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedBrands([
+                                      ...selectedBrands,
                                       String(c.id),
                                     ]);
                                   }
