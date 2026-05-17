@@ -100,20 +100,22 @@ const BarcodeSticker = ({ product, settings, scale = 1, showRulers = false }) =>
               )}
           </div>
 
-          <div className="flex-1 flex items-center justify-center w-full overflow-hidden my-2">
-            <div className="scale-100 transform transition-transform">
-                <Barcode 
-                    value={product.barcode} 
-                    format={settings.barcodeFormat} 
-                    width={settings.barThickness * scale} 
-                    height={settings.barHeight * scale} 
-                    displayValue={settings.showFields.barcode}
-                    fontSize={settings.barFontSize * scale}
-                    margin={0}
-                    background="transparent"
-                />
+          {settings.showFields.barcodeImage !== false && (
+            <div className="flex-1 flex items-center justify-center w-full overflow-hidden my-2">
+              <div className="scale-100 transform transition-transform">
+                  <Barcode 
+                      value={product.barcode} 
+                      format={settings.barcodeFormat} 
+                      width={settings.barThickness * scale} 
+                      height={settings.barHeight * scale} 
+                      displayValue={settings.showFields.barcode}
+                      fontSize={settings.barFontSize * scale}
+                      margin={0}
+                      background="transparent"
+                  />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="w-full flex flex-col items-center px-1">
               <div className="flex justify-between w-full font-bold" style={{ fontSize: `${fontSize + 2}px` }}>
@@ -191,7 +193,7 @@ export default function BarcodePrintingPage() {
     barHeight: 30,
     barFontSize: 12,
     showFields: {
-      name: true, variant: true, sku: true, barcode: true, price: true, customText: false,
+      name: true, variant: true, sku: true, barcode: true, barcodeImage: true, price: true, customText: false,
     },
     customTextContent: "",
   });
@@ -724,12 +726,19 @@ export default function BarcodePrintingPage() {
                 <div className="space-y-4">
                     <Label className="text-[10px] font-bold text-muted-foreground ml-1">Fields Visibility</Label>
                     <div className="grid grid-cols-2 gap-y-3 gap-x-4 bg-muted/40 p-4 rounded-xl border border-border/40 shadow-inner">
-                        {Object.keys(settings.showFields).filter(k => k !== 'customTextContent').map((key) => (
-                            <div key={key} className="flex items-center space-x-2.5">
-                                <Checkbox id={`field-${key}`} checked={settings.showFields[key]} onCheckedChange={() => toggleField(key)} className="h-4 w-4 rounded-md border-border/60 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-none text-white shadow-none" />
-                                <Label htmlFor={`field-${key}`} className="text-xs capitalize cursor-pointer select-none font-bold text-foreground/80 hover:text-foreground transition-colors">{key}</Label>
-                            </div>
-                        ))}
+                        {Object.keys(settings.showFields).filter(k => k !== 'customTextContent').map((key) => {
+                            const labelMap = {
+                                name: "Product Name", variant: "Variant Info", sku: "SKU Number",
+                                barcode: "Barcode ID", barcodeImage: "Barcode Graphic", price: "Selling Price",
+                                customText: "Custom Footer"
+                            };
+                            return (
+                                <div key={key} className="flex items-center space-x-2.5">
+                                    <Checkbox id={`field-${key}`} checked={settings.showFields[key]} onCheckedChange={() => toggleField(key)} className="h-4 w-4 rounded-md border-border/60 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-none text-white shadow-none" />
+                                    <Label htmlFor={`field-${key}`} className="text-xs cursor-pointer select-none font-bold text-foreground/80 hover:text-foreground transition-colors">{labelMap[key] || key}</Label>
+                                </div>
+                            );
+                        })}
                     </div>
                     {settings.showFields.customText && <Input placeholder="E.g. 'Non-Refundable'" value={settings.customTextContent} onChange={(e) => updateSetting('customTextContent', e.target.value)} className="mt-2 h-9 text-xs bg-emerald-500/5 border-emerald-500/30 rounded-xl focus:ring-emerald-500/20 font-medium" />}
                 </div>
