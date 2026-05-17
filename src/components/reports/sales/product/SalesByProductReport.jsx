@@ -699,7 +699,7 @@ export default function SalesByProductPage() {
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">MRP</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">Wholesale</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">Selling</TableHead>
-                    <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">Total Yield</TableHead>
+                    <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">Revenue</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -737,7 +737,7 @@ export default function SalesByProductPage() {
                         <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.selling_price)}</TableCell>
                         <TableCell className="text-right pr-6">
                            <p className="font-semibold text-foreground tabular-nums">{formatCurrency(item.sales)}</p>
-                           <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">Gross Yield</p>
+                           <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">Total Revenue</p>
                         </TableCell>
                       </TableRow>
                     ))
