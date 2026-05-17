@@ -1649,6 +1649,18 @@ export default function DailySalesSummaryPage() {
                     Customer Profile
                   </TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
+                    Cost Total
+                  </TableHead>
+                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
+                    MRP Total
+                  </TableHead>
+                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
+                    Wholesale Total
+                  </TableHead>
+                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
+                    Selling Total
+                  </TableHead>
+                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
                     Net Revenue
                   </TableHead>
                   <TableHead className="text-center py-3.5 text-[13px] font-semibold text-muted-foreground">
@@ -1672,9 +1684,11 @@ export default function DailySalesSummaryPage() {
                       <TableCell>
                         <Skeleton className="h-4 w-40 bg-muted rounded" />
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Skeleton className="h-4 w-28 bg-muted rounded ml-auto" />
-                      </TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-28 bg-muted rounded ml-auto" /></TableCell>
                       <TableCell className="text-center">
                         <Skeleton className="h-6 w-20 mx-auto rounded-md bg-muted/50" />
                       </TableCell>
@@ -1722,6 +1736,18 @@ export default function DailySalesSummaryPage() {
                               {item.customer || "Walk-in Market"}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_cost || 0)}</span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_mrp || 0)}</span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_wholesale || 0)}</span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_selling_base || 0)}</span>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-col items-end">
@@ -1804,7 +1830,7 @@ export default function DailySalesSummaryPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-24 text-center">
+                    <TableCell colSpan={10} className="py-24 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
                           <Receipt className="size-8" />

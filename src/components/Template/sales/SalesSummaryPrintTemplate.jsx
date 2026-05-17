@@ -56,7 +56,10 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
             <th className="py-2 px-2 font-bold">Customer</th>
             <th className="py-2 px-2 font-bold">Type</th>
             <th className="py-2 px-2 font-bold">Status</th>
-            <th className="py-2 px-2 text-right font-bold">Subtotal</th>
+            <th className="py-2 px-2 text-right font-bold">Cost</th>
+            <th className="py-2 px-2 text-right font-bold">MRP</th>
+            <th className="py-2 px-2 text-right font-bold">Wholesale</th>
+            <th className="py-2 px-2 text-right font-bold">Selling</th>
             <th className="py-2 px-2 text-right font-bold">Total</th>
           </tr>
         </thead>
@@ -82,7 +85,10 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
                   <span className="text-emerald-700">PAID</span>
                 )}
               </td>
-              <td className="py-2 px-2 text-right">LKR {(item.subtotal || 0).toFixed(2)}</td>
+              <td className="py-2 px-2 text-right">LKR {(item.total_cost || 0).toFixed(2)}</td>
+              <td className="py-2 px-2 text-right">LKR {(item.total_mrp || 0).toFixed(2)}</td>
+              <td className="py-2 px-2 text-right">LKR {(item.total_wholesale || 0).toFixed(2)}</td>
+              <td className="py-2 px-2 text-right">LKR {(item.total_selling_base || 0).toFixed(2)}</td>
               <td className="py-2 px-2 text-right font-semibold">
                 LKR {(item.total || 0).toFixed(2)}
                 {isCredit && (
