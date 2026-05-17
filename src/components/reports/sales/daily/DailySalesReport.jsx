@@ -210,6 +210,37 @@ export default function DailySalesSummaryPage() {
   const { formatCurrency, formatDateTime, localization, pos } =
     useAppSettings();
 
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("dailySalesReportColumns");
+      if (saved) return JSON.parse(saved);
+    }
+    return {
+      executionDate: true,
+      reference: true,
+      customer: true,
+      cost: true,
+      mrp: true,
+      wholesale: true,
+      selling: true,
+      netRevenue: true,
+      profit: true,
+      settlement: true,
+      cashier: true,
+    };
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dailySalesReportColumns", JSON.stringify(selectedColumns));
+    }
+  }, [selectedColumns]);
+
+  const toggleColumn = (key) => {
+    setSelectedColumns((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const currencySymbol = useMemo(() => {
     const currencies = [
       { code: "LKR", symbol: "Rs" },
@@ -358,6 +389,18 @@ export default function DailySalesSummaryPage() {
             headers: { Authorization: `Bearer ${session.accessToken}` },
           },
         ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/active/list`,
+          {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          },
+        ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/stocks/batches/list`,
+          {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          },
+        ),
       ]);
 
       const branchData = await branchRes.json();
@@ -481,25 +524,33 @@ export default function DailySalesSummaryPage() {
   });
 
   const exportData = useMemo(() => {
-    return (filteredData || []).map((item) => ({
-      "Invoice No": item.id,
-      Date: item.date ? formatDateTime(item.date) : "N/A",
-      "Customer Profile": item.customer || "Walk-in Market",
-      "Gross Total": Number(item.subtotal || 0),
-      "Marketing Discount": Number(item.discount || 0),
-      "Net Revenue": Number(item.total || 0),
-      "Settlement Channel": item.type || "N/A",
-      "Payment Status": item.payment_status || "N/A",
-      "Authorized Personnel": item.cashier || "N/A",
-      "Branch Location":
-        branch === "all"
-          ? "All"
-          : branches.find((b) => String(b.id) === String(branch))?.name ||
-            "N/A",
-      Organization: session?.organization?.name || "Inzeedo POS",
-      Currency: currencySymbol,
-    }));
-  }, [filteredData, formatDateTime, branch, branches, session, currencySymbol]);
+    return (filteredData || []).map((item) => {
+      let row = {};
+      if (selectedColumns.reference) row["Reference"] = item.id;
+      if (selectedColumns.executionDate) row["Date"] = item.date ? formatDateTime(item.date) : "N/A";
+      if (selectedColumns.customer) row["Customer"] = item.customer || "Walk-in Market";
+      if (selectedColumns.cost) row["Cost"] = Number(item.total_cost || 0);
+      if (selectedColumns.mrp) row["MRP"] = Number(item.total_mrp || 0);
+      if (selectedColumns.wholesale) row["Wholesale"] = Number(item.total_wholesale || 0);
+      if (selectedColumns.selling) row["Selling"] = Number(item.total_selling_base || 0);
+      if (selectedColumns.netRevenue) {
+         row["Gross Total"] = Number(item.subtotal || 0);
+         row["Marketing Discount"] = Number(item.discount || 0);
+         row["Revenue"] = Number(item.total || 0);
+      }
+      if (selectedColumns.profit) row["Profit"] = Number(item.total - (item.total_cost || 0));
+      if (selectedColumns.settlement) {
+         row["Payment Method"] = item.type || "N/A";
+         row["Payment Status"] = item.payment_status || "N/A";
+      }
+      if (selectedColumns.cashier) row["Cashier"] = item.cashier || "N/A";
+      
+      row["Branch Location"] = branch === "all" ? "All" : branches.find((b) => String(b.id) === String(branch))?.name || "N/A";
+      row["Organization"] = session?.organization?.name || "Inzeedo POS";
+      row["Currency"] = currencySymbol;
+      return row;
+    });
+  }, [filteredData, formatDateTime, branch, branches, session, currencySymbol, selectedColumns]);
 
   useEffect(() => {
     let result = Array.isArray(data) ? data : [];
@@ -542,6 +593,7 @@ export default function DailySalesSummaryPage() {
   }, [searchQuery, date, branch, user, paymentFilter, amountRange]);
 
   const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+  const activeColCount = Object.values(selectedColumns).filter(Boolean).length;
 
   const paginatedData = useMemo(
     () =>
@@ -759,8 +811,70 @@ export default function DailySalesSummaryPage() {
               </div>
             )}
             
-            <div className={cn("grid gap-4 items-end", !isSetupComplete ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7")}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 items-end">
+            {isSetupComplete && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                  <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
+                  {activePreset === "all" ? "All Time" : date?.from ? (date.to ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : format(date.from, "LLL dd, yyyy")) : "All Time"}
+                </Badge>
+                {branch !== "all" && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {branches.find((b) => String(b.id) === String(branch))?.name || "Branch"}
+                  </Badge>
+                )}
+                {user !== "all" && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <UserIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {sellers.find((u) => String(u.id) === String(user))?.name || "User"}
+                  </Badge>
+                )}
+                {selectedMainCategories.length > 0 && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {selectedMainCategories.length === 1 ? mainCategories.find(c => String(c.id) === String(selectedMainCategories[0]))?.name || "1 Category" : `${selectedMainCategories.length} Categories`}
+                  </Badge>
+                )}
+                {selectedSubCategories.length > 0 && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {selectedSubCategories.length === 1 ? subCategories.find(c => String(c.id) === String(selectedSubCategories[0]))?.name || "1 Sub-cat" : `${selectedSubCategories.length} Sub-cat`}
+                  </Badge>
+                )}
+                {selectedBrands.length > 0 && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {selectedBrands.length === 1 ? brands.find(c => String(c.id) === String(selectedBrands[0]))?.name || "1 Brand" : `${selectedBrands.length} Brands`}
+                  </Badge>
+                )}
+                {selectedSuppliers.length > 0 && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {selectedSuppliers.length === 1 ? suppliers.find(c => String(c.id) === String(selectedSuppliers[0]))?.name || "1 Supplier" : `${selectedSuppliers.length} Suppliers`}
+                  </Badge>
+                )}
+                {selectedBatches.length > 0 && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {selectedBatches.length === 1 ? selectedBatches[0] : `${selectedBatches.length} Batches`}
+                  </Badge>
+                )}
+                {paymentFilter !== "all" && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border capitalize">
+                    <PaymentIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {paymentFilter === "credit" ? "Credit" : paymentFilter === "return" ? "Return" : paymentMethods.find(m => String(m.id).toLowerCase() === String(paymentFilter))?.name || paymentFilter}
+                  </Badge>
+                )}
+                {searchQuery && (
+                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                    <Search className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                    {searchQuery}
+                  </Badge>
+                )}
+              </div>
+            )}
+            
+            <div className={cn("grid gap-4 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto", isSetupComplete && "hidden")}>
               {/* Date Filter */}
               <div className="w-full space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -1658,78 +1772,108 @@ export default function DailySalesSummaryPage() {
                 </div>
               </div>
             </div>
+
+            {!isSetupComplete && (
+              <div className="mt-8 flex justify-center max-w-5xl mx-auto">
+                <Button
+                  onClick={() => setIsSetupComplete(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
+                >
+                  <FileText className="w-5 h-5" /> Get Report
+                </Button>
+              </div>
+            )}
           </div>
 
+          {isSetupComplete && (
+            <>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow className="border-border hover:bg-transparent">
+                  {selectedColumns.executionDate && (
                   <TableHead className="pl-6 py-3.5 text-[13px] font-semibold text-muted-foreground">
-                    Execution Date
+                    Date
                   </TableHead>
+                  )}
+                  {selectedColumns.reference && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">
-                    Reference #
+                    Reference
                   </TableHead>
+                  )}
+                  {selectedColumns.customer && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">
-                    Customer Profile
+                    Customer
                   </TableHead>
-                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">
-                    Batches
-                  </TableHead>
+                  )}
+
+                  {selectedColumns.cost && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
-                    Cost Total
+                    Cost
                   </TableHead>
+                  )}
+                  {selectedColumns.mrp && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
-                    MRP Total
+                    MRP
                   </TableHead>
+                  )}
+                  {selectedColumns.wholesale && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
-                    Wholesale Total
+                    Wholesale
                   </TableHead>
+                  )}
+                  {selectedColumns.selling && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
-                    Selling Total
+                    Selling
                   </TableHead>
+                  )}
+                  {selectedColumns.netRevenue && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
-                    Net Revenue
+                    Revenue
                   </TableHead>
+                  )}
+                  {selectedColumns.profit && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
-                    Profit/Loss
+                    Profit
                   </TableHead>
+                  )}
+                  {selectedColumns.settlement && (
                   <TableHead className="text-center py-3.5 text-[13px] font-semibold text-muted-foreground">
-                    Settlement
+                    Payment Method
                   </TableHead>
+                  )}
+                  {selectedColumns.cashier && (
                   <TableHead className="text-right pr-6 py-3.5 text-[13px] font-semibold text-muted-foreground">
-                    Auth Personnel
+                    Cashier
                   </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: pageSize }).map((_, i) => (
                     <TableRow key={i} className="border-border animate-pulse">
-                      <TableCell className="pl-6 py-4">
+                      {selectedColumns.executionDate && <TableCell className="pl-6 py-4">
                         <Skeleton className="h-4 w-32 bg-muted rounded" />
-                      </TableCell>
-                      <TableCell>
+                      </TableCell>}
+                      {selectedColumns.reference && <TableCell>
                         <Skeleton className="h-4 w-24 bg-muted/50 rounded" />
-                      </TableCell>
-                      <TableCell>
+                      </TableCell>}
+                      {selectedColumns.customer && <TableCell>
                         <Skeleton className="h-4 w-40 bg-muted rounded" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-24 bg-muted/50 rounded" />
-                      </TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-4 w-28 bg-muted rounded ml-auto" /></TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {selectedColumns.cost && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
+                      {selectedColumns.mrp && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
+                      {selectedColumns.wholesale && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
+                      {selectedColumns.selling && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
+                      {selectedColumns.netRevenue && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
+                      {selectedColumns.profit && <TableCell className="text-right"><Skeleton className="h-4 w-28 bg-muted rounded ml-auto" /></TableCell>}
+                      {selectedColumns.settlement && <TableCell className="text-center">
                         <Skeleton className="h-6 w-20 mx-auto rounded-md bg-muted/50" />
-                      </TableCell>
-                      <TableCell className="text-right pr-6">
+                      </TableCell>}
+                      {selectedColumns.cashier && <TableCell className="text-right pr-6">
                         <Skeleton className="h-4 w-28 ml-auto bg-muted rounded" />
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 ) : paginatedData.length > 0 ? (
@@ -1748,21 +1892,21 @@ export default function DailySalesSummaryPage() {
                           isCredit && "bg-amber-500/[0.02]",
                         )}
                       >
-                        <TableCell className="pl-6 py-3.5 relative">
+                        {selectedColumns.executionDate && <TableCell className="pl-6 py-3.5 relative">
                           {isCredit && (
                             <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-500 shadow-[2px_0_10px_rgba(245,158,11,0.2)]" />
                           )}
                           <p className="text-[13px] font-semibold text-muted-foreground tabular-nums">
                             {formatDateTime(item.date)}
                           </p>
-                        </TableCell>
-                        <TableCell>
+                        </TableCell>}
+                        {selectedColumns.reference && <TableCell>
                           <div className="font-semibold text-sm text-foreground flex items-center gap-2 group-hover:text-emerald-600 transition-colors">
                             <Receipt className="size-3.5 opacity-40 text-muted-foreground group-hover:text-emerald-600" />
                             {item.id}
                           </div>
-                        </TableCell>
-                        <TableCell>
+                        </TableCell>}
+                        {selectedColumns.customer && <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="size-6 rounded-md bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-all border border-border">
                               {item.customer?.substring(0, 2)}
@@ -1771,20 +1915,20 @@ export default function DailySalesSummaryPage() {
                               {item.customer || "Walk-in Market"}
                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </TableCell>}
+                        {selectedColumns.cost && <TableCell className="text-right">
                           <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_cost || 0)}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </TableCell>}
+                        {selectedColumns.mrp && <TableCell className="text-right">
                           <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_mrp || 0)}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </TableCell>}
+                        {selectedColumns.wholesale && <TableCell className="text-right">
                           <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_wholesale || 0)}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </TableCell>}
+                        {selectedColumns.selling && <TableCell className="text-right">
                           <span className="text-[13px] font-medium text-muted-foreground tabular-nums">{formatCurrency(item.total_selling_base || 0)}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </TableCell>}
+                        {selectedColumns.netRevenue && <TableCell className="text-right">
                           <div className="flex flex-col items-end">
                             <span
                               className={cn(
@@ -1800,13 +1944,13 @@ export default function DailySalesSummaryPage() {
                               </span>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </TableCell>}
+                        {selectedColumns.profit && <TableCell className="text-right">
                           <span className={cn("text-[13px] font-medium tabular-nums", (item.total - (item.total_cost || 0)) >= 0 ? "text-emerald-600" : "text-rose-600")}>
                              {(item.total - (item.total_cost || 0)) > 0 ? '+' : ''}{formatCurrency(item.total - (item.total_cost || 0))}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-center">
+                        </TableCell>}
+                        {selectedColumns.settlement && <TableCell className="text-center">
                           <div className="flex justify-center flex-wrap gap-1 max-w-[120px] mx-auto">
                             {item.payments && item.payments.length > 0 ? (
                               item.payments.map((pmt, idx) => (
@@ -1856,15 +2000,15 @@ export default function DailySalesSummaryPage() {
                               </Badge>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right pr-6">
+                        </TableCell>}
+                        {selectedColumns.cashier && <TableCell className="text-right pr-6">
                           <p className="text-[13px] font-medium text-foreground">
                             {item.cashier}
                           </p>
                           <p className="text-[11px] font-medium text-muted-foreground italic">
                             via POS Terminal
                           </p>
-                        </TableCell>
+                        </TableCell>}
                       </TableRow>
                     );
                   })
@@ -1897,6 +2041,8 @@ export default function DailySalesSummaryPage() {
             pageSize={pageSize}
             onPageSizeChange={handlePageSizeChange}
           />
+            </>
+          )}
         </Card>
       </div>
     </div>
