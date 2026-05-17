@@ -807,9 +807,9 @@ export default function BarcodePrintingPage() {
                         <div className="space-y-2 mt-4 animate-in fade-in duration-300">
                             <Label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">Sticker Design Layout</Label>
                             <Tabs value={settings.layoutMode || "classic"} onValueChange={(v) => updateSetting('layoutMode', v)} className="w-full">
-                                <TabsList className="w-full grid grid-cols-2 bg-muted p-1 h-9 rounded-xl border border-border/40">
-                                    <TabsTrigger value="classic" className="text-xs font-bold rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm">Classic Stack</TabsTrigger>
-                                    <TabsTrigger value="price-tag" className="text-xs font-bold rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm">Retail Price Tag</TabsTrigger>
+                                <TabsList className="w-full flex border-b border-border/40 bg-transparent h-auto p-0 rounded-none gap-6">
+                                    <TabsTrigger value="classic" className="text-xs font-bold py-2 bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 text-muted-foreground p-0 shadow-none">Classic Stack</TabsTrigger>
+                                    <TabsTrigger value="price-tag" className="text-xs font-bold py-2 bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 text-muted-foreground p-0 shadow-none">Retail Price Tag</TabsTrigger>
                                 </TabsList>
                             </Tabs>
                         </div>
