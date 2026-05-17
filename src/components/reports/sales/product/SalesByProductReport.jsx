@@ -271,7 +271,7 @@ export default function SalesByProductPage() {
              mrp_price: Number(item.variant?.mrp_price || 0),
              wholesale_price: Number(item.variant?.wholesale_price || 0),
              selling_price: Number(item.variant?.price || 0),
-             profit: 0
+             profit: Number(item.total_revenue) - (Number(item.total_quantity) * Number(item.variant?.cost_price || 0))
         }));
         setData(mappedData);
         setSummary(result.data.summary);
@@ -699,6 +699,7 @@ export default function SalesByProductPage() {
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">MRP</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">Wholesale</TableHead>
                     <TableHead className="text-right text-xs font-semibold text-muted-foreground">Selling</TableHead>
+                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Profit/Loss</TableHead>
                     <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">Revenue</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -711,6 +712,7 @@ export default function SalesByProductPage() {
                           <Skeleton className="h-3 w-24 rounded bg-gray-50" />
                         </TableCell>
                         <TableCell><Skeleton className="h-5 w-10 mx-auto rounded bg-gray-100" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" /></TableCell>
@@ -735,6 +737,9 @@ export default function SalesByProductPage() {
                         <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.mrp_price)}</TableCell>
                         <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.wholesale_price)}</TableCell>
                         <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">{formatCurrency(item.selling_price)}</TableCell>
+                        <TableCell className={cn("text-right font-medium tabular-nums text-sm", item.profit >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                           {item.profit > 0 ? '+' : ''}{formatCurrency(item.profit)}
+                        </TableCell>
                         <TableCell className="text-right pr-6">
                            <p className="font-semibold text-foreground tabular-nums">{formatCurrency(item.sales)}</p>
                            <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">Total Revenue</p>
@@ -743,7 +748,7 @@ export default function SalesByProductPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="py-24 text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="py-24 text-center text-muted-foreground">
                          <div className="flex flex-col items-center gap-3">
                             <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
                                <Layers className="size-8" />

@@ -1663,6 +1663,9 @@ export default function DailySalesSummaryPage() {
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
                     Net Revenue
                   </TableHead>
+                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
+                    Profit/Loss
+                  </TableHead>
                   <TableHead className="text-center py-3.5 text-[13px] font-semibold text-muted-foreground">
                     Settlement
                   </TableHead>
@@ -1684,6 +1687,7 @@ export default function DailySalesSummaryPage() {
                       <TableCell>
                         <Skeleton className="h-4 w-40 bg-muted rounded" />
                       </TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
                       <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
                       <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
                       <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
@@ -1766,6 +1770,11 @@ export default function DailySalesSummaryPage() {
                             )}
                           </div>
                         </TableCell>
+                        <TableCell className="text-right">
+                          <span className={cn("text-[13px] font-medium tabular-nums", (item.total - (item.total_cost || 0)) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                             {(item.total - (item.total_cost || 0)) > 0 ? '+' : ''}{formatCurrency(item.total - (item.total_cost || 0))}
+                          </span>
+                        </TableCell>
                         <TableCell className="text-center">
                           <div className="flex justify-center flex-wrap gap-1 max-w-[120px] mx-auto">
                             {item.payments && item.payments.length > 0 ? (
@@ -1830,7 +1839,7 @@ export default function DailySalesSummaryPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-24 text-center">
+                    <TableCell colSpan={11} className="py-24 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
                           <Receipt className="size-8" />
