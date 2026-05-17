@@ -1,6 +1,17 @@
 "use client";
 
-import { format, startOfMonth } from "date-fns";
+import {
+  endOfDay,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+  subMonths,
+  subYears,
+} from "date-fns";
 import {
   BarChart3,
   CalendarDays,
@@ -20,10 +31,14 @@ import {
   Printer,
   RefreshCw,
   Search,
+  Settings2,
   ShoppingBag,
+  SlidersHorizontal,
   Store,
+  Tag,
   Target,
   TrendingUp,
+  User as UserIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
@@ -215,29 +230,90 @@ export default function SalesByProductPage() {
     totalPages: 1,
   });
   const [pageSize, setPageSize] = useState(10);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [subCategory, setSubCategory] = useState("all");
   const [brand, setBrand] = useState("all");
   const [store, setStore] = useState("all");
+  const [user, setUser] = useState("all");
 
+  // Multi-select checklists state
+  const [selectedMainCategories, setSelectedMainCategories] = useState([]);
+  const [selectedSubCategories, setSelectedSubCategories] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+  const [selectedBatches, setSelectedBatches] = useState([]);
+
+  // Setup Wizard State
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
+
+  // Popover open triggers
+  const [dateOpen, setDateOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [subCategoryOpen, setSubCategoryOpen] = useState(false);
   const [brandOpen, setBrandOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const [mainCategoriesOpen, setMainCategoriesOpen] = useState(false);
+  const [subCategoriesOpen, setSubCategoriesOpen] = useState(false);
+  const [brandsOpen, setBrandsOpen] = useState(false);
+  const [suppliersOpen, setSuppliersOpen] = useState(false);
+  const [batchesOpen, setBatchesOpen] = useState(false);
+
+  // Date Preset helper
+  const [activePreset, setActivePreset] = useState("month");
 
   // --- METADATA STATES ---
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [sellers, setSellers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [batches, setBatches] = useState([]);
+
+  // Date Presets Handler
+  const handlePresetClick = (preset) => {
+    setActivePreset(preset);
+    const today = new Date();
+    switch (preset) {
+      case "today":
+        setDate({ from: startOfDay(today), to: endOfDay(today) });
+        break;
+      case "week":
+        setDate({ from: startOfWeek(today), to: endOfWeek(today) });
+        break;
+      case "month":
+        setDate({ from: startOfMonth(today), to: endOfMonth(today) });
+        break;
+      case "year":
+        setDate({ from: startOfMonth(today), to: endOfMonth(today) });
+        break;
+      case "lastYear": {
+        const lastYr = subYears(today, 1);
+        setDate({ from: startOfMonth(lastYr), to: endOfMonth(lastYr) });
+        break;
+      }
+      case "all":
+        setDate({ from: undefined, to: undefined });
+        break;
+    }
+  };
 
   const fetchMetadata = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
-      const [catRes, subCatRes, brandRes, branchRes] = await Promise.all([
+      const [
+        catRes,
+        subCatRes,
+        brandRes,
+        branchRes,
+        userRes,
+        supplierRes,
+        batchRes,
+      ] = await Promise.all([
         fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/main-categories/active/list`,
           {
@@ -256,17 +332,35 @@ export default function SalesByProductPage() {
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         }),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/active-sellers`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/active/list`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        }),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/stocks/batches/list`,
+          {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          },
+        ),
       ]);
 
       const catData = await catRes.json();
       const subCatData = await subCatRes.json();
       const brandData = await brandRes.json();
       const branchData = await branchRes.json();
+      const userData = await userRes.json();
+      const supplierData = await supplierRes.json();
+      const batchData = await batchRes.json();
 
       if (catData.status === "success") setCategories(catData.data);
       if (subCatData.status === "success") setSubCategories(subCatData.data);
       if (brandData.status === "success") setBrands(brandData.data);
       if (branchData.status === "success") setBranches(branchData.data);
+      if (userData.status === "success") setSellers(userData.data);
+      if (supplierData.status === "success") setSuppliers(supplierData.data);
+      if (batchData.status === "success") setBatches(batchData.data);
     } catch (err) {
       console.error("Failed to fetch metadata", err);
     }
@@ -281,9 +375,12 @@ export default function SalesByProductPage() {
           start_date: date?.from ? format(date.from, "yyyy-MM-dd") : "",
           end_date: date?.to ? format(date.to, "yyyy-MM-dd") : "",
           branch_id: store,
-          main_category_id: category,
-          sub_category_id: subCategory,
-          brand_id: brand,
+          seller_id: user,
+          main_category_ids: selectedMainCategories.join(","),
+          sub_category_ids: selectedSubCategories.join(","),
+          brand_ids: selectedBrands.join(","),
+          supplier_ids: selectedSuppliers.join(","),
+          batches: selectedBatches.join(","),
           search: searchQuery,
           page: targetPage,
           limit: pageSize,
@@ -341,9 +438,12 @@ export default function SalesByProductPage() {
       session?.accessToken,
       date,
       store,
-      category,
-      subCategory,
-      brand,
+      user,
+      selectedMainCategories,
+      selectedSubCategories,
+      selectedBrands,
+      selectedSuppliers,
+      selectedBatches,
       searchQuery,
       pageSize,
     ],
@@ -353,29 +453,32 @@ export default function SalesByProductPage() {
     fetchMetadata();
   }, [fetchMetadata]);
 
-  // Debounced fetch when filters change (resets to page 1)
+  // Fetch report only if setup is complete
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
+    if (isSetupComplete) {
       fetchData(1);
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [fetchData]);
-
-  // Reset sub-category if main category changes
-  useEffect(() => {
-    if (category !== "all" && subCategory !== "all") {
-      const currentSub = subCategories.find(
-        (sc) => String(sc.id) === String(subCategory),
-      );
-      if (
-        currentSub &&
-        String(currentSub.main_category_id) !== String(category)
-      ) {
-        setSubCategory("all");
-      }
     }
-  }, [category, subCategories]);
+  }, [isSetupComplete, pageSize]);
+
+  const filteredSubCategories = useMemo(() => {
+    if (selectedMainCategories.length === 0) return subCategories;
+    return subCategories.filter((sub) =>
+      selectedMainCategories.includes(String(sub.main_category_id)),
+    );
+  }, [subCategories, selectedMainCategories]);
+
+  useEffect(() => {
+    if (selectedMainCategories.length > 0) {
+      setSelectedSubCategories((prev) =>
+        prev.filter((subId) => {
+          const sub = subCategories.find((s) => String(s.id) === String(subId));
+          return (
+            sub && selectedMainCategories.includes(String(sub.main_category_id))
+          );
+        }),
+      );
+    }
+  }, [selectedMainCategories, subCategories]);
 
   // --- PRINT ENGINE ---
   const printRef = useRef(null);
@@ -401,17 +504,29 @@ export default function SalesByProductPage() {
       "Operational Unit":
         store === "all"
           ? "All Branches"
-          : branches.find((b) => b.id === store)?.name || store,
+          : branches.find((b) => String(b.id) === String(store))?.name || store,
       Classification:
-        category === "all"
+        selectedMainCategories.length === 0
           ? "All Categories"
-          : categories.find((c) => c.id === category)?.name || category,
+          : selectedMainCategories.length === 1
+            ? categories.find(
+                (c) => String(c.id) === String(selectedMainCategories[0]),
+              )?.name || "1 Category"
+            : `${selectedMainCategories.length} Categories`,
       Organization: session?.organization?.name || "Inzeedo POS",
       Horizon: date?.from
         ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}`
         : "Global",
     }));
-  }, [data, store, branches, category, categories, session, date]);
+  }, [
+    data,
+    store,
+    branches,
+    selectedMainCategories,
+    categories,
+    session,
+    date,
+  ]);
 
   const statsCards = [
     {
@@ -462,15 +577,29 @@ export default function SalesByProductPage() {
             store:
               store === "all"
                 ? "All Branches"
-                : branches.find((b) => b.id === store)?.name || store,
+                : branches.find((b) => String(b.id) === String(store))?.name ||
+                  store,
             category:
-              category === "all"
-                ? "All Categories"
-                : categories.find((c) => c.id === category)?.name || category,
+              selectedMainCategories.length > 0
+                ? selectedMainCategories
+                    .map(
+                      (cid) =>
+                        categories.find((c) => String(c.id) === String(cid))
+                          ?.name,
+                    )
+                    .filter(Boolean)
+                    .join(", ")
+                : "All Categories",
             brand:
-              brand === "all"
-                ? "All Brands"
-                : brands.find((b) => b.id === brand)?.name || brand,
+              selectedBrands.length > 0
+                ? selectedBrands
+                    .map(
+                      (bid) =>
+                        brands.find((b) => String(b.id) === String(bid))?.name,
+                    )
+                    .filter(Boolean)
+                    .join(", ")
+                : "All Brands",
           }}
         />
       </div>
@@ -494,179 +623,487 @@ export default function SalesByProductPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {isSetupComplete && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 border-dashed border-emerald-500/50 text-emerald-600 bg-emerald-50/50 hover:bg-emerald-100 mr-2 gap-2"
+                onClick={() => setIsSetupComplete(false)}
+              >
+                <Settings2 className="w-4 h-4" /> Reconfigure
+              </Button>
+            )}
             <DataActions
               data={exportData}
               fileName="Product_Sales_Performance_Report"
               onPrint={handlePrint}
               showPrint={true}
             />
-            <Button
-              variant="outline"
-              size="icon"
-              className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 rounded-lg"
-              onClick={() => fetchData(pagination.page)}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={cn("size-3.5", isLoading && "animate-spin")}
-              />
-            </Button>
+            {isSetupComplete && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 rounded-lg"
+                onClick={() => fetchData(pagination.page)}
+                disabled={isLoading}
+              >
+                <RefreshCw
+                  className={cn("size-3.5", isLoading && "animate-spin")}
+                />
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* ── Stats Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statsCards.map((card, idx) => (
-            <div
-              key={idx}
-              className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4"
-            >
-              <div
-                className={`p-3 rounded-lg bg-gradient-to-br ${card.gradient} text-white shrink-0 self-start`}
+        {isSetupComplete ? (
+          <>
+            {/* Filter Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="secondary"
+                className="px-3 py-1.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
               >
-                <card.icon className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col min-w-0 w-full">
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
-                  {card.label}
-                </p>
-                {isLoading ? (
-                  <Skeleton className="h-7 w-28 mt-1" />
-                ) : (
-                  <h3 className="text-2xl font-bold text-foreground truncate">
-                    {card.val}
-                  </h3>
-                )}
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {card.desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Performance Visualization */}
-        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
-          <CardHeader className="pb-4 border-b border-border bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="size-8 rounded-md bg-emerald-100 flex items-center justify-center text-emerald-600">
-                <BarChart3 className="size-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-foreground">
-                  Volume Distribution
-                </h3>
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Top 10 SKU Movement Velocity
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-center min-h-[350px]">
-            {isLoading ? (
-              <div className="space-y-4 w-full px-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Skeleton
-                    key={i}
-                    className="h-10 w-full rounded-md bg-gray-100"
-                  />
-                ))}
-              </div>
-            ) : data.length === 0 ? (
-              <div className="text-center italic text-muted-foreground p-8 flex flex-col items-center gap-3">
-                <Package className="h-10 w-10 opacity-20" />
-                <p className="text-sm font-semibold">
-                  No movement detected in selected horizon
-                </p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart
-                  data={[...data]
-                    .sort((a, b) => b.sold - a.sold)
-                    .slice(0, 10)
-                    .map((item) => ({
-                      name:
-                        item.name.length > 20
-                          ? item.name.substring(0, 18) + "..."
-                          : item.name,
-                      sold: item.sold,
-                      fullName: item.name,
-                    }))}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
+                {activePreset === "all"
+                  ? "All Time"
+                  : date?.from
+                    ? date.to
+                      ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}`
+                      : format(date.from, "LLL dd, yyyy")
+                    : "All Time"}
+              </Badge>
+              {store !== "all" && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#E2E8F0"
-                    opacity={0.3}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    stroke="#94A3B8"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                    className="font-bold"
-                  />
-                  <YAxis
-                    stroke="#94A3B8"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "rgba(226, 232, 240, 0.4)", radius: 8 }}
-                    contentStyle={{
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                      fontSize: "13px",
-                    }}
-                    labelStyle={{
-                      fontWeight: "700",
-                      color: "#1E293B",
-                      marginBottom: "4px",
-                    }}
-                    labelFormatter={(label, payload) =>
-                      payload[0]?.payload?.fullName || label
-                    }
-                  />
-                  <Bar
-                    dataKey="sold"
-                    fill="#10b981"
-                    radius={[4, 4, 0, 0]}
-                    barSize={40}
-                  >
-                    {[...data]
-                      .sort((a, b) => b.sold - a.sold)
-                      .slice(0, 10)
-                      .map((entry, index) => (
-                        <Cell
-                          key={index}
-                          fillOpacity={1 - index * 0.08}
-                          fill="#10b981"
-                        />
-                      ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+                  <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {branches.find((b) => String(b.id) === String(store))?.name ||
+                    "Branch"}
+                </Badge>
+              )}
+              {user !== "all" && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
+                >
+                  <UserIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {sellers.find((u) => String(u.id) === String(user))?.name ||
+                    "User"}
+                </Badge>
+              )}
+              {selectedMainCategories.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
+                >
+                  <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {selectedMainCategories.length === 1
+                    ? categories.find(
+                        (c) =>
+                          String(c.id) === String(selectedMainCategories[0]),
+                      )?.name || "1 Category"
+                    : `${selectedMainCategories.length} Categories`}
+                </Badge>
+              )}
+              {selectedSubCategories.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
+                >
+                  <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {selectedSubCategories.length === 1
+                    ? subCategories.find(
+                        (c) =>
+                          String(c.id) === String(selectedSubCategories[0]),
+                      )?.name || "1 Sub-cat"
+                    : `${selectedSubCategories.length} Sub-cat`}
+                </Badge>
+              )}
+              {selectedBrands.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
+                >
+                  <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {selectedBrands.length === 1
+                    ? brands.find(
+                        (c) => String(c.id) === String(selectedBrands[0]),
+                      )?.name || "1 Brand"
+                    : `${selectedBrands.length} Brands`}
+                </Badge>
+              )}
+              {selectedSuppliers.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
+                >
+                  <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {selectedSuppliers.length === 1
+                    ? suppliers.find(
+                        (c) => String(c.id) === String(selectedSuppliers[0]),
+                      )?.name || "1 Supplier"
+                    : `${selectedSuppliers.length} Suppliers`}
+                </Badge>
+              )}
+              {selectedBatches.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
+                >
+                  <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {selectedBatches.length === 1
+                    ? selectedBatches[0]
+                    : `${selectedBatches.length} Batches`}
+                </Badge>
+              )}
+              {searchQuery && (
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1.5 text-xs font-medium border-border"
+                >
+                  <Search className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  {searchQuery}
+                </Badge>
+              )}
+            </div>
 
-        {/* Movement Ledger + Filters embedded */}
-        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
-          {/* Filters Bar inside standard Table Layout */}
-          <div className="bg-card border-b border-border p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-              {/* Time Horizon */}
+            {/* ── Stats Cards ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {statsCards.map((card, idx) => (
+                <div
+                  key={idx}
+                  className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4"
+                >
+                  <div
+                    className={`p-3 rounded-lg bg-gradient-to-br ${card.gradient} text-white shrink-0 self-start`}
+                  >
+                    <card.icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0 w-full">
+                    <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+                      {card.label}
+                    </p>
+                    {isLoading ? (
+                      <Skeleton className="h-7 w-28 mt-1" />
+                    ) : (
+                      <h3 className="text-2xl font-bold text-foreground truncate">
+                        {card.val}
+                      </h3>
+                    )}
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {card.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Performance Visualization */}
+            <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+              <CardHeader className="pb-4 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-md bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    <BarChart3 className="size-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">
+                      Volume Distribution
+                    </h3>
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      Top 10 SKU Movement Velocity
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 flex-1 flex flex-col justify-center min-h-[350px]">
+                {isLoading ? (
+                  <div className="space-y-4 w-full px-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Skeleton
+                        key={i}
+                        className="h-10 w-full rounded-md bg-gray-100"
+                      />
+                    ))}
+                  </div>
+                ) : data.length === 0 ? (
+                  <div className="text-center italic text-muted-foreground p-8 flex flex-col items-center gap-3">
+                    <Package className="h-10 w-10 opacity-20" />
+                    <p className="text-sm font-semibold">
+                      No movement detected in selected horizon
+                    </p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart
+                      data={[...data]
+                        .sort((a, b) => b.sold - a.sold)
+                        .slice(0, 10)
+                        .map((item) => ({
+                          name:
+                            item.name.length > 20
+                              ? item.name.substring(0, 18) + "..."
+                              : item.name,
+                          sold: item.sold,
+                          fullName: item.name,
+                        }))}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#E2E8F0"
+                        opacity={0.3}
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#94A3B8"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                        className="font-bold"
+                      />
+                      <YAxis
+                        stroke="#94A3B8"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        cursor={{
+                          fill: "rgba(226, 232, 240, 0.4)",
+                          radius: 8,
+                        }}
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                          fontSize: "13px",
+                        }}
+                        labelStyle={{
+                          fontWeight: "700",
+                          color: "#1E293B",
+                          marginBottom: "4px",
+                        }}
+                        labelFormatter={(label, payload) =>
+                          payload[0]?.payload?.fullName || label
+                        }
+                      />
+                      <Bar
+                        dataKey="sold"
+                        fill="#10b981"
+                        radius={[4, 4, 0, 0]}
+                        barSize={40}
+                      >
+                        {[...data]
+                          .sort((a, b) => b.sold - a.sold)
+                          .slice(0, 10)
+                          .map((entry, index) => (
+                            <Cell
+                              key={index}
+                              fillOpacity={1 - index * 0.08}
+                              fill="#10b981"
+                            />
+                          ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Movement Ledger Table Card */}
+            <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+              <div className="overflow-x-auto flex-1 animate-in fade-in duration-300">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">
+                        SKU Entity
+                      </TableHead>
+                      <TableHead className="text-left text-xs font-semibold text-muted-foreground">
+                        Batch / Expiry
+                      </TableHead>
+                      <TableHead className="text-center text-xs font-semibold text-muted-foreground">
+                        Quantity
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                        Cost
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                        MRP
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                        Wholesale
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                        Selling Price
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                        Margin / Profit
+                      </TableHead>
+                      <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">
+                        Yield (Revenue)
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array.from({ length: pageSize }).map((_, i) => (
+                        <TableRow key={i} className="border-b border-border">
+                          <TableCell className="pl-6 py-4">
+                            <Skeleton className="h-4 w-48 mb-2 rounded bg-gray-100" />
+                            <Skeleton className="h-3.5 w-24 rounded bg-gray-100/70" />
+                          </TableCell>
+                          <TableCell className="py-4">
+                            <Skeleton className="h-4 w-28 rounded bg-gray-100" />
+                          </TableCell>
+                          <TableCell className="py-4 text-center">
+                            <Skeleton className="h-6 w-12 mx-auto rounded bg-gray-100" />
+                          </TableCell>
+                          <TableCell className="py-4 text-right">
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                          </TableCell>
+                          <TableCell className="py-4 text-right">
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                          </TableCell>
+                          <TableCell className="py-4 text-right">
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                          </TableCell>
+                          <TableCell className="py-4 text-right">
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                          </TableCell>
+                          <TableCell className="py-4 text-right">
+                            <Skeleton className="h-4 w-20 ml-auto rounded bg-gray-100" />
+                          </TableCell>
+                          <TableCell className="py-4 text-right pr-6">
+                            <Skeleton className="h-4 w-24 ml-auto rounded bg-gray-100 font-bold" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : data.length > 0 ? (
+                      data.map((item, idx) => (
+                        <TableRow
+                          key={idx}
+                          className="hover:bg-muted/30 transition-colors border-b border-border group"
+                        >
+                          <TableCell className="pl-6 py-3.5">
+                            <p className="font-semibold text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                              {item.name}
+                            </p>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase mt-0.5 tracking-wider">
+                              SKU: {item.sku}
+                            </p>
+                          </TableCell>
+                          <TableCell className="text-left">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-sm text-foreground">
+                                {item.batch !== "N/A" ? item.batch : "General"}
+                              </span>
+                              {item.expiry !== "N/A" && (
+                                <span className="text-[10px] font-medium text-muted-foreground">
+                                  Exp: {item.expiry}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="font-semibold text-sm bg-muted px-2.5 py-1 rounded-md text-foreground">
+                              {item.sold}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                            {formatCurrency(item.cost_price)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                            {formatCurrency(item.mrp_price)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                            {formatCurrency(item.wholesale_price)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                            {formatCurrency(item.selling_price)}
+                          </TableCell>
+                          <TableCell
+                            className={cn(
+                              "text-right font-medium tabular-nums text-sm",
+                              item.profit >= 0
+                                ? "text-emerald-600"
+                                : "text-rose-600",
+                            )}
+                          >
+                            {item.profit > 0 ? "+" : ""}
+                            {formatCurrency(item.profit)}
+                          </TableCell>
+                          <TableCell className="text-right pr-6">
+                            <p className="font-semibold text-foreground tabular-nums">
+                              {formatCurrency(item.sales)}
+                            </p>
+                            <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                              Total Revenue
+                            </p>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={9}
+                          className="py-24 text-center text-muted-foreground"
+                        >
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="size-14 rounded-full bg-gray-55 flex items-center justify-center text-gray-200">
+                              <Layers className="size-8" />
+                            </div>
+                            <h4 className="font-bold text-foreground uppercase tracking-tight">
+                              Zero movement in scope
+                            </h4>
+                            <p className="text-sm font-medium italic">
+                              Adjust classifiers or store selection to expand
+                              visibility
+                            </p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <PaginationControls
+                currentPage={pagination.page - 1}
+                totalPages={pagination.totalPages}
+                onPageChange={(pageIndex) => fetchData(pageIndex + 1)}
+                pageSize={pageSize}
+                onPageSizeChange={(newSize) => setPageSize(newSize)}
+              />
+            </Card>
+          </>
+        ) : (
+          <Card className="border border-border shadow-sm rounded-lg overflow-hidden bg-card p-8 animate-in fade-in duration-300">
+            {/* Configure panel */}
+            <div className="mb-8 text-center max-w-2xl mx-auto">
+              <div className="inline-flex p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 mb-4">
+                <Settings2 className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Configure Your Product Sales Report
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Select your reporting parameters and search filters before
+                generating the high-density performance tracking sales report.
+              </p>
+            </div>
+
+            <div className="grid gap-4 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto w-full">
+              {/* Date Filter */}
               <div className="w-full space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <CalendarDays className="size-3.5 text-emerald-600" /> Horizon
+                  <CalendarDays className="h-3.5 w-3.5 text-emerald-600" /> Date
+                  Range
                 </label>
-                <Popover>
+                <Popover open={dateOpen} onOpenChange={setDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -674,7 +1111,9 @@ export default function SalesByProductPage() {
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
                       <span className="truncate">
-                        {date?.from ? (
+                        {activePreset === "all" ? (
+                          <span>All Time</span>
+                        ) : date?.from ? (
                           date.to ? (
                             <>
                               {format(date.from, "LLL dd")} -{" "}
@@ -684,270 +1123,117 @@ export default function SalesByProductPage() {
                             format(date.from, "LLL dd")
                           )
                         ) : (
-                          <span>Select horizon</span>
+                          <span>All Time</span>
                         )}
                       </span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="w-auto p-0 rounded-md border-border shadow-xl"
+                    className="w-auto p-0 flex flex-col md:flex-row rounded-md border border-border bg-card shadow-xl"
                     align="start"
                   >
-                    <Calendar
-                      mode="range"
-                      selected={date}
-                      onSelect={setDate}
-                      numberOfMonths={2}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Main Category */}
-              <div className="w-full space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Layers className="size-3.5 text-emerald-600" />{" "}
-                  Classification
-                </label>
-                <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
-                    >
-                      <span className="truncate">
-                        {category === "all"
-                          ? "All Categories"
-                          : categories.find(
-                              (c) => String(c.id) === String(category),
-                            )?.name}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border"
-                    align="start"
-                  >
-                    <Command>
-                      <CommandInput
-                        placeholder="Search category..."
-                        className="h-9"
+                    <div className="flex flex-col border-b md:border-b-0 md:border-r border-border p-3 space-y-1.5 shrink-0 w-full md:w-40 bg-muted/10">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">
+                        Shortcuts
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                          activePreset === "today"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => handlePresetClick("today")}
+                      >
+                        Today
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                          activePreset === "week"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => handlePresetClick("week")}
+                      >
+                        This Week
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                          activePreset === "month"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => handlePresetClick("month")}
+                      >
+                        This Month
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                          activePreset === "year"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => handlePresetClick("year")}
+                      >
+                        This Year
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                          activePreset === "lastYear"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => handlePresetClick("lastYear")}
+                      >
+                        Last Year
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-xs font-semibold h-8 px-2 rounded-md w-full transition-colors",
+                          activePreset === "all"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 font-bold"
+                            : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => handlePresetClick("all")}
+                      >
+                        All Time
+                      </Button>
+                    </div>
+                    <div className="p-1">
+                      <Calendar
+                        mode="range"
+                        selected={date}
+                        onSelect={(val) => {
+                          setDate(val);
+                          setActivePreset("");
+                        }}
+                        numberOfMonths={2}
                       />
-                      <CommandList>
-                        <CommandEmpty>No category found.</CommandEmpty>
-                        <CommandGroup>
-                          <CommandItem
-                            onSelect={() => {
-                              setCategory("all");
-                              setCategoryOpen(false);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4 text-emerald-600",
-                                category === "all"
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            All Categories
-                          </CommandItem>
-                          {categories.map((cat) => (
-                            <CommandItem
-                              key={cat.id}
-                              onSelect={() => {
-                                setCategory(cat.id);
-                                setCategoryOpen(false);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4 text-emerald-600",
-                                  String(category) === String(cat.id)
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                              {cat.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
+                    </div>
                   </PopoverContent>
                 </Popover>
               </div>
 
-              {/* Sub Category */}
+              {/* Branch Filter */}
               <div className="w-full space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Filter className="size-3.5 text-emerald-600" /> Sub-Class
-                </label>
-                <Popover
-                  open={subCategoryOpen}
-                  onOpenChange={setSubCategoryOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
-                    >
-                      <span className="truncate">
-                        {subCategory === "all"
-                          ? "All Sub-Classes"
-                          : subCategories.find(
-                              (sc) => String(sc.id) === String(subCategory),
-                            )?.name}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border"
-                    align="start"
-                  >
-                    <Command>
-                      <CommandInput
-                        placeholder="Search sub-category..."
-                        className="h-9"
-                      />
-                      <CommandList>
-                        <CommandEmpty>No sub-category found.</CommandEmpty>
-                        <CommandGroup>
-                          <CommandItem
-                            onSelect={() => {
-                              setSubCategory("all");
-                              setSubCategoryOpen(false);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4 text-emerald-600",
-                                subCategory === "all"
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            All Sub-Classes
-                          </CommandItem>
-                          {subCategories
-                            .filter(
-                              (sc) =>
-                                category === "all" ||
-                                String(sc.main_category_id) ===
-                                  String(category),
-                            )
-                            .map((sc) => (
-                              <CommandItem
-                                key={sc.id}
-                                onSelect={() => {
-                                  setSubCategory(sc.id);
-                                  setSubCategoryOpen(false);
-                                }}
-                                className="cursor-pointer"
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4 text-emerald-600",
-                                    String(subCategory) === String(sc.id)
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-                                {sc.name}
-                              </CommandItem>
-                            ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Brand */}
-              <div className="w-full space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Target className="size-3.5 text-emerald-600" /> Brand
-                  Authority
-                </label>
-                <Popover open={brandOpen} onOpenChange={setBrandOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
-                    >
-                      <span className="truncate">
-                        {brand === "all"
-                          ? "Global Brands"
-                          : brands.find((b) => String(b.id) === String(brand))
-                              ?.name}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border"
-                    align="start"
-                  >
-                    <Command>
-                      <CommandInput
-                        placeholder="Search brand..."
-                        className="h-9"
-                      />
-                      <CommandList>
-                        <CommandEmpty>No brand found.</CommandEmpty>
-                        <CommandGroup>
-                          <CommandItem
-                            onSelect={() => {
-                              setBrand("all");
-                              setBrandOpen(false);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4 text-emerald-600",
-                                brand === "all" ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                            Global Brands
-                          </CommandItem>
-                          {brands.map((b) => (
-                            <CommandItem
-                              key={b.id}
-                              onSelect={() => {
-                                setBrand(b.id);
-                                setBrandOpen(false);
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4 text-emerald-600",
-                                  String(brand) === String(b.id)
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                              {b.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Store */}
-              <div className="w-full space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Store className="size-3.5 text-emerald-600" /> Operational
-                  Unit
+                  <MapPin className="h-3.5 w-3.5 text-emerald-600" /> Branch
                 </label>
                 <Popover open={storeOpen} onOpenChange={setStoreOpen}>
                   <PopoverTrigger asChild>
@@ -957,24 +1243,24 @@ export default function SalesByProductPage() {
                     >
                       <span className="truncate">
                         {store === "all"
-                          ? "All Global Units"
+                          ? "All Branches"
                           : branches.find((b) => String(b.id) === String(store))
-                              ?.name}
+                              ?.name || "All Branches"}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="w-full min-w-[200px] p-0 rounded-md shadow-lg border-border"
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
                     align="start"
                   >
                     <Command>
                       <CommandInput
-                        placeholder="Search store..."
+                        placeholder="Search branches..."
                         className="h-9"
                       />
                       <CommandList>
-                        <CommandEmpty>No store found.</CommandEmpty>
+                        <CommandEmpty>No location found.</CommandEmpty>
                         <CommandGroup>
                           <CommandItem
                             onSelect={() => {
@@ -989,13 +1275,14 @@ export default function SalesByProductPage() {
                                 store === "all" ? "opacity-100" : "opacity-0",
                               )}
                             />
-                            All Global Units
+                            All Branches
                           </CommandItem>
                           {branches.map((b) => (
                             <CommandItem
                               key={b.id}
+                              value={b.name}
                               onSelect={() => {
-                                setStore(b.id);
+                                setStore(String(b.id));
                                 setStoreOpen(false);
                               }}
                               className="cursor-pointer"
@@ -1018,15 +1305,590 @@ export default function SalesByProductPage() {
                 </Popover>
               </div>
 
-              {/* Quick Search */}
+              {/* Cashier Filter */}
               <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <UserIcon className="h-3.5 w-3.5 text-emerald-600" /> Cashier
+                </label>
+                <Popover open={userOpen} onOpenChange={setUserOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
+                    >
+                      <span className="truncate">
+                        {user === "all"
+                          ? "All Cashiers"
+                          : sellers.find((u) => String(u.id) === String(user))
+                              ?.name || "All Cashiers"}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search cashiers..."
+                        className="h-9"
+                      />
+                      <CommandList>
+                        <CommandEmpty>No cashier found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setUser("all");
+                              setUserOpen(false);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4 text-emerald-600",
+                                user === "all" ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            All Cashiers
+                          </CommandItem>
+                          {sellers.map((u) => (
+                            <CommandItem
+                              key={u.id}
+                              value={u.name}
+                              onSelect={() => {
+                                setUser(String(u.id));
+                                setUserOpen(false);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4 text-emerald-600",
+                                  String(user) === String(u.id)
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              {u.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Main Category Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-emerald-600" /> Main Category
+                </label>
+                <Popover
+                  open={mainCategoriesOpen}
+                  onOpenChange={setMainCategoriesOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
+                    >
+                      <span className="truncate">
+                        {selectedMainCategories.length === 0
+                          ? "All Categories"
+                          : selectedMainCategories.length === 1
+                            ? categories.find(
+                                (c) =>
+                                  String(c.id) ===
+                                  String(selectedMainCategories[0]),
+                              )?.name || "1 Category"
+                            : `${selectedMainCategories.length} Categories`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search categories..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedMainCategories([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedMainCategories.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Categories
+                          </CommandItem>
+                          {categories.map((c) => {
+                            const isSelected = selectedMainCategories.includes(
+                              String(c.id),
+                            );
+                            return (
+                              <CommandItem
+                                key={c.id}
+                                value={c.name}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedMainCategories(
+                                      selectedMainCategories.filter(
+                                        (id) => id !== String(c.id),
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedMainCategories([
+                                      ...selectedMainCategories,
+                                      String(c.id),
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {c.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Sub Category Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-emerald-600" /> Sub Category
+                </label>
+                <Popover
+                  open={subCategoriesOpen}
+                  onOpenChange={setSubCategoriesOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
+                    >
+                      <span className="truncate">
+                        {selectedSubCategories.length === 0
+                          ? "All Sub-categories"
+                          : selectedSubCategories.length === 1
+                            ? subCategories.find(
+                                (c) =>
+                                  String(c.id) ===
+                                  String(selectedSubCategories[0]),
+                              )?.name || "1 Sub-cat"
+                            : `${selectedSubCategories.length} Sub-categories`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search sub-categories..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No sub-category found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedSubCategories([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedSubCategories.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Sub-categories
+                          </CommandItem>
+                          {filteredSubCategories.map((c) => {
+                            const isSelected = selectedSubCategories.includes(
+                              String(c.id),
+                            );
+                            return (
+                              <CommandItem
+                                key={c.id}
+                                value={c.name}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedSubCategories(
+                                      selectedSubCategories.filter(
+                                        (id) => id !== String(c.id),
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedSubCategories([
+                                      ...selectedSubCategories,
+                                      String(c.id),
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {c.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Brand Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Target className="h-3.5 w-3.5 text-emerald-600" /> Brand
+                </label>
+                <Popover open={brandsOpen} onOpenChange={setBrandsOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
+                    >
+                      <span className="truncate">
+                        {selectedBrands.length === 0
+                          ? "All Brands"
+                          : selectedBrands.length === 1
+                            ? brands.find(
+                                (c) =>
+                                  String(c.id) === String(selectedBrands[0]),
+                              )?.name || "1 Brand"
+                            : `${selectedBrands.length} Brands`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search brands..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No brand found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedBrands([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedBrands.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Brands
+                          </CommandItem>
+                          {brands.map((c) => {
+                            const isSelected = selectedBrands.includes(
+                              String(c.id),
+                            );
+                            return (
+                              <CommandItem
+                                key={c.id}
+                                value={c.name}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedBrands(
+                                      selectedBrands.filter(
+                                        (id) => id !== String(c.id),
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedBrands([
+                                      ...selectedBrands,
+                                      String(c.id),
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {c.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Supplier Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-emerald-600" /> Supplier
+                </label>
+                <Popover open={suppliersOpen} onOpenChange={setSuppliersOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
+                    >
+                      <span className="truncate">
+                        {selectedSuppliers.length === 0
+                          ? "All Suppliers"
+                          : selectedSuppliers.length === 1
+                            ? suppliers.find(
+                                (c) =>
+                                  String(c.id) === String(selectedSuppliers[0]),
+                              )?.name || "1 Supplier"
+                            : `${selectedSuppliers.length} Suppliers`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search suppliers..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No supplier found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedSuppliers([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedSuppliers.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Suppliers
+                          </CommandItem>
+                          {suppliers.map((c) => {
+                            const isSelected = selectedSuppliers.includes(
+                              String(c.id),
+                            );
+                            return (
+                              <CommandItem
+                                key={c.id}
+                                value={c.name}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedSuppliers(
+                                      selectedSuppliers.filter(
+                                        (id) => id !== String(c.id),
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedSuppliers([
+                                      ...selectedSuppliers,
+                                      String(c.id),
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {c.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Batch Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-emerald-600" /> Batch
+                </label>
+                <Popover open={batchesOpen} onOpenChange={setBatchesOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm bg-transparent"
+                    >
+                      <span className="truncate">
+                        {selectedBatches.length === 0
+                          ? "All Batches"
+                          : selectedBatches.length === 1
+                            ? selectedBatches[0]
+                            : `${selectedBatches.length} Batches`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search batches..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No batch found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedBatches([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedBatches.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Batches
+                          </CommandItem>
+                          {batches.map((c) => {
+                            const isSelected = selectedBatches.includes(
+                              String(c.batch_number),
+                            );
+                            return (
+                              <CommandItem
+                                key={c.id || c.batch_number}
+                                value={c.batch_number}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedBatches(
+                                      selectedBatches.filter(
+                                        (id) => id !== String(c.batch_number),
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedBatches([
+                                      ...selectedBatches,
+                                      String(c.batch_number),
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {c.batch_number}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Quick Search / Explorer */}
+              <div className="w-full space-y-1.5 sm:col-span-2">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                   <Search className="size-3.5 text-emerald-600" /> Explorer
                 </label>
                 <div className="relative group">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
                   <Input
-                    placeholder="Refine by SKU or content..."
+                    placeholder="Search by SKU, product name, code..."
                     className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -1034,178 +1896,17 @@ export default function SalesByProductPage() {
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="overflow-x-auto flex-1">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">
-                    SKU Entity
-                  </TableHead>
-                  <TableHead className="text-left text-xs font-semibold text-muted-foreground">
-                    Batch / Expiry
-                  </TableHead>
-                  <TableHead className="text-center text-xs font-semibold text-muted-foreground">
-                    Quantity
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                    Cost
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                    MRP
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                    Wholesale
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                    Selling
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                    Profit/Loss
-                  </TableHead>
-                  <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">
-                    Revenue
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-b border-border">
-                      <TableCell className="pl-6 py-4">
-                        <Skeleton className="h-4 w-48 mb-2 rounded bg-gray-100" />
-                        <Skeleton className="h-3 w-24 rounded bg-gray-55" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-20 rounded bg-gray-50" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-10 mx-auto rounded bg-gray-100" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-5 w-16 ml-auto rounded bg-gray-50" />
-                      </TableCell>
-                      <TableCell className="pr-6">
-                        <Skeleton className="h-5 w-28 ml-auto rounded bg-gray-100" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : data.length > 0 ? (
-                  data.map((item, idx) => (
-                    <TableRow
-                      key={idx}
-                      className="hover:bg-muted/30 transition-colors border-b border-border group"
-                    >
-                      <TableCell className="pl-6 py-3.5">
-                        <p className="font-semibold text-sm text-foreground group-hover:text-emerald-600 transition-colors">
-                          {item.name}
-                        </p>
-                        <p className="text-xs font-medium text-muted-foreground mt-1 flex items-center gap-1.5">
-                          <Badge
-                            variant="outline"
-                            className="h-5 px-1.5 pointer-events-none rounded text-[10px] font-semibold bg-muted border-border text-muted-foreground"
-                          >
-                            {item.sku}
-                          </Badge>
-                          <span className="italic">Stock Keeping Unit</span>
-                        </p>
-                      </TableCell>
-                      <TableCell className="text-left">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-sm text-foreground">
-                            {item.batch !== "N/A" ? item.batch : "General"}
-                          </span>
-                          {item.expiry !== "N/A" && (
-                            <span className="text-[10px] font-medium text-muted-foreground">
-                              Exp: {item.expiry}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="font-semibold text-sm bg-muted px-2.5 py-1 rounded-md text-foreground">
-                          {item.sold}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                        {formatCurrency(item.cost_price)}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                        {formatCurrency(item.mrp_price)}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                        {formatCurrency(item.wholesale_price)}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                        {formatCurrency(item.selling_price)}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-right font-medium tabular-nums text-sm",
-                          item.profit >= 0
-                            ? "text-emerald-600"
-                            : "text-rose-600",
-                        )}
-                      >
-                        {item.profit > 0 ? "+" : ""}
-                        {formatCurrency(item.profit)}
-                      </TableCell>
-                      <TableCell className="text-right pr-6">
-                        <p className="font-semibold text-foreground tabular-nums">
-                          {formatCurrency(item.sales)}
-                        </p>
-                        <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                          Total Revenue
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-24 text-center text-muted-foreground"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="size-14 rounded-full bg-gray-55 flex items-center justify-center text-gray-200">
-                          <Layers className="size-8" />
-                        </div>
-                        <h4 className="font-bold text-foreground uppercase tracking-tight">
-                          Zero movement in scope
-                        </h4>
-                        <p className="text-sm font-medium italic">
-                          Adjust classifiers or store selection to expand
-                          visibility
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <PaginationControls
-            currentPage={pagination.page - 1}
-            totalPages={pagination.totalPages}
-            onPageChange={(pageIndex) => fetchData(pageIndex + 1)}
-            pageSize={pageSize}
-            onPageSizeChange={(newSize) => setPageSize(newSize)}
-          />
-        </Card>
+            <div className="mt-8 flex justify-center max-w-5xl mx-auto w-full">
+              <Button
+                onClick={() => setIsSetupComplete(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
+              >
+                <FileText className="w-5 h-5" /> Get Report
+              </Button>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
