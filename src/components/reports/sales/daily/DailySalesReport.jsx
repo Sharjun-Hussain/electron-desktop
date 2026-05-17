@@ -870,65 +870,76 @@ export default function DailySalesSummaryPage() {
             )}
             
             {isSetupComplete && (
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                  <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
-                  {activePreset === "all" ? "All Time" : date?.from ? (date.to ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : format(date.from, "LLL dd, yyyy")) : "All Time"}
-                </Badge>
-                {branch !== "all" && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {branches.find((b) => String(b.id) === String(branch))?.name || "Branch"}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                    <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
+                    {activePreset === "all" ? "All Time" : date?.from ? (date.to ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : format(date.from, "LLL dd, yyyy")) : "All Time"}
                   </Badge>
-                )}
-                {user !== "all" && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <UserIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {sellers.find((u) => String(u.id) === String(user))?.name || "User"}
-                  </Badge>
-                )}
-                {selectedMainCategories.length > 0 && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {selectedMainCategories.length === 1 ? mainCategories.find(c => String(c.id) === String(selectedMainCategories[0]))?.name || "1 Category" : `${selectedMainCategories.length} Categories`}
-                  </Badge>
-                )}
-                {selectedSubCategories.length > 0 && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {selectedSubCategories.length === 1 ? subCategories.find(c => String(c.id) === String(selectedSubCategories[0]))?.name || "1 Sub-cat" : `${selectedSubCategories.length} Sub-cat`}
-                  </Badge>
-                )}
-                {selectedBrands.length > 0 && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {selectedBrands.length === 1 ? brands.find(c => String(c.id) === String(selectedBrands[0]))?.name || "1 Brand" : `${selectedBrands.length} Brands`}
-                  </Badge>
-                )}
-                {selectedSuppliers.length > 0 && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {selectedSuppliers.length === 1 ? suppliers.find(c => String(c.id) === String(selectedSuppliers[0]))?.name || "1 Supplier" : `${selectedSuppliers.length} Suppliers`}
-                  </Badge>
-                )}
-                {selectedBatches.length > 0 && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {selectedBatches.length === 1 ? selectedBatches[0] : `${selectedBatches.length} Batches`}
-                  </Badge>
-                )}
-                {paymentFilter !== "all" && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border capitalize">
-                    <PaymentIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {paymentFilter === "credit" ? "Credit" : paymentFilter === "return" ? "Return" : paymentMethods.find(m => String(m.id).toLowerCase() === String(paymentFilter))?.name || paymentFilter}
-                  </Badge>
-                )}
-                {searchQuery && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
-                    <Search className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
-                    {searchQuery}
-                  </Badge>
-                )}
+                  {branch !== "all" && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <MapPin className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {branches.find((b) => String(b.id) === String(branch))?.name || "Branch"}
+                    </Badge>
+                  )}
+                  {user !== "all" && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <UserIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {sellers.find((u) => String(u.id) === String(user))?.name || "User"}
+                    </Badge>
+                  )}
+                  {selectedMainCategories.length > 0 && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {selectedMainCategories.length === 1 ? mainCategories.find(c => String(c.id) === String(selectedMainCategories[0]))?.name || "1 Category" : `${selectedMainCategories.length} Categories`}
+                    </Badge>
+                  )}
+                  {selectedSubCategories.length > 0 && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {selectedSubCategories.length === 1 ? subCategories.find(c => String(c.id) === String(selectedSubCategories[0]))?.name || "1 Sub-cat" : `${selectedSubCategories.length} Sub-cat`}
+                    </Badge>
+                  )}
+                  {selectedBrands.length > 0 && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {selectedBrands.length === 1 ? brands.find(c => String(c.id) === String(selectedBrands[0]))?.name || "1 Brand" : `${selectedBrands.length} Brands`}
+                    </Badge>
+                  )}
+                  {selectedSuppliers.length > 0 && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {selectedSuppliers.length === 1 ? suppliers.find(c => String(c.id) === String(selectedSuppliers[0]))?.name || "1 Supplier" : `${selectedSuppliers.length} Suppliers`}
+                    </Badge>
+                  )}
+                  {selectedBatches.length > 0 && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {selectedBatches.length === 1 ? selectedBatches[0] : `${selectedBatches.length} Batches`}
+                    </Badge>
+                  )}
+                  {paymentFilter !== "all" && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border capitalize">
+                      <PaymentIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {paymentFilter === "credit" ? "Credit" : paymentFilter === "return" ? "Return" : paymentMethods.find(m => String(m.id).toLowerCase() === String(paymentFilter))?.name || paymentFilter}
+                    </Badge>
+                  )}
+                  {searchQuery && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <Search className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {searchQuery}
+                    </Badge>
+                  )}
+                </div>
+                <div className="w-full sm:w-72 relative group">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
+                  <Input
+                    placeholder="Search customers or invoices..."
+                    className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-background"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
             )}
             
@@ -1810,24 +1821,6 @@ export default function DailySalesSummaryPage() {
                     </div>
                   </PopoverContent>
                 </Popover>
-              </div>
-
-              {/* Quick Search */}
-              <div className="w-full space-y-1.5 xl:col-span-1 md:col-span-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Search className="h-3.5 w-3.5 text-emerald-600" /> Explorer
-                </label>
-                <div className="relative group flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
-                    <Input
-                      placeholder="Customers or invoices..."
-                      className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
               </div>
             </div>
 

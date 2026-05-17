@@ -456,9 +456,12 @@ export default function SalesByProductPage() {
   // Fetch report only if setup is complete
   useEffect(() => {
     if (isSetupComplete) {
-      fetchData(1);
+      const delayDebounceFn = setTimeout(() => {
+        fetchData(1);
+      }, 300);
+      return () => clearTimeout(delayDebounceFn);
     }
-  }, [isSetupComplete, pageSize]);
+  }, [isSetupComplete, pageSize, searchQuery]);
 
   const filteredSubCategories = useMemo(() => {
     if (selectedMainCategories.length === 0) return subCategories;
@@ -915,6 +918,23 @@ export default function SalesByProductPage() {
 
             {/* Movement Ledger Table Card */}
             <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+              <div className="p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-emerald-600" />
+                  <h3 className="font-semibold text-sm text-foreground">
+                    Movement Ledger
+                  </h3>
+                </div>
+                <div className="w-full sm:w-72 relative group">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
+                  <Input
+                    placeholder="Search by SKU, product name, code..."
+                    className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-background"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
               <div className="overflow-x-auto flex-1 animate-in fade-in duration-300">
                 <Table>
                   <TableHeader className="bg-muted/50">
@@ -1878,22 +1898,6 @@ export default function SalesByProductPage() {
                     </Command>
                   </PopoverContent>
                 </Popover>
-              </div>
-
-              {/* Quick Search / Explorer */}
-              <div className="w-full space-y-1.5 sm:col-span-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <Search className="size-3.5 text-emerald-600" /> Explorer
-                </label>
-                <div className="relative group">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
-                  <Input
-                    placeholder="Search by SKU, product name, code..."
-                    className="pl-9 h-9 rounded-md border-border shadow-none focus-visible:ring-emerald-500 focus-visible:border-emerald-500 text-sm font-normal bg-transparent"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
               </div>
             </div>
 
