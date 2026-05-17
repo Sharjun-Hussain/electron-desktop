@@ -143,12 +143,12 @@ const ProductDetailSheet = ({ product, isOpen, onClose }) => {
                 <Layers className="h-4 w-4" />
                 <h4 className="text-xs font-bold uppercase tracking-widest">Variants & Pricing</h4>
               </div>
-              
+
               <div className="space-y-3">
                 {product.variants?.map((v, idx) => {
-                  const variantTitle = v.name || 
-                    (v.attribute_values?.length > 0 
-                      ? v.attribute_values.map(av => av.value).join(", ") 
+                  const variantTitle = v.name ||
+                    (v.attribute_values?.length > 0
+                      ? v.attribute_values.map(av => av.value).join(", ")
                       : `Variant ${v.barcode || idx + 1}`);
 
                   return (
@@ -159,44 +159,44 @@ const ProductDetailSheet = ({ product, isOpen, onClose }) => {
                             <Tag className="h-3.5 w-3.5 text-emerald-500" />
                             {variantTitle}
                           </p>
-                        <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5">
-                          <Barcode className="h-3 w-3" />
-                          {v.barcode || "No Barcode"}
-                        </p>
+                          <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5">
+                            <Barcode className="h-3 w-3" />
+                            {v.barcode || "No Barcode"}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 font-bold">
+                          {v.is_active ? "Active" : "Inactive"}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 font-bold">
-                        {v.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-2xl bg-emerald-500/[0.03] border border-emerald-500/10">
-                        <p className="text-[9px] font-bold text-emerald-600/70 uppercase mb-1 flex items-center gap-1">
-                          <DollarSign className="h-2.5 w-2.5" /> Retail Price
-                        </p>
-                        <p className="text-lg font-bold text-emerald-600 font-mono">
-                          LKR {parseFloat(v.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-2xl bg-emerald-500/[0.03] border border-emerald-500/10">
+                          <p className="text-[9px] font-bold text-emerald-600/70 uppercase mb-1 flex items-center gap-1">
+                            <DollarSign className="h-2.5 w-2.5" /> Retail Price
+                          </p>
+                          <p className="text-lg font-bold text-emerald-600 font-mono">
+                            LKR {parseFloat(v.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-2xl bg-blue-500/[0.03] border border-blue-500/10">
+                          <p className="text-[9px] font-bold text-blue-600/70 uppercase mb-1 flex items-center gap-1">
+                            <DollarSign className="h-2.5 w-2.5" /> Wholesale Price
+                          </p>
+                          <p className="text-lg font-bold text-blue-600 font-mono">
+                            LKR {parseFloat(v.wholesale_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
                       </div>
-                      <div className="p-3 rounded-2xl bg-blue-500/[0.03] border border-blue-500/10">
-                        <p className="text-[9px] font-bold text-blue-600/70 uppercase mb-1 flex items-center gap-1">
-                          <DollarSign className="h-2.5 w-2.5" /> Wholesale Price
-                        </p>
-                        <p className="text-lg font-bold text-blue-600 font-mono">
-                          LKR {parseFloat(v.wholesale_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
 
-                    {v.attribute_values && v.attribute_values.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {v.attribute_values.map((av, idx) => (
-                          <Badge key={idx} variant="secondary" className="bg-muted text-muted-foreground text-[10px] font-bold rounded-lg border-none">
-                            {av.attribute?.name}: {av.value}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                      {v.attribute_values && v.attribute_values.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {v.attribute_values.map((av, idx) => (
+                            <Badge key={idx} variant="secondary" className="bg-muted text-muted-foreground text-[10px] font-bold rounded-lg border-none">
+                              {av.attribute?.name}: {av.value}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -350,8 +350,8 @@ const ProductGridCard = ({ row, onEdit, onDelete, onToggleStatus, onPrintBarcode
                 <Edit3 className="h-3.5 w-3.5 text-slate-400" />
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Edit Details</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onPrintBarcode(product)} 
+              <DropdownMenuItem
+                onClick={() => onPrintBarcode(product)}
                 disabled={!product.variants || product.variants.length === 0}
                 className="rounded-md px-3 py-2 cursor-pointer flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -419,6 +419,7 @@ export default function ProductsPage() {
   // --- State ---
   const [isNavigating, setIsNavigating] = useState(false);
   const [products, setProducts] = useState([]);
+  const [allProductsForExport, setAllProductsForExport] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openingStockOpen, setOpeningStockOpen] = useState(false);
@@ -468,6 +469,31 @@ export default function ProductsPage() {
   }, [router, status]);
 
   // --- Data Fetching ---
+  const fetchAllProductsForExport = useCallback(async () => {
+    if (!session?.accessToken) return;
+    try {
+      const params = new URLSearchParams({
+        page: "1",
+        size: "10000",
+        is_variant: "0"
+      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/products?${params.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === "success") {
+          setAllProductsForExport(data.data.data || []);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [session?.accessToken]);
+
   const fetchProducts = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
@@ -510,6 +536,8 @@ export default function ProductsPage() {
           setPageCount(data.data.pagination.pages || 0);
           setTotalProducts(data.data.pagination.total || 0);
         }
+        // Fetch all products for export in background
+        fetchAllProductsForExport();
       } else {
         throw new Error(data.message || "Failed to parse structural index");
       }
@@ -519,7 +547,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [session?.accessToken, pagination.pageIndex, pagination.pageSize, debouncedSearch, sortValue]);
+  }, [session?.accessToken, pagination.pageIndex, pagination.pageSize, debouncedSearch, sortValue, fetchAllProductsForExport]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -649,7 +677,7 @@ export default function ProductsPage() {
     if (items.length === 0) return;
 
     const base = items[0];
-    
+
     // Fetch product variants
     let variants = [];
     try {
@@ -659,7 +687,7 @@ export default function ProductsPage() {
       });
       const resData = await res.json();
       toast.dismiss(toastId);
-      
+
       if (resData.status === "success" && resData.data && resData.data.variants) {
         variants = resData.data.variants;
       }
@@ -677,14 +705,14 @@ export default function ProductsPage() {
       return {
         id: v.id,
         title: variantName,
-        barcodeValue: v.sku || v.barcode || base.sku || base.code || v.id.substring(0,8),
+        barcodeValue: v.sku || v.barcode || base.sku || base.code || v.id.substring(0, 8),
         price: v.selling_price || base.selling_price ? `${Number(v.selling_price || base.selling_price).toFixed(2)}` : "",
         size: base.unit?.name || "",
       };
     }) : [{
       id: base.id,
       title: base.name,
-      barcodeValue: base.sku || base.code || base.id.substring(0,8),
+      barcodeValue: base.sku || base.code || base.id.substring(0, 8),
       price: base.selling_price ? `${Number(base.selling_price).toFixed(2)}` : "",
       size: base.unit?.name || "",
     }];
@@ -696,7 +724,7 @@ export default function ProductsPage() {
       price: barcodeItems[0].price,
       size: barcodeItems[0].size,
       isPreset: true,
-      items: barcodeItems 
+      items: barcodeItems
     });
     setBarcodeOpen(true);
   }, [session?.accessToken]);
@@ -744,16 +772,22 @@ export default function ProductsPage() {
   );
 
   const exportData = useMemo(() => {
-    if (!products || products.length === 0) return [];
-    return products.map(p => ({
-      "Product Name": p.name,
-      "SKU": p.sku || "N/A",
-      "Category": p.main_category?.name || "General",
-      "Unit": p.unit?.name || "Units",
-      "Variants": p.variants?.length || 0,
-      "Status": p.is_active ? "Active" : "Suspended"
-    }));
-  }, [products]);
+    if (!allProductsForExport || allProductsForExport.length === 0) return [];
+    return allProductsForExport.map(p => {
+      const skuVal = p.sku || p.variants?.map(v => v.sku).filter(Boolean).join(", ") || "-";
+      const barcodeVal = p.barcode || p.variants?.map(v => v.barcode).filter(Boolean).join(", ") || "-";
+      return {
+        "Product Name": p.name,
+        "SKU": skuVal,
+        "Barcode / PLU": barcodeVal,
+        "Category": p.main_category?.name || "General",
+        "Brand": p.brand?.name || "-",
+        "Unit": p.unit?.name || "Units",
+        "Variants": p.variants?.length || 0,
+        "Status": p.is_active ? "Active" : "Suspended"
+      };
+    });
+  }, [allProductsForExport]);
 
 
 
@@ -770,6 +804,8 @@ export default function ProductsPage() {
       <ResourceManagementLayout
         // Data & Status
         data={products}
+        exportData={exportData}
+        exportFileName="Product_Catalog_Archive"
         isLoading={loading || status === "loading"}
         loadingSkeleton={<ProductSkeleton />}
         isError={!!error}
@@ -796,7 +832,7 @@ export default function ProductsPage() {
               <FileSpreadsheet className="h-4 w-4" />
               <span className="hidden lg:inline text-xs ">Import Catalog</span>
             </Button>
-            
+
             <Button
               id="inventory-opening-stock"
               variant="outline"
@@ -920,7 +956,7 @@ export default function ProductsPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <ProductDetailSheet 
+        <ProductDetailSheet
           product={productForDetail}
           isOpen={isDetailSheetOpen}
           onClose={() => setIsDetailSheetOpen(false)}

@@ -289,17 +289,17 @@ const ResourceTableToolbar = ({
         {(sortOptions && onSortChange) && (
           <div id="inventory-sort">
             <Select value={sortValue} onValueChange={onSortChange}>
-            <SelectTrigger className="h-8 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 text-sm font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-100 transition-colors gap-1 px-2 w-auto shrink-0">
-              <span className="text-gray-400 dark:text-slate-500 font-normal mr-0.5">Sort:</span>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-border bg-card shadow-2xl animate-in zoom-in-95">
-              {sortOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-sm font-medium rounded-md">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
+              <SelectTrigger className="h-8 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 text-sm font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-100 transition-colors gap-1 px-2 w-auto shrink-0">
+                <span className="text-gray-400 dark:text-slate-500 font-normal mr-0.5">Sort:</span>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border bg-card shadow-2xl animate-in zoom-in-95">
+                {sortOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-sm font-medium rounded-md">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
         )}
@@ -479,9 +479,9 @@ export const ResourceManagementLayout = ({
 
   if (isError) {
     return (
-      <AccessDenied 
-        errorMessage={errorMessage} 
-        onRetry={onRetry} 
+      <AccessDenied
+        errorMessage={errorMessage}
+        onRetry={onRetry}
       />
     );
   }
@@ -494,7 +494,7 @@ export const ResourceManagementLayout = ({
           {headerTitle}
           <div className="flex items-center gap-2">
             {extraActions}
-            
+
             {(onExportClick || data) && (
               <div id="inventory-export" className="shrink-0">
                 {onExportClick ? (
@@ -507,9 +507,9 @@ export const ResourceManagementLayout = ({
                     Export
                   </Button>
                 ) : (
-                  <DataActions 
-                    data={exportData || data} 
-                    fileName={exportFileName} 
+                  <DataActions
+                    data={exportData || data}
+                    fileName={exportFileName}
                     onPrint={onPrint}
                     showPrint={showPrint}
                   />
@@ -576,10 +576,10 @@ export const ResourceManagementLayout = ({
                   gridClassName={gridClassName}
                 />
               ) : (
-                <DataTable 
-                  table={table} 
-                  columns={columns} 
-                  isLoading={isLoading} 
+                <DataTable
+                  table={table}
+                  columns={columns}
+                  isLoading={isLoading}
                   onRowClick={onRowClick}
                   rowClassName={rowClassName}
                 />

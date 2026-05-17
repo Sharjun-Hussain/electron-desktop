@@ -23,9 +23,9 @@ import { cn } from "@/lib/utils";
  * @param {boolean} showPrint - Whether to show the print option.
  * @param {Function} onPrint - Custom print handler (defaults to window.print()).
  */
-export const DataActions = ({ 
-  data, 
-  fileName = "Export", 
+export const DataActions = ({
+  data,
+  fileName = "Export",
   className,
   showPrint = false,
   onPrint = () => window.print()
@@ -58,8 +58,8 @@ export const DataActions = ({
             Output Protocols
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border/50" />
-          
-          <DropdownMenuItem 
+
+          <DropdownMenuItem
             onClick={handleExcel}
             className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors"
           >
@@ -72,7 +72,7 @@ export const DataActions = ({
             </div>
           </DropdownMenuItem>
 
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={handleCSV}
             className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors"
           >
@@ -88,7 +88,7 @@ export const DataActions = ({
           {showPrint && (
             <>
               <DropdownMenuSeparator className="bg-border/50" />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={onPrint}
                 className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
               >
