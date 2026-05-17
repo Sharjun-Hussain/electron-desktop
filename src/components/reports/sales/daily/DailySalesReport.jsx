@@ -943,7 +943,7 @@ export default function DailySalesSummaryPage() {
               </div>
             )}
             
-            <div className={cn("grid gap-4 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto", isSetupComplete && "hidden")}>
+            <div className={cn("grid gap-4 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 max-w-5xl mx-auto", isSetupComplete && "hidden")}>
               {/* Date Filter */}
               <div className="w-full space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -1739,84 +1739,82 @@ export default function DailySalesSummaryPage() {
                 </Popover>
               </div>
 
-{/* Advanced Filters */}
+              {/* Settlement Channel */}
               <div className="w-full space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5 opacity-0 pointer-events-none">
-                  Placeholder
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <PaymentIcon className="h-3.5 w-3.5 text-emerald-600" /> Settlement
+                </label>
+                <Select
+                  value={paymentFilter}
+                  onValueChange={setPaymentFilter}
+                >
+                  <SelectTrigger className="h-9 rounded-md border-border font-normal text-sm bg-transparent hover:bg-emerald-50/50 hover:border-emerald-200 transition-colors">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-md border-border shadow-lg">
+                    <SelectItem value="all">Global (All Channels)</SelectItem>
+                    {paymentMethods.map((method) => (
+                      <SelectItem
+                        key={method.id}
+                        value={method.id.toLowerCase()}
+                      >
+                        {method.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="credit">Credit</SelectItem>
+                    <SelectItem value="return">Return</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Monetary Scope */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600" /> Value Scope
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full h-9 rounded-md border border-border text-muted-foreground text-sm font-normal gap-2 hover:bg-muted focus:ring-0 bg-transparent"
+                      className="w-full h-9 rounded-md border-border text-sm font-normal bg-transparent hover:bg-emerald-50/50 hover:border-emerald-200 transition-colors justify-start"
                     >
-                      <SlidersHorizontal className="size-4" /> Advanced
+                      <span className="truncate">
+                        {amountRange[0] === 0 && amountRange[1] === 5000 ? (
+                          "All Ranges"
+                        ) : (
+                          `${currencySymbol}${amountRange[0]} - ${currencySymbol}${amountRange[1]}`
+                        )}
+                      </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent
-                    className="w-80 p-6 rounded-md border-border shadow-xl"
-                    align="center"
-                  >
-                    <div className="space-y-6">
-                      <div className="space-y-4">
-                        <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                          Monetary Scope ({currencySymbol})
-                        </Label>
-                        <Slider
-                          defaultValue={[0, 1000]}
-                          max={5000}
-                          step={10}
-                          value={amountRange}
-                          onValueChange={setAmountRange}
-                          className="py-2"
-                        />
-                        <div className="flex justify-between text-xs font-semibold tabular-nums text-muted-foreground">
-                          <span className="bg-muted/50 px-2 py-1 rounded-md">
-                            {currencySymbol} {amountRange[0]}
-                          </span>
-                          <span className="bg-muted/50 px-2 py-1 rounded-md">
-                            {currencySymbol} {amountRange[1]}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <Label className="text-sm font-semibold text-foreground">
-                          Settlement Channel
-                        </Label>
-                        <Select
-                          value={paymentFilter}
-                          onValueChange={setPaymentFilter}
-                        >
-                          <SelectTrigger className="h-9 rounded-md border-border font-normal text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-md border-border shadow-lg">
-                            <SelectItem value="all">
-                              Global (All Channels)
-                            </SelectItem>
-                            {paymentMethods.map((method) => (
-                              <SelectItem
-                                key={method.id}
-                                value={method.id.toLowerCase()}
-                              >
-                                {method.name}
-                              </SelectItem>
-                            ))}
-                            <SelectItem value="credit">Credit</SelectItem>
-                            <SelectItem value="return">Return</SelectItem>
-                          </SelectContent>
-                        </Select>
+                  <PopoverContent className="w-80 p-6 rounded-md border-border shadow-xl" align="end">
+                    <div className="space-y-4">
+                      <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        Monetary Scope ({currencySymbol})
+                      </Label>
+                      <Slider
+                        defaultValue={[0, 1000]}
+                        max={5000}
+                        step={10}
+                        value={amountRange}
+                        onValueChange={setAmountRange}
+                        className="py-2"
+                      />
+                      <div className="flex justify-between text-xs font-semibold tabular-nums text-muted-foreground">
+                        <span className="bg-muted/50 px-2 py-1 rounded-md">
+                          {currencySymbol} {amountRange[0]}
+                        </span>
+                        <span className="bg-muted/50 px-2 py-1 rounded-md">
+                          {currencySymbol} {amountRange[1]}
+                        </span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full h-8 rounded-md text-xs font-medium text-rose-500 hover:bg-rose-50"
-                        onClick={() => {
-                          setPaymentFilter("all");
-                          setAmountRange([0, 5000]);
-                        }}
+                        className="w-full h-8 rounded-md text-xs font-medium text-rose-500 hover:bg-rose-50 mt-2"
+                        onClick={() => setAmountRange([0, 5000])}
                       >
-                        Reset Filters
+                        Reset Range
                       </Button>
                     </div>
                   </PopoverContent>
