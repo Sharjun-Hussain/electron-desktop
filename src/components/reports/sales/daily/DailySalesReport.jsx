@@ -290,6 +290,12 @@ export default function DailySalesSummaryPage() {
   const [brands, setBrands] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [brandsOpen, setBrandsOpen] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
+  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+  const [suppliersOpen, setSuppliersOpen] = useState(false);
+  const [batches, setBatches] = useState([]);
+  const [selectedBatches, setSelectedBatches] = useState([]);
+  const [batchesOpen, setBatchesOpen] = useState(false);
 
   const filteredSubCategories = useMemo(() => {
     if (selectedMainCategories.length === 0) return subCategories;
@@ -317,7 +323,7 @@ export default function DailySalesSummaryPage() {
   const fetchMetadata = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
-      const [branchRes, sellerRes, mainCatRes, subCatRes, brandRes, paymentMethodsRes] = await Promise.all([
+      const [branchRes, sellerRes, mainCatRes, subCatRes, brandRes, paymentMethodsRes, supplierRes, batchRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         }),
@@ -356,6 +362,8 @@ export default function DailySalesSummaryPage() {
       const subCatData = await subCatRes.json();
       const brandData = await brandRes.json();
       const paymentMethodsData = await paymentMethodsRes.json();
+      const supplierData = await supplierRes.json();
+      const batchData = await batchRes.json();
 
       if (branchData.status === "success") setBranches(branchData.data || []);
       if (sellerData.status === "success") setSellers(sellerData.data || []);
@@ -367,6 +375,10 @@ export default function DailySalesSummaryPage() {
         setBrands(brandData.data || []);
       if (paymentMethodsData.status === "success")
         setPaymentMethods(paymentMethodsData.data || []);
+      if (supplierData.status === "success")
+        setSuppliers(supplierData.data || []);
+      if (batchData.status === "success")
+        setBatches(batchData.data || []);
     } catch (err) {
       console.error("Failed to fetch metadata", err);
     }
@@ -384,6 +396,8 @@ export default function DailySalesSummaryPage() {
         main_category_ids: selectedMainCategories.join(","),
         sub_category_ids: selectedSubCategories.join(","),
         brand_ids: selectedBrands.join(","),
+        supplier_ids: selectedSuppliers.join(","),
+        batch_ids: selectedBatches.join(","),
       });
 
       const res = await fetch(
@@ -1315,7 +1329,209 @@ export default function DailySalesSummaryPage() {
                 </Popover>
               </div>
 
-              {/* Advanced Filters */}
+              
+              {/* Supplier Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-emerald-600" /> Supplier
+                </label>
+                <Popover
+                  open={suppliersOpen}
+                  onOpenChange={setSuppliersOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                    >
+                      <span className="truncate">
+                        {selectedSuppliers.length === 0
+                          ? "All Suppliers"
+                          : selectedSuppliers.length === 1
+                            ? suppliers.find(
+                                (c) =>
+                                  String(c.id) ===
+                                  String(selectedSuppliers[0]),
+                              )?.name || "1 Supplier"
+                            : `${selectedSuppliers.length} Suppliers`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search suppliers..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No supplier found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedSuppliers([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedSuppliers.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Suppliers
+                          </CommandItem>
+                          {suppliers.map((c) => {
+                            const isSelected = selectedSuppliers.includes(
+                              String(c.id),
+                            );
+                            return (
+                              <CommandItem
+                                key={c.id}
+                                value={c.name}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedSuppliers(
+                                      selectedSuppliers.filter(
+                                        (id) => id !== String(c.id),
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedSuppliers([
+                                      ...selectedSuppliers,
+                                      String(c.id),
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {c.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+
+              {/* Batch Filter */}
+              <div className="w-full space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-emerald-600" /> Batch
+                </label>
+                <Popover
+                  open={batchesOpen}
+                  onOpenChange={setBatchesOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between h-9 rounded-md border-border font-normal hover:bg-emerald-50 hover:border-emerald-200 p-2 text-sm"
+                    >
+                      <span className="truncate">
+                        {selectedBatches.length === 0
+                          ? "All Batches"
+                          : selectedBatches.length === 1
+                            ? selectedBatches[0]
+                            : `${selectedBatches.length} Batches`}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 transition-colors" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-full min-w-[200px] p-0 rounded-md border border-border shadow-lg bg-card"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder="Search batches..."
+                        className="h-9"
+                      />
+                      <CommandList className="max-h-60 overflow-y-auto">
+                        <CommandEmpty>No batch found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setSelectedBatches([]);
+                            }}
+                            className="cursor-pointer font-medium"
+                          >
+                            <div
+                              className={cn(
+                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                selectedBatches.length === 0
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                            >
+                              <Check className="h-3 w-3" />
+                            </div>
+                            All Batches
+                          </CommandItem>
+                          {batches.map((batchString) => {
+                            const isSelected = selectedBatches.includes(batchString);
+                            return (
+                              <CommandItem
+                                key={batchString}
+                                value={batchString}
+                                onSelect={() => {
+                                  if (isSelected) {
+                                    setSelectedBatches(
+                                      selectedBatches.filter(
+                                        (b) => b !== batchString,
+                                      ),
+                                    );
+                                  } else {
+                                    setSelectedBatches([
+                                      ...selectedBatches,
+                                      batchString,
+                                    ]);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <div
+                                  className={cn(
+                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                    isSelected
+                                      ? "bg-primary text-primary-foreground"
+                                      : "opacity-50 [&_svg]:invisible",
+                                  )}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </div>
+                                {batchString}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+{/* Advanced Filters */}
               <div className="w-full space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5 opacity-0 pointer-events-none">
                   Placeholder
