@@ -463,7 +463,7 @@ export default function DailySalesSummaryPage() {
               <SlidersHorizontal className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">Daily Sales Summary</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Sales Report</h1>
               <p className="text-sm text-muted-foreground mt-0.5">Audited chronological list of business events and revenue streams</p>
             </div>
           </div>
@@ -471,7 +471,7 @@ export default function DailySalesSummaryPage() {
           <div className="flex items-center gap-2">
             <DataActions 
               data={exportData} 
-              fileName="Daily_Sales_Summary_Report"
+              fileName="Sales_Report"
               onPrint={handlePrint}
               showPrint={true}
             />

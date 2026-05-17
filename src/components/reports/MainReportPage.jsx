@@ -58,10 +58,10 @@ const REPORTS_DATA = [
   // Sales Category
   {
     id: "sales-daily",
-    name: "Daily Sales Summary",
+    name: "Sales Report",
     href: "/reports/sales/daily",
     category: "Sales",
-    description: "Overview of daily sales transactions and revenue.",
+    description: "Overview of sales transactions and revenue.",
     isFavorite: true,
   },
   {

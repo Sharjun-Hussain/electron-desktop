@@ -18,7 +18,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
       <div className="border-b-2 border-slate-800 pb-6 mb-8 flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold uppercase tracking-wider">Sales Report</h1>
-          <p className="text-sm text-slate-500 mt-1">Daily Sales Summary</p>
+          <p className="text-sm text-slate-500 mt-1">Sales Summary</p>
         </div>
         <div className="text-right text-sm">
           <p><strong>Generated:</strong> {format(new Date(), "PPP p")}</p>
