@@ -40,6 +40,10 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Settings2,
+  CheckSquare,
+  Square,
+  Columns,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -440,8 +444,10 @@ export default function DailySalesSummaryPage() {
   }, [fetchMetadata]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (isSetupComplete) {
+      fetchData();
+    }
+  }, [fetchData, isSetupComplete]);
 
   useEffect(() => {
     if (data.length > 0) {
@@ -676,7 +682,12 @@ export default function DailySalesSummaryPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <DataActions
+            {isSetupComplete && (
+               <Button variant="outline" size="sm" className="h-9 border-dashed border-emerald-500/50 text-emerald-600 bg-emerald-50/50 hover:bg-emerald-100 mr-2 gap-2" onClick={() => setIsSetupComplete(false)}>
+                 <Settings2 className="w-4 h-4" /> Reconfigure
+               </Button>
+             )}
+             <DataActions
               data={exportData}
               fileName="Sales_Report"
               onPrint={handlePrint}
@@ -697,6 +708,7 @@ export default function DailySalesSummaryPage() {
         </div>
 
         {/* ── Stats Cards ── */}
+        {isSetupComplete && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {statsCards.map((card, idx) => (
             <div
@@ -730,11 +742,24 @@ export default function DailySalesSummaryPage() {
             </div>
           ))}
         </div>
+        )}
 
         {/* ── Main Table Card Wrap ── */}
         <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
-          {/* Filters Bar */}
-          <div className="bg-muted/10 border-b border-border p-4">
+          {/* Setup Wizard / Filters */}
+          <div className={cn("p-4 transition-all duration-300", !isSetupComplete ? "p-8 bg-card" : "bg-muted/10 border-b border-border")}>
+            
+            {!isSetupComplete && (
+              <div className="mb-8 text-center max-w-2xl mx-auto">
+                <div className="inline-flex p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 mb-4">
+                   <Settings2 className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Configure Your Report</h2>
+                <p className="text-sm text-muted-foreground">Select your reporting parameters and choose the specific data columns you want to analyze before generating the report.</p>
+              </div>
+            )}
+            
+            <div className={cn("grid gap-4 items-end", !isSetupComplete ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7")}>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 items-end">
               {/* Date Filter */}
               <div className="w-full space-y-1.5">
@@ -1648,6 +1673,9 @@ export default function DailySalesSummaryPage() {
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">
                     Customer Profile
                   </TableHead>
+                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">
+                    Batches
+                  </TableHead>
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground text-right">
                     Cost Total
                   </TableHead>
@@ -1686,6 +1714,9 @@ export default function DailySalesSummaryPage() {
                       </TableCell>
                       <TableCell>
                         <Skeleton className="h-4 w-40 bg-muted rounded" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24 bg-muted/50 rounded" />
                       </TableCell>
                       <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
                       <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>
@@ -1839,7 +1870,7 @@ export default function DailySalesSummaryPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-24 text-center">
+                    <TableCell colSpan={12} className="py-24 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="size-14 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
                           <Receipt className="size-8" />

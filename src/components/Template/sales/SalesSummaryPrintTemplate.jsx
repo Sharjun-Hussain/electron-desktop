@@ -54,6 +54,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
             <th className="py-2 px-2 font-bold">Date</th>
             <th className="py-2 px-2 font-bold">Invoice</th>
             <th className="py-2 px-2 font-bold">Customer</th>
+            <th className="py-2 px-2 font-bold">Batches</th>
             <th className="py-2 px-2 font-bold">Type</th>
             <th className="py-2 px-2 font-bold">Status</th>
             <th className="py-2 px-2 text-right font-bold">Cost</th>
@@ -72,6 +73,13 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
               <td className="py-2 px-2">{formatDateTime ? formatDateTime(item.date) : (item.date ? format(new Date(item.date), "MMM dd, HH:mm") : "-")}</td>
               <td className="py-2 px-2">{item.id || "-"}</td>
               <td className="py-2 px-2">{item.customer || "Walk-in"}</td>
+              <td className="py-2 px-2 text-[9px]">
+                 {item.batchDetails?.length > 0 
+                    ? [...new Map(item.batchDetails.map(b => [b.batch_number, b])).values()]
+                        .map(b => b.batch_number + (b.expiry_date ? ` (Exp: ${b.expiry_date.split('T')[0]})` : ''))
+                        .join(', ') 
+                    : '-'}
+              </td>
               <td className="py-2 px-2 uppercase text-[10px]">
                 {item.payments && item.payments.length > 0 
                   ? item.payments.map(p => p.payment_method).join(", ")
