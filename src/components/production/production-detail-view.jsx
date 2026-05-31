@@ -110,7 +110,7 @@ export default function ProductionDetailView({ orderId }) {
         <div className="flex items-center gap-3">
           {order.status === 'pending' && (
             <Button 
-              onClick={() => router.push(`/production/orders/complete?id=${order.id}`)}
+              onClick={() => router.push(`/production/orders/${order.id}/complete`)}
               className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 px-8 transition-all hover:scale-105 active:scale-95"
             >
               <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -221,6 +221,16 @@ export default function ProductionDetailView({ orderId }) {
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60 leading-none">Completed At</span>
                       <span className="text-sm font-semibold">{format(new Date(order.end_date), "PPP p")}</span>
+                    </div>
+                  </div>
+                )}
+
+                {order.expiry_date && (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-red-50 text-red-600"><Calendar className="w-4 h-4" /></div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60 leading-none">Batch Expiry Date</span>
+                      <span className="text-sm font-bold text-red-600">{format(new Date(order.expiry_date), "PPP")}</span>
                     </div>
                   </div>
                 )}

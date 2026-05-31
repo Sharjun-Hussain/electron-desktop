@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  endOfDay,
-  endOfMonth,
-  endOfWeek,
   format,
-  startOfDay,
   startOfMonth,
+  startOfDay,
+  endOfDay,
   startOfWeek,
-  subDays,
-  subMonths,
+  endOfWeek,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
   subYears,
 } from "date-fns";
 import {
@@ -31,15 +31,16 @@ import {
   Printer,
   RefreshCw,
   Search,
-  Settings2,
   ShoppingBag,
-  SlidersHorizontal,
   Store,
-  Tag,
   Target,
   TrendingUp,
+  SlidersHorizontal,
+  Settings2,
+  Tag,
   User as UserIcon,
 } from "lucide-react";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import {
@@ -54,7 +55,6 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
-import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { DataActions } from "@/components/general/DataActions";
 import { SalesByProductPrintTemplate } from "@/components/Template/sales/SalesByProductTemplate";
 import { Badge } from "@/components/ui/badge";
@@ -214,10 +214,13 @@ export default function SalesByProductPage() {
   const { formatCurrency } = useAppSettings();
 
   // --- STATES ---
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [date, setDate] = useState({
     from: startOfMonth(new Date()),
     to: new Date(),
   });
+  const [dateOpen, setDateOpen] = useState(false);
+  const [activePreset, setActivePreset] = useState("");
   const [data, setData] = useState([]);
   const [summary, setSummary] = useState({
     totalRevenue: 0,
@@ -233,37 +236,22 @@ export default function SalesByProductPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [category, setCategory] = useState("all");
-  const [subCategory, setSubCategory] = useState("all");
-  const [brand, setBrand] = useState("all");
   const [store, setStore] = useState("all");
-  const [user, setUser] = useState("all");
-
-  // Multi-select checklists state
-  const [selectedMainCategories, setSelectedMainCategories] = useState([]);
-  const [selectedSubCategories, setSelectedSubCategories] = useState([]);
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
-  const [selectedBatches, setSelectedBatches] = useState([]);
-
-  // Setup Wizard State
-  const [isSetupComplete, setIsSetupComplete] = useState(false);
-
-  // Popover open triggers
-  const [dateOpen, setDateOpen] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [subCategoryOpen, setSubCategoryOpen] = useState(false);
-  const [brandOpen, setBrandOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
-  const [userOpen, setUserOpen] = useState(false);
-  const [mainCategoriesOpen, setMainCategoriesOpen] = useState(false);
-  const [subCategoriesOpen, setSubCategoriesOpen] = useState(false);
-  const [brandsOpen, setBrandsOpen] = useState(false);
-  const [suppliersOpen, setSuppliersOpen] = useState(false);
-  const [batchesOpen, setBatchesOpen] = useState(false);
 
-  // Date Preset helper
-  const [activePreset, setActivePreset] = useState("month");
+  const [user, setUser] = useState("all");
+  const [userOpen, setUserOpen] = useState(false);
+
+  const [selectedMainCategories, setSelectedMainCategories] = useState([]);
+  const [mainCategoriesOpen, setMainCategoriesOpen] = useState(false);
+  const [selectedSubCategories, setSelectedSubCategories] = useState([]);
+  const [subCategoriesOpen, setSubCategoriesOpen] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [brandsOpen, setBrandsOpen] = useState(false);
+  const [selectedSuppliers, setSelectedSuppliers] = useState([]);
+  const [suppliersOpen, setSuppliersOpen] = useState(false);
+  const [selectedBatches, setSelectedBatches] = useState([]);
+  const [batchesOpen, setBatchesOpen] = useState(false);
 
   // --- METADATA STATES ---
   const [categories, setCategories] = useState([]);
@@ -274,57 +262,75 @@ export default function SalesByProductPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [batches, setBatches] = useState([]);
 
-  // Date Presets Handler
+  const filteredSubCategories = useMemo(() => {
+    if (selectedMainCategories.length === 0) return subCategories;
+    return subCategories.filter((sub) =>
+      selectedMainCategories.includes(String(sub.main_category_id)),
+    );
+  }, [subCategories, selectedMainCategories]);
+
+  useEffect(() => {
+    if (selectedMainCategories.length > 0) {
+      setSelectedSubCategories((prev) =>
+        prev.filter((subId) => {
+          const sub = subCategories.find((s) => String(s.id) === String(subId));
+          return (
+            sub && selectedMainCategories.includes(String(sub.main_category_id))
+          );
+        }),
+      );
+    }
+  }, [selectedMainCategories, subCategories]);
+
   const handlePresetClick = (preset) => {
-    setActivePreset(preset);
-    const today = new Date();
+    let from, to;
+    const now = new Date();
+
     switch (preset) {
       case "today":
-        setDate({ from: startOfDay(today), to: endOfDay(today) });
+        from = startOfDay(now);
+        to = endOfDay(now);
         break;
       case "week":
-        setDate({ from: startOfWeek(today), to: endOfWeek(today) });
+        from = startOfWeek(now, { weekStartsOn: 1 });
+        to = endOfWeek(now, { weekStartsOn: 1 });
         break;
       case "month":
-        setDate({ from: startOfMonth(today), to: endOfMonth(today) });
+        from = startOfMonth(now);
+        to = endOfMonth(now);
         break;
       case "year":
-        setDate({ from: startOfMonth(today), to: endOfMonth(today) });
+        from = startOfYear(now);
+        to = endOfYear(now);
         break;
-      case "lastYear": {
-        const lastYr = subYears(today, 1);
-        setDate({ from: startOfMonth(lastYr), to: endOfMonth(lastYr) });
+      case "lastYear":
+        from = startOfYear(subYears(now, 1));
+        to = endOfYear(subYears(now, 1));
         break;
-      }
       case "all":
-        setDate({ from: undefined, to: undefined });
+        from = null;
+        to = null;
         break;
+      default:
+        return;
     }
+
+    setDate({ from, to });
+    setActivePreset(preset);
+    setDateOpen(false);
   };
 
   const fetchMetadata = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
-      const [
-        catRes,
-        subCatRes,
-        brandRes,
-        branchRes,
-        userRes,
-        supplierRes,
-        batchRes,
-      ] = await Promise.all([
+      const [catRes, subCatRes, brandRes, branchRes, sellerRes, supplierRes, batchRes] = await Promise.all([
         fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/main-categories/active/list`,
-          {
-            headers: { Authorization: `Bearer ${session.accessToken}` },
-          },
+          { headers: { Authorization: `Bearer ${session.accessToken}` } },
         ),
         fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/active/list`,
-          {
-            headers: { Authorization: `Bearer ${session.accessToken}` },
-          },
+          { headers: { Authorization: `Bearer ${session.accessToken}` } },
         ),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/brands/active/list`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
@@ -338,29 +344,26 @@ export default function SalesByProductPage() {
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/active/list`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         }),
-        fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/stocks/batches/list`,
-          {
-            headers: { Authorization: `Bearer ${session.accessToken}` },
-          },
-        ),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/stocks/batches/list`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        }),
       ]);
 
       const catData = await catRes.json();
       const subCatData = await subCatRes.json();
       const brandData = await brandRes.json();
       const branchData = await branchRes.json();
-      const userData = await userRes.json();
+      const sellerData = await sellerRes.json();
       const supplierData = await supplierRes.json();
       const batchData = await batchRes.json();
 
-      if (catData.status === "success") setCategories(catData.data);
-      if (subCatData.status === "success") setSubCategories(subCatData.data);
-      if (brandData.status === "success") setBrands(brandData.data);
-      if (branchData.status === "success") setBranches(branchData.data);
-      if (userData.status === "success") setSellers(userData.data);
-      if (supplierData.status === "success") setSuppliers(supplierData.data);
-      if (batchData.status === "success") setBatches(batchData.data);
+      if (catData.status === "success") setCategories(catData.data || []);
+      if (subCatData.status === "success") setSubCategories(subCatData.data || []);
+      if (brandData.status === "success") setBrands(brandData.data || []);
+      if (branchData.status === "success") setBranches(branchData.data || []);
+      if (sellerData.status === "success") setSellers(sellerData.data || []);
+      if (supplierData.status === "success") setSuppliers(supplierData.data || []);
+      if (batchData.status === "success") setBatches(batchData.data || []);
     } catch (err) {
       console.error("Failed to fetch metadata", err);
     }
@@ -375,12 +378,12 @@ export default function SalesByProductPage() {
           start_date: date?.from ? format(date.from, "yyyy-MM-dd") : "",
           end_date: date?.to ? format(date.to, "yyyy-MM-dd") : "",
           branch_id: store,
-          seller_id: user,
+          user_id: user,
           main_category_ids: selectedMainCategories.join(","),
           sub_category_ids: selectedSubCategories.join(","),
           brand_ids: selectedBrands.join(","),
           supplier_ids: selectedSuppliers.join(","),
-          batches: selectedBatches.join(","),
+          batch_ids: selectedBatches.join(","),
           search: searchQuery,
           page: targetPage,
           limit: pageSize,
@@ -463,26 +466,6 @@ export default function SalesByProductPage() {
     }
   }, [isSetupComplete, pageSize, searchQuery]);
 
-  const filteredSubCategories = useMemo(() => {
-    if (selectedMainCategories.length === 0) return subCategories;
-    return subCategories.filter((sub) =>
-      selectedMainCategories.includes(String(sub.main_category_id)),
-    );
-  }, [subCategories, selectedMainCategories]);
-
-  useEffect(() => {
-    if (selectedMainCategories.length > 0) {
-      setSelectedSubCategories((prev) =>
-        prev.filter((subId) => {
-          const sub = subCategories.find((s) => String(s.id) === String(subId));
-          return (
-            sub && selectedMainCategories.includes(String(sub.main_category_id))
-          );
-        }),
-      );
-    }
-  }, [selectedMainCategories, subCategories]);
-
   // --- PRINT ENGINE ---
   const printRef = useRef(null);
   const handlePrint = useReactToPrint({
@@ -509,13 +492,15 @@ export default function SalesByProductPage() {
           ? "All Branches"
           : branches.find((b) => String(b.id) === String(store))?.name || store,
       Classification:
-        selectedMainCategories.length === 0
-          ? "All Categories"
-          : selectedMainCategories.length === 1
-            ? categories.find(
-                (c) => String(c.id) === String(selectedMainCategories[0]),
-              )?.name || "1 Category"
-            : `${selectedMainCategories.length} Categories`,
+        selectedMainCategories.length > 0
+          ? selectedMainCategories
+              .map(
+                (cid) =>
+                  categories.find((c) => String(c.id) === String(cid))?.name,
+              )
+              .filter(Boolean)
+              .join(", ")
+          : "All Categories",
       Organization: session?.organization?.name || "Inzeedo POS",
       Horizon: date?.from
         ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}`
@@ -1308,14 +1293,12 @@ export default function SalesByProductPage() {
                               className="cursor-pointer"
                             >
                               <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4 text-emerald-600",
-                                  String(store) === String(b.id)
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                              {b.name}
+                              className={cn(
+                                "mr-2 h-4 w-4 text-emerald-600",
+                                String(store) === String(b.id) ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            {b.name}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -1722,7 +1705,8 @@ export default function SalesByProductPage() {
                           : selectedSuppliers.length === 1
                             ? suppliers.find(
                                 (c) =>
-                                  String(c.id) === String(selectedSuppliers[0]),
+                                  String(c.id) ===
+                                  String(selectedSuppliers[0]),
                               )?.name || "1 Supplier"
                             : `${selectedSuppliers.length} Suppliers`}
                       </span>
@@ -1822,7 +1806,7 @@ export default function SalesByProductPage() {
                             ? selectedBatches[0]
                             : `${selectedBatches.length} Batches`}
                       </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 animate-in" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent

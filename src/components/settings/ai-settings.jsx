@@ -21,7 +21,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-
 import { usePermission } from "@/hooks/use-permission";
 import { PERMISSIONS } from "@/lib/permissions";
 import { useAppSettings } from "@/app/hooks/useAppSettings";

@@ -17,24 +17,21 @@ import { ResourceManagementLayout } from "../general/resource-management-layout"
 import { UnitDialog } from "./units-dialog";
 import { UnitsAiAssistant } from "./units-ai-assistant";
 import { getUnitColumns } from "./units-column";
-import {
-  CheckCircle2,
-  XCircle,
-  Trash2,
-  ChevronDown,
-  Box,
-  Edit3,
-  MoreHorizontal,
+import { 
+  CheckCircle2, 
+  XCircle, 
+  Trash2, 
+  ChevronDown, 
+  Box, 
+  Edit3, 
+  MoreHorizontal, 
   Check,
-  Sparkles
+  Sparkles 
 } from "lucide-react";
 import { usePermission } from "@/hooks/use-permission";
 import { MODULES } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { StatusBadge } from "../ui/status-badge";
-import { exportToCSV } from "@/lib/exportUtils";
-import { Badge } from "../ui/badge";
 
 // --- FIX 1: Component defined outside with safety check ---
 const UnitBulkActions = ({ table, onDelete, onDeactivate, onActivate }) => {
@@ -92,11 +89,11 @@ const UnitGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDelet
   const isSelected = row.getIsSelected();
 
   return (
-    <div
+    <div 
       className={cn(
         "group relative flex flex-col gap-4 p-5 rounded-md border transition-all duration-300",
-        isSelected
-          ? "bg-emerald-500/5 border-emerald-500/30 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-500/20"
+        isSelected 
+          ? "bg-emerald-500/5 border-emerald-500/30 shadow-lg shadow-emerald-500/5 ring-1 ring-emerald-500/20" 
           : "bg-white dark:bg-slate-900/50 border-slate-100 dark:border-slate-800/60 hover:border-emerald-500/20 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none hover:-translate-y-1"
       )}
     >
@@ -107,10 +104,10 @@ const UnitGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDelet
           onCheckedChange={(val) => row.toggleSelected(!!val)}
           className="h-4.5 w-4.5 rounded-md border-slate-300 dark:border-slate-700 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
         />
-
+        
         <div className="flex items-center gap-2">
           <StatusBadge value={unit.is_active} className="text-xs font-bold  h-5 px-2 rounded-full border-none shadow-none" />
-
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-md hover:bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -166,10 +163,10 @@ const UnitGridCard = ({ row, onEdit, onDelete, onToggleStatus, canEdit, canDelet
 
       {/* Description Footer */}
       <div className="mt-auto pt-4 flex flex-col border-t border-slate-50 dark:border-slate-800/50">
-        <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1 text-center">Protocol Specs</span>
-        <p className="text-xs text-center font-medium text-slate-500 line-clamp-2 px-2 italic">
-          Standard metric unit: {unit.short_name}
-        </p>
+         <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1 text-center">Protocol Specs</span>
+          <p className="text-xs text-center font-medium text-slate-500 line-clamp-2 px-2 italic">
+            Standard metric unit: {unit.short_name}
+          </p>
       </div>
     </div>
   );
@@ -354,18 +351,6 @@ export default function UnitsPage() {
     );
   }, [session, fetchUnits]);
 
-
-  const exportData = useMemo(() => {
-    if (!units || units.length === 0) return [];
-    return units.map(u => ({
-      "Unit Name": u.name,
-      "Short Name": u.short_name || "N/A",
-      "Base Unit": u.is_base_unit ? "Yes" : "No",
-      "Status": u.is_active ? "Active" : "Suspended",
-      "Created At": u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"
-    }));
-  }, [units]);
-
   // --- FIX 3: Memoize Columns ---
   const columns = useMemo(() => getUnitColumns({
     onDelete: canDelete(UNIT) ? handleDelete : null,
@@ -395,37 +380,35 @@ export default function UnitsPage() {
         errorMessage={error}
         onRetry={fetchUnits}
         headerTitle={
-          <div className="flex items-center gap-4">
-            <div className="size-9 shrink-0 rounded-md bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm transition-all duration-300 hover:rotate-6">
-              <CheckCircle2 className="size-4.5 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex items-center gap-4">
+                <div className="size-9 shrink-0 rounded-md bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm transition-all duration-300 hover:rotate-6">
+                    <CheckCircle2 className="size-4.5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex flex-col">
+                    <h1 className="text-lg font-bold text-slate-900 dark:text-white  leading-none">
+                        Inventory Units
+                    </h1>
+                    <p className="text-xs text-slate-500 font-semibold mt-1 opacity-70">
+                        Metric protocols & packaging standards
+                    </p>
+                </div>
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white  leading-none">
-                Inventory Units
-              </h1>
-              <p className="text-xs text-slate-500 font-semibold mt-1 opacity-70">
-                Metric protocols & packaging standards
-              </p>
-            </div>
-          </div>
         }
         addButtonLabel="Add Unit"
         onAddClick={canCreate(UNIT) ? handleAddClick : null}
         extraActions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAiOpen(true)}
-            className="h-9 px-4 gap-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">AI Assist</span>
-          </Button>
+            <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsAiOpen(true)}
+                className="h-9 px-4 gap-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+            >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Assist</span>
+            </Button>
         }
         isAdding={isNavigating}
-        onExportClick={null}
-        exportData={exportData}
-        exportFileName="Inventory_Units_Audit"
+        onExportClick={() => console.log("Export clicked")}
         bulkActionsComponent={bulkActionsComponent} // Use the memoized variable
         searchColumn="name"
         searchPlaceholder="Filter unit by name..."
@@ -452,7 +435,7 @@ export default function UnitsPage() {
         session={session}
         initialData={editingUnit}
       />
-      <UnitsAiAssistant
+      <UnitsAiAssistant 
         open={isAiOpen}
         onOpenChange={setIsAiOpen}
         onSuccess={fetchUnits}

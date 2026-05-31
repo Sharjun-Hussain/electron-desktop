@@ -50,7 +50,7 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-export default function ProductionOrderForm() {
+export default function ProductionOrderForm({ showBackButton = true }) {
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -143,9 +143,11 @@ export default function ProductionOrderForm() {
     <div className="w-full p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-emerald-50 text-emerald-600">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          {showBackButton && (
+            <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-emerald-50 text-emerald-600">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 animate-pulse">
               <Activity className="w-6 h-6 text-emerald-600" />

@@ -354,7 +354,6 @@ export default function SalesReturnHistoryPage() {
         statCardsComponent={statCards}
         searchPlaceholder="Filter by Return #, Invoice, or Customer..."
         searchColumn="searchText"
-        // onSearchChange removed to allow perfect client-side filtering like Purchase Returns
         onExportClick={null}
         exportData={exportData}
         exportFileName="Sales_Return_Audit_Log"

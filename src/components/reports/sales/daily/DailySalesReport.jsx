@@ -219,6 +219,7 @@ export default function DailySalesSummaryPage() {
     return {
       executionDate: true,
       reference: true,
+      source: true,
       customer: true,
       cost: true,
       mrp: true,
@@ -527,6 +528,7 @@ export default function DailySalesSummaryPage() {
     return (filteredData || []).map((item) => {
       let row = {};
       if (selectedColumns.reference) row["Reference"] = item.id;
+      if (selectedColumns.source) row["Source"] = item.source === 'shopify' ? 'Shopify (Online)' : 'In-Store (POS)';
       if (selectedColumns.executionDate) row["Date"] = item.date ? formatDateTime(item.date) : "N/A";
       if (selectedColumns.customer) row["Customer"] = item.customer || "Walk-in Market";
       if (selectedColumns.cost) row["Cost"] = Number(item.total_cost || 0);
@@ -669,6 +671,13 @@ export default function DailySalesSummaryPage() {
       icon: DollarSign,
       gradient: "from-emerald-500 to-teal-400",
     },
+    ...(stats.shopifyEnabled ? [{
+      label: "Shopify Revenue",
+      val: isLoading ? null : formatCurrency(stats.shopifySalesVolume || 0),
+      desc: "Online store contributions",
+      icon: Zap,
+      gradient: "from-indigo-500 to-purple-400",
+    }] : []),
     {
       label: "Transactions",
       val: isLoading ? null : stats.totalTransactions || 0,
@@ -766,6 +775,7 @@ export default function DailySalesSummaryPage() {
                         const labels = {
                           executionDate: "Date",
                           reference: "Reference",
+                          source: "Source (POS/Shopify)",
                           customer: "Customer",
                           cost: "Cost",
                           mrp: "MRP",
@@ -1850,6 +1860,11 @@ export default function DailySalesSummaryPage() {
                     Reference
                   </TableHead>
                   )}
+                  {selectedColumns.source && (
+                  <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">
+                    Source
+                  </TableHead>
+                  )}
                   {selectedColumns.customer && (
                   <TableHead className="py-3.5 text-[13px] font-semibold text-muted-foreground">
                     Customer
@@ -1908,9 +1923,13 @@ export default function DailySalesSummaryPage() {
                       {selectedColumns.reference && <TableCell>
                         <Skeleton className="h-4 w-24 bg-muted/50 rounded" />
                       </TableCell>}
+                      {selectedColumns.source && <TableCell>
+                        <Skeleton className="h-4 w-16 bg-muted/50 rounded" />
+                      </TableCell>}
                       {selectedColumns.customer && <TableCell>
                         <Skeleton className="h-4 w-40 bg-muted rounded" />
                       </TableCell>}
+
                       {selectedColumns.cost && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
                       {selectedColumns.mrp && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
                       {selectedColumns.wholesale && <TableCell className="text-right"><Skeleton className="h-4 w-16 bg-muted rounded ml-auto" /></TableCell>}
@@ -1954,6 +1973,11 @@ export default function DailySalesSummaryPage() {
                             <Receipt className="size-3.5 opacity-40 text-muted-foreground group-hover:text-emerald-600" />
                             {item.id}
                           </div>
+                        </TableCell>}
+                        {selectedColumns.source && <TableCell>
+                          <Badge variant="outline" className={cn("text-[11px] font-medium tracking-wide", item.source === 'shopify' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-700 border-slate-200')}>
+                            {item.source === 'shopify' ? 'Shopify' : 'POS'}
+                          </Badge>
                         </TableCell>}
                         {selectedColumns.customer && <TableCell>
                           <div className="flex items-center gap-3">

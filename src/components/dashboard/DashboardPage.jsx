@@ -7,13 +7,18 @@ import { useGSAP } from "@gsap/react";
 import Header from "./Header";
 import StatsGrid from "./StatsGrid";
 import QuickActions from "./QuickAction";
+import IntegrationCards from "./IntegrationCards";
 import DashboardCharts from "./DashboardCharts";
+import DashboardTableMonitor from "./DashboardTableMonitor";
+import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Zap, Activity, BarChart3 } from "lucide-react";
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const containerRef = useRef(null);
+  const { business } = useAppSettings();
+  const isRestaurant = business?.business_type?.toLowerCase() === "restaurant";
 
   useGSAP(() => {
     // Stagger entrance of all child elements with the class 'dashboard-item'
@@ -58,6 +63,13 @@ export default function Dashboard() {
               <StatsGrid />
             </div>
 
+            {/* Restaurant Seating Monitor */}
+            {isRestaurant && (
+              <div id="dashboard-table-monitor" className="dashboard-item animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <DashboardTableMonitor />
+              </div>
+            )}
+
             {/* 2. Quick Actions Section */}
             <div id="dashboard-quick-access" className="dashboard-item">
                <div className="flex items-center gap-3 mb-6">
@@ -71,6 +83,9 @@ export default function Dashboard() {
                 </div>
               <QuickActions />
             </div>
+
+            {/* 2.5 Integrations Section (Shopify/WhatsApp) */}
+            <IntegrationCards />
 
             {/* 1.5. Charts Section */}
             <div id="dashboard-charts" className="dashboard-item">

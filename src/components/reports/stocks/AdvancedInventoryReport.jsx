@@ -89,6 +89,7 @@ export default function AdvancedInventoryReport() {
     user_id: "all",
     stock_from: "",
     stock_to: "",
+    batch_number: "",
   });
 
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_COLUMNS);
@@ -152,6 +153,7 @@ export default function AdvancedInventoryReport() {
         user_id: filters.user_id,
         stock_from: filters.stock_from,
         stock_to: filters.stock_to,
+        batch_number: filters.batch_number,
       });
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/advanced/stocks?${queryParams}`, {
@@ -318,6 +320,17 @@ export default function AdvancedInventoryReport() {
                   </Select>
                 </div>
 
+                {/* Batch Number */}
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Batch Number</Label>
+                  <Input 
+                    placeholder="Enter batch..." 
+                    className="h-10" 
+                    value={filters.batch_number} 
+                    onChange={(e) => setFilters(f => ({ ...f, batch_number: e.target.value }))} 
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Stock From</Label>
@@ -355,7 +368,7 @@ export default function AdvancedInventoryReport() {
                 <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-10 font-bold" onClick={fetchData}>Submit</Button>
                 <Button variant="outline" className="flex-1 h-10 font-bold" onClick={() => {
                   setReportType("summary");
-                  setFilters({ product_id: "all", supplier_id: "all", category_id: "all", brand_id: "all", user_id: "all", stock_from: "", stock_to: "" });
+                  setFilters({ product_id: "all", supplier_id: "all", category_id: "all", brand_id: "all", user_id: "all", stock_from: "", stock_to: "", batch_number: "" });
                   setVisibleColumns(DEFAULT_COLUMNS);
                 }}>Reset</Button>
               </div>

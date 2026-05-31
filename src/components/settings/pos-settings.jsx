@@ -6,13 +6,15 @@ import { useBeep } from "@/hooks/use-beep";
 import { toast } from "sonner";
 import { useEffect, useState, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import {
   Save, Volume2, Printer, Percent, Calculator,
   CreditCard, Banknote, Smartphone, QrCode,
   FileText, ScrollText, CheckCircle2, Settings2, Loader2, Eye,
   Fingerprint, Type, Layout, AlignLeft, AlignCenter, RotateCcw, Image as ImageIcon,
   Usb, Scan, Activity, Zap, Info, ShieldCheck, Monitor,
-  Fullscreen, Package, Lock, ArrowUpCircle, LayoutGrid
+  Fullscreen, Package, Lock, ArrowUpCircle, LayoutGrid,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermission } from "@/hooks/use-permission";
@@ -31,7 +33,6 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { useSettingsStore } from "@/store/useSettingsStore";
 
 const AVAILABLE_PAYMENTS = [
   { id: "cash", label: "Cash", icon: Banknote, desc: "Physical currency" },
@@ -68,6 +69,10 @@ const ToggleRow = ({ label, desc, checked, onCheckedChange }) => (
   </div>
 );
 
+import { useHardware } from "@/components/pos/hooks/useHardware";
+import qz from "qz-tray";
+import { hardwareService } from "@/lib/qz-service";
+
 export function PosSettings() {
   const { hasPermission } = usePermission();
   const { useModularSettings, updateModularSettings, useBusinessSettings } = useSettings();
@@ -77,6 +82,28 @@ export function PosSettings() {
   const planFeatures = business?.plan?.features || [];
   const overrides = business?.module_overrides || [];
   const tier = business?.subscription_tier;
+  const posLayout = useSettingsStore((state) => state.global?.posLayout || "modern");
+  const setPosLayout = useSettingsStore((state) => state.setPosLayout);
+
+  const {
+    isReady: isHardwareReady, isConnecting, selectedPrinter,
+    selectedScalePort, selectedDisplayPort, currentWeight,
+    pickPrinter, pickScalePort, pickDisplayPort,
+    startScaleListening, stopScaleListening, updateDisplay,
+    openDrawer, printReceipt
+  } = useHardware();
+  const [systemPrinters, setSystemPrinters] = useState([]);
+  const [serialPorts, setSerialPorts] = useState([]);
+
+  // Fetch all hardware when QZ is ready
+  useEffect(() => {
+    if (isHardwareReady) {
+      // Printers
+      qz.printers.find().then(setSystemPrinters).catch(console.error);
+      // Serial Ports (Scales/Displays)
+      hardwareService.findSerialPorts().then(setSerialPorts).catch(console.error);
+    }
+  }, [isHardwareReady]);
 
   const isShiftEnabled =
     planFeatures.includes('shift_management') ||
@@ -86,8 +113,6 @@ export function PosSettings() {
 
   const { playBeep } = useBeep();
   const [terminalName, setTerminalName] = useState("");
-  const posLayout = useSettingsStore((state) => state.global?.posLayout || "modern");
-  const setGlobalSettings = useSettingsStore((state) => state.setGlobalSettings);
 
   useEffect(() => {
     const saved = localStorage.getItem("pos_terminal_id");
@@ -104,7 +129,6 @@ export function PosSettings() {
   const [activeTab, setActiveTab] = useState(searchParams.get("config") || "behavior");
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewMaximized, setIsPreviewMaximized] = useState(false);
-  const [systemPrinters, setSystemPrinters] = useState([]);
   const printRef = useRef(null);
 
   const handleTestPrint = useReactToPrint({
@@ -137,8 +161,7 @@ export function PosSettings() {
     enableBatchSelection: false,
     showUser: true, showCustomer: true, showDateTime: true, showSalesType: true,
     autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false,
-    receiptPrinterName: "", barcodePrinterName: "",
-    posTableColumns: ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]
+    posTableColumns: ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"],
   });
 
   const [peripherals, setPeripherals] = useState({
@@ -148,28 +171,6 @@ export function PosSettings() {
     drawer: { status: 'wired', name: 'Printer Linked' },
     digitalScale: { status: 'online', name: 'Mettler Toledo - COM3' }
   });
-
-  // Fetch System Printers (Desktop Only)
-  useEffect(() => {
-    if (activeTab === 'printer' && window.api?.getPrinters) {
-      window.api.getPrinters().then(printers => {
-        setSystemPrinters(printers);
-        
-        // Auto-detect connection status based on saved names
-        setPeripherals(prev => ({
-          ...prev,
-          receiptPrinter: {
-            status: printers.some(p => p.name === formData.receiptPrinterName) ? 'connected' : 'disconnected',
-            name: formData.receiptPrinterName || null
-          },
-          barcodePrinter: {
-            status: printers.some(p => p.name === formData.barcodePrinterName) ? 'connected' : 'disconnected',
-            name: formData.barcodePrinterName || null
-          }
-        }));
-      });
-    }
-  }, [activeTab, window.api, formData.receiptPrinterName, formData.barcodePrinterName]);
 
   // Pattern Recognition for Barcode Scanners
   useEffect(() => {
@@ -280,6 +281,16 @@ export function PosSettings() {
   };
 
   const updateField = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+
+  const toggleColumn = (colId) => {
+    setFormData(prev => {
+      const current = prev.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"];
+      const updated = current.includes(colId)
+        ? current.filter(c => c !== colId)
+        : [...current, colId];
+      return { ...prev, posTableColumns: updated };
+    });
+  };
 
   const handleSave = async () => {
     if (!hasPermission(PERMISSIONS.SETTINGS_POS)) {
@@ -418,24 +429,6 @@ export function PosSettings() {
                       </div>
                     </div>
                   )}
-                </div>
-
-                <div className="space-y-1 pt-1 lg:pt-0">
-                  <ToggleRow label="Checkout Live Preview" desc="Render receipt preview prior to settlement" checked={formData.showReceiptPreview} onCheckedChange={(c) => updateField('showReceiptPreview', c)} />
-                  <ToggleRow label="Line Item Discounts" desc="Allow manual adjustments to item prices" checked={formData.showDiscount} onCheckedChange={(c) => updateField('showDiscount', c)} />
-                  <ToggleRow label="Fiscal Tax Breakdown" desc="Display tax structural details in cart" checked={formData.showTax} onCheckedChange={(c) => updateField('showTax', c)} />
-                  <ToggleRow label="Enable Wholesale Mode" desc="Show wholesale toggle and pricing protocols in workstation" checked={formData.enableWholesale} onCheckedChange={(c) => updateField('enableWholesale', c)} />
-                  <ToggleRow
-                    label={
-                      <div className="flex items-center gap-2">
-                        Mandatory Shift Protocol
-                        {!isShiftEnabled && <Badge variant="secondary" className="text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/20 py-0 h-4 uppercase tracking-tighter font-semibold">Enterprise</Badge>}
-                      </div>
-                    }
-                    desc="Require opening/closing shift for transactions"
-                    checked={isShiftEnabled && formData.requireShift}
-                    onCheckedChange={(c) => isShiftEnabled && updateField('requireShift', c)}
-                  />
 
                   <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
                     <SectionHeader icon={Layout} title="Interface & Layout" description="Select the primary visual structural basis for the POS workstation" />
@@ -449,7 +442,7 @@ export function PosSettings() {
                           <div
                             key={layout.id}
                             onClick={() => {
-                              setGlobalSettings({ posLayout: layout.id });
+                              setPosLayout(layout.id);
                               toast.success(`POS layout switched to ${layout.label}`);
                             }}
                             className={cn(
@@ -468,6 +461,43 @@ export function PosSettings() {
                       })}
                     </div>
                   </div>
+
+                  <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
+                    <Label className="text-[11px] font-medium text-slate-500 dark:text-slate-400  px-1 mb-2 block">Workstation Identification</Label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 relative">
+                        <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <Input
+                          placeholder="e.g. Counter 01, Express Register"
+                          value={terminalName}
+                          onChange={(e) => handleTerminalNameChange(e.target.value)}
+                          className="h-10 pl-9 bg-slate-50/50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 rounded-md text-[13px] font-medium"
+                        />
+                      </div>
+                      <div className="px-3 py-2 rounded-md bg-amber-500/5 border border-amber-500/10 flex items-center gap-2">
+                        <Info className="w-3.5 h-3.5 text-amber-600" />
+                        <span className="text-[9px] font-medium text-amber-800/60 ">Local Persistence Active</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1 pt-1 lg:pt-0">
+                  <ToggleRow label="Checkout Live Preview" desc="Render receipt preview prior to settlement" checked={formData.showReceiptPreview} onCheckedChange={(c) => updateField('showReceiptPreview', c)} />
+                  <ToggleRow label="Line Item Discounts" desc="Allow manual adjustments to item prices" checked={formData.showDiscount} onCheckedChange={(c) => updateField('showDiscount', c)} />
+                  <ToggleRow label="Fiscal Tax Breakdown" desc="Display tax structural details in cart" checked={formData.showTax} onCheckedChange={(c) => updateField('showTax', c)} />
+                  <ToggleRow label="Enable Wholesale Mode" desc="Show wholesale toggle and pricing protocols in workstation" checked={formData.enableWholesale} onCheckedChange={(c) => updateField('enableWholesale', c)} />
+                  <ToggleRow
+                    label={
+                      <div className="flex items-center gap-2">
+                        Mandatory Shift Protocol
+                        {!isShiftEnabled && <Badge variant="secondary" className="text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/20 py-0 h-4 uppercase tracking-tighter font-semibold">Enterprise</Badge>}
+                      </div>
+                    }
+                    desc="Require opening/closing shift for transactions"
+                    checked={isShiftEnabled && formData.requireShift}
+                    onCheckedChange={(c) => isShiftEnabled && updateField('requireShift', c)}
+                  />
 
                   <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
                     <SectionHeader icon={Package} title="Inventory & Pricing Strategy" description="Configure how the system identifies and prices products with multiple batches" />
@@ -492,63 +522,28 @@ export function PosSettings() {
                   </div>
 
                   <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
-                    <Label className="text-[11px] font-medium text-slate-500 dark:text-slate-400  px-1 mb-2 block">Workstation Identification</Label>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 relative">
-                        <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                        <Input
-                          placeholder="e.g. Counter 01, Express Register"
-                          value={terminalName}
-                          onChange={(e) => handleTerminalNameChange(e.target.value)}
-                          className="h-10 pl-9 bg-slate-50/50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 rounded-md text-[13px] font-medium"
-                        />
-                      </div>
-                      <div className="px-3 py-2 rounded-md bg-amber-500/5 border border-amber-500/10 flex items-center gap-2">
-                        <Info className="w-3.5 h-3.5 text-amber-600" />
-                        <span className="text-[9px] font-medium text-amber-800/60 ">Local Persistence Active</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
-                    <SectionHeader icon={LayoutGrid} title="Workstation Table Columns" description="Configure which data points are visible in the product grid" />
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <SectionHeader icon={LayoutGrid} title="Workstation Table Layout" description="Toggle visibility of specific data columns in the active POS sales table" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 bg-slate-50/30 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
                       {[
-                        { id: "barcode", label: "ItemCode" },
-                        { id: "name", label: "ItemName" },
-                        { id: "quantity", label: "Quantity" },
-                        { id: "mrp", label: "MRP" },
-                        { id: "price", label: "Price" },
-                        { id: "discount", label: "Discount (Amt)" },
-                        { id: "discount_percent", label: "Disc (%)" },
-                        { id: "total", label: "Net Total" },
-                        { id: "expire", label: "Expire Date" },
-                      ].map((col) => {
-                        const isChecked = formData.posTableColumns?.includes(col.id);
-                        return (
-                          <div
-                            key={col.id}
-                            onClick={() => {
-                              const current = formData.posTableColumns || [];
-                              const next = isChecked ? current.filter(id => id !== col.id) : [...current, col.id];
-                              updateField('posTableColumns', next);
-                            }}
-                            className={cn(
-                              "flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all",
-                              isChecked 
-                                ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400" 
-                                : "bg-transparent border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-200"
-                            )}
-                          >
-                            <div className={cn(
-                              "w-3.5 h-3.5 rounded border flex items-center justify-center transition-all",
-                              isChecked ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-300 dark:border-slate-600"
-                            )}>
-                              {isChecked && <CheckCircle2 className="w-2.5 h-2.5" />}
-                            </div>
-                            <span className="text-[11px] font-medium leading-none">{col.label}</span>
-                          </div>
-                        );
-                      })}
+                        { id: "barcode", label: "Item Code", desc: "Unique barcode / SKU" },
+                        { id: "name", label: "Item Name", desc: "Product & variant title" },
+                        { id: "quantity", label: "Quantity", desc: "Sale qty / Units" },
+                        { id: "mrp", label: "MRP", desc: "Maximum Retail Price" },
+                        { id: "price", label: "Selling Price", desc: "Active unit rate" },
+                        { id: "discount", label: "Disc. Amount", desc: "Fixed value reduction" },
+                        { id: "discount_percent", label: "Disc. (%)", desc: "Percentage reduction" },
+                        { id: "total", label: "Net Total", desc: "Line item calculation" },
+                        { id: "batch", label: "Batch", desc: "Inventory lot tracking" },
+                        { id: "expire", label: "Expiry", desc: "Safety date identifier" },
+                      ].map((col) => (
+                        <ToggleRow
+                          key={col.id}
+                          label={col.label}
+                          desc={col.desc}
+                          checked={(formData.posTableColumns || []).includes(col.id)}
+                          onCheckedChange={() => toggleColumn(col.id)}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -573,7 +568,7 @@ export function PosSettings() {
                       Your organization is on the <span className="font-bold text-amber-700 underline decoration-amber-300">Essential Plan</span>. Thermal and A4 document layout customization are premium features.
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl pt-1">
                     <div className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex items-start gap-2 text-left">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
@@ -822,131 +817,203 @@ export function PosSettings() {
         </TabsContent>
 
         {/* TAB 3: HARDWARE CONTROL CENTER */}
+        {/* TAB 3: HARDWARE CONTROL CENTER */}
         <TabsContent value="printer" className="mt-0 outline-none animate-in fade-in-0 duration-300">
           <div className="space-y-6">
-            {/* Peripheral Status Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {[
-                { key: 'receiptPrinter', label: 'Receipt Printer', icon: Printer, type: 'USB' },
-                { key: 'barcodePrinter', label: 'Barcode Printer', icon: Scan, type: 'USB' },
-                { key: 'scanner', label: 'Barcode Scanner', icon: Monitor, type: 'HID' },
-                { key: 'drawer', label: 'Cash Drawer', icon: Zap, type: 'RJ11' },
-                { key: 'digitalScale', label: 'Digital Scale', icon: Fullscreen, type: 'COM' },
-              ].map((item) => {
-                const status = peripherals[item.key].status;
-                const isConnected = status === 'connected';
-                const isListening = status === 'listening';
 
-                return (
-                  <Card key={item.key} className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-2xl overflow-hidden group transition-all hover:ring-1 hover:ring-emerald-600/20">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className={cn(
-                          "p-2 rounded-md transition-colors",
-                          isConnected ? "bg-emerald-500/10 text-emerald-600" :
-                            isListening ? "bg-amber-500/10 text-amber-600 animate-pulse" :
-                              "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
-                        )}>
-                          <item.icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex gap-1">
-                          <span className="text-[9px] font-medium text-slate-400 bg-slate-50 dark:bg-slate-950 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800">{item.type}</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <h4 className="text-[12px] font-medium text-slate-900 dark:text-white ">{item.label}</h4>
-                        <div className="flex items-center gap-1.5">
-                          <div className={cn("w-1.5 h-1.5 rounded-full",
-                            isConnected ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
-                              isListening ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"
-                          )} />
-                          <span className="text-[10px] font-medium  text-slate-500">
-                            {isConnected ? "Active" : isListening ? "Listening..." : "Disconnected"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
-                        <span className="text-[10px] font-medium text-slate-400 truncate max-w-[120px]">
-                          {peripherals[item.key].name || "No device bound"}
-                        </span>
-                        {item.type === 'USB' && !isConnected && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => detectUSBDevice(item.key)}
-                            disabled={!hasPermission(PERMISSIONS.SETTINGS_POS)}
-                            className="h-7 px-2 text-[10px] font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-md gap-1"
-                          >
-                            <Usb className="w-3 h-3" />
-                            Detect
-                          </Button>
-                        )}
-                        {isConnected && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setPeripherals(p => ({ ...p, [item.key]: { status: 'disconnected', name: null } }))}
-                            className="h-7 px-2 text-[10px] font-medium text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md"
-                          >
-                            Release
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            {/* QZ Tray Connection Status */}
+            <Card className={cn(
+              "border-2 transition-all duration-500",
+              isHardwareReady ? "border-emerald-500/20 bg-emerald-50/5" : "border-amber-500/20 bg-amber-50/5"
+            )}>
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "p-3 rounded-2xl shadow-lg transition-all",
+                      isHardwareReady ? "bg-emerald-600 text-white shadow-emerald-500/20" : "bg-amber-500 text-white shadow-amber-500/20"
+                    )}>
+                      {isConnecting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Monitor className="w-6 h-6" />}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                        Hardware Service: {isHardwareReady ? "Operational" : "Disconnected"}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        {isHardwareReady
+                          ? "Linked to local hardware via QZ Tray WebSocket bridge"
+                          : "QZ Tray not detected. Ensure the desktop application is running."}
+                      </p>
+                    </div>
+                  </div>
+                  {!isHardwareReady && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 px-4 border-amber-200 text-amber-700 bg-white hover:bg-amber-50"
+                      onClick={() => window.location.reload()}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-2" />
+                      Retry Connection
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
               {/* Hardware Setup & Logic */}
               <div className="xl:col-span-8 space-y-6">
                 <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
                   <CardContent className="p-6">
-                    <SectionHeader icon={Settings2} title="Auto-Peripheral Actions" description="Configure automatic structural triggers for physical hardware" />
+                    <SectionHeader icon={Printer} title="Primary Receipt Printer" description="Select and calibrate your physical thermal printer for silent checkout" />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
-                      <ToggleRow label="Auto-Print Settlement" desc="Trigger printer immediately after payment" checked={formData.autoPrint} onCheckedChange={(c) => updateField('autoPrint', c)} />
-                      <ToggleRow label="Kick Drawer Basis" desc="Trigger cash drawer RJ11 pulse on sale" checked={formData.openCashDrawer} onCheckedChange={(c) => updateField('openCashDrawer', c)} />
-                      <ToggleRow label="Auto-Advance Feed" desc="Perform paper feed after document cut" checked={formData.autoFeed} onCheckedChange={(c) => updateField('autoFeed', c)} />
-                      <ToggleRow label="Silent Receipt Basis" desc="Skip system print dialog (Native Setup)" checked={formData.silentPrint} onCheckedChange={(c) => updateField('silentPrint', c)} />
-                    </div>
-
-                    {formData.silentPrint && (
-                      <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/50 space-y-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 px-1">Default Receipt Printer</Label>
-                          <Select value={formData.receiptPrinterName} onValueChange={(v) => updateField('receiptPrinterName', v)}>
-                            <SelectTrigger className={selectTriggerCls}>
-                              <SelectValue placeholder="Select a printer..." />
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-bold text-slate-500 uppercase">Selected Device</Label>
+                          <Select
+                            value={selectedPrinter || ""}
+                            onValueChange={pickPrinter}
+                            disabled={!isHardwareReady}
+                          >
+                            <SelectTrigger className="h-12 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 font-bold text-[13px]">
+                              <SelectValue placeholder={isHardwareReady ? "Select a printer..." : "Waiting for service..."} />
                             </SelectTrigger>
-                            <SelectContent className="rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                              <SelectItem value="DEFAULT" className="text-xs font-medium">System Default Printer</SelectItem>
-                              {systemPrinters.map(p => (
-                                <SelectItem key={p.name} value={p.name} className="text-xs font-medium">{p.name}</SelectItem>
-                              ))}
+                            <SelectContent className="max-h-60">
+                              {systemPrinters.length > 0 ? (
+                                systemPrinters.map(p => (
+                                  <SelectItem key={p} value={p} className="text-xs font-bold">{p}</SelectItem>
+                                ))
+                              ) : (
+                                <div className="p-4 text-center text-[11px] text-slate-500">No printers detected on this computer</div>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 px-1">Default Barcode Printer</Label>
-                          <Select value={formData.barcodePrinterName} onValueChange={(v) => updateField('barcodePrinterName', v)}>
-                            <SelectTrigger className={selectTriggerCls}>
-                              <SelectValue placeholder="Select a printer..." />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                              <SelectItem value="DEFAULT" className="text-xs font-medium">System Default Printer</SelectItem>
-                              {systemPrinters.map(p => (
-                                <SelectItem key={p.name} value={p.name} className="text-xs font-medium">{p.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-bold text-slate-500 uppercase">Device Identifier</Label>
+                          <div className="h-12 px-4 flex items-center bg-slate-100/50 dark:bg-slate-800/30 rounded-md border border-dashed border-slate-200 dark:border-slate-700">
+                            <span className="text-[12px] font-mono font-bold text-slate-600 dark:text-slate-400">
+                              {selectedPrinter || "UNBOUND"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    )}
+
+                      <div className="pt-6 border-t border-slate-100 dark:border-slate-800/50">
+                        <SectionHeader icon={Settings2} title="Auto-Peripheral Actions" description="Configure automatic structural triggers for physical hardware" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
+                          <ToggleRow label="Auto-Print Settlement" desc="Trigger printer immediately after payment" checked={formData.autoPrint} onCheckedChange={(c) => updateField('autoPrint', c)} />
+                          <ToggleRow label="Kick Drawer Basis" desc="Trigger cash drawer RJ11 pulse on sale" checked={formData.openCashDrawer} onCheckedChange={(c) => updateField('openCashDrawer', c)} />
+                          <ToggleRow label="Auto-Advance Feed" desc="Perform paper feed after document cut" checked={formData.autoFeed} onCheckedChange={(c) => updateField('autoFeed', c)} />
+                          <ToggleRow label="Silent Receipt Basis" desc="Skip system print dialog (Experimental)" checked={isHardwareReady} onCheckedChange={() => { }} />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
+                  <CardContent className="p-6">
+                    <SectionHeader icon={Fullscreen} title="Digital Weight Scale" description="Connect an RS232/USB scale to automatically read item weights" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-slate-500 uppercase">Scale COM Port</Label>
+                        <Select
+                          value={selectedScalePort || ""}
+                          onValueChange={pickScalePort}
+                          disabled={!isHardwareReady}
+                        >
+                          <SelectTrigger className="h-12 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 font-bold text-[13px]">
+                            <SelectValue placeholder="Select COM port..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {serialPorts.length > 0 ? serialPorts.map(port => (
+                              <SelectItem key={port} value={port} className="text-xs font-bold">{port}</SelectItem>
+                            )) : (
+                              <div className="p-4 text-center text-[11px] text-slate-500">No COM ports detected</div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-slate-500 uppercase">Live Weight Reading</Label>
+                        <div className="h-12 px-4 flex items-center justify-between bg-slate-950 rounded-md border border-slate-800 shadow-inner">
+                          <span className={cn(
+                            "text-[20px] font-mono font-bold transition-all",
+                            currentWeight > 0 ? "text-emerald-500" : "text-slate-700"
+                          )}>
+                            {currentWeight.toFixed(3)}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Kilograms (KG)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 flex-1 bg-white dark:bg-slate-900 border-slate-200 text-[10px] font-bold uppercase"
+                        onClick={startScaleListening}
+                        disabled={!selectedScalePort}
+                      >
+                        <Activity className="w-3.5 h-3.5 mr-2 text-emerald-600" />
+                        Start Listening
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 flex-1 bg-white dark:bg-slate-900 border-slate-200 text-[10px] font-bold uppercase"
+                        onClick={stopScaleListening}
+                        disabled={!selectedScalePort}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 mr-2 text-red-600" />
+                        Stop
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
+                  <CardContent className="p-6">
+                    <SectionHeader icon={LayoutGrid} title="Customer Pole Display" description="Synchronize real-time cart totals to a physical VFD display" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-slate-500 uppercase">Display COM Port</Label>
+                        <Select
+                          value={selectedDisplayPort || ""}
+                          onValueChange={pickDisplayPort}
+                          disabled={!isHardwareReady}
+                        >
+                          <SelectTrigger className="h-12 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 font-bold text-[13px]">
+                            <SelectValue placeholder="Select COM port..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {serialPorts.length > 0 ? serialPorts.map(port => (
+                              <SelectItem key={port} value={port} className="text-xs font-bold">{port}</SelectItem>
+                            )) : (
+                              <div className="p-4 text-center text-[11px] text-slate-500">No COM ports detected</div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          variant="outline"
+                          className="h-12 w-full border-dashed border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all"
+                          onClick={() => updateDisplay("INZEEDO POS", "READY TO SERVE")}
+                          disabled={!selectedDisplayPort}
+                        >
+                          <Monitor className="w-3.5 h-3.5 mr-2 text-blue-600" />
+                          Test Welcome Message
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -956,21 +1023,21 @@ export function PosSettings() {
 
                     <div className="space-y-4">
                       <div className="flex gap-4 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/50">
-                        <div className="p-2 h-fit rounded-md bg-emerald-500/10 text-emerald-600"><Printer className="w-5 h-5" /></div>
+                        <div className="p-2 h-fit rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-xs">01</div>
                         <div className="space-y-1">
-                          <h5 className="text-[12px] font-medium text-slate-900 dark:text-white">Printer Connectivity (ESC/POS Basis)</h5>
-                          <p className="text-[11px] text-slate-500 leading-relaxed">
-                            Connect your printer via USB. Click "Detect" on the status card above to bind the browser to the hardware ID for auto-reconnect.
+                          <h5 className="text-[12px] font-bold text-slate-900 dark:text-white uppercase tracking-tight">Install QZ Tray</h5>
+                          <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                            Download and install the QZ Tray application from <a href="https://qz.io/download/" target="_blank" className="text-emerald-600 underline">qz.io</a>. This is required for silent printing.
                           </p>
                         </div>
                       </div>
 
                       <div className="flex gap-4 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/50">
-                        <div className="p-2 h-fit rounded-md bg-emerald-500/10 text-emerald-600"><Scan className="w-5 h-5" /></div>
+                        <div className="p-2 h-fit rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-xs">02</div>
                         <div className="space-y-1">
-                          <h5 className="text-[12px] font-medium text-slate-900 dark:text-white">Scanning Recognition (HID Basis)</h5>
-                          <p className="text-[11px] text-slate-500 leading-relaxed">
-                            No manual setup required. Simply scan any barcode. The terminal uses "Pulse Recognition" to automatically identify and synchronize your scanner's input velocity.
+                          <h5 className="text-[12px] font-bold text-slate-900 dark:text-white uppercase tracking-tight">Select System Printer</h5>
+                          <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                            Select your thermal printer from the dropdown menu above. The system will remember this choice for all future sales.
                           </p>
                         </div>
                       </div>
@@ -978,9 +1045,9 @@ export function PosSettings() {
                       <div className="flex gap-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
                         <div className="p-2 h-fit rounded-md bg-amber-500/10 text-amber-600"><ShieldCheck className="w-5 h-5" /></div>
                         <div className="space-y-1">
-                          <h5 className="text-[12px] font-medium text-amber-900 dark:text-amber-400">Windows User Notice (WinUSB Required)</h5>
-                          <p className="text-[11px] text-amber-800/60 dark:text-amber-400/60 leading-relaxed ">
-                            If the browser cannot "claim" your USB printer, you may need to use Zadig to replace the default driver with WinUSB. This enables direct hardware pulses from the browser.
+                          <h5 className="text-[12px] font-bold text-amber-900 dark:text-amber-400 uppercase tracking-tight">Security Certificate</h5>
+                          <p className="text-[11px] text-amber-800/60 dark:text-amber-400/60 leading-relaxed font-medium">
+                            The first time you print, QZ Tray will ask for permission. Click **"Always Allow"** to ensure you never see a pop-up again during checkout.
                           </p>
                         </div>
                       </div>
@@ -993,75 +1060,57 @@ export function PosSettings() {
               <div className="xl:col-span-4 space-y-4">
                 <div className="flex items-center gap-2 mb-2 px-1">
                   <Activity className="w-3.5 h-3.5 text-slate-400" />
-                  <h4 className="text-[10px] font-medium text-slate-500 ">Hardware Diagnostics</h4>
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hardware Diagnostics</h4>
                 </div>
 
                 <Button
-                  onClick={() => detectUSBDevice('receiptPrinter')}
-                  className="w-full h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/30 text-slate-900 dark:text-white rounded-md shadow-none flex items-center justify-between px-4 group transition-all"
+                  onClick={async () => {
+                    const html = printRef.current.innerHTML;
+                    toast.loading("Sending test print pulse...");
+                    const success = await printReceipt(html);
+                    if (success) toast.success("Test receipt printed successfully");
+                  }}
+                  disabled={!isHardwareReady || !selectedPrinter}
+                  className="w-full h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/30 text-slate-900 dark:text-white rounded-xl shadow-sm flex items-center justify-between px-4 group transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-emerald-600/10 group-hover:text-emerald-600 transition-colors">
-                      <Usb className="w-4 h-4" />
+                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-emerald-600/10 group-hover:text-emerald-600 transition-colors">
+                      <Printer className="w-5 h-5" />
                     </div>
                     <div className="text-left">
-                      <span className="block text-xs font-medium ">Run Hardware Discovery</span>
-                      <span className="block text-[9px] text-slate-400 font-medium  leading-none">Global USB scan & bind</span>
+                      <span className="block text-xs font-bold uppercase tracking-tight">Print Test Page</span>
+                      <span className="block text-[10px] text-slate-400 font-medium leading-none">Verify alignment & contrast</span>
                     </div>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600" />
                 </Button>
 
                 <Button
-                  onClick={handlePulseDrawer}
-                  disabled={!hasPermission(PERMISSIONS.SETTINGS_POS)}
-                  className="w-full h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-600/30 text-slate-900 dark:text-white rounded-md shadow-none flex items-center justify-between px-4 group transition-all"
+                  onClick={async () => {
+                    toast.loading("Sending drawer kick signal...");
+                    await openDrawer();
+                    toast.success("Cash drawer signal verified");
+                  }}
+                  disabled={!isHardwareReady || !selectedPrinter}
+                  className="w-full h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-600/30 text-slate-900 dark:text-white rounded-xl shadow-sm flex items-center justify-between px-4 group transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-amber-600/10 group-hover:text-amber-600 transition-colors">
-                      <Zap className="w-4 h-4" />
+                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-amber-600/10 group-hover:text-amber-600 transition-colors">
+                      <Zap className="w-5 h-5" />
                     </div>
                     <div className="text-left">
-                      <span className="block text-xs font-medium ">Pulse Cash Drawer</span>
-                      <span className="block text-[9px] text-slate-400 font-medium  leading-none">Test RJ11 trigger signal</span>
+                      <span className="block text-xs font-bold uppercase tracking-tight">Pulse Cash Drawer</span>
+                      <span className="block text-[10px] text-slate-400 font-medium leading-none">Test physical RJ11 trigger</span>
                     </div>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-amber-600" />
                 </Button>
 
-                <Button
-                  onClick={() => toast.success('Scale zeroed successfully')}
-                  className="w-full h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/30 text-slate-900 dark:text-white rounded-md shadow-none flex items-center justify-between px-4 group transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-emerald-600/10 group-hover:text-emerald-600 transition-colors">
-                      <Fullscreen className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <span className="block text-xs font-medium ">Zero Digital Scale</span>
-                      <span className="block text-[9px] text-slate-400 font-medium  leading-none">Send tare signal to COM station</span>
-                    </div>
-                  </div>
-                </Button>
-
-                <Button
-                  onClick={handleTestPrint}
-                  className="w-full h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-600/30 text-slate-900 dark:text-white rounded-md shadow-none flex items-center justify-between px-4 group transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-indigo-600/10 group-hover:text-indigo-600 transition-colors">
-                      <Printer className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <span className="block text-xs font-medium ">Print Diagnostic Page</span>
-                      <span className="block text-[9px] text-slate-400 font-medium  leading-none">Test alignment & typography</span>
-                    </div>
-                  </div>
-                </Button>
-
-                <div className="mt-8 p-5 bg-slate-950 rounded-2xl border border-slate-800 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 opacity-10"><ShieldCheck className="w-16 h-16 text-emerald-500" /></div>
-                  <h5 className="text-[11px] font-medium text-emerald-500  mb-1">Status: Operational Basis</h5>
-                  <p className="text-[10px] text-slate-400 leading-relaxed ">
-                    All connected hardware is monitored in real-time. If a device is disconnected, the terminal automatically switches to "Manual Backup" mode.
+                <div className="mt-8 p-6 bg-slate-950 rounded-3xl border border-slate-800 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-5"><ShieldCheck className="w-20 h-20 text-emerald-500" /></div>
+                  <h5 className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest mb-2">Security: Hardware Locked</h5>
+                  <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
+                    Hardware signals are encrypted and transmitted locally. No data leaves your workstation during peripheral communication.
                   </p>
                 </div>
               </div>
@@ -1072,45 +1121,45 @@ export function PosSettings() {
         {/* TAB 4: PAYMENT PROTOCOL */}
         <TabsContent value="payments" className="mt-0 space-y-6 outline-none animate-in fade-in-0 duration-300">
           {tier === 'Essential' ? (
-             <div className="py-12">
-             <Card className="border-amber-200 bg-amber-50/20 overflow-hidden max-w-2xl mx-auto">
-               <div className="h-1 bg-amber-500 w-full" />
-               <CardContent className="p-5 flex flex-col items-center text-center space-y-3">
-                 <div className="p-2 bg-amber-100 rounded-full">
-                   <Lock className="w-5 h-5 text-amber-600" />
-                 </div>
-                 <div className="space-y-1">
-                   <h2 className="text-base font-bold text-slate-900 leading-tight">Settlement Protocol Restricted</h2>
-                   <p className="text-[11px] text-slate-500 max-w-sm mx-auto leading-relaxed">
-                     Your organization is on the <span className="font-bold text-amber-700 underline decoration-amber-300">Essential Plan</span>. Advanced payment methodologies (QR, Wallets, Transfers) are premium features.
-                   </p>
-                 </div>
-                 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl pt-1">
-                   <div className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex items-start gap-2 text-left">
-                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                     <div>
-                       <div className="text-[11px] font-bold text-slate-900 leading-none">Professional</div>
-                       <p className="text-[9px] text-slate-400 mt-1 leading-tight">Enable digital transfers and cheque settlements.</p>
-                     </div>
-                   </div>
-                   <div className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex items-start gap-2 text-left">
-                     <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
-                     <div>
-                       <div className="text-[11px] font-bold text-slate-900 leading-none">Enterprise</div>
-                       <p className="text-[9px] text-slate-400 mt-1 leading-tight">Dynamic QR payments and digital wallet integration.</p>
-                     </div>
-                   </div>
-                 </div>
+            <div className="py-12">
+              <Card className="border-amber-200 bg-amber-50/20 overflow-hidden max-w-2xl mx-auto">
+                <div className="h-1 bg-amber-500 w-full" />
+                <CardContent className="p-5 flex flex-col items-center text-center space-y-3">
+                  <div className="p-2 bg-amber-100 rounded-full">
+                    <Lock className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <h2 className="text-base font-bold text-slate-900 leading-tight">Settlement Protocol Restricted</h2>
+                    <p className="text-[11px] text-slate-500 max-w-sm mx-auto leading-relaxed">
+                      Your organization is on the <span className="font-bold text-amber-700 underline decoration-amber-300">Essential Plan</span>. Advanced payment methodologies (QR, Wallets, Transfers) are premium features.
+                    </p>
+                  </div>
 
-                 <div className="pt-2">
-                   <Button size="sm" className="h-8 px-5 bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/10 text-[10px] font-bold" onClick={() => router.push('/settings?tab=subscription')}>
-                     <ArrowUpCircle className="w-3.5 h-3.5 mr-2" /> Upgrade Plan
-                   </Button>
-                 </div>
-               </CardContent>
-             </Card>
-           </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl pt-1">
+                    <div className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex items-start gap-2 text-left">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-[11px] font-bold text-slate-900 leading-none">Professional</div>
+                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">Enable digital transfers and cheque settlements.</p>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-white border border-slate-100 rounded-lg shadow-sm flex items-start gap-2 text-left">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-[11px] font-bold text-slate-900 leading-none">Enterprise</div>
+                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">Dynamic QR payments and digital wallet integration.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Button size="sm" className="h-8 px-5 bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/10 text-[10px] font-bold" onClick={() => router.push('/settings?tab=subscription')}>
+                      <ArrowUpCircle className="w-3.5 h-3.5 mr-2" /> Upgrade Plan
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             <>
               <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">

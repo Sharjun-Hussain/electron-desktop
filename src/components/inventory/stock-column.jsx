@@ -38,7 +38,7 @@ export const getStockColumns = ({ onAdjust, onViewBatches, hasEditPermission }) 
     header: () => null,
     cell: () => null,
     enableSorting: false,
-    enableHiding: true,
+    enableHiding: false,
   },
   {
     accessorKey: "product",
@@ -129,6 +129,33 @@ export const getStockColumns = ({ onAdjust, onViewBatches, hasEditPermission }) 
     },
   },
   {
+    accessorKey: "batch_count",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-9 hover:bg-emerald-500/5 group px-3 -ml-3"
+      >
+        <span className="text-xs font-semibold text-muted-foreground group-hover:text-emerald-600 transition-colors">Batches</span>
+        <ArrowUpDown className="ml-2 size-3.5 text-muted-foreground/30 transition-colors group-hover:text-emerald-500/50" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const count = parseInt(row.original.batch_count || 0);
+      return (
+        <div className="flex items-center gap-2">
+          <Layers className="h-3 w-3 text-muted-foreground" />
+          <span className={cn(
+            "text-xs font-bold",
+            count > 0 ? "text-emerald-600" : "text-muted-foreground"
+          )}>
+            {count} {count === 1 ? "Batch" : "Batches"}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "quantity",
     header: ({ column }) => (
       <div className="flex justify-end">
@@ -157,7 +184,7 @@ export const getStockColumns = ({ onAdjust, onViewBatches, hasEditPermission }) 
                 : "text-emerald-600"
             )}
           >
-            {qty.toFixed(2)}
+            {Math.round(qty)}
           </span>
           {qty <= 0 && (
             <span className="text-[9px] text-red-500 font-semibold flex items-center gap-0.5">

@@ -64,6 +64,12 @@ export const getSupplierColumns = ({ onDelete, onToggleStatus, onEdit, onViewLed
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Supplier Entity" />
     ),
+    filterFn: (row, columnId, filterValue) => {
+      const name = row.getValue("name")?.toLowerCase() || "";
+      const code = row.original.code?.toLowerCase() || "";
+      const query = filterValue?.toLowerCase() || "";
+      return name.includes(query) || code.includes(query);
+    },
     cell: ({ row }) => {
       const supplier = row.original;
       return (
@@ -71,11 +77,11 @@ export const getSupplierColumns = ({ onDelete, onToggleStatus, onEdit, onViewLed
           className="flex flex-col cursor-pointer group"
           onClick={() => onViewDetails(supplier)}
         >
-          <span className="font-semibold text-[13px] text-foreground group-hover:text-emerald-600 transition-colors">
+          <span className="font-bold text-[13px] text-foreground group-hover:text-emerald-600 transition-colors">
             {supplier.name}
           </span>
-          <span className="text-[10px] text-muted-foreground font-bold mt-0.5 opacity-60">
-            PID: #{String(supplier.id).substring(0, 8).toUpperCase()}
+          <span className="text-[10px] text-muted-foreground font-bold mt-0.5 opacity-60 uppercase tracking-widest">
+            {supplier.code ? `Code: ${supplier.code}` : "No Code"}
           </span>
         </div>
       );
@@ -90,7 +96,7 @@ export const getSupplierColumns = ({ onDelete, onToggleStatus, onEdit, onViewLed
       const supplier = row.original;
       return (
         <div className="flex flex-col">
-          <span className="text-[12px] font-semibold text-foreground/80 uppercase tracking-tight">
+          <span className="text-[12px] font-bold text-foreground/80 uppercase tracking-tight">
             {supplier.contact_person || "Unassigned"}
           </span>
         </div>
@@ -106,11 +112,11 @@ export const getSupplierColumns = ({ onDelete, onToggleStatus, onEdit, onViewLed
       const supplier = row.original;
       return (
         <div className="flex flex-col gap-0.5">
-          <span className="text-[12px] font-semibold text-emerald-600 tabular-nums leading-none">
+          <span className="text-[12px] font-black text-emerald-600 tabular-nums leading-none">
             {supplier.phone || "--- --- ----"}
           </span>
           {supplier.email && (
-            <span className="text-[10px] font-semibold text-muted-foreground opacity-60">
+            <span className="text-[10px] font-bold text-muted-foreground opacity-60">
               {supplier.email}
             </span>
           )}
@@ -166,8 +172,8 @@ export const getSupplierColumns = ({ onDelete, onToggleStatus, onEdit, onViewLed
       const isActive = row.getValue("is_active");
       return (
         <div className="flex justify-center md:justify-start">
-          <StatusBadge
-            value={isActive}
+          <StatusBadge 
+            value={isActive} 
             label={isActive ? "ACTIVE" : "SUSPENDED"}
           />
         </div>

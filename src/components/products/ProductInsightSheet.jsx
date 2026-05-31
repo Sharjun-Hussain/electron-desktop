@@ -116,25 +116,33 @@ export const ProductInsightSheet = ({ isOpen, onClose, insightData }) => {
               </div>
               
               <div className="space-y-2">
-                {(type === 'variant' ? data.batches : data.variants?.flatMap(v => v.batches))?.map((batch, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-emerald-500/30 transition-all group">
-                    <div className="flex items-center gap-3">
-                      <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-colors">
-                        <Barcode className="size-4" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-900 dark:text-white">#{batch.batch_number}</p>
-                        <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500">
-                          <Calendar className="size-3" />
-                          Exp: {batch.expiry_date ? format(new Date(batch.expiry_date), 'dd MMM yyyy') : 'No Expiry'}
+                {(type === 'variant' ? data.batches : data.variants?.flatMap(v => v.batches))
+                  ?.sort((a, b) => {
+                    // Sort by expiry date (nulls last)
+                    if (!a.expiry_date) return 1;
+                    if (!b.expiry_date) return -1;
+                    return new Date(a.expiry_date) - new Date(b.expiry_date);
+                  })
+                  ?.map((batch, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-emerald-500/30 transition-all group">
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-colors">
+                          <Barcode className="size-4" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-0.5">Batch Number</p>
+                          <p className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">{batch.batch_number || "Default"}</p>
+                          <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500 mt-0.5">
+                            <Calendar className="size-3" />
+                            Exp: {batch.expiry_date ? format(new Date(batch.expiry_date), 'dd MMM yyyy') : 'Not Applicable'}
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <p className="text-sm font-black text-slate-900 dark:text-white">{parseFloat(batch.quantity).toLocaleString()}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Remaining</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-black text-slate-900 dark:text-white">{parseFloat(batch.quantity).toLocaleString()}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Remaining</p>
-                    </div>
-                  </div>
                 ))}
                 {(!insightData.data.batches && !insightData.data.variants?.some(v => v.batches?.length > 0)) && (
                    <div className="p-8 text-center border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">

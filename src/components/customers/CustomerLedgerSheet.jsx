@@ -356,8 +356,8 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
                       <p className="text-sm font-semibold text-foreground">Record Manual Settlement</p>
                       <p className="text-sm text-muted-foreground">Log a payment or reconcile the ledger balance.</p>
                     </div>
-                    <Button
-                      onClick={() => setSettleOpen(true)}
+                    <Button 
+                      onClick={() => setSettleOpen(true)} 
                       disabled={!isReceivable}
                       className="gap-2 shadow-sm font-semibold"
                     >
@@ -468,8 +468,8 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
               {/* LEDGER TAB */}
               <TabsContent value="ledger" className="mt-0 space-y-4">
                 <div className="flex items-center justify-end">
-                  <DataActions
-                    data={exportData}
+                  <DataActions 
+                    data={exportData} 
                     fileName={`${customer?.name || 'Customer'}_Ledger_Statement`}
                   />
                 </div>
@@ -538,7 +538,7 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
                                 {item.purchase_count}
                               </div>
                             </div>
-
+                            
                             <div className="flex flex-col">
                               <span className="text-[13px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
                                 {item.product_name}
@@ -563,7 +563,7 @@ export function CustomerLedgerSheet({ customer, open, onOpenChange, accessToken 
                               </span>
                             </div>
                           </div>
-
+                          
                           {/* Visual accent */}
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>

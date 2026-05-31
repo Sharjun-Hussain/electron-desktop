@@ -229,7 +229,6 @@ export default function CreateReturn() {
             const branchesData = await branchesRes.json();
             const posData = await posRes.json();
             const grnsData = await grnsRes.json();
-
             if (suppliersData.status === 'success') {
                 setSuppliers(suppliersData.data || []);
             }

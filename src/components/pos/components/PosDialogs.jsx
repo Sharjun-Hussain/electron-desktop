@@ -27,6 +27,7 @@ import {
   Trash2, RotateCcw, Printer, Search, Plus, Truck,
 } from "lucide-react";
 import clsx from "clsx";
+import { db } from "@/lib/indexedDB/db";
 import { useTranslation } from "@/hooks/useTranslation";
 import SalesReturnDialog from "../SalesReturnDialog";
 import SaleDetailSheet from "../SaleDetailSheet";
@@ -143,52 +144,52 @@ export const HoldListDialog = memo(({ isOpen, onOpenChange, salesData, isLoading
         ) : salesData.length > 0 ? (
           <Table>
             <TableHeader className="bg-muted/30 sticky top-0 z-10">
-              <TableRow>
-                <TableHead className="w-[180px] px-6 font-bold text-foreground">{t("pos.invoice_no_col")}</TableHead>
-                <TableHead className="w-[200px] px-6 font-bold text-foreground">{t("pos.date_time_col")}</TableHead>
-                <TableHead className="px-6 font-bold text-foreground">{t("pos.customer_col")}</TableHead>
-                <TableHead className="px-6 font-bold text-foreground">{t("pos.terminal_col")}</TableHead>
-                <TableHead className="px-6 font-bold text-foreground">{t("pos.held_by_col")}</TableHead>
-                <TableHead className="px-6 font-bold text-foreground">{t("pos.items_col")}</TableHead>
-                <TableHead className="px-6 text-right font-bold text-foreground">{t("pos.total_col")}</TableHead>
-                <TableHead className="px-6 text-center font-bold text-foreground">{t("pos.actions_col")}</TableHead>
+              <TableRow className="hover:bg-transparent border-none">
+                <TableHead className="w-[140px] px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.invoice_no_col")}</TableHead>
+                <TableHead className="w-[150px] px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.date_time_col")}</TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.customer_col")}</TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.terminal_col")}</TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.held_by_col")}</TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.items_col")}</TableHead>
+                <TableHead className="px-4 py-2 text-right font-bold text-[10px] text-foreground">{t("pos.total_col")}</TableHead>
+                <TableHead className="px-4 py-2 text-center font-bold text-[10px] text-foreground">{t("pos.actions_col")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {salesData.map((sale) => (
-                <TableRow key={sale.id} className="group hover:bg-emerald-500/5 transition-colors">
-                  <TableCell className="px-6 font-mono font-medium text-emerald-500">{sale.invoice_number}</TableCell>
-                  <TableCell className="px-6 text-muted-foreground text-xs">{new Date(sale.created_at).toLocaleString()}</TableCell>
-                  <TableCell className="px-6">
+                <TableRow key={sale.id} className="group hover:bg-emerald-500/5 transition-colors border-border/30">
+                  <TableCell className="px-4 py-2 font-mono font-bold text-[11px] text-emerald-500">{sale.invoice_number}</TableCell>
+                  <TableCell className="px-4 py-2 text-muted-foreground text-[10px]">{new Date(sale.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</TableCell>
+                  <TableCell className="px-4 py-2">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-foreground">{sale.customer?.name || t("pos.walk_in")}</span>
-                      <span className="text-[10px] text-muted-foreground">{sale.customer?.phone || t("pos.no_phone")}</span>
+                      <span className="font-bold text-[11px] text-foreground">{sale.customer?.name || t("pos.walk_in")}</span>
+                      <span className="text-[9px] text-muted-foreground leading-none">{sale.customer?.phone || t("pos.no_phone")}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6">
-                    <Badge variant="outline" className="h-5 px-2 bg-slate-50 text-slate-600 border-slate-200 text-[10px] font-bold">
+                  <TableCell className="px-4 py-2">
+                    <Badge variant="outline" className="h-4 px-1 bg-slate-50 text-slate-600 border-slate-200 text-[9px] font-bold">
                       {parseTerminal(sale.notes)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-6">
-                    <span className="text-xs font-medium text-muted-foreground">
+                  <TableCell className="px-4 py-2">
+                    <span className="text-[10px] font-medium text-muted-foreground">
                       {sale.cashier?.name || (sale.sellers && sale.sellers[0]?.name) || t("pos.system")}
                     </span>
                   </TableCell>
-                  <TableCell className="px-6">
+                  <TableCell className="px-4 py-2">
                     <SaleItemsHoverCard sale={sale} accentClass="bg-emerald-500/10 text-emerald-500 group-hover/items:bg-emerald-600" />
                   </TableCell>
-                  <TableCell className="px-6 text-right">
-                    <span className="font-bold text-foreground">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
+                  <TableCell className="px-4 py-2 text-right">
+                    <span className="font-bold text-[11px] text-foreground">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
                   </TableCell>
-                  <TableCell className="px-6 text-center">
-                    <div className="flex justify-center gap-2">
+                  <TableCell className="px-4 py-2 text-center">
+                    <div className="flex justify-center gap-1.5">
                       <Button size="sm" variant="ghost"
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => onDelete(sale.id)} title={t("pos.delete_draft")}>
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700 font-bold px-4"
+                      <Button size="sm" className="h-7 bg-emerald-600 hover:bg-emerald-700 font-bold px-3 text-[10px]"
                         onClick={() => onResume(sale)}>
                         {t("pos.resume")}
                       </Button>
@@ -218,38 +219,76 @@ export const SaleListDialog = memo(({
   searchSales
 }) => {
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: "created_at", direction: "desc" });
+  const [filterState, setFilterState] = useState({
+    search: "",
+    sortKey: "created_at",
+    sortDir: "desc",
+    date: "all",
+    isFilteredByProduct: false
+  });
   const [localSales, setLocalSales] = useState([]);
-  const [isFilteredByProduct, setIsFilteredByProduct] = useState(false);
-  const [dateFilter, setDateFilter] = useState("all"); // all, today, yesterday, 7days
+  const [pendingLocalSales, setPendingLocalSales] = useState([]);
+
+  // Fetch real offline pending sales from IndexedDB
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchPending = async () => {
+      try {
+        const pending = await db.pendingSales.toArray();
+        console.log(`[F7 List] Found ${pending.length} offline sales in DB:`, pending);
+        
+        // Format them to look like regular sales for the UI
+        const formatted = pending.map(s => {
+          const data = s.saleData || {};
+          return {
+            ...data,
+            id: `pending-${s.id}`,
+            created_at: s.createdAt || new Date().toISOString(),
+            invoice_number: s.invoice_no || "LOCAL-PENDING",
+            isOffline: true,
+            syncStatus: s.status,
+            syncError: s.error,
+            payment_status: s.status === 'failed' ? "Sync Error" : "Pending Sync",
+            // Ensure nested objects exist for the UI to render without crashing
+            customer: data.customer_id ? { name: "Customer #" + data.customer_id } : { name: t("pos.walk_in") },
+            items: data.items || []
+          };
+        });
+        setPendingLocalSales(formatted);
+      } catch (e) {
+        console.error("Failed to load offline sales for list", e);
+      }
+    };
+    fetchPending();
+  }, [isOpen, t]);
 
   useEffect(() => {
     if (salesData) setLocalSales(salesData);
   }, [salesData]);
 
   const filteredAndSortedSales = useMemo(() => {
-    let result = [...(localSales || [])];
+    let result = [...(pendingLocalSales || []), ...(localSales || [])];
 
     // Filter by Date
-    if (dateFilter !== "all") {
+    if (filterState.date !== "all") {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
       const yesterday = today - 86400000;
       const sevenDays = today - 86400000 * 7;
 
       result = result.filter(s => {
+        if (s.isOffline) return true;
         const sTime = new Date(s.created_at).getTime();
-        if (dateFilter === "today") return sTime >= today;
-        if (dateFilter === "yesterday") return sTime >= yesterday && sTime < today;
-        if (dateFilter === "7days") return sTime >= sevenDays;
+        if (filterState.date === "today") return sTime >= today;
+        if (filterState.date === "yesterday") return sTime >= yesterday && sTime < today;
+        if (filterState.date === "7days") return sTime >= sevenDays;
         return true;
       });
     }
 
     // Filter by Search Text
-    if (search) {
-      const q = search.toLowerCase();
+    if (filterState.search) {
+      const q = filterState.search.toLowerCase();
       result = result.filter(s => 
         s.invoice_number?.toLowerCase().includes(q) || 
         s.customer?.name?.toLowerCase().includes(q) ||
@@ -259,26 +298,25 @@ export const SaleListDialog = memo(({
 
     // Sort
     result.sort((a, b) => {
-      let aVal = a[sortConfig.key];
-      let bVal = b[sortConfig.key];
-
-      if (sortConfig.key === "total") {
+      let aVal = a[filterState.sortKey];
+      let bVal = b[filterState.sortKey];
+      if (filterState.sortKey === "total") {
         aVal = parseFloat(a.payable_amount);
         bVal = parseFloat(b.payable_amount);
       }
-
-      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      if (aVal < bVal) return filterState.sortDir === "asc" ? -1 : 1;
+      if (aVal > bVal) return filterState.sortDir === "asc" ? 1 : -1;
       return 0;
     });
 
     return result;
-  }, [salesData, search, sortConfig]);
+  }, [localSales, pendingLocalSales, filterState]);
 
   const toggleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === "desc" ? "asc" : "desc"
+    setFilterState(prev => ({
+      ...prev,
+      sortKey: key,
+      sortDir: prev.sortKey === key && prev.sortDir === "desc" ? "asc" : "desc"
     }));
   };
 
@@ -312,10 +350,10 @@ export const SaleListDialog = memo(({
           const sales = await searchSales(code);
           if (sales.length > 0) {
             setLocalSales(sales);
-            setIsFilteredByProduct(true);
+            setFilterState(prev => ({ ...prev, isFilteredByProduct: true }));
           } else {
             setLocalSales([]);
-            setIsFilteredByProduct(true);
+            setFilterState(prev => ({ ...prev, isFilteredByProduct: true }));
           }
         }
         return;
@@ -349,39 +387,39 @@ export const SaleListDialog = memo(({
       <Separator />
       <div className="p-2 px-4 bg-muted/20 border-b border-border/50 flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
           <Input 
-            placeholder="Search invoice, customer name or phone..."
-            className="pl-9 h-8 text-xs bg-white dark:bg-slate-900 border-border/50 rounded-lg"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search invoice, customer..."
+            className="pl-8 h-7 text-[10px] bg-white dark:bg-slate-950 border-border/50 rounded-md"
+            value={filterState.search}
+            onChange={(e) => setFilterState(prev => ({ ...prev, search: e.target.value }))}
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-background/50 p-1 rounded-lg border border-border/50">
+        <div className="flex items-center gap-0.5 bg-background/50 p-0.5 rounded-md border border-border/50">
           {[
-            { id: "all", label: "All Time" },
+            { id: "all", label: "All" },
             { id: "today", label: "Today" },
             { id: "yesterday", label: "Yesterday" },
-            { id: "7days", label: "7 Days" },
+            { id: "7days", label: "7D" },
           ].map((d) => (
             <Button
               key={d.id}
-              variant={dateFilter === d.id ? "secondary" : "ghost"}
+              variant={filterState.date === d.id ? "secondary" : "ghost"}
               size="sm"
-              className={clsx("h-6 px-3 text-[9px] font-bold uppercase tracking-wider transition-all", 
-                dateFilter === d.id ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm" : "text-muted-foreground")}
-              onClick={() => setDateFilter(d.id)}
+              className={clsx("h-5 px-2 text-[8px] font-bold uppercase transition-all", 
+                filterState.date === d.id ? "bg-emerald-500 text-white shadow-sm" : "text-muted-foreground")}
+              onClick={() => setFilterState(prev => ({ ...prev, date: d.id }))}
             >
               {d.label}
             </Button>
           ))}
         </div>
 
-        {isFilteredByProduct && (
-          <Button variant="outline" size="sm" className="h-8 text-[10px] font-bold border-emerald-500/50 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 animate-in fade-in slide-in-from-right-2"
-            onClick={() => { setLocalSales(salesData); setIsFilteredByProduct(false); setDateFilter("all"); setSearch(""); }}>
-            <RotateCcw className="h-3 w-3 mr-1" /> Clear Product Filter
+        {filterState.isFilteredByProduct && (
+          <Button variant="outline" size="sm" className="h-7 text-[9px] font-bold border-emerald-500/50 text-emerald-600"
+            onClick={() => { setLocalSales(salesData); setFilterState(prev => ({ ...prev, isFilteredByProduct: false, date: "all", search: "" })); }}>
+            <RotateCcw className="h-3 w-3 mr-1" /> Clear
           </Button>
         )}
       </div>
@@ -390,25 +428,23 @@ export const SaleListDialog = memo(({
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
           </div>
-        ) : salesData.length > 0 ? (
+        ) : filteredAndSortedSales.length > 0 ? (
           <Table>
             <TableHeader className="bg-muted/30 sticky top-0 z-10">
               <TableRow className="hover:bg-transparent border-none">
-                <TableHead className="w-[180px] px-6 font-bold text-foreground cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => toggleSort("invoice_number")}>
-                  {t("pos.invoice_no_col")} {sortConfig.key === "invoice_number" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                <TableHead className="w-[140px] px-4 py-2 font-bold text-[10px] text-foreground cursor-pointer" onClick={() => toggleSort("invoice_number")}>
+                  {t("pos.invoice_no_col")} {filterState.sortKey === "invoice_number" && (filterState.sortDir === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead className="w-[200px] px-6 font-bold text-foreground cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => toggleSort("created_at")}>
-                  {t("pos.date_time_col")} {sortConfig.key === "created_at" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                <TableHead className="w-[150px] px-4 py-2 font-bold text-[10px] text-foreground cursor-pointer" onClick={() => toggleSort("created_at")}>
+                  {t("pos.date_time_col")} {filterState.sortKey === "created_at" && (filterState.sortDir === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead className="px-6 font-bold text-foreground cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => toggleSort("customer")}>
-                  {t("pos.customer_col")}
+                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.customer_col")}</TableHead>
+                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground text-center">{t("pos.items_col")}</TableHead>
+                <TableHead className="px-4 py-2 text-right font-bold text-[10px] text-foreground cursor-pointer" onClick={() => toggleSort("total")}>
+                  {t("pos.total_col")} {filterState.sortKey === "total" && (filterState.sortDir === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead className="px-6 font-bold text-foreground">{t("pos.items_col")}</TableHead>
-                <TableHead className="px-6 text-right font-bold text-foreground cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => toggleSort("total")}>
-                  {t("pos.total_col")} {sortConfig.key === "total" && (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="px-6 text-center font-bold text-foreground">{t("pos.status_col")}</TableHead>
-                <TableHead className="px-6 text-right font-bold text-foreground">{t("pos.actions_col")}</TableHead>
+                <TableHead className="px-4 py-2 text-center font-bold text-[10px] text-foreground">{t("pos.status_col")}</TableHead>
+                <TableHead className="px-4 py-2 text-right font-bold text-[10px] text-foreground">{t("pos.actions_col")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -429,12 +465,42 @@ export const SaleListDialog = memo(({
                     <span className="font-bold text-foreground">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
                   </TableCell>
                   <TableCell className="px-6 text-center">
-                    <Badge variant="outline" className="h-5 px-2 bg-green-50 text-green-700 border-green-100 text-[10px] font-bold">
-                      {sale.payment_status}
-                    </Badge>
+                    {sale.isOffline ? (
+                      <Badge 
+                        variant="outline" 
+                        className={clsx(
+                          "h-5 px-2 border-none text-[10px] font-black animate-pulse cursor-help",
+                          sale.syncStatus === 'failed' ? "bg-red-500 text-white" : "bg-amber-500 text-white"
+                        )}
+                        title={sale.syncError ? `Sync Failed: ${sale.syncError}` : "Waiting for internet to sync..."}
+                      >
+                        {sale.syncStatus === 'failed' ? "ERROR" : "LOCAL"}
+                      </Badge>
+                    ) : sale.status === 'draft' ? (
+                      <Badge variant="outline" className="h-5 px-2 bg-amber-50 text-amber-700 border-amber-100 text-[10px] font-bold">
+                        HELD
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="h-5 px-2 bg-green-50 text-green-700 border-green-100 text-[10px] font-bold">
+                        {sale.payment_status}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="px-6 text-right">
                     <div className="flex justify-end gap-2">
+                      {sale.isOffline && (
+                        <Button size="sm" variant="ghost"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={async () => {
+                            if (confirm("Delete this offline sale? It will not be synced to the cloud.")) {
+                              await db.pendingSales.delete(parseInt(sale.id.replace('pending-', '')));
+                              window.location.reload(); // Refresh to update list
+                            }
+                          }}
+                          title="Delete Offline Sale">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost"
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-orange-600 hover:bg-orange-50"
                         onClick={() => { setSelectedReturnSale(sale); setIsReturnDialogOpen(true); }}
@@ -509,12 +575,12 @@ export const StockCheckDialog = memo(({
           </div>
         </DialogHeader>
 
-        <div className="px-8 py-4 border-y border-border/50 bg-muted/10">
+        <div className="px-6 py-2 border-y border-border/50 bg-muted/10">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-all duration-300" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-orange-500 transition-all duration-300" />
             <Input
               placeholder={t("pos.search_placeholder")}
-              className="pl-12 h-12 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-500/50 focus:border-orange-500 rounded-2xl transition-all shadow-sm ring-offset-background focus:ring-2 focus:ring-orange-500/20"
+              className="pl-10 h-8 text-xs bg-white dark:bg-slate-950 border-border/50 rounded-lg focus:ring-1 focus:ring-orange-500/20 shadow-none"
               autoFocus
               value={stockSearch}
               onChange={(e) => setStockSearch(e.target.value)}
@@ -645,3 +711,215 @@ export const SaleDetailWrapper = memo(({ isOpen, onOpenChange, sale, onReprint }
   <SaleDetailSheet isOpen={isOpen} onOpenChange={onOpenChange} sale={sale} onReprint={onReprint} />
 ));
 SaleDetailWrapper.displayName = "SaleDetailWrapper";
+
+// ─── VariantSelectorDialog ────────────────────────────────────────────────────
+export const VariantSelectorDialog = memo(({ isOpen, onOpenChange, product, onSelect }) => {
+  const { t } = useTranslation();
+  if (!product) return null;
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl p-0 overflow-hidden bg-card border-border shadow-2xl rounded-3xl">
+        <DialogHeader className="p-4 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center overflow-hidden border border-emerald-500/20">
+              {product.image ? <img src={product.image} alt={product.name} className="h-full w-full object-cover" /> : <PackageSearch className="h-6 w-6 text-emerald-500" />}
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-medium">{product.name}</DialogTitle>
+              <DialogDescription className="text-[10px] mt-0.5">{t("pos.select_variant")}</DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <Separator className="bg-border/50" />
+        <ScrollArea className="max-h-[50vh]">
+          <div className="p-4 space-y-2">
+            {product.variants?.map((v) => (
+              <div key={v.id}
+                className="group flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all cursor-pointer"
+                onClick={() => {
+                  onSelect({
+                    variantId: v.id, productId: v.productId, barcode: v.barcode,
+                    name: v.fullName, size: v.variantName, unit: v.unit,
+                    retailPrice: v.retailPrice, mrpPrice: v.mrpPrice, wholesalePrice: v.wholesalePrice,
+                    batches: v.batches
+                  });
+                  onOpenChange(false);
+                }}>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium group-hover:text-emerald-700 transition-colors uppercase tracking-tight">{v.variantName}</span>
+                  <span className="text-[9px] text-muted-foreground font-mono mt-0.5">{v.barcode || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-3 text-right">
+                  <div className="flex flex-col">
+                    <p className="text-base font-black text-emerald-600">LKR {v.retailPrice.toFixed(2)}</p>
+                    {v.mrpPrice > v.retailPrice && (
+                      <p className="text-[9px] text-muted-foreground line-through decoration-red-500/50">MRP: {v.mrpPrice.toFixed(2)}</p>
+                    )}
+                  </div>
+                  <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
+                    <Plus className="h-4 w-4 text-emerald-600" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        <div className="p-4 bg-muted/10 border-t border-border/40 text-center">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-xs font-bold text-muted-foreground hover:text-foreground">{t("common.cancel")}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+VariantSelectorDialog.displayName = "VariantSelectorDialog";
+import { CustomerSelector } from "./CustomerSelector";
+
+// ─── Payment Dialog ────────────────────────────────────────────────────────
+export const PaymentDialog = memo(({ 
+  isOpen, 
+  onOpenChange, 
+  netTotal, 
+  onConfirm, 
+  paymentMethods = ["cash", "card", "online", "qr"],
+  allCustomers = [],
+  selectedCustomer = null,
+  onSelectCustomer,
+}) => {
+  const { t } = useTranslation();
+  const [cashIn, setCashIn] = useState("");
+  const [method, setMethod] = useState("cash");
+
+  const balance = useMemo(() => {
+    const received = parseFloat(cashIn) || 0;
+    return received > netTotal ? received - netTotal : 0;
+  }, [cashIn, netTotal]);
+
+  const remaining = useMemo(() => {
+    const received = parseFloat(cashIn) || 0;
+    return netTotal > received ? netTotal - received : 0;
+  }, [cashIn, netTotal]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCashIn("");
+      setMethod("cash");
+    }
+  }, [isOpen]);
+
+  const handleConfirm = () => {
+    onConfirm({
+      method,
+      received: parseFloat(cashIn) || netTotal,
+      balance
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[440px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl bg-card">
+        <div className="bg-violet-600 px-6 py-6 flex flex-col gap-1 relative">
+          <DialogTitle className="text-white font-bold uppercase text-[12px] opacity-90">Finalize Sale</DialogTitle>
+          <DialogDescription className="sr-only">Choose a payment method and confirm the amount received.</DialogDescription>
+          <div className="flex items-baseline justify-between">
+            <span className="text-white font-black text-3xl">
+              LKR {netTotal.toFixed(2)}
+            </span>
+            <span className="text-white font-bold uppercase text-[11px] opacity-90">Payable Total</span>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+              Select Customer (Default: Walk-in)
+            </label>
+            <div className="border border-border/40 rounded-xl overflow-hidden bg-muted/5">
+              <CustomerSelector 
+                customers={allCustomers} 
+                selectedCustomer={selectedCustomer} 
+                onSelect={onSelectCustomer}
+                isCompact={true}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+              Payment Method
+            </label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl border border-border/40 bg-muted/20 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/20 appearance-none cursor-pointer"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='激M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.75rem center',
+                backgroundSize: '1rem'
+              }}
+            >
+              {paymentMethods.map((m) => (
+                <option key={m} value={m} className="bg-card text-foreground uppercase">
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+              Amount Received
+            </label>
+            <div className="relative">
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={cashIn}
+                onChange={(e) => setCashIn(e.target.value)}
+                autoFocus
+                className="h-12 text-xl font-bold bg-muted/20 border-border/40 rounded-xl focus:ring-1 focus:ring-violet-500/20"
+                onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
+              />
+              <Button 
+                variant="ghost" 
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-2 text-[10px] font-bold text-violet-600 hover:bg-violet-500/5"
+                onClick={() => setCashIn(netTotal.toString())}
+              >
+                EXACT
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="bg-muted/10 p-4 rounded-xl border border-border/30">
+              <p className="text-[10px] font-black uppercase text-slate-500 mb-1">Balance</p>
+              <p className={clsx(
+                "text-xl font-black",
+                balance > 0 ? "text-emerald-600" : "text-muted-foreground/20"
+              )}>
+                {balance.toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-muted/10 p-4 rounded-xl border border-border/30">
+              <p className="text-[10px] font-black uppercase text-slate-500 mb-1">Remaining</p>
+              <p className={clsx(
+                "text-xl font-black",
+                remaining > 0 ? "text-rose-500" : "text-muted-foreground/20"
+              )}>
+                {remaining.toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          <Button
+            className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-violet-500/10 transition-all active:scale-[0.98] uppercase"
+            onClick={handleConfirm}
+          >
+            Confirm & Print
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+PaymentDialog.displayName = "PaymentDialog";

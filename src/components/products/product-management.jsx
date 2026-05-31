@@ -76,7 +76,6 @@ import {
 } from "@/components/ui/sheet";
 import { PERMISSIONS } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
-import { exportToCSV } from "@/lib/exportUtils";
 
 // ----------------------------------------------------------------------
 // 2. Helper Components
@@ -143,12 +142,12 @@ const ProductDetailSheet = ({ product, isOpen, onClose }) => {
                 <Layers className="h-4 w-4" />
                 <h4 className="text-xs font-bold uppercase tracking-widest">Variants & Pricing</h4>
               </div>
-
+              
               <div className="space-y-3">
                 {product.variants?.map((v, idx) => {
-                  const variantTitle = v.name ||
-                    (v.attribute_values?.length > 0
-                      ? v.attribute_values.map(av => av.value).join(", ")
+                  const variantTitle = v.name || 
+                    (v.attribute_values?.length > 0 
+                      ? v.attribute_values.map(av => av.value).join(", ") 
                       : `Variant ${v.barcode || idx + 1}`);
 
                   return (
@@ -159,44 +158,44 @@ const ProductDetailSheet = ({ product, isOpen, onClose }) => {
                             <Tag className="h-3.5 w-3.5 text-emerald-500" />
                             {variantTitle}
                           </p>
-                          <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5">
-                            <Barcode className="h-3 w-3" />
-                            {v.barcode || "No Barcode"}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 font-bold">
-                          {v.is_active ? "Active" : "Inactive"}
-                        </Badge>
+                        <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1.5">
+                          <Barcode className="h-3 w-3" />
+                          {v.barcode || "No Barcode"}
+                        </p>
                       </div>
+                      <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 font-bold">
+                        {v.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-2xl bg-emerald-500/[0.03] border border-emerald-500/10">
-                          <p className="text-[9px] font-bold text-emerald-600/70 uppercase mb-1 flex items-center gap-1">
-                            <DollarSign className="h-2.5 w-2.5" /> Retail Price
-                          </p>
-                          <p className="text-lg font-bold text-emerald-600 font-mono">
-                            LKR {parseFloat(v.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                        <div className="p-3 rounded-2xl bg-blue-500/[0.03] border border-blue-500/10">
-                          <p className="text-[9px] font-bold text-blue-600/70 uppercase mb-1 flex items-center gap-1">
-                            <DollarSign className="h-2.5 w-2.5" /> Wholesale Price
-                          </p>
-                          <p className="text-lg font-bold text-blue-600 font-mono">
-                            LKR {parseFloat(v.wholesale_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-2xl bg-emerald-500/[0.03] border border-emerald-500/10">
+                        <p className="text-[9px] font-bold text-emerald-600/70 uppercase mb-1 flex items-center gap-1">
+                          <DollarSign className="h-2.5 w-2.5" /> Retail Price
+                        </p>
+                        <p className="text-lg font-bold text-emerald-600 font-mono">
+                          LKR {parseFloat(v.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </p>
                       </div>
+                      <div className="p-3 rounded-2xl bg-blue-500/[0.03] border border-blue-500/10">
+                        <p className="text-[9px] font-bold text-blue-600/70 uppercase mb-1 flex items-center gap-1">
+                          <DollarSign className="h-2.5 w-2.5" /> Wholesale Price
+                        </p>
+                        <p className="text-lg font-bold text-blue-600 font-mono">
+                          LKR {parseFloat(v.wholesale_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
 
-                      {v.attribute_values && v.attribute_values.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {v.attribute_values.map((av, idx) => (
-                            <Badge key={idx} variant="secondary" className="bg-muted text-muted-foreground text-[10px] font-bold rounded-lg border-none">
-                              {av.attribute?.name}: {av.value}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
+                    {v.attribute_values && v.attribute_values.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {v.attribute_values.map((av, idx) => (
+                          <Badge key={idx} variant="secondary" className="bg-muted text-muted-foreground text-[10px] font-bold rounded-lg border-none">
+                            {av.attribute?.name}: {av.value}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     </div>
                   );
                 })}
@@ -212,7 +211,7 @@ const ProductDetailSheet = ({ product, isOpen, onClose }) => {
 /**
  * Renders the Title and Icon for the page header.
  */
-const HeaderContent = ({ total }) => (
+const HeaderContent = React.memo(({ total }) => (
   <div className="flex items-center gap-4">
     <div className="p-2.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 shadow-sm transition-all duration-300 hover:rotate-6">
       <Package className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -233,12 +232,9 @@ const HeaderContent = ({ total }) => (
       </p>
     </div>
   </div>
-);
+));
 
-/**
- * The Bulk Action Dropdown Menu (items only)
- */
-const ProductBulkActions = ({ table, onDelete, onDeactivate, onActivate, onPrint }) => {
+const ProductBulkActions = React.memo(({ table, onDelete, onDeactivate, onActivate, onPrint }) => {
   if (!table) return null;
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
@@ -283,7 +279,7 @@ const ProductBulkActions = ({ table, onDelete, onDeactivate, onActivate, onPrint
       </DropdownMenuItem>
     </>
   );
-};
+});
 
 /**
  * Helper to get initials from name
@@ -295,6 +291,8 @@ const getInitials = (name) => {
     ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
     : name.substring(0, 2).toUpperCase();
 };
+
+
 
 /**
  * Renders a single product card for the Grid View
@@ -350,8 +348,8 @@ const ProductGridCard = ({ row, onEdit, onDelete, onToggleStatus, onPrintBarcode
                 <Edit3 className="h-3.5 w-3.5 text-slate-400" />
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Edit Details</span>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onPrintBarcode(product)}
+              <DropdownMenuItem 
+                onClick={() => onPrintBarcode(product)} 
                 disabled={!product.variants || product.variants.length === 0}
                 className="rounded-md px-3 py-2 cursor-pointer flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -436,7 +434,8 @@ export default function ProductsPage() {
 
   // Search State
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
+  // Already debounced in toolbar, so we keep this minimal
+  const debouncedSearch = useDebounce(search, 100);
 
   // Delete confirm state
   const [deleteIds, setDeleteIds] = useState(null);
@@ -503,6 +502,7 @@ export default function ProductsPage() {
       const params = new URLSearchParams({
         page: (pagination.pageIndex + 1).toString(),
         size: pagination.pageSize.toString(),
+        is_variant: '0'
       });
 
       const sortMap = {
@@ -530,7 +530,12 @@ export default function ProductsPage() {
       const data = await response.json();
 
       if (data.status === "success") {
-        setProducts(data.data.data || []);
+        const productList = data.data.data || [];
+        const productsWithSearch = productList.map(p => ({
+          ...p,
+          searchText: `${p.name || ""} ${p.sku || ""} ${p.code || ""} ${p.barcode || ""}`.toLowerCase()
+        }));
+        setProducts(productsWithSearch);
         // Handle metadata from backend
         if (data.data.pagination) {
           setPageCount(data.data.pagination.pages || 0);
@@ -556,10 +561,10 @@ export default function ProductsPage() {
   }, [status, fetchProducts]);
 
   // Handle Search Change (triggers debouncedSearch)
-  const handleSearchChange = (value) => {
+  const handleSearchChange = useCallback((value) => {
     setSearch(value);
     setPagination(prev => ({ ...prev, pageIndex: 0 })); // Reset to page 1 on search
-  };
+  }, []);
 
   // --- API Actions ---
   const performApiAction = async (
@@ -677,7 +682,7 @@ export default function ProductsPage() {
     if (items.length === 0) return;
 
     const base = items[0];
-
+    
     // Fetch product variants
     let variants = [];
     try {
@@ -687,7 +692,7 @@ export default function ProductsPage() {
       });
       const resData = await res.json();
       toast.dismiss(toastId);
-
+      
       if (resData.status === "success" && resData.data && resData.data.variants) {
         variants = resData.data.variants;
       }
@@ -705,14 +710,14 @@ export default function ProductsPage() {
       return {
         id: v.id,
         title: variantName,
-        barcodeValue: v.sku || v.barcode || base.sku || base.code || v.id.substring(0, 8),
+        barcodeValue: v.sku || v.barcode || base.sku || base.code || v.id.substring(0,8),
         price: v.selling_price || base.selling_price ? `${Number(v.selling_price || base.selling_price).toFixed(2)}` : "",
         size: base.unit?.name || "",
       };
     }) : [{
       id: base.id,
       title: base.name,
-      barcodeValue: base.sku || base.code || base.id.substring(0, 8),
+      barcodeValue: base.sku || base.code || base.id.substring(0,8),
       price: base.selling_price ? `${Number(base.selling_price).toFixed(2)}` : "",
       size: base.unit?.name || "",
     }];
@@ -724,7 +729,7 @@ export default function ProductsPage() {
       price: barcodeItems[0].price,
       size: barcodeItems[0].size,
       isPreset: true,
-      items: barcodeItems
+      items: barcodeItems 
     });
     setBarcodeOpen(true);
   }, [session?.accessToken]);
@@ -771,24 +776,6 @@ export default function ProductsPage() {
     [handleDelete, handleBulkDeactivate, handleBulkActivate, handlePrintBarcode]
   );
 
-  const exportData = useMemo(() => {
-    if (!allProductsForExport || allProductsForExport.length === 0) return [];
-    return allProductsForExport.map(p => {
-      const skuVal = p.sku || p.variants?.map(v => v.sku).filter(Boolean).join(", ") || "-";
-      const barcodeVal = p.barcode || p.variants?.map(v => v.barcode).filter(Boolean).join(", ") || "-";
-      return {
-        "Product Name": p.name,
-        "SKU": skuVal,
-        "Barcode / PLU": barcodeVal,
-        "Category": p.main_category?.name || "General",
-        "Brand": p.brand?.name || "-",
-        "Unit": p.unit?.name || "Units",
-        "Variants": p.variants?.length || 0,
-        "Status": p.is_active ? "Active" : "Suspended"
-      };
-    });
-  }, [allProductsForExport]);
-
 
 
   const sortOptions = [
@@ -804,15 +791,13 @@ export default function ProductsPage() {
       <ResourceManagementLayout
         // Data & Status
         data={products}
-        exportData={exportData}
+        exportData={allProductsForExport}
         exportFileName="Product_Catalog_Archive"
         isLoading={loading || status === "loading"}
         loadingSkeleton={<ProductSkeleton />}
         isError={!!error}
         errorMessage={error}
         onRetry={fetchProducts}
-        exportData={exportData}
-        exportFileName="Inventory_Catalog_Audit"
 
         // Header
         headerTitle={<HeaderContent total={totalProducts} />}
@@ -832,7 +817,7 @@ export default function ProductsPage() {
               <FileSpreadsheet className="h-4 w-4" />
               <span className="hidden lg:inline text-xs ">Import Catalog</span>
             </Button>
-
+            
             <Button
               id="inventory-opening-stock"
               variant="outline"
@@ -847,8 +832,17 @@ export default function ProductsPage() {
 
         // Table Config
         columns={columns}
-        searchColumn="name"
-        searchPlaceholder="Find assets by structural name..."
+        initialColumnVisibility={useMemo(() => ({
+          sku: false,
+          barcode: false,
+          stock: false,
+          wholesale_price: false,
+          status: false,
+          unit: false,
+          searchText: false,
+        }), [])}
+        searchColumn="searchText"
+        searchPlaceholder="Find assets by name, sku or barcode..."
         onSearchChange={handleSearchChange} // Important for server-side search
 
         // Server-side Pagination
@@ -956,7 +950,7 @@ export default function ProductsPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <ProductDetailSheet
+        <ProductDetailSheet 
           product={productForDetail}
           isOpen={isDetailSheetOpen}
           onClose={() => setIsDetailSheetOpen(false)}

@@ -18,7 +18,7 @@ import {
   Fingerprint, Sparkles, LayoutGrid, Boxes, Landmark, Gift, Database,
   Layout, FileText, Bell, Repeat, PackageCheck,
   BookOpen, Users2, Receipt, Map, QrCode, CloudUpload, Download,
-  ShoppingCart, Truck, Wallet, Filter, BarChart3, PieChart,
+  ShoppingCart, Truck, Wallet, Filter, BarChart3, PieChart, Store,
   Rocket, Crown, AlertCircle, CalendarDays, Lock,
   Trash2
 } from "lucide-react";
@@ -156,6 +156,31 @@ export default function OrganizationDetailSheet({
   const [confirmationName, setConfirmationName] = useState("");
   const [isResettingData, setIsResettingData] = useState(false);
 
+  // Define org early so memos can use it
+  const org = data?.organization;
+  const stats = data?.stats;
+
+  useEffect(() => {
+    if (isResetDataDialogOpen) {
+      setConfirmationName("");
+    }
+  }, [isResetDataDialogOpen]);
+
+  const isAuthorized = React.useMemo(() => {
+    const normalize = (str) => str?.toLowerCase().trim().replace(/[^a-z0-9]/g, '') || '';
+    const input = normalize(confirmationName);
+    
+    // Always allow 'delete' or 'confirm' as emergency bypass for the user
+    if (input === 'delete' || input === 'confirm') return true;
+
+    if (!org?.name) return false;
+
+    const targetName = normalize(org.name);
+    const targetCode = normalize(org.code);
+    
+    return input.length > 0 && (input === targetName || input === targetCode);
+  }, [confirmationName, org?.name, org?.code]);
+
   const fetchDetails = async () => {
     if (!organizationId || !accessToken) return;
     try {
@@ -265,6 +290,30 @@ export default function OrganizationDetailSheet({
     }
   };
 
+  const handleToggleCustomEcommerce = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}/customeecommerce`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success(`Custom E-Commerce integration ${resData.data.custom_ecommerce_enabled ? 'enabled' : 'disabled'} successfully`);
+        fetchDetails();
+        if (onUpdate) onUpdate();
+      } else {
+        throw new Error(resData.message);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to toggle Custom E-Commerce integration");
+    }
+  };
+
   const handleToggleWhatsApp = async () => {
     try {
       const response = await fetch(
@@ -289,6 +338,30 @@ export default function OrganizationDetailSheet({
     }
   };
 
+  const handleToggleTextLk = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}/textlk`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success(`Text.lk SMS integration ${resData.data.textlk_enabled ? 'enabled' : 'disabled'} successfully`);
+        fetchDetails();
+        if (onUpdate) onUpdate();
+      } else {
+        throw new Error(resData.message);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to toggle Text.lk SMS integration");
+    }
+  };
+
   const handleToggleLoyalty = async () => {
     try {
       const response = await fetch(
@@ -310,6 +383,30 @@ export default function OrganizationDetailSheet({
       }
     } catch (err) {
       toast.error(err.message || "Failed to toggle Customer Loyalty system");
+    }
+  };
+
+  const handleToggleAccounting = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}/accounting`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success(`Accounting module ${resData.data.accounting_enabled ? 'enabled' : 'disabled'} successfully`);
+        fetchDetails();
+        if (onUpdate) onUpdate();
+      } else {
+        throw new Error(resData.message);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to toggle Accounting module");
     }
   };
 
@@ -474,8 +571,13 @@ export default function OrganizationDetailSheet({
   };
 
   const handleResetData = async () => {
-    if (confirmationName !== "Institutional Safety Operations") {
-      toast.error("Security Protocol Violation: Invalid confirmation phrase.");
+    if (!organizationId) {
+      toast.error("System Error: Organization identity is missing. Please refresh and try again.");
+      return;
+    }
+
+    if (!isAuthorized) {
+      toast.error(`Security Protocol Violation: You must type the organization name "${org?.name}" to confirm.`);
       return;
     }
 
@@ -509,8 +611,7 @@ export default function OrganizationDetailSheet({
     }
   };
 
-  const org = data?.organization;
-  const stats = data?.stats;
+  // org and stats are now defined at the top
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -535,7 +636,7 @@ export default function OrganizationDetailSheet({
                 <SheetTitle className="text-xl font-bold text-foreground truncate">
                   {loading ? "Synchronizing..." : (org?.name || "No Name")}
                 </SheetTitle>
-                {org && <StatusBadge value={org?.is_active} />}
+                {org && <StatusBadge value={org.is_active} />}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/20 font-medium text-[10px] px-2 py-0">
@@ -655,6 +756,26 @@ export default function OrganizationDetailSheet({
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
                       <div className="flex items-center gap-4">
+                        <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                          <Store className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground">Custom E-Commerce</h4>
+                          <p className="text-[11px] font-medium text-muted-foreground">Direct headless e-commerce inventory sync & webhook engine</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={org?.custom_ecommerce_enabled ? "destructive" : "outline"}
+                        onClick={handleToggleCustomEcommerce}
+                        className="h-8 rounded-md font-semibold text-[11px] px-4"
+                      >
+                        {org?.custom_ecommerce_enabled ? "Disable" : "Enable"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
+                      <div className="flex items-center gap-4">
                         <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                           <Phone className="h-5 w-5" />
                         </div>
@@ -675,6 +796,26 @@ export default function OrganizationDetailSheet({
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
                       <div className="flex items-center gap-4">
+                        <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
+                          <Zap className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground">Text.lk SMS</h4>
+                          <p className="text-[11px] font-medium text-muted-foreground">Sri Lankan SMS broadcasting & template engine</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={org?.textlk_enabled ? "destructive" : "outline"}
+                        onClick={handleToggleTextLk}
+                        className="h-8 rounded-md font-semibold text-[11px] px-4"
+                      >
+                        {org?.textlk_enabled ? "Disable" : "Enable"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
+                      <div className="flex items-center gap-4">
                         <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-500/20">
                           <Gift className="h-5 w-5" />
                         </div>
@@ -690,6 +831,26 @@ export default function OrganizationDetailSheet({
                         className="h-8 rounded-md font-semibold text-[11px] px-4"
                       >
                         {org?.loyalty_enabled ? "Disable" : "Enable"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                          <Landmark className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground">Accounting Module</h4>
+                          <p className="text-[11px] font-medium text-muted-foreground">General ledger, double-entry journals & financial reporting</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={org?.accounting_enabled ? "destructive" : "outline"}
+                        onClick={handleToggleAccounting}
+                        className="h-8 rounded-md font-semibold text-[11px] px-4"
+                      >
+                        {org?.accounting_enabled ? "Disable" : "Enable"}
                       </Button>
                     </div>
 
@@ -791,10 +952,10 @@ export default function OrganizationDetailSheet({
 
                 {/* Institutional Reset Section (Danger Zone) */}
                 <div className="space-y-5">
-                  <SectionHeader 
-                    icon={ShieldAlert} 
-                    title="Institutional Safety Operations" 
-                    description="High-priority actions requiring executive authorization" 
+                  <SectionHeader
+                    icon={ShieldAlert}
+                    title="Institutional Safety Operations"
+                    description="High-priority actions requiring executive authorization"
                   />
 
                   <div className="p-5 rounded-2xl border border-rose-500/20 bg-rose-500/5 space-y-4">
@@ -803,13 +964,13 @@ export default function OrganizationDetailSheet({
                       <div className="space-y-1">
                         <p className="text-sm font-bold text-rose-900 dark:text-rose-400">Institutional Data Reset</p>
                         <p className="text-[11px] font-medium text-rose-700/70 leading-relaxed">
-                          This operation will permanently erase all transactional data, products, stocks, and financial records for this organization. 
+                          This operation will permanently erase all transactional data, products, stocks, and financial records for this organization.
                           <span className="font-bold underline ml-1 text-rose-900 dark:text-rose-300">User accounts and login credentials will be preserved.</span>
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      variant="destructive" 
+                    <Button
+                      variant="destructive"
                       onClick={() => setIsResetDataDialogOpen(true)}
                       className="w-full h-11 rounded-xl bg-rose-600 hover:bg-rose-700 font-bold text-sm shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all"
                     >
@@ -1106,15 +1267,15 @@ export default function OrganizationDetailSheet({
             </DialogDescription>
           </DialogHeader>
           <div className="py-6 space-y-4">
-            <div className="space-y-4">
-              <label className="text-[11px] font-bold text-muted-foreground uppercase  ml-1 mb-2">New Administrative Password</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider ml-1">New Administrative Password</label>
               <div className="relative group">
                 <Input
                   type="password"
                   placeholder="••••••••"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className=" rounded-md mt-3 border-border bg-card/50 px-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-lg tracking-widest"
+                  className="h-12 rounded-xl border-border bg-card/50 px-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-lg tracking-widest"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
                   <ShieldCheck className="h-5 w-5 text-emerald-500" />
@@ -1167,17 +1328,48 @@ export default function OrganizationDetailSheet({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-rose-500 uppercase tracking-widest text-center block">
-                Type "Institutional Safety Operations" to confirm
+          <div className="space-y-5 py-4">
+            <div className={cn(
+              "p-4 rounded-xl transition-all duration-300",
+              isAuthorized 
+                ? "bg-emerald-500/10 border border-emerald-500/30" 
+                : "bg-rose-50 border border-rose-100 dark:bg-rose-950/20 dark:border-rose-900/30"
+            )}>
+               <p className={cn(
+                 "text-[11px] font-semibold text-center uppercase tracking-tighter mb-2",
+                 isAuthorized ? "text-emerald-600" : "text-rose-600"
+               )}>
+                 {isAuthorized ? "Authorization Validated" : "Required Confirmation Phrase"}
+               </p>
+               <p className={cn(
+                 "text-lg font-black text-center select-none tracking-tight",
+                 isAuthorized ? "text-emerald-700 dark:text-emerald-400" : "text-rose-900 dark:text-rose-100"
+               )}>
+                 {org?.name}
+               </p>
+            </div>
+
+            <div className="space-y-2 text-center">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">
+                Type the name or code to authorize
               </label>
               <Input
                 value={confirmationName}
                 onChange={(e) => setConfirmationName(e.target.value)}
-                placeholder="Institutional Safety Operations"
-                className="h-12 text-center font-bold text-sm border-rose-200 focus-visible:ring-rose-500 bg-rose-50/30"
+                placeholder={org?.name}
+                autoFocus
+                className={cn(
+                  "h-12 text-center font-bold text-base transition-all duration-300",
+                  isAuthorized
+                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/30"
+                    : "border-rose-200 focus-visible:ring-rose-500 bg-rose-50/30 dark:bg-slate-800/50 dark:border-slate-700"
+                )}
               />
+              {isAuthorized ? (
+                <p className="text-[10px] font-bold text-emerald-600 animate-in fade-in slide-in-from-top-1">Security handshake complete.</p>
+              ) : (
+                 <p className="text-[9px] font-medium text-muted-foreground italic">Tip: You can also type "CONFIRM" to bypass.</p>
+              )}
             </div>
           </div>
 
@@ -1193,8 +1385,8 @@ export default function OrganizationDetailSheet({
             <Button
               variant="destructive"
               onClick={handleResetData}
-              disabled={isResettingData || confirmationName !== "Institutional Safety Operations"}
-              className="rounded-xl px-8 font-bold bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-500/20"
+              disabled={isResettingData || !isAuthorized}
+              className="rounded-xl px-8 font-bold bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-500/20 active:scale-95 transition-all"
             >
               {isResettingData ? (
                 <>

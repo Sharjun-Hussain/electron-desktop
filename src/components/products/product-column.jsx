@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowUpDown, MoreHorizontal, Edit3, Trash2, ShieldCheck, Printer } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Edit3, Trash2, ShieldCheck, Printer, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,6 +79,13 @@ export const getProductColumns = ({
   canToggleStatus = false,
 }) => [
     {
+      accessorKey: "searchText",
+      header: () => null,
+      cell: () => null,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       id: "select",
       // Added Select All functionality to the header
       header: ({ table }) => (
@@ -110,26 +118,57 @@ export const getProductColumns = ({
         const imageUrl = getPrimaryImage(product.image);
 
         return (
-          <div
-            className="flex items-center gap-3 py-1 group/item max-w-[250px] cursor-pointer"
-            onClick={() => onViewVariants(product)}
-          >
-            <Avatar className="h-10 w-10 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 transition-transform duration-300 group-hover/item:scale-105 shadow-sm">
-              {imageUrl && <AvatarImage src={imageUrl} alt={product.name} className="object-cover" />}
-              <AvatarFallback className="text-slate-400 dark:text-slate-500 font-bold text-xs">
-                {getInitials(product.name)}
-              </AvatarFallback>
-            </Avatar>
+          <div className="flex items-center gap-3 py-1 group/item max-w-[250px]">
+            <div 
+              className="cursor-pointer shrink-0"
+              onClick={() => onViewVariants(product)}
+            >
+              <Avatar className="h-10 w-10 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 transition-transform duration-300 hover:scale-105 shadow-sm">
+                {imageUrl && <AvatarImage src={imageUrl} alt={product.name} className="object-cover" />}
+                <AvatarFallback className="text-slate-400 dark:text-slate-500 font-bold text-xs">
+                  {getInitials(product.name)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            
             <div className="flex flex-col overflow-hidden">
-              <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm truncate group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 transition-colors">
+              <span 
+                className="font-semibold text-slate-900 dark:text-slate-100 text-sm truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                onClick={() => onViewVariants(product)}
+              >
                 {product.name}
               </span>
-              {/* Optional: Add SKU here if you have it in your data */}
-              {product.sku && (
-                <span className="text-xs text-slate-400 font-mono mt-0.5 truncate">
-                  SKU: {product.sku}
-                </span>
-              )}
+              
+              <div className="flex flex-col gap-0.5 mt-0.5">
+                {product.sku && (
+                  <span 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(product.sku);
+                      toast.success(`The product ${product.name} SKU is copied`);
+                    }}
+                    className="text-[10px] text-slate-400 font-mono truncate cursor-pointer hover:text-emerald-500 hover:bg-emerald-500/10 px-1 rounded-sm transition-all flex items-center gap-1 w-fit"
+                    title="Click to copy SKU"
+                  >
+                    SKU: {product.sku}
+                    <Copy className="h-2 w-2" />
+                  </span>
+                )}
+                {product.barcode && (
+                  <span 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(product.barcode);
+                      toast.success(`The product ${product.name} Barcode is copied`);
+                    }}
+                    className="text-[10px] text-slate-400 font-mono truncate cursor-pointer hover:text-blue-500 hover:bg-blue-500/10 px-1 rounded-sm transition-all flex items-center gap-1 w-fit"
+                    title="Click to copy Barcode"
+                  >
+                    BC: {product.barcode}
+                    <Copy className="h-2 w-2" />
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         );
@@ -192,21 +231,6 @@ export const getProductColumns = ({
       },
     },
     {
-      accessorKey: "variants",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Variants" />,
-      cell: ({ row }) => {
-        const variants = row.original.variants || [];
-        const count = variants.length;
-        if (count === 0) return <span className="text-sm text-slate-400">0 Variants</span>;
-
-        return (
-          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 font-medium px-2 py-0 h-5">
-            {count} Variant{count !== 1 ? 's' : ''}
-          </Badge>
-        );
-      },
-    },
-    {
       accessorKey: "brand.name",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Brand" />,
       cell: ({ row }) => (
@@ -216,6 +240,7 @@ export const getProductColumns = ({
       ),
     },
     {
+      id: "unit",
       accessorKey: "unit.name",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Unit" />,
       cell: ({ row }) => (
@@ -225,6 +250,207 @@ export const getProductColumns = ({
       ),
     },
     {
+      id: "stock",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Stock" />,
+      cell: ({ row }) => {
+        const product = row.original;
+        let total = 0;
+        if (product.variants) {
+           product.variants.forEach(v => {
+             if (v.stocks && v.stocks.length > 0) {
+               v.stocks.forEach(s => total += parseFloat(s.quantity || 0));
+             } else {
+               total += parseFloat(v.stock_quantity || 0);
+             }
+           });
+        }
+        
+        return (
+          <div className="flex items-center">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "px-2.5 py-0.5 h-6 font-bold rounded-md border shadow-none",
+                total > 0 
+                  ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/10" 
+                  : "bg-rose-500/5 text-rose-600 border-rose-500/10"
+              )}
+            >
+              {total.toLocaleString()} Units
+            </Badge>
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "cost_price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Cost Price" />,
+      cell: ({ row }) => {
+        const variants = row.original.variants || [];
+        if (variants.length === 0) return "-";
+        if (variants.length === 1) return <span className="text-sm font-medium">LKR {parseFloat(variants[0].cost_price || 0).toLocaleString()}</span>;
+        
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[10px]">
+                Various ({variants.length})
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1 rounded-xl">
+              {variants.map(v => (
+                <DropdownMenuItem key={v.id} className="text-[10px] flex justify-between py-1.5">
+                  <span className="opacity-60 font-medium">{v.name}:</span>
+                  <span className="font-bold">LKR {parseFloat(v.cost_price || 0).toLocaleString()}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      }
+    },
+    {
+      id: "mrp_price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="MRP Price" />,
+      accessorFn: (row) => row.variants?.[0]?.mrp_price || 0,
+      cell: ({ row }) => {
+        const variants = row.original.variants || [];
+        if (variants.length === 0) return "-";
+        if (variants.length === 1) return <span className="text-sm font-medium text-slate-500">LKR {parseFloat(variants[0].mrp_price || 0).toLocaleString()}</span>;
+        
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[10px]">
+                Various
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1 rounded-xl">
+              {variants.map(v => (
+                <DropdownMenuItem key={v.id} className="text-[10px] flex justify-between py-1.5">
+                  <span className="opacity-60 font-medium">{v.name}:</span>
+                  <span className="font-bold text-slate-500">LKR {parseFloat(v.mrp_price || 0).toLocaleString()}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      }
+    },
+    {
+      accessorKey: "price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Selling Price" />,
+      cell: ({ row }) => {
+        const variants = row.original.variants || [];
+        if (variants.length === 0) return "-";
+        if (variants.length === 1) return <span className="text-sm font-bold text-emerald-600">LKR {parseFloat(variants[0].price || 0).toLocaleString()}</span>;
+        
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[10px]">
+                Various
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1 rounded-xl">
+              {variants.map(v => (
+                <DropdownMenuItem key={v.id} className="text-[10px] flex justify-between py-1.5">
+                  <span className="opacity-60 font-medium">{v.name}:</span>
+                  <span className="font-bold text-emerald-600">LKR {parseFloat(v.price || 0).toLocaleString()}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      }
+    },
+    {
+      accessorKey: "wholesale_price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Wholesale" />,
+      cell: ({ row }) => {
+        const variants = row.original.variants || [];
+        if (variants.length === 0) return "-";
+        if (variants.length === 1) return <span className="text-sm font-medium text-blue-600">LKR {parseFloat(variants[0].wholesale_price || 0).toLocaleString()}</span>;
+        
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[10px]">
+                Various
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1 rounded-xl">
+              {variants.map(v => (
+                <DropdownMenuItem key={v.id} className="text-[10px] flex justify-between py-1.5">
+                  <span className="opacity-60 font-medium">{v.name}:</span>
+                  <span className="font-bold text-blue-600">LKR {parseFloat(v.wholesale_price || 0).toLocaleString()}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      }
+    },
+    {
+      id: "batch_number",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Batch" />,
+      cell: ({ row }) => {
+        const variants = row.original.variants || [];
+        const getBatch = (v) => v.batches?.[0]?.batch_number || "-";
+
+        if (variants.length === 0) return "-";
+        if (variants.length === 1) return <span className="text-xs font-mono font-bold text-slate-500">{getBatch(variants[0])}</span>;
+        
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 font-bold text-slate-500 bg-slate-50 border border-slate-200 text-[10px]">
+                View Batches
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1 rounded-xl">
+              {variants.map(v => (
+                <DropdownMenuItem key={v.id} className="text-[10px] flex justify-between py-1.5">
+                  <span className="opacity-60 font-medium">{v.name}:</span>
+                  <span className="font-mono font-bold">{getBatch(v)}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      }
+    },
+    {
+      id: "expiry_date",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Expiry" />,
+      cell: ({ row }) => {
+        const variants = row.original.variants || [];
+        const getExp = (v) => v.batches?.[0]?.expiry_date ? new Date(v.batches[0].expiry_date).toLocaleDateString() : "Not Applicable";
+
+        if (variants.length === 0) return "-";
+        if (variants.length === 1) return <span className="text-xs font-medium text-orange-600">{getExp(variants[0])}</span>;
+        
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 font-bold text-orange-600 bg-orange-50 border border-orange-200 text-[10px]">
+                Exp Dates
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 p-1 rounded-xl">
+              {variants.map(v => (
+                <DropdownMenuItem key={v.id} className="text-[10px] flex justify-between py-1.5">
+                  <span className="opacity-60 font-medium">{v.name}:</span>
+                  <span className="font-bold text-orange-600">{getExp(v)}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      }
+    },
+    {
+      id: "status",
       accessorKey: "is_active",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
       cell: ({ row }) => (
@@ -262,8 +488,8 @@ export const getProductColumns = ({
                   </DropdownMenuItem>
                 )}
 
-                <DropdownMenuItem
-                  onClick={() => onPrintBarcode(product)}
+                <DropdownMenuItem 
+                  onClick={() => onPrintBarcode(product)} 
                   disabled={!product.variants || product.variants.length === 0}
                   className="rounded-lg px-2 py-2 cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

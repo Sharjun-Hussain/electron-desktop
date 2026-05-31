@@ -17,7 +17,8 @@ import {
   ArrowRight,
   TrendingUp,
   Boxes,
-  MinusCircle
+  MinusCircle,
+  Calendar
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const itemSchema = z.object({
 const formSchema = z.object({
   quantity_produced: z.coerce.number().min(0.001, "Produced quantity must be > 0"),
   items_consumed: z.array(itemSchema),
+  expiry_date: z.string().optional().nullable(),
 });
 
 export default function ProductionCompletionSheet({ orderId }) {
@@ -62,6 +64,7 @@ export default function ProductionCompletionSheet({ orderId }) {
     defaultValues: {
       quantity_produced: 0,
       items_consumed: [],
+      expiry_date: "",
     },
   });
 
@@ -97,6 +100,7 @@ export default function ProductionCompletionSheet({ orderId }) {
               quantity_planned: i.quantity_planned,
               quantity_consumed: i.quantity_planned,
             })),
+            expiry_date: "",
           });
         }
       } catch (err) {
@@ -300,6 +304,37 @@ export default function ProductionCompletionSheet({ orderId }) {
                     />
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-gray-200 dark:border-white/5 shadow-sm bg-white dark:bg-card">
+              <CardHeader className="border-b border-gray-100 dark:border-white/10 pb-3">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-emerald-600" /> Batch Expiry Date
+                </CardTitle>
+                <CardDescription className="text-xs font-medium text-muted-foreground">
+                  Set expiration timeline for this finished food product
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-5">
+                <FormField
+                  control={form.control}
+                  name="expiry_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">Expiration Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          value={field.value || ""}
+                          className="h-10 bg-gray-50/50 dark:bg-transparent"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 

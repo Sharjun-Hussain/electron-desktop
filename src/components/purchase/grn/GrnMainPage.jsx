@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   ChevronsUpDown,
   Paperclip,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -60,6 +61,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import CreateGRNSkeleton from "@/app/skeletons/purchases/create-grn-skeleton";
@@ -76,6 +85,8 @@ const grnItemSchema = z.object({
   freeQty: z.coerce.number().min(0).default(0),
   unitCost: z.coerce.number().min(0),
   wholesalePrice: z.coerce.number().min(0).default(0),
+  profitMargin: z.coerce.number().min(0).default(0),
+  mrpPrice: z.coerce.number().min(0),
   sellingPrice: z.coerce.number().min(0),
   expiryDate: z.date().nullable().optional(),
   batchNumber: z.string().optional(),
@@ -102,10 +113,10 @@ const RestrictedProductSelect = ({ value, onChange, availableProducts }) => {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between bg-card h-9", !value && "text-muted-foreground")}
+          className={cn("w-full justify-between bg-card min-h-9 h-auto py-2", !value && "text-muted-foreground")}
         >
           {selectedProduct ? (
-            <span className="truncate font-medium text-sm">{selectedProduct.name}</span>
+            <span className="font-medium text-sm text-left whitespace-normal line-clamp-3">{selectedProduct.name}</span>
           ) : (
             <span className="text-sm">Select Item...</span>
           )}
@@ -146,14 +157,20 @@ const RestrictedProductSelect = ({ value, onChange, availableProducts }) => {
 // --- MAIN PAGE ---
 
 export default function GRNPage() {
-  const searchParams = useSearchParams();
-  const poid = searchParams.get('poid');
+  const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
 
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [poData, setPoData] = useState(null);
+
+  const [visibleColumns, setVisibleColumns] = useState({
+    batch: false,
+    expiry: false,
+    bonus: false,
+    wholesale: false,
+  });
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -185,7 +202,7 @@ export default function GRNPage() {
 
   useEffect(() => {
     async function loadData() {
-      if (!poid || status !== "authenticated" || !session?.accessToken) {
+      if (!params.poid || status !== "authenticated" || !session?.accessToken) {
         if (params.poid === undefined || session?.accessToken === undefined) {
           // Still initializing
         } else {
@@ -195,7 +212,7 @@ export default function GRNPage() {
       }
       try {
         setIsDataLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders/${poid}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders/${params.poid}`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         });
 
@@ -213,6 +230,9 @@ export default function GRNPage() {
           const variantName = item.variant?.name || item.variant?.sku || '';
           const fullName = variantName ? `${productName} - ${variantName}` : productName;
 
+          const cost = Number(item.unit_cost || item.unitCost || item.unit_price || item.cost) || 0;
+          const defaultSelling = Number((cost / 0.70).toFixed(2));
+
           return {
             poItemId: item.id,
             productId: item.product_id || item.productId,
@@ -222,14 +242,19 @@ export default function GRNPage() {
             orderedQty: Number(item.quantity || item.orderedQty) || 0,
             receivedQty: Number(item.quantity || item.orderedQty) || 0,
             freeQty: 0,
-            unitCost: Number(item.unit_cost || item.unitCost || item.unit_price || item.cost) || 0,
+            unitCost: cost,
             wholesalePrice: 0,
-            sellingPrice: Number(item.unit_cost || item.unit_price || item.cost || 0) * 1.25,
+            profitMargin: 30,
+            mrpPrice: defaultSelling,
+            sellingPrice: defaultSelling,
             batchNumber: "",
             expiryDate: undefined,
           };
         });
-        replace(mappedItems);
+        const currentItems = form.getValues("items");
+        if (!currentItems || currentItems.length === 0) {
+          replace(mappedItems);
+        }
       } catch (error) {
         console.error(error);
         toast.error("Failed to load Purchase Order details");
@@ -241,7 +266,7 @@ export default function GRNPage() {
     if (status === "authenticated") {
       loadData();
     }
-  }, [poid, replace, status, session]);
+  }, [params.poid, replace, status, session]);
 
   if (status === "loading" || isDataLoading) {
     return <CreateGRNSkeleton />;
@@ -277,6 +302,7 @@ export default function GRNPage() {
           ordered_qty: item.orderedQty,
           free_qty: item.freeQty,
           unit_cost: item.unitCost,
+          mrp_price: item.mrpPrice,
           selling_price: item.sellingPrice,
           wholesale_price: item.wholesalePrice,
           batch_number: item.batchNumber,
@@ -342,21 +368,13 @@ export default function GRNPage() {
       {/* ── Premium Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2 border-b border-border/40">
         <div className="flex items-center gap-4">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="rounded-xl border border-border/50 bg-card h-10 w-10 shrink-0 hover:bg-emerald-500/5 transition-all"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-sm shadow-emerald-500/5">
               <PackageCheck className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Acknowledge Logistics</h1>
+              <h1 className="text-2xl font-bold text-foreground">Create GRN </h1>
               <p className="text-[13px] text-muted-foreground font-medium opacity-70">Authenticated Receipt Protocol</p>
             </div>
           </div>
@@ -374,32 +392,30 @@ export default function GRNPage() {
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* --- Protocol Source Card --- */}
-            <Card className="lg:col-span-1 border-2 border-border/40 bg-card/60 backdrop-blur-sm shadow-xl shadow-emerald-500/5 rounded-[32px] overflow-hidden">
-              <CardHeader className="bg-muted/10 border-b border-border/40 px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                    <PackageCheck className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-base font-bold text-foreground">Protocol Source</CardTitle>
+            <Card className="lg:col-span-1 border border-border/40 bg-card shadow-sm rounded-lg overflow-hidden">
+              <CardHeader className="bg-muted/30 border-b border-border/40 px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <PackageCheck className="w-4 h-4 text-emerald-600" />
+                  <CardTitle className="text-[13px] font-bold text-foreground">Supplier details</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-4">
+              <CardContent className="p-5 space-y-4">
+                <div className="space-y-3">
                   <div className="space-y-1">
-                    <span className="text-[13px] font-medium text-muted-foreground opacity-60">Issuing Vendor</span>
-                    <div className="font-semibold text-lg text-foreground leading-tight">{poData?.supplier?.name || poData?.supplier_name}</div>
+                    <span className="text-sm font-bold text-muted-foreground uppercase opacity-70">Issuing Vendor</span>
+                    <div className="font-semibold text-base text-foreground leading-tight">{poData?.supplier?.name || poData?.supplier_name}</div>
                     <div className="text-sm text-muted-foreground font-medium">{poData?.supplier?.email || poData?.supplier_email || poData?.supplier?.phone}</div>
                   </div>
-                  <div className="pt-4 border-t border-border/40 space-y-4">
-                    <div className="flex justify-between items-center text-[13px]">
-                      <span className="text-muted-foreground font-medium opacity-60">Order Reference</span>
-                      <span className="font-bold text-emerald-600 bg-emerald-500/5 px-3 py-1 rounded-lg border border-emerald-500/10">{poData?.po_number || "Draft"}</span>
+                  <div className="pt-3 border-t border-border/40 space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground font-medium opacity-70">Order Reference</span>
+                      <span className="font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{poData?.po_number || "Draft"}</span>
                     </div>
-                    <div className="flex justify-between items-center text-[13px]">
-                      <span className="text-muted-foreground font-medium opacity-60">Issuance Date</span>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground font-medium opacity-70">Issuance Date</span>
                       <span className="font-semibold text-foreground/80">{poData?.order_date ? format(new Date(poData.order_date), "MMM dd, yyyy") : (poData?.created_at ? format(new Date(poData.created_at), "MMM dd, yyyy") : "-")}</span>
                     </div>
                   </div>
@@ -408,23 +424,21 @@ export default function GRNPage() {
             </Card>
 
             {/* --- Logistics Configuration Card --- */}
-            <Card className="lg:col-span-2 border-2 border-border/40 bg-card shadow-xl shadow-emerald-500/5 rounded-[32px] overflow-hidden">
-              <CardHeader className="bg-muted/10 border-b border-border/40 px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <CalendarIcon className="w-4 h-4 text-emerald-600" />
-                  </div>
+            <Card className="lg:col-span-2 border border-border/40 bg-card shadow-sm rounded-lg overflow-hidden">
+              <CardHeader className="bg-muted/30 border-b border-border/40 px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-emerald-600" />
                   <CardTitle className="text-base font-bold text-foreground">Logistics Configuration</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <CardContent className="p-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <FormField
                     control={form.control}
                     name="branchId"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-[13px] font-medium text-muted-foreground opacity-70">Recipient Unit <span className="text-red-500">*</span></FormLabel>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-sm font-medium text-foreground">Recipient Unit <span className="text-red-500">*</span></FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -432,7 +446,7 @@ export default function GRNPage() {
                           disabled={session?.user?.branches?.length <= 1}
                         >
                           <FormControl>
-                            <SelectTrigger className="h-11 bg-white dark:bg-slate-950 border-border/60 rounded-xl font-medium text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all">
+                            <SelectTrigger>
                               <SelectValue placeholder="Target Recipient Unit" />
                             </SelectTrigger>
                           </FormControl>
@@ -453,13 +467,12 @@ export default function GRNPage() {
                     control={form.control}
                     name="invoiceNumber"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-[13px] font-medium text-muted-foreground opacity-70">Manifest / Invoice Identifier <span className="text-red-500">*</span></FormLabel>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-sm font-medium text-foreground">Invoice Number <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g. INV-99887"
                             {...field}
-                            className="h-11 bg-white dark:bg-slate-950 border-border/60 rounded-xl font-medium text-sm shadow-sm focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/40 transition-all"
                           />
                         </FormControl>
                         <FormMessage className="text-[12px]" />
@@ -471,14 +484,14 @@ export default function GRNPage() {
                     control={form.control}
                     name="grnDate"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-[13px] font-medium text-muted-foreground opacity-70">Temporal Receipt Date <span className="text-red-500">*</span></FormLabel>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-sm font-medium text-foreground">Temporal Receipt Date <span className="text-red-500">*</span></FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
-                              <Button variant={"outline"} className={cn("h-11 w-full pl-3 text-left font-medium text-sm bg-white dark:bg-slate-950 border-border/60 rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-500/10", !field.value && "text-muted-foreground")}>
+                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
+                                <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
                                 {field.value ? format(field.value, "PPP") : <span>Pick arrival date</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
@@ -495,8 +508,8 @@ export default function GRNPage() {
                     control={form.control}
                     name="attachmentFiles"
                     render={({ field: { value, onChange, ...fieldProps } }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-[13px] font-medium text-muted-foreground opacity-70">Documentary Evidence</FormLabel>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-sm font-medium text-foreground">Documentary Evidence</FormLabel>
                         <FormControl>
                           <div className="flex items-center gap-3">
                             <Input
@@ -510,10 +523,10 @@ export default function GRNPage() {
                             />
                             <label
                               htmlFor="grn-file-upload"
-                              className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border/60 rounded-xl bg-white dark:bg-slate-950 hover:bg-emerald-500/5 hover:border-emerald-500/30 cursor-pointer transition-all text-xs font-semibold shadow-sm w-full"
+                              className="flex items-center justify-center gap-2 h-9 px-4 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm shadow-sm transition-colors"
                             >
-                              <Paperclip className="w-4 h-4 text-emerald-600" />
-                              {value && value.length > 0 ? `${value.length} files selected` : "Attach Invoice/Quotes (Multi)"}
+                              <Paperclip className="h-4 w-4 shrink-0" />
+                              <span className="truncate">{value && value.length > 0 ? `${value.length} files selected` : "Attach Document"}</span>
                             </label>
                           </div>
                         </FormControl>
@@ -526,7 +539,7 @@ export default function GRNPage() {
             </Card>
           </div>
 
-          <Card className="border-2 border-border/40 shadow-xl shadow-emerald-500/5 rounded-[32px] overflow-hidden">
+          <Card className="border border-border/40 shadow-sm rounded-lg overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border/40 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
@@ -534,6 +547,23 @@ export default function GRNPage() {
                   <p className="text-[13px] text-muted-foreground font-medium opacity-60 underline underline-offset-4 decoration-emerald-500/30">Registry of Receipt Protocol</p>
                 </div>
                 <div className="text-right flex items-center gap-6">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 gap-2 border-border/60 shadow-sm hidden sm:flex">
+                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                        View Columns
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[180px]">
+                      <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuCheckboxItem checked={visibleColumns.batch} onCheckedChange={(c) => setVisibleColumns((prev) => ({ ...prev, batch: c }))}>Batch #</DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem checked={visibleColumns.expiry} onCheckedChange={(c) => setVisibleColumns((prev) => ({ ...prev, expiry: c }))}>Ref. Expiry</DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem checked={visibleColumns.bonus} onCheckedChange={(c) => setVisibleColumns((prev) => ({ ...prev, bonus: c }))}>Bonus (Free Qty)</DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem checked={visibleColumns.wholesale} onCheckedChange={(c) => setVisibleColumns((prev) => ({ ...prev, wholesale: c }))}>Wholesale Price</DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <div className="flex flex-col items-end">
                     <span className="text-[13px] font-medium text-muted-foreground opacity-60">Session Valuation</span>
                     <span className="text-2xl font-bold text-foreground tabular-nums">LKR {grandTotal.toLocaleString("en-LK", { minimumFractionDigits: 2 })}</span>
@@ -546,15 +576,17 @@ export default function GRNPage() {
                 <thead className="bg-muted/5 border-b border-border/40">
                   <tr className="hover:bg-transparent">
                     <th className="px-6 py-5 text-[13px] font-medium text-muted-foreground opacity-80 min-w-[220px]">Product Identity</th>
-                    <th className="px-3 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[140px]">Batch #</th>
-                    <th className="px-3 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[140px]">Ref. Expiry</th>
+                    {visibleColumns.batch && <th className="px-3 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[140px]">Batch #</th>}
+                    {visibleColumns.expiry && <th className="px-3 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[140px]">Ref. Expiry</th>}
                     <th className="px-3 py-5 text-[13px] font-semibold text-emerald-600 opacity-80 w-[100px] text-center bg-emerald-500/5">Ordered</th>
                     <th className="px-3 py-5 text-[13px] font-semibold text-blue-600 opacity-80 w-[110px] bg-blue-500/5">Now Receiving</th>
-                    <th className="px-3 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[90px] text-center">Bonus</th>
-                    <th className="px-3 py-5 text-[13px] font-medium text-slate-900 opacity-80 w-[130px]">Unit Cost</th>
-                    <th className="px-3 py-5 text-[13px] font-semibold text-amber-600 opacity-80 w-[130px]">Whls. Prc</th>
-                    <th className="px-3 py-5 text-[13px] font-semibold text-emerald-600 opacity-80 w-[130px]">Sell. Prc</th>
-                    <th className="px-6 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[160px] text-right">Net Extension</th>
+                    {visibleColumns.bonus && <th className="px-3 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[90px] text-center">Bonus</th>}
+                    <th className="px-3 py-5 text-[13px] font-medium opacity-80 w-[130px]">Unit Cost</th>
+                    <th className="px-3 py-5 text-[13px] font-semibold text-purple-600 opacity-80 w-[100px]">Margin %</th>
+                    {visibleColumns.wholesale && <th className="px-3 py-5 text-[13px] font-semibold text-amber-600 opacity-80 w-[120px]">Whls. Prc</th>}
+                    <th className="px-3 py-5 text-[13px] font-semibold text-blue-600 opacity-80 w-[120px]">MRP</th>
+                    <th className="px-3 py-5 text-[13px] font-semibold text-emerald-600 opacity-80 w-[120px]">Sell. Prc</th>
+                    <th className="px-6 py-5 text-[13px] font-medium text-muted-foreground opacity-80 w-[140px] text-right">Net Ext.</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/20">
@@ -585,12 +617,16 @@ export default function GRNPage() {
                             onChange={(val) => handleProductSelect(index, val)}
                           />
                         </td>
-                        <td className="px-3 py-3">
-                          <Input className="h-10 text-[13px] bg-white dark:bg-slate-950 border-border/40 font-medium rounded-xl min-w-[100px] px-3 transition-all focus:ring-2 focus:ring-emerald-500/5" placeholder="Batch ID" {...form.register(`items.${index}.batchNumber`)} />
-                        </td>
-                        <td className="px-3 py-3">
-                          <Input type="date" className="h-10 text-[13px] bg-white dark:bg-slate-950 border-border/40 font-medium rounded-xl min-w-[120px] px-2 transition-all focus:ring-2 focus:ring-emerald-500/5" {...form.register(`items.${index}.expiryDate`, { valueAsDate: true })} />
-                        </td>
+                        {visibleColumns.batch && (
+                          <td className="px-3 py-3">
+                            <Input className="h-9 focus:ring-emerald-500/20" placeholder="Auto" {...form.register(`items.${index}.batchNumber`)} />
+                          </td>
+                        )}
+                        {visibleColumns.expiry && (
+                          <td className="px-3 py-3">
+                            <Input type="date" className="h-9 focus:ring-emerald-500/20" {...form.register(`items.${index}.expiryDate`, { valueAsDate: true })} />
+                          </td>
+                        )}
                         <td className="px-3 py-3 text-center bg-emerald-500/5 font-semibold text-foreground/80 tabular-nums border-x border-border/10">
                           <span className="text-[14px]">{ordered}</span>
                         </td>
@@ -598,23 +634,65 @@ export default function GRNPage() {
                           <Input
                             type="number"
                             className={cn(
-                              "h-10 font-semibold text-sm tabular-nums rounded-xl bg-white dark:bg-slate-950 min-w-[80px] px-3",
-                              isOver ? "border-amber-400 bg-amber-500/5 text-amber-700 ring-2 ring-amber-500/10" : "border-border/40 focus:border-blue-500/40"
+                              "h-9 focus:ring-emerald-500/20",
+                              isOver && "border-destructive focus-visible:ring-destructive"
                             )}
                             {...form.register(`items.${index}.receivedQty`, { valueAsNumber: true })}
                           />
                         </td>
-                        <td className="px-3 py-3 text-center">
-                          <Input type="number" className="h-10 bg-emerald-500/5 border-emerald-500/20 text-emerald-700 font-semibold text-sm tabular-nums rounded-xl min-w-[60px] px-2" {...form.register(`items.${index}.freeQty`, { valueAsNumber: true })} />
+                        {visibleColumns.bonus && (
+                          <td className="px-3 py-3 text-center">
+                            <Input type="number" className="h-9 focus:ring-emerald-500/20" {...form.register(`items.${index}.freeQty`, { valueAsNumber: true })} />
+                          </td>
+                        )}
+                        <td className="px-3 py-3">
+                          <Input type="number" className="h-9 focus:ring-emerald-500/20" step="0.01" {...form.register(`items.${index}.unitCost`, { valueAsNumber: true })} />
                         </td>
                         <td className="px-3 py-3">
-                          <Input type="number" className="h-10 text-[13px] font-semibold bg-white dark:bg-slate-950 border-border/40 rounded-xl min-w-[100px] px-3" step="0.01" {...form.register(`items.${index}.unitCost`, { valueAsNumber: true })} />
+                          <Input
+                            type="number"
+                            className="h-9 focus:ring-emerald-500/20"
+                            step="0.1"
+                            {...form.register(`items.${index}.profitMargin`, {
+                              valueAsNumber: true,
+                              onChange: (e) => {
+                                const cost = form.getValues(`items.${index}.unitCost`) || 0;
+                                const margin = parseFloat(e.target.value) || 0;
+                                // True Retail Margin: Selling Price = Cost / (1 - Margin%)
+                                const newSellingPrice = margin >= 100 ? cost : (cost / (1 - margin / 100));
+                                form.setValue(`items.${index}.sellingPrice`, Number(newSellingPrice.toFixed(2)));
+                              }
+                            })}
+                          />
+                        </td>
+                        {visibleColumns.wholesale && (
+                          <td className="px-3 py-3">
+                            <Input type="number" className="h-9 focus:ring-emerald-500/20" step="0.01" {...form.register(`items.${index}.wholesalePrice`, { valueAsNumber: true })} />
+                          </td>
+                        )}
+                        <td className="px-3 py-3">
+                          <Input type="number" className="h-9 focus:ring-emerald-500/20" step="0.01" {...form.register(`items.${index}.mrpPrice`, { valueAsNumber: true })} />
                         </td>
                         <td className="px-3 py-3">
-                          <Input type="number" className="h-10 text-amber-600 font-semibold text-[13px] bg-white dark:bg-slate-950 border-border/40 rounded-xl min-w-[100px] px-3" step="0.01" {...form.register(`items.${index}.wholesalePrice`, { valueAsNumber: true })} />
-                        </td>
-                        <td className="px-3 py-3">
-                          <Input type="number" className="h-10 text-emerald-600 font-semibold text-[13px] bg-white dark:bg-slate-950 border-border/40 rounded-xl min-w-[100px] px-3" step="0.01" {...form.register(`items.${index}.sellingPrice`, { valueAsNumber: true })} />
+                          <Input
+                            type="number"
+                            className="h-9 focus:ring-emerald-500/20"
+                            step="0.01"
+                            {...form.register(`items.${index}.sellingPrice`, {
+                              valueAsNumber: true,
+                              onChange: (e) => {
+                                const cost = form.getValues(`items.${index}.unitCost`) || 0;
+                                const newSellingPrice = parseFloat(e.target.value) || 0;
+                                if (cost > 0 && newSellingPrice > 0) {
+                                  // True Retail Margin: Margin% = ((Selling Price - Cost) / Selling Price) * 100
+                                  const newMargin = ((newSellingPrice - cost) / newSellingPrice) * 100;
+                                  form.setValue(`items.${index}.profitMargin`, Number(newMargin.toFixed(2)));
+                                } else if (newSellingPrice === 0) {
+                                  form.setValue(`items.${index}.profitMargin`, 0);
+                                }
+                              }
+                            })}
+                          />
                         </td>
                         <td className="px-6 py-3 text-right">
                           <span className="font-semibold text-foreground opacity-90 text-[15px] tabular-nums">
@@ -629,11 +707,11 @@ export default function GRNPage() {
             </div>
           </Card>
 
-          <div className="flex gap-4 justify-end mt-12 pb-10">
-            <Button variant="ghost" size="lg" type="button" onClick={() => router.back()} className="h-12 px-8 rounded-xl font-semibold text-[13px] hover:bg-muted/50 transition-all">
+          <div className="flex gap-4 justify-end mt-8 pb-10">
+            <Button variant="outline" type="button" onClick={() => router.back()}>
               Cancel Protocol
             </Button>
-            <Button type="submit" size="lg" disabled={isSubmitting} className="h-12 px-10 gap-3 min-w-[200px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-semibold text-[13px]">
+            <Button type="submit" disabled={isSubmitting} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

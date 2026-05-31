@@ -42,8 +42,8 @@ const SupplierHeaderContent = () => (
       <Briefcase className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
     </div>
     <div>
-      <h1 className="text-xl font-bold text-foreground tracking-tight leading-none">Supplier Directory</h1>
-      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1 opacity-60">Vendor Lifecycle & Procurement Asset Management</p>
+      <h1 className="text-xl font-bold text-foreground tracking-tight leading-none">Suppliers</h1>
+      <p className="text-sm font-medium text-muted-foreground mt-1.5 opacity-80">Manage your supplier network and vendor profiles</p>
     </div>
   </div>
 );
@@ -63,12 +63,12 @@ const SupplierFilters = ({ table }) => {
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All partners" />
+            <SelectValue placeholder="All Suppliers" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Global Partners</SelectItem>
-            <SelectItem value="true">Active Supply</SelectItem>
-            <SelectItem value="false">Suspended / Hold</SelectItem>
+            <SelectItem value="all">All Suppliers</SelectItem>
+            <SelectItem value="true">Active</SelectItem>
+            <SelectItem value="false">Inactive</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -99,16 +99,16 @@ const SupplierBulkActions = ({ table, onDelete, onBulkActivation }) => {
     <>
       <DropdownMenuItem onClick={handleActivate}>
         <CheckCircle2 className="mr-2 h-4 w-4" />
-        Activate Network
+        Activate Suppliers
       </DropdownMenuItem>
       <DropdownMenuItem onClick={handleDeactivate}>
         <XCircle className="mr-2 h-4 w-4" />
-        Suspend Network
+        Deactivate Suppliers
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
         <Trash2 className="mr-2 h-4 w-4" />
-        Purge Metadata
+        Delete Suppliers
       </DropdownMenuItem>
     </>
   );

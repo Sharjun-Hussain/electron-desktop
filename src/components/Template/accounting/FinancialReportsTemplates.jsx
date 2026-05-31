@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import { format } from "date-fns";
 import { ReportLayout } from "../ReportLayout";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
+import { cn } from "@/lib/utils";
 
 /**
  * INDUSTRIAL SIGNATURE BLOCK
@@ -32,11 +33,11 @@ const IndustrialSignature = ({ userName }) => (
 /**
  * 1. TRIAL BALANCE
  */
-export const TrialBalanceTemplate = forwardRef(({ data, userName }, ref) => {
+export const TrialBalanceTemplate = forwardRef(({ data, userName, isPreview = false }, ref) => {
     const { formatCurrency } = useAppSettings();
     return (
-        <div style={{ display: "none" }}>
-            <div ref={ref}>
+        <div style={!isPreview ? { display: "none" } : {}}>
+            <div ref={ref} className={cn(isPreview && "bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-lg border border-slate-200 my-4")}>
                 <ReportLayout 
                     title="Statement of Trial Balance" 
                     subtitle="Comprehensive Ledger Balance Validation"
@@ -87,13 +88,13 @@ export const TrialBalanceTemplate = forwardRef(({ data, userName }, ref) => {
 /**
  * 2. PROFIT & LOSS
  */
-export const ProfitLossTemplate = forwardRef(({ data, userName }, ref) => {
+export const ProfitLossTemplate = forwardRef(({ data, userName, isPreview = false }, ref) => {
     const { formatCurrency, report } = useAppSettings();
     const themeColor = report.primaryColor || "#10b981";
 
     return (
-        <div style={{ display: "none" }}>
-            <div ref={ref}>
+        <div style={!isPreview ? { display: "none" } : {}}>
+            <div ref={ref} className={cn(isPreview && "bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-lg border border-slate-200 my-4")}>
                 <ReportLayout 
                     title="Income Statement (Profit & Loss)" 
                     subtitle="Comprehensive Fiscal Performance Review"
@@ -103,11 +104,23 @@ export const ProfitLossTemplate = forwardRef(({ data, userName }, ref) => {
                             Operating Revenue & Production Costs
                         </h3>
                         <div className="grid grid-cols-2 divide-x-2 border-b-2" style={{ borderColor: themeColor, divideColor: themeColor }}>
-                            <div className="p-6 space-y-4">
-                                <div className="flex justify-between items-center group">
+                            <div className="p-6 flex flex-col justify-center space-y-2">
+                                <div className="flex justify-between items-center">
                                     <span className="text-[12px] font-bold text-slate-500 uppercase">Gross Revenue</span>
                                     <span className="text-lg font-bold tabular-nums text-slate-900">{formatCurrency(data.revenue)}</span>
                                 </div>
+                                {data.sourceBreakdown && (
+                                    <div className="pt-2 mt-2 border-t border-slate-200/50 space-y-1">
+                                        <div className="flex justify-between items-center text-[10px] text-slate-500">
+                                            <span>↳ POS Sales</span>
+                                            <span className="tabular-nums font-bold">{formatCurrency(data.sourceBreakdown.pos.revenue)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[10px] text-slate-500">
+                                            <span>↳ Shopify Sales</span>
+                                            <span className="tabular-nums font-bold text-indigo-600">{formatCurrency(data.sourceBreakdown.shopify.revenue)}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="p-6 bg-slate-50 flex flex-col justify-center italic">
                                 <div className="flex justify-between items-center text-slate-500">
@@ -117,11 +130,25 @@ export const ProfitLossTemplate = forwardRef(({ data, userName }, ref) => {
                             </div>
                         </div>
 
-                        <div className="bg-slate-100 p-6 flex justify-between items-center border-b-2" style={{ borderColor: themeColor }}>
-                            <span className="text-xs font-bold uppercase text-slate-600">Gross Fiscal Performance Result</span>
-                            <span className="text-2xl font-bold tabular-nums border-b-4 border-double pb-1 text-slate-900" style={{ borderColor: themeColor }}>
-                                {formatCurrency(data.grossProfit)}
-                            </span>
+                        <div className="bg-slate-100 p-6 flex flex-col border-b-2" style={{ borderColor: themeColor }}>
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold uppercase text-slate-600">Gross Fiscal Performance Result</span>
+                                <span className="text-2xl font-bold tabular-nums border-b-4 border-double pb-1 text-slate-900" style={{ borderColor: themeColor }}>
+                                    {formatCurrency(data.grossProfit)}
+                                </span>
+                            </div>
+                            {data.sourceBreakdown && (
+                                <div className="mt-4 pt-3 flex flex-col gap-1 border-t border-slate-200">
+                                    <div className="flex justify-between items-center text-[10px] text-slate-500">
+                                        <span className="uppercase font-bold">↳ POS Profit Contribution</span>
+                                        <span className="tabular-nums font-bold">{formatCurrency(data.sourceBreakdown.pos.grossProfit)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[10px] text-slate-500">
+                                        <span className="uppercase font-bold">↳ Shopify Profit Contribution</span>
+                                        <span className="tabular-nums font-bold text-indigo-600">{formatCurrency(data.sourceBreakdown.shopify.grossProfit)}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-10 flex flex-col items-center justify-center text-white space-y-2" style={{ backgroundColor: themeColor }}>
@@ -145,13 +172,13 @@ export const ProfitLossTemplate = forwardRef(({ data, userName }, ref) => {
 /**
  * 3. BALANCE SHEET
  */
-export const BalanceSheetTemplate = forwardRef(({ data, userName }, ref) => {
+export const BalanceSheetTemplate = forwardRef(({ data, userName, isPreview = false }, ref) => {
     const { formatCurrency, report } = useAppSettings();
     const themeColor = report.primaryColor || "#10b981";
 
     return (
-        <div style={{ display: "none" }}>
-            <div ref={ref}>
+        <div style={!isPreview ? { display: "none" } : {}}>
+            <div ref={ref} className={cn(isPreview && "bg-white p-8 max-w-4xl mx-auto shadow-lg rounded-lg border border-slate-200 my-4")}>
                 <ReportLayout 
                     title="Statement of Financial Position" 
                     subtitle="Institutional Assets & Liabilities Summary"

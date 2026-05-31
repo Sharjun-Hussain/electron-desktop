@@ -169,7 +169,11 @@ export default function PurchaseOrderPage() {
     }
   }, [session?.accessToken]);
 
-  // Auth check is handled by AppLayout
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(`/login?return_url=${encodeURIComponent(window.location.pathname)}`);
+    }
+  }, [status, router]);
 
   useEffect(() => {
     if (status === "authenticated") fetchPurchaseOrders();

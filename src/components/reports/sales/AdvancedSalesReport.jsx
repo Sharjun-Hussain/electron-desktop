@@ -361,7 +361,7 @@ export default function AdvancedSalesReport() {
                       <TableRow key={item.id} className="border-border hover:bg-muted/30 transition-colors">
                         {visibleColumns.invoice_no && <TableCell className="pl-6 py-4 text-[13px] font-bold text-emerald-600">{item.invoice_no}</TableCell>}
                         {visibleColumns.date && <TableCell className="text-[13px] font-medium text-muted-foreground tabular-nums">{format(new Date(item.date), "LLL dd, HH:mm")}</TableCell>}
-                        {item.item_name && <TableCell className="text-[13px] font-bold text-foreground max-w-[200px] truncate">{item.item_name || 'Sale Record'}</TableCell>}
+                        {visibleColumns.item_name && <TableCell className="text-[13px] font-bold text-foreground max-w-[200px] truncate">{item.item_name || 'Sale Record'}</TableCell>}
                         {visibleColumns.quantity && <TableCell className="text-center font-bold text-foreground tabular-nums">{item.quantity || '-'}</TableCell>}
                         {visibleColumns.unit_price && <TableCell className="text-right font-medium text-foreground">{formatCurrency(item.unit_price)}</TableCell>}
                         {visibleColumns.discount && <TableCell className="text-right font-bold text-rose-600">-{formatCurrency(item.discount)}</TableCell>}

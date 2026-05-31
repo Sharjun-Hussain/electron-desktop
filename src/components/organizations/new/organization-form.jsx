@@ -16,7 +16,9 @@ import {
   Plus,
   User,
   Trash2,
-  Calendar
+  Calendar,
+  Zap,
+  Landmark
 } from "lucide-react";
 import { mutate } from "swr";
 
@@ -75,8 +77,11 @@ export const formSchema = z.object({
   business_type: z.string({ required_error: "Please select a business type." }),
   business_mode: z.string({ required_error: "Please select a business mode." }),
   shopify_enabled: z.boolean().optional(),
+  custom_ecommerce_enabled: z.boolean().optional(),
   whatsapp_enabled: z.boolean().optional(),
+  textlk_enabled: z.boolean().optional(),
   loyalty_enabled: z.boolean().optional(),
+  accounting_enabled: z.boolean().optional(),
 });
 
 // ── Section header helper ────────────────────────────────
@@ -119,8 +124,8 @@ export function OrganizationForm({ initialData }) {
       subscription_tier: initialData.subscription_tier || undefined,
       billing_cycle: initialData.billing_cycle || undefined,
       subscription_status: initialData.subscription_status || undefined,
-      subscription_expiry_date: (initialData.subscription_expiry_date && !isNaN(new Date(initialData.subscription_expiry_date).getTime()) && initialData.subscription_expiry_date !== '1970-01-01T00:00:00.000Z') 
-        ? new Date(initialData.subscription_expiry_date).toISOString().split('T')[0] 
+      subscription_expiry_date: (initialData.subscription_expiry_date && !isNaN(new Date(initialData.subscription_expiry_date).getTime()) && initialData.subscription_expiry_date !== '1970-01-01T00:00:00.000Z')
+        ? new Date(initialData.subscription_expiry_date).toISOString().split('T')[0]
         : "",
       amount: "",
       payment_method: "",
@@ -131,8 +136,11 @@ export function OrganizationForm({ initialData }) {
       business_type: initialData.business_type || "Retail",
       business_mode: initialData.business_mode || "Retailer",
       shopify_enabled: !!initialData.shopify_enabled,
+      custom_ecommerce_enabled: !!initialData.custom_ecommerce_enabled,
       whatsapp_enabled: !!initialData.whatsapp_enabled,
+      textlk_enabled: !!initialData.textlk_enabled,
       loyalty_enabled: !!initialData.loyalty_enabled,
+      accounting_enabled: initialData.accounting_enabled === undefined ? true : !!initialData.accounting_enabled,
     } : {
       logo: undefined, name: "", phone: "", website: "", address: "", email: "", city: "",
       subscription_plan: undefined, subscription_tier: "Essential", billing_cycle: "Monthly",
@@ -140,10 +148,13 @@ export function OrganizationForm({ initialData }) {
       status: "active", owner_name: "", owner_password: "", owner_phone: "",
       branch_name: "Main Branch", bank_accounts: [],
       loyalty_enabled: false,
+      accounting_enabled: true,
       business_type: "Retail",
       business_mode: "Retailer",
       shopify_enabled: false,
+      custom_ecommerce_enabled: false,
       whatsapp_enabled: false,
+      textlk_enabled: false,
     },
   });
 
@@ -155,7 +166,7 @@ export function OrganizationForm({ initialData }) {
   const { clearSavedData } = useFormRestore(form, isEditMode ? `org-edit-${initialData.id}` : "org-create");
 
   const logo = form.watch("logo");
-  const newLogoPreview = (logo instanceof Blob || logo instanceof File) ? URL.createObjectURL(logo) : null;
+  const newLogoPreview = logo ? URL.createObjectURL(logo) : null;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const previewUrl = newLogoPreview || (initialData?.logo ? `${baseUrl.replace('/api/v1', '')}/${initialData.logo}` : "");
 
@@ -190,10 +201,13 @@ export function OrganizationForm({ initialData }) {
     if (data.bank_accounts?.length) formData.append("bank_accounts", JSON.stringify(data.bank_accounts));
     formData.append("status", data.status);
     formData.append("loyalty_enabled", data.loyalty_enabled ? "true" : "false");
+    formData.append("accounting_enabled", data.accounting_enabled ? "true" : "false");
     formData.append("business_type", data.business_type);
     formData.append("business_mode", data.business_mode);
     formData.append("shopify_enabled", data.shopify_enabled ? "true" : "false");
+    formData.append("custom_ecommerce_enabled", data.custom_ecommerce_enabled ? "true" : "false");
     formData.append("whatsapp_enabled", data.whatsapp_enabled ? "true" : "false");
+    formData.append("textlk_enabled", data.textlk_enabled ? "true" : "false");
     if (data.logo) formData.append("logo", data.logo);
 
     const url = isEditMode
@@ -216,10 +230,10 @@ export function OrganizationForm({ initialData }) {
 
       toast.success(`Organization ${isEditMode ? "updated" : "created"} successfully!`);
       clearSavedData();
-      
+
       // Invalidate settings cache to refresh sidebar and entitlements
       mutate(`${process.env.NEXT_PUBLIC_API_BASE_URL}/settings/global`);
-      
+
       router.back();
       router.refresh();
     } catch (error) {
@@ -416,63 +430,63 @@ export function OrganizationForm({ initialData }) {
 
         {/* ── Subscription Status ── */}
         <Card className="border-border/40 rounded-xl shadow-sm">
-            <CardContent className="p-6">
-              <SectionHeader icon={Calendar} title="Subscription Setup" description="Plan management and billing cycles" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField control={form.control} name="subscription_tier" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Plan Tier</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Identify plan" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        <SelectItem value="Essential">Basic Edition</SelectItem>
-                        <SelectItem value="Professional">Professional</SelectItem>
-                        <SelectItem value="Enterprise">Enterprise Elite</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="billing_cycle" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Billing Cycle</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Select cycle" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        <SelectItem value="Monthly">Monthly</SelectItem>
-                        <SelectItem value="Yearly">Yearly (Save 20%)</SelectItem>
-                        <SelectItem value="Lifetime">Lifetime License</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="amount" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Billing Amount</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                        <Input type="number" placeholder="0.00" className={`${inputCls} pl-9`} {...field} disabled={isSubmitting} />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <FormField control={form.control} name="subscription_expiry_date" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Expiry Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" className={inputCls} {...field} disabled={isSubmitting} />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )} />
-              </div>
-            </CardContent>
-          </Card>
+          <CardContent className="p-6">
+            <SectionHeader icon={Calendar} title="Subscription Setup" description="Plan management and billing cycles" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField control={form.control} name="subscription_tier" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Plan Tier</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Identify plan" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="Essential">Basic Edition</SelectItem>
+                      <SelectItem value="Professional">Professional</SelectItem>
+                      <SelectItem value="Enterprise">Enterprise Elite</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="billing_cycle" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Billing Cycle</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Select cycle" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="Monthly">Monthly</SelectItem>
+                      <SelectItem value="Yearly">Yearly (Save 20%)</SelectItem>
+                      <SelectItem value="Lifetime">Lifetime License</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="amount" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Billing Amount</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                      <Input type="number" placeholder="0.00" className={`${inputCls} pl-9`} {...field} disabled={isSubmitting} />
+                    </div>
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <FormField control={form.control} name="subscription_expiry_date" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Expiry Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" className={inputCls} {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )} />
+            </div>
+          </CardContent>
+        </Card>
 
 
         {/* ── Brand Identity & Operational Status ── */}
@@ -524,20 +538,20 @@ export function OrganizationForm({ initialData }) {
                 )} />
 
                 <FormField control={form.control} name="subscription_status" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Payment Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Status" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Trial">Trial Period</SelectItem>
-                          <SelectItem value="Expired">Payment Due</SelectItem>
-                          <SelectItem value="Suspended">Paused</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )} />
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Payment Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Status" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Trial">Trial Period</SelectItem>
+                        <SelectItem value="Expired">Payment Due</SelectItem>
+                        <SelectItem value="Suspended">Paused</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )} />
 
 
                 <FormField control={form.control} name="loyalty_enabled" render={({ field }) => (
@@ -548,6 +562,26 @@ export function OrganizationForm({ initialData }) {
                         Loyalty System
                       </FormLabel>
                       <FormDescription className="text-[10px]">Enable customer points and rewards nexus</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                        className="data-[state=checked]:bg-emerald-600"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="accounting_enabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-slate-50/5 mt-2">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <Landmark className="h-4 w-4 text-emerald-600" />
+                        Accounting Module
+                      </FormLabel>
+                      <FormDescription className="text-[10px]">Enable accounting features & general ledger access</FormDescription>
                     </div>
                     <FormControl>
                       <Switch
@@ -580,6 +614,26 @@ export function OrganizationForm({ initialData }) {
                   </FormItem>
                 )} />
 
+                <FormField control={form.control} name="custom_ecommerce_enabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-slate-50/5 mt-2">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <Globe className="h-4 w-4 text-emerald-600" />
+                        Custom E-Commerce
+                      </FormLabel>
+                      <FormDescription className="text-[10px]">Enable direct headless e-commerce inventory sync & webhook engine</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                        className="data-[state=checked]:bg-emerald-600"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
                 <FormField control={form.control} name="whatsapp_enabled" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-slate-50/5 mt-2">
                     <div className="space-y-0.5">
@@ -588,6 +642,26 @@ export function OrganizationForm({ initialData }) {
                         WhatsApp CRM
                       </FormLabel>
                       <FormDescription className="text-[10px]">Enable WhatsApp Cloud API / Chatwoot</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                        className="data-[state=checked]:bg-emerald-600"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="textlk_enabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-slate-50/5 mt-2">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <Zap className="h-4 w-4 text-indigo-600" />
+                        Text.lk SMS Integration
+                      </FormLabel>
+                      <FormDescription className="text-[10px]">Enable Sri Lankan bulk SMS broadcasting & campaigns</FormDescription>
                     </div>
                     <FormControl>
                       <Switch

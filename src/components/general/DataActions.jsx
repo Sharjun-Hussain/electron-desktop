@@ -23,9 +23,10 @@ import { cn } from "@/lib/utils";
  * @param {boolean} showPrint - Whether to show the print option.
  * @param {Function} onPrint - Custom print handler (defaults to window.print()).
  */
-export const DataActions = ({
-  data,
-  fileName = "Export",
+export const DataActions = ({ 
+  data, 
+  table,
+  fileName = "Export", 
   className,
   showPrint = false,
   onPrint = () => window.print()
@@ -33,8 +34,89 @@ export const DataActions = ({
   const { business } = useAppSettings();
   const orgName = business?.name || "";
 
-  const handleCSV = () => exportToCSV(data, fileName, orgName);
-  const handleExcel = () => exportToExcel(data, fileName, orgName);
+  const filteredData = React.useMemo(() => {
+    if (!table || !data) return data;
+    
+    const visibleColumns = table.getAllColumns().filter(col => 
+      (col.getIsVisible() || 
+       col.id === "sku" || 
+       col.id === "barcode" || 
+       col.id === "brand_name" || 
+       col.id === "unit" ||
+       col.columnDef.accessorKey === "brand.name" ||
+       col.columnDef.accessorKey === "unit.name") && 
+      col.id !== "select" && 
+      col.id !== "actions"
+    );
+
+    return data.map(item => {
+      const row = {};
+      visibleColumns.forEach(col => {
+        const id = col.columnDef.accessorKey || col.id;
+        // Generate a readable header name
+        let header = typeof col.columnDef.header === 'string' 
+          ? col.columnDef.header 
+          : id.replace(/_/g, ' ').toUpperCase();
+        
+        if (id === 'name') header = 'Product Name';
+        if (id === 'sku') header = 'SKU';
+        if (id === 'barcode') header = 'Barcode / PLU';
+        if (id === 'main_category.name' || id === 'main_category_name') {
+          header = 'Category';
+          row['Sub Category'] = item.sub_category?.name || "-";
+        }
+        if (id === 'brand.name' || id === 'brand_name') header = 'Brand';
+        if (id === 'unit.name' || id === 'unit') header = 'Unit';
+        if (id === 'price') header = 'Retail Price';
+        if (id === 'cost_price') header = 'Cost Price';
+        if (id === 'mrp_price') header = 'MRP';
+        if (id === 'wholesale_price') header = 'Wholesale Price';
+        if (id === 'stock' || id === 'stock_quantity') header = 'Stock';
+        
+        // Extract value with support for nested paths (e.g., 'main_category.name')
+        let value = item;
+        const path = id.split('.');
+        path.forEach(p => {
+          value = value?.[p];
+        });
+
+        // Special handling for products with variants in the export
+        if (id === 'variants' && Array.isArray(value)) {
+          value = `${value.length} Variants`;
+        }
+
+        // If it's a price field and we have variants but no direct value, take the first variant's value
+        if (['cost_price', 'mrp_price', 'price', 'wholesale_price'].includes(id) && !value && item.variants?.length > 0) {
+          value = item.variants[0][id];
+        }
+
+        // If it's SKU or Barcode and we have variants but no direct value, combine variants' values
+        if (id === 'sku' && !value && item.variants?.length > 0) {
+          value = item.variants.map(v => v.sku).filter(Boolean).join(", ") || "-";
+        }
+        if (id === 'barcode' && !value && item.variants?.length > 0) {
+          value = item.variants.map(v => v.barcode).filter(Boolean).join(", ") || "-";
+        }
+        
+        // Handle Batch/Expiry from item itself (if it's a variant) or first variant (if it's a product)
+        if (id === 'batch_number') {
+           const batches = item.variants?.length > 0 ? item.variants[0].batches : item.batches;
+           value = batches?.[0]?.batch_number || "-";
+        }
+        if (id === 'expiry_date') {
+           const batches = item.variants?.length > 0 ? item.variants[0].batches : item.batches;
+           const exp = batches?.[0]?.expiry_date;
+           value = exp ? new Date(exp).toLocaleDateString() : "-";
+        }
+
+        row[header] = value ?? "";
+      });
+      return row;
+    });
+  }, [data, table]);
+
+  const handleCSV = () => exportToCSV(filteredData, fileName, orgName);
+  const handleExcel = () => exportToExcel(filteredData, fileName, orgName);
 
   const disabled = !data || data.length === 0;
 
@@ -58,8 +140,8 @@ export const DataActions = ({
             Output Protocols
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border/50" />
-
-          <DropdownMenuItem
+          
+          <DropdownMenuItem 
             onClick={handleExcel}
             className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors"
           >
@@ -72,7 +154,7 @@ export const DataActions = ({
             </div>
           </DropdownMenuItem>
 
-          <DropdownMenuItem
+          <DropdownMenuItem 
             onClick={handleCSV}
             className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors"
           >
@@ -88,7 +170,7 @@ export const DataActions = ({
           {showPrint && (
             <>
               <DropdownMenuSeparator className="bg-border/50" />
-              <DropdownMenuItem
+              <DropdownMenuItem 
                 onClick={onPrint}
                 className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
               >

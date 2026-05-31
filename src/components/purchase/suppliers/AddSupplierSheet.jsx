@@ -42,10 +42,11 @@ const phoneRegex = new RegExp(
 
 const supplierSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
+  code: z.string().optional(),
   email: z.string().email("Invalid email address").or(z.literal("")),
-  phone: z.string().regex(phoneRegex, "Invalid phone number"),
+  phone: z.string().regex(phoneRegex, "Invalid phone number").or(z.literal("")).optional(),
   contact_person: z.string().min(2, "Contact person is required"),
-  address: z.string().min(5, "Address is required"),
+  address: z.string().optional(),
 });
 
 export function AddSupplierSheet({ open, onOpenChange, onSuccess }) {
@@ -56,6 +57,7 @@ export function AddSupplierSheet({ open, onOpenChange, onSuccess }) {
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
+      code: "",
       email: "",
       phone: "",
       contact_person: "",
@@ -63,9 +65,17 @@ export function AddSupplierSheet({ open, onOpenChange, onSuccess }) {
     },
   });
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (values) => {
     if (!session?.accessToken) return;
     setIsSubmitting(true);
+
+    // Clean data: convert empty strings to null for optional fields
+    const cleanedData = {
+      ...values,
+      phone: values.phone || null,
+      email: values.email || null,
+      address: values.address || null,
+    };
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers`, {
@@ -74,7 +84,7 @@ export function AddSupplierSheet({ open, onOpenChange, onSuccess }) {
           Authorization: `Bearer ${session.accessToken}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(cleanedData),
       });
 
       const result = await response.json();
@@ -135,6 +145,23 @@ export function AddSupplierSheet({ open, onOpenChange, onSuccess }) {
                         <FormLabel className="font-semibold text-foreground">Supplier Name</FormLabel>
                         <FormControl>
                           <Input className="shadow-sm" placeholder="e.g. Acme Corporation" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-semibold text-foreground flex items-center justify-between">
+                          Supplier Code
+                          <span className="text-[10px] font-normal opacity-60 italic">Optional unique identifier</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input className="shadow-sm" placeholder="e.g. SUP-001" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

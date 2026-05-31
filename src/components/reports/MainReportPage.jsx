@@ -18,6 +18,7 @@ import {
   CreditCard,
   Briefcase,
   Factory,
+  UtensilsCrossed
 } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Gift } from "lucide-react";
@@ -63,6 +64,30 @@ const REPORTS_DATA = [
     category: "Sales",
     description: "Overview of sales transactions and revenue.",
     isFavorite: true,
+  },
+  {
+    id: "sales-dining",
+    name: "Restaurant Dining Analytics",
+    href: "/reports/sales/dining",
+    category: "Restaurant",
+    description: "Detailed analytics on Dine-In vs. Takeaway, table turnovers, and waiter performance.",
+    isFavorite: true,
+  },
+  {
+    id: "restaurant-kitchen",
+    name: "Kitchen & KDS Efficiency Audit",
+    href: "/reports/sales/dining",
+    category: "Restaurant",
+    description: "Track food preparation times, dish completion rates, and KDS queue metrics.",
+    isFavorite: true,
+  },
+  {
+    id: "restaurant-waiters",
+    name: "Waiter Performance & AOV Ledger",
+    href: "/reports/sales/dining",
+    category: "Restaurant",
+    description: "Audit waiter shift covers, average order values (AOV), and customer review ratings.",
+    isFavorite: false,
   },
   {
     id: "sales-product",
@@ -267,6 +292,14 @@ const REPORTS_DATA = [
     description: "Analysis of supplier delivery times and costs.",
     isFavorite: false,
   },
+  {
+    id: "purchase-history",
+    name: "Purchase History",
+    href: "/reports/purchase/history",
+    category: "Purchase",
+    description: "Detailed timeline and line-item auditing of procurement purchase orders.",
+    isFavorite: true,
+  },
   
   // Manufacturing Category
   {
@@ -318,6 +351,14 @@ const REPORTS_DATA = [
     description: "Item-level sales analytics with comprehensive filtering and deep insights.",
     isFavorite: true,
   },
+  {
+    id: "batch-sales-audit",
+    name: "Batch-wise Sales Audit",
+    href: "/reports/sales/batch-sales-audit",
+    category: "Sales",
+    description: "Comprehensive daily analysis of sales, batch costs, and profit margins.",
+    isFavorite: true,
+  },
 ];
 
 const CATEGORIES_BASE = [
@@ -329,6 +370,7 @@ const CATEGORIES_BASE = [
   { id: "Staff", label: "Staff", icon: Briefcase },
   { id: "Purchase", label: "Purchase", icon: ShoppingBag },
   { id: "Manufacturing", label: "Manufacturing", icon: Factory },
+  { id: "Restaurant", label: "Restaurant", icon: UtensilsCrossed },
 ];
 
 export default function ReportsHubPage({ isNested = false }) {
@@ -350,12 +392,16 @@ function ReportsContent({ isNested }) {
   
   const { business } = useAppSettings();
   const isLoyaltyEnabled = business?.loyalty_enabled;
+  const isManufacturing = business?.business_type?.toLowerCase() === "manufacturing";
+  const isRestaurant = business?.business_type?.toLowerCase() === "restaurant";
 
   const CATEGORIES = useMemo(() => {
     let list = CATEGORIES_BASE;
     if (!isLoyaltyEnabled) list = list.filter(c => c.id !== "Loyalty");
+    if (!isManufacturing) list = list.filter(c => c.id !== "Manufacturing");
+    if (!isRestaurant) list = list.filter(c => c.id !== "Restaurant");
     return list;
-  }, [isLoyaltyEnabled]);
+  }, [isLoyaltyEnabled, isManufacturing, isRestaurant]);
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -366,8 +412,10 @@ function ReportsContent({ isNested }) {
   const visibleReports = useMemo(() => {
     let list = reports;
     if (!isLoyaltyEnabled) list = list.filter(r => r.category !== "Loyalty");
+    if (!isManufacturing) list = list.filter(r => r.category !== "Manufacturing");
+    if (!isRestaurant) list = list.filter(r => r.category !== "Restaurant");
     return list;
-  }, [reports, isLoyaltyEnabled]);
+  }, [reports, isLoyaltyEnabled, isManufacturing, isRestaurant]);
 
   // Sync tab with URL
   useEffect(() => {

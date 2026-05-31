@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { getImageUrl } from "@/lib/utils";
 import {
@@ -58,6 +58,7 @@ import {
   ShieldAlert,
   Scale,
   MessageCircle,
+  MessageSquare,
   Globe,
   Trash2,
   Store
@@ -77,12 +78,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/avatar";
-
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -92,10 +87,12 @@ import {
 export function CustomSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { hasPermission, hasAnyPermission } = usePermission();
   const { business, general } = useAppSettings();
   const { t } = useTranslation();
+  const isRestaurant = (business?.business_type || session?.user?.organization?.business_type || "").toLowerCase() === 'restaurant';
 
   const sidebarMode = general?.interface?.sidebar || 'fixed';
   const isCollapsed = sidebarMode === 'collapsed';
@@ -105,27 +102,16 @@ export function CustomSidebar() {
 
   const sidebarRef = useRef(null);
 
-  const user = React.useMemo(() => ({
+  const user = {
     name: session?.user?.name || "User",
     email: session?.user?.email || "user@example.com",
     avatar: session?.user?.image,
     organizationName: session?.user?.organization?.name || business?.name || "Inzeedo",
     branchName: session?.user?.branches?.[0]?.name || "Main Branch",
-  }), [session?.user, business]);
+  };
 
-  const avatarUrl = React.useMemo(() => {
-    const base = getImageUrl(user.avatar);
-    if (!base) return null;
-
-    // Add cache breaker if available to ensure immediate update after photo change
-    if (session?.user?.imageLastUpdated) {
-      return `${base}${base.includes('?') ? '&' : '?'}v=${session.user.imageLastUpdated}`;
-    }
-    return base;
-  }, [user.avatar, session?.user?.imageLastUpdated]);
-
-  const getUserInitials = (name) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  const getProfileAvatar = () => {
+    return getImageUrl(user.avatar) || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`;
   };
 
   const sidebarData = {
@@ -179,6 +165,10 @@ export function CustomSidebar() {
         moduleKey: "pos_billing",
         items: [
           { title: t("sidebar.pos"), url: "/pos", icon: Monitor, requiredPermission: PERMISSIONS.POS_ACCESS, moduleKey: "pos_billing" },
+          ...(isRestaurant ? [
+            { title: "Floor Plan (Tables)", url: "/dining", icon: Shapes, requiredPermission: PERMISSIONS.POS_ACCESS, moduleKey: "pos_billing" },
+            { title: "Kitchen Display (KDS)", url: "/kitchen", icon: Monitor, requiredPermission: PERMISSIONS.POS_ACCESS, moduleKey: "pos_billing" },
+          ] : []),
           { title: t("sidebar.sales_history"), url: "/sales", icon: History, requiredPermission: PERMISSIONS.SALE_VIEW, moduleKey: "pos_billing" },
           { title: t("sidebar.sales_return_history"), url: "/sales/returns", icon: RotateCcw, requiredPermission: PERMISSIONS.SALE_VIEW, moduleKey: "pos_billing" },
           { title: t("sidebar.sales_return_report"), url: "/reports/sales/returns", icon: FileText, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "pos_billing" },
@@ -196,6 +186,7 @@ export function CustomSidebar() {
           { title: t("sidebar.purchase_orders"), url: "/purchase/purchase-orders", icon: FilePlus, requiredPermission: PERMISSIONS.PURCHASE_VIEW, moduleKey: "inventory_po" },
           { title: t("sidebar.grn"), url: "/purchase/grn", icon: FileInput, requiredPermission: PERMISSIONS.PURCHASE_VIEW, moduleKey: "inventory_po" },
           { title: t("sidebar.purchase_returns"), url: "/purchase/returns", icon: Undo, requiredPermission: PERMISSIONS.PURCHASE_VIEW, moduleKey: "inventory_po" },
+          { title: "Purchase History Report", url: "/reports/purchase/history", icon: BarChart3, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "inventory_po" },
         ],
       },
       {
@@ -226,6 +217,42 @@ export function CustomSidebar() {
           { title: t("sidebar.intelligent_insights"), url: "/reports", icon: Zap, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "reports_advanced" },
         ]
       },
+      // Apps (Shopify & Custom E-Commerce) Section
+      ...(business?.shopify_enabled || business?.custom_ecommerce_enabled ? [{
+        title: t("sidebar.apps") || "Apps",
+        url: business?.shopify_enabled ? "/settings/shopify" : "/settings/custom-ecommerce",
+        icon: Globe,
+        requiredPermission: PERMISSIONS.SETTINGS_MANAGE,
+        items: [
+          ...(business?.shopify_enabled ? [{ title: "Shopify Setup", url: "/settings/shopify", icon: Monitor, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
+          ...(business?.custom_ecommerce_enabled ? [{ title: "Custom E-Commerce", url: "/settings/custom-ecommerce", icon: Store, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
+        ]
+      }] : []),
+      // WhatsApp CRM Section
+      ...(business?.whatsapp_enabled ? [{
+        title: "WhatsApp CRM",
+        url: "/crm/whatsapp",
+        icon: MessageCircle,
+        requiredPermission: PERMISSIONS.CRM_VIEW,
+        items: [
+          { title: "Templates", url: "/crm/whatsapp", icon: FileText, requiredPermission: PERMISSIONS.CRM_VIEW },
+          { title: "CRM Settings", url: "/crm/whatsapp/settings", icon: Settings, requiredPermission: PERMISSIONS.CRM_MANAGE },
+        ]
+      }] : []),
+      // Text.lk SMS Section
+      ...(business?.textlk_enabled ? [{
+        title: "Text.lk SMS",
+        url: "/crm/text-lk",
+        icon: Zap,
+        requiredPermission: PERMISSIONS.CRM_VIEW,
+        items: [
+          { title: "Dashboard", url: "/crm/text-lk?tab=dashboard", icon: LayoutDashboard, requiredPermission: PERMISSIONS.CRM_VIEW },
+          { title: "Contacts", url: "/crm/text-lk?tab=contacts", icon: Users, requiredPermission: PERMISSIONS.CRM_VIEW },
+          { title: "Messaging", url: "/crm/text-lk?tab=messages", icon: MessageSquare, requiredPermission: PERMISSIONS.CRM_VIEW },
+          { title: "API Settings", url: "/crm/text-lk?tab=settings", icon: Settings, requiredPermission: PERMISSIONS.CRM_MANAGE },
+        ]
+      }] : []),
+      // System Settings — always last
       {
         title: t("sidebar.system"),
         url: "/settings",
@@ -243,27 +270,6 @@ export function CustomSidebar() {
           { title: t("sidebar.report_layout") || "Report Layout Design", url: "/report-layout", icon: FileText, requiredPermission: PERMISSIONS.SETTINGS_MANAGE, moduleKey: "invoice_customization" },
         ]
       },
-      // Shopify Integration Section
-      ...(business?.shopify_enabled ? [{
-        title: t("sidebar.apps") || "Apps",
-        url: "/settings/shopify",
-        icon: Globe,
-        requiredPermission: PERMISSIONS.SETTINGS_MANAGE,
-        items: [
-          { title: "Shopify Setup", url: "/settings/shopify", icon: Monitor, requiredPermission: PERMISSIONS.SETTINGS_MANAGE },
-        ]
-      }] : []),
-      // WhatsApp CRM Section
-      ...(business?.whatsapp_enabled ? [{
-        title: "WhatsApp CRM",
-        url: "/crm/whatsapp",
-        icon: MessageCircle,
-        requiredPermission: PERMISSIONS.CRM_VIEW,
-        items: [
-          { title: "Templates", url: "/crm/whatsapp", icon: FileText, requiredPermission: PERMISSIONS.CRM_VIEW },
-          { title: "CRM Settings", url: "/crm/whatsapp/settings", icon: Settings, requiredPermission: PERMISSIONS.CRM_MANAGE },
-        ]
-      }] : [])
     ]
   };
 
@@ -275,6 +281,11 @@ export function CustomSidebar() {
 
     // 0b. Explicitly block Accounting for Essential Tier
     if (business?.subscription_tier === 'Essential' && moduleKey.startsWith('accounting')) {
+      return false;
+    }
+
+    // 0c. Explicitly block Accounting if disabled for this organization
+    if (business?.accounting_enabled === false && moduleKey.startsWith('accounting')) {
       return false;
     }
 
@@ -384,8 +395,8 @@ export function CustomSidebar() {
 
   return (
     <div ref={sidebarRef} className="flex h-screen sticky top-0 z-50 gap-0 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group/sidebar overflow-visible">
-      <aside
-        id="sidebar-main"
+      <aside 
+        id="sidebar-main" 
         className={cn(
           "flex flex-col items-center py-6 bg-(--sidebar-bg-custom) border-r border-sidebar-border/40 z-50 relative pointer-events-auto shrink-0 transition-all duration-500 ease-in-out",
           isCollapsed ? "w-20" : "w-30"
@@ -401,13 +412,15 @@ export function CustomSidebar() {
           {filteredPrimary.map((item) => {
             // 1. Find all possible matches for this specific item and its sub-items
             const matches = [];
-            if (pathname === item.url || pathname.startsWith(`${item.url}/`)) {
-              matches.push(item.url);
+            const itemUrlBase = item.url.split("?")[0];
+            if (pathname === itemUrlBase || pathname.startsWith(`${itemUrlBase}/`)) {
+              matches.push(itemUrlBase);
             }
             if (item.items) {
               item.items.forEach(sub => {
-                if (pathname === sub.url || pathname.startsWith(`${sub.url}/`)) {
-                  matches.push(sub.url);
+                const subUrlBase = sub.url.split("?")[0];
+                if (pathname === subUrlBase || pathname.startsWith(`${subUrlBase}/`)) {
+                  matches.push(subUrlBase);
                 }
               });
             }
@@ -418,10 +431,12 @@ export function CustomSidebar() {
 
             const allPossibleMatches = filteredPrimary.flatMap(p => {
               const pMatches = [];
-              if (pathname === p.url || pathname.startsWith(`${p.url}/`)) pMatches.push(p.url);
+              const pUrlBase = p.url.split("?")[0];
+              if (pathname === pUrlBase || pathname.startsWith(`${pUrlBase}/`)) pMatches.push(pUrlBase);
               if (p.items) {
                 p.items.forEach(s => {
-                  if (pathname === s.url || pathname.startsWith(`${s.url}/`)) pMatches.push(s.url);
+                  const sUrlBase = s.url.split("?")[0];
+                  if (pathname === sUrlBase || pathname.startsWith(`${sUrlBase}/`)) pMatches.push(sUrlBase);
                 });
               }
               return pMatches;
@@ -472,16 +487,19 @@ export function CustomSidebar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="relative h-10 w-10 outline-none group">
-                <Avatar className="size-full rounded-xl overflow-hidden border border-border group-hover:border-emerald-500/50 transition-all shadow-sm">
-                  <AvatarImage
-                    src={avatarUrl}
-                    alt={user.name}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 font-bold text-xs">
-                    {getUserInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="size-full rounded-xl overflow-hidden border border-border group-hover:border-emerald-500/50 transition-all shadow-sm">
+                  <div className="size-full bg-muted flex items-center justify-center text-foreground text-xs font-bold">
+                    <img
+                      src={getProfileAvatar()}
+                      alt={user.name}
+                      className="size-full object-cover"
+                      onError={(e) => {
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`;
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 border-2 border-background z-10 shadow-sm" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="right" sideOffset={20} className="w-56 rounded-xl p-2 bg-card border border-border shadow-md">
@@ -544,10 +562,12 @@ export function CustomSidebar() {
               {(() => {
                 const allPossibleMatches = filteredPrimary.flatMap(p => {
                   const pMatches = [];
-                  if (pathname === p.url || pathname.startsWith(`${p.url}/`)) pMatches.push(p.url);
+                  const pUrlBase = p.url.split("?")[0];
+                  if (pathname === pUrlBase || pathname.startsWith(`${pUrlBase}/`)) pMatches.push(pUrlBase);
                   if (p.items) {
                     p.items.forEach(s => {
-                      if (pathname === s.url || pathname.startsWith(`${s.url}/`)) pMatches.push(s.url);
+                      const sUrlBase = s.url.split("?")[0];
+                      if (pathname === sUrlBase || pathname.startsWith(`${sUrlBase}/`)) pMatches.push(sUrlBase);
                     });
                   }
                   return pMatches;
@@ -555,7 +575,22 @@ export function CustomSidebar() {
                 const globalLongestMatch = allPossibleMatches.sort((a, b) => b.length - a.length)[0] || "";
 
                 return activeCategory?.items?.map((sub) => {
-                  const isActive = sub.url === globalLongestMatch && (pathname === sub.url || pathname.startsWith(`${sub.url}/`));
+                  const subUrlBase = sub.url.split("?")[0];
+                  let isActive = subUrlBase === globalLongestMatch && (pathname === subUrlBase || pathname.startsWith(`${subUrlBase}/`));
+
+                  if (isActive && sub.url.includes("?")) {
+                    const params = new URLSearchParams(sub.url.split("?")[1]);
+                    const targetTab = params.get("tab");
+                    const currentTab = searchParams ? searchParams.get("tab") : null;
+                    if (targetTab) {
+                      isActive = (currentTab === targetTab) || (!currentTab && targetTab === "dashboard");
+                    }
+                  } else if (isActive && !sub.url.includes("?") && pathname === "/crm/text-lk") {
+                    const currentTab = searchParams ? searchParams.get("tab") : null;
+                    if (currentTab && currentTab !== "dashboard") {
+                      isActive = false;
+                    }
+                  }
 
                   return (
                     <Link

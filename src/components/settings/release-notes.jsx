@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { 
-  Sparkles, 
-  CheckCircle2, 
-  Zap, 
-  ShieldCheck, 
+import {
+  Sparkles,
+  CheckCircle2,
+  Zap,
+  ShieldCheck,
   Rocket,
   ArrowRight,
   ShieldAlert,
@@ -18,166 +18,8 @@ import { Badge } from "@/components/ui/badge";
 export function ReleaseNotes() {
   const releases = [
     {
-      version: "1.2.2",
-      date: "May 08, 2026",
-      title: "Unit Measurement Precision Fix",
-      type: "Patch",
-      changes: [
-        {
-          category: "Catalog Maintenance",
-          icon: Zap,
-          items: [
-            "Fixed measurement units creation failure by resolving field naming mismatch (short_code vs short_name) between frontend and backend.",
-            "Synchronized validation schema to ensure consistent unit registration across the system."
-          ]
-        }
-      ]
-    },
-    {
-      version: "1.2.1",
-      date: "May 07, 2026",
-      title: "Data Maintenance & Structural Snapshots",
-      type: "Patch",
-      changes: [
-        {
-          category: "System Maintenance",
-          icon: Zap,
-          items: [
-            "Resolved SQL snapshot generation failure by implementing automated directory initialization and path sanitization.",
-            "Hardened shell command execution for database backups with secure credential quoting and enhanced diagnostics.",
-            "Improved database restoration reliability for large-scale structural snapshots."
-          ]
-        }
-      ]
-    },
-    {
-      version: "1.2.0",
-      date: "May 06, 2026",
-      title: "Major Milestone: Multi-Window Ecosystem",
-      type: "Major Update",
-      changes: [
-        {
-          category: "Navigation Architecture",
-          icon: Rocket,
-          items: [
-            "Implemented Full Multi-Window Support with native 'Open in New Window' context menu functionality.",
-            "Engineered root-based window initialization with client-side route hydration to ensure asset integrity across deep links.",
-            "Synchronized authentication state across all independent windows via shared persistent partitions."
-          ]
-        },
-        {
-          category: "UX & Stability",
-          icon: CheckCircle2,
-          items: [
-            "Refactored back-button logic with hierarchical module awareness to prevent application crashes during deep navigation.",
-            "Standardized native desktop context menu actions (Copy/Paste/Cut/Select All)."
-          ]
-        }
-      ]
-    },
-    {
-      version: "1.1.9",
-      date: "May 05, 2026",
-      title: "Multi-Window Asset Integrity",
-      type: "Patch",
-      changes: [
-        {
-          category: "Stability Fixes",
-          icon: Zap,
-          items: [
-            "Resolved 'Broken Window' issue by implementing root-based initialization with auth-gated internal redirects.",
-            "Fixed relative path resolutions for JS/CSS in new windows within static production environments."
-          ]
-        }
-      ]
-    },
-    {
-      version: "1.1.8",
-      date: "May 04, 2026",
-      title: "Desktop Multitasking",
-      type: "Patch",
-      changes: [
-        {
-          category: "Performance & Features",
-          icon: Rocket,
-          items: [
-            "Implemented native context-menu 'Open in New Window' for enhanced multi-tasking across all application modules.",
-            "Optimized multi-window session persistence using dedicated partitions for real-time authentication state sharing."
-          ]
-        }
-      ]
-    },
-    {
-      version: "1.1.7",
-      date: "May 02, 2026",
-      title: "Navigation Stability & Data Integrity",
-      type: "Patch",
-      changes: [
-        {
-          category: "Bug Fixes",
-          icon: Zap,
-          items: [
-            "Resolved application crashes during 'Back' button navigation by implementing hierarchical route parsing.",
-            "Fixed critical JavaScript exceptions (ReferenceError) in Purchase Order detail views during attachment management.",
-            "Verified and standardized Main/Sub Category Sales reports with audited revenue share calculations."
-          ]
-        }
-      ]
-    },
-    {
-      version: "1.1.5",
-      date: "April 30, 2026",
-      title: "Settings Standardization & UI Parity",
-      type: "Patch",
-      changes: [
-        {
-          category: "Settings Architecture",
-          icon: Settings2,
-          items: [
-            "Standardized Settings UI across Web and Desktop with the new 'Floating Action Hub'.",
-            "Enhanced Dark Mode styling for Organization management and standardized input field aesthetics.",
-            "Synchronized 'Business Settings' and 'Report Settings' logic between platforms."
-          ]
-        },
-        {
-          category: "Security & Parity",
-          icon: ShieldCheck,
-          items: [
-            "Enforced stricter RBAC (Role-Based Access Control) for administrative settings updates.",
-            "Optimized settings tab transitions and improved responsive layouts."
-          ]
-        }
-      ]
-    },
-    {
-      version: "1.1.4",
-      date: "April 28, 2026",
-      title: "Offline Stability & Structural Integrity",
-      type: "Patch",
-      changes: [
-        {
-          category: "Offline-First POS",
-          icon: ShieldCheck,
-          items: [
-            "Decoupled core POS operations from internet dependency for air-gapped environment stability.",
-            "Prioritized local MySQL backend for sales processing and stock management.",
-            "Standardized 'Export Actions' (Excel/CSV) across Inventory Catalog and Units Registry."
-          ]
-        },
-        {
-          category: "Structural Bug Fixes",
-          icon: Zap,
-          items: [
-            "Resolved application crashes in Organization Edit workflow related to form state restoration.",
-            "Implemented safe date parsing for subscription expiry to prevent RangeError crashes.",
-            "Removed redundant 'Refresh Application' UI from Error Boundaries for smoother recovery."
-          ]
-        }
-      ]
-    },
-    {
       version: "1.1.2",
-      date: "April 25, 2026",
+      date: "May 10, 2026",
       title: "UI Standardisation & Insights Refinement",
       type: "Patch",
       changes: [
@@ -195,7 +37,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.1",
-      date: "April 22, 2026",
+      date: "May 10, 2026",
       title: "Authentication & Parity Update",
       type: "Patch",
       changes: [
@@ -212,7 +54,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.1.0",
-      date: "April 20, 2026",
+      date: "May 09, 2026",
       title: "Organization Empowerment & UI Refinement",
       type: "Major Update",
       changes: [
@@ -247,7 +89,7 @@ export function ReleaseNotes() {
     },
     {
       version: "1.0.2",
-      date: "April 18, 2026",
+      date: "May 08, 2026",
       title: "Core Stability Patch",
       type: "Patch",
       changes: [
@@ -269,11 +111,11 @@ export function ReleaseNotes() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Software Evolution</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tracking the progress of Inzeedo POS Core</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tracking the progress of Inzeedo POS </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
           <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.2.2</span>
+          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.1.2</span>
         </div>
       </div>
 
@@ -285,7 +127,7 @@ export function ReleaseNotes() {
                 <Rocket className="w-24 h-24" />
               </div>
             )}
-            
+
             <CardHeader className="pb-4 border-b border-slate-50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/10">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -301,7 +143,7 @@ export function ReleaseNotes() {
                 </div>
               </div>
             </CardHeader>
-            
+
             <CardContent className="pt-6 space-y-6">
               {release.changes.map((group, gIdx) => (
                 <div key={gIdx} className="space-y-3">
@@ -333,7 +175,7 @@ export function ReleaseNotes() {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-900 dark:text-white leading-none">System Engine Specification</p>
-            <p className="text-[10px] text-slate-500 mt-1">Core build 1.2.2.0511 (Stable)</p>
+            <p className="text-[10px] text-slate-500 mt-1">Core build 1.1.2.83152 (Stable)</p>
           </div>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />

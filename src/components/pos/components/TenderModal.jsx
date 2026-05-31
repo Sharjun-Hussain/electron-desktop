@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -87,6 +87,36 @@ const TenderModal = ({
     return bal > 0 ? bal : 0;
   }, [totalPaid, totalAmount]);
 
+  // Broadcast payment updates in real-time to the secondary customer display
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const channel = new BroadcastChannel("pos_customer_display");
+      if (isOpen) {
+        channel.postMessage({
+          type: "payment_update",
+          payload: {
+            isOpen: true,
+            totalAmount,
+            selectedMethod,
+            payments,
+            balance,
+            totalPaid
+          }
+        });
+      } else {
+        channel.postMessage({
+          type: "payment_update",
+          payload: {
+            isOpen: false
+          }
+        });
+      }
+      return () => {
+        channel.close();
+      };
+    }
+  }, [isOpen, totalAmount, selectedMethod, payments, balance, totalPaid]);
+
   const handlePayClick = () => {
     const paymentArray = Object.entries(payments)
       .filter(([_, amount]) => amount > 0)
@@ -128,7 +158,8 @@ const TenderModal = ({
         }}
       >
         <div className="bg-[#1e293b] p-4 px-6 flex items-center justify-between shrink-0">
-            <h2 className="text-white font-black text-lg tracking-tight uppercase">Payment Settlement</h2>
+            <DialogTitle className="text-white font-black text-lg tracking-tight uppercase">Payment Settlement</DialogTitle>
+            <DialogDescription className="sr-only">Finalize the payment for the current transaction.</DialogDescription>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-8 pt-6 space-y-6">

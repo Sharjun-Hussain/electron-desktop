@@ -117,7 +117,7 @@ export default function ExpenseManagement() {
   }, [status, session, fetchExpenses, fetchCategories]);
 
   const handleEdit = (expense) => router.push(`/expenses/edit?id=${expense.id}`);
-  const handleView = (expense) => router.push(`/expenses/view?id=${expense.id}`);
+  const handleView = (expense) => router.push(`/expenses/${expense.id}`);
   const handleDelete = async (id) => {
     if (!confirm("Delete this expense record?")) return;
     toast.promise(

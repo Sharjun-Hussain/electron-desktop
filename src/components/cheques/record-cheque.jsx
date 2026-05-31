@@ -270,7 +270,7 @@ export default function RecordCheque() {
                               <Button
                                 variant="outline"
                                 className={cn(
-                                  "w-full h-9 pl-3 text-left font-normal bg-white border-gray-200 focus:ring-emerald-500/20 focus:border-emerald-500",
+                                  "w-full h-9 pl-3 text-left font-normal bg-background border-border focus:ring-emerald-500/20 focus:border-emerald-500",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >

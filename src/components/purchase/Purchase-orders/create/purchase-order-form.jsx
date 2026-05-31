@@ -22,10 +22,13 @@ import {
   Search,
   X,
   Loader2,
+  Paperclip,
   FileSpreadsheet,
   Upload,
-  Paperclip,
   Barcode,
+  Layers,
+  Minimize2,
+  Maximize2,
 } from "lucide-react";
 
 import {
@@ -36,6 +39,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreatePOSkeleton } from "@/app/skeletons/purchases/create-po-skeleton";
 import { AddSupplierSheet as CreateSupplierSheet } from "@/components/purchase/suppliers/AddSupplierSheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ProductForm } from "@/components/products/new/product-form";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -122,13 +127,15 @@ const formSchema = z.object({
   reference: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(itemSchema).min(1, "Add at least one item"),
+  overallDiscount: z.coerce.number().min(0).optional().default(0),
   paymentTerms: z.string().optional(),
   deliveryAddress: z.string().optional(),
 });
 
 // --- 3. Helper Component for Product Search (UX Focus) ---
-const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
+const ProductSelect = ({ value, onChange, products, autoFocus, onSelect, onCreateProduct }) => {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Handle both string and number IDs
   const selectedProduct = products.find((p) => String(p.id) === String(value));
@@ -139,6 +146,20 @@ const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
     }
   }, [autoFocus]);
 
+  // Performance Optimization: Filter products manually and limit results to improve rendering speed
+  const filteredItems = useMemo(() => {
+    const search = searchQuery.toLowerCase().trim();
+    if (!search) return products.slice(0, 50); // Show first 50 by default
+
+    return products
+      .filter(p =>
+        (p.fullName || "").toLowerCase().includes(search) ||
+        (p.sku || "").toLowerCase().includes(search) ||
+        (p.barcode || "").toLowerCase().includes(search)
+      )
+      .slice(0, 50); // Only render top 50 matches to keep it fast
+  }, [products, searchQuery]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -147,12 +168,12 @@ const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between bg-transparent border-0 border-b-2 rounded-none shadow-none hover:bg-transparent hover:border-primary/20 focus:border-primary/80 pl-3 text-left font-normal",
+            "w-full justify-between bg-transparent border-0 border-b-2 rounded-none shadow-none hover:bg-transparent hover:border-primary/20 focus:border-primary/80 pl-3 text-left font-normal min-h-9 h-auto py-2",
             !value && "text-muted-foreground"
           )}
         >
           {selectedProduct ? (
-            <span className="truncate font-medium">{selectedProduct.fullName || selectedProduct.name}</span>
+            <span className="font-medium whitespace-normal line-clamp-3">{selectedProduct.fullName || selectedProduct.name}</span>
           ) : (
             "Select product/variant..."
           )}
@@ -160,18 +181,39 @@ const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search by name or SKU..." />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search by name or SKU..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
           <CommandList>
-            <CommandEmpty>No product found.</CommandEmpty>
+            <CommandEmpty className="py-6 flex flex-col items-center gap-3">
+              <p className="text-sm text-muted-foreground">No product found.</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-50"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onCreateProduct();
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create New Product
+              </Button>
+            </CommandEmpty>
             <CommandGroup>
-              {products.map((product, idx) => (
+              {filteredItems.map((product, idx) => (
                 <CommandItem
                   key={`${product.id}-${idx}`}
                   value={`${product.fullName} ${product.sku || ''} ${product.barcode || ''}`}
                   onSelect={() => {
                     onChange(product.id);
                     setOpen(false);
+                    setSearchQuery(""); // Clear for next use
                     if (onSelect) onSelect();
                   }}
                 >
@@ -193,7 +235,6 @@ const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
                     <div className="flex justify-between items-center mt-1">
                       <span className="text-xs text-muted-foreground">
                         Stock:
-                        {/* Optional chaining for null safety as requested */}
                         <span
                           className={cn(
                             "ml-1 font-medium",
@@ -206,7 +247,6 @@ const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
                         </span>
                       </span>
                       <span className="text-xs font-medium text-muted-foreground">
-                        {/* Assuming cost_price is available, otherwise 0 */}
                         LKR {(Number(product.cost_price) || 0).toLocaleString()}
                       </span>
                     </div>
@@ -228,6 +268,7 @@ export default function CreatePurchaseOrder({ initialData }) {
   const duplicateId = searchParams.get("duplicateId");
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [isDocsMinimized, setIsDocsMinimized] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newItemAdded, setNewItemAdded] = useState(false);
@@ -241,9 +282,17 @@ export default function CreatePurchaseOrder({ initialData }) {
   const [orderDateOpen, setOrderDateOpen] = useState(false);
   const [expectedDateOpen, setExpectedDateOpen] = useState(false);
   const [isCreateSupplierOpen, setIsCreateSupplierOpen] = useState(false);
+  const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
+  const [prefillProductData, setPrefillProductData] = useState(null);
+  const [pendingItemIndex, setPendingItemIndex] = useState(null);
+
+  // Barcode specific states
+  const [multipleMatches, setMultipleMatches] = useState([]);
+  const [isMultipleMatchesOpen, setIsMultipleMatchesOpen] = useState(false);
+  const [notFoundBarcode, setNotFoundBarcode] = useState(null);
 
   // New Feature: Filter by Supplier
-  const [filterBySupplier, setFilterBySupplier] = useState(true);
+  const [filterBySupplier, setFilterBySupplier] = useState(false);
 
   // Refs for focus management
   const unitCostRef = useRef(null);
@@ -285,6 +334,7 @@ export default function CreatePurchaseOrder({ initialData }) {
             notes: "",
           },
         ],
+      overallDiscount: Number(initialData?.discount_amount) || 0,
     },
   });
 
@@ -317,6 +367,7 @@ export default function CreatePurchaseOrder({ initialData }) {
               notes: "",
             },
           ],
+        overallDiscount: Number(initialData.discount_amount) || 0,
       });
     }
   }, [initialData, form, session?.user?.branch_id]);
@@ -378,15 +429,13 @@ export default function CreatePurchaseOrder({ initialData }) {
           setProducts(flattened);
         }
 
-        // Fetch branches if Super Admin
-        if (isSuperAdmin) {
-          const branchesRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
-            headers: { Authorization: `Bearer ${session.accessToken}` },
-          });
-          if (branchesRes.ok) {
-            const data = await branchesRes.json();
-            setBranches(data.data || []);
-          }
+        // Fetch branches
+        const branchesRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        });
+        if (branchesRes.ok) {
+          const data = await branchesRes.json();
+          setBranches(data.data || []);
         }
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -399,12 +448,28 @@ export default function CreatePurchaseOrder({ initialData }) {
     if (session?.accessToken) {
       fetchData();
     }
-  }, [session?.accessToken, isSuperAdmin, form.watch("branchId")]);
+  }, [session?.accessToken, form.watch("branchId")]);
 
-  // Keyboard Shortcut: Ctrl + n to add new item
+  // Auto-select Branch if only one exists or find the main branch
+  useEffect(() => {
+    if (branches.length > 0 && !form.getValues("branchId")) {
+      if (branches.length === 1) {
+        form.setValue("branchId", String(branches[0].id));
+        form.clearErrors("branchId");
+      } else {
+        const mainBranch = branches.find(b => b.is_main || b.name?.toLowerCase().includes("main"));
+        if (mainBranch) {
+          form.setValue("branchId", String(mainBranch.id));
+          form.clearErrors("branchId");
+        }
+      }
+    }
+  }, [branches, form]);
+
+  // Keyboard Shortcut: Ctrl + n or F2 to add new item
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+      if (((e.ctrlKey || e.metaKey) && e.key === "n") || e.key === "F2") {
         e.preventDefault();
         prepend({ productId: "", unitCost: 0, quantity: 1 });
         setNewItemAdded(true);
@@ -426,6 +491,14 @@ export default function CreatePurchaseOrder({ initialData }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Auto-focus barcode scanner on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      document.getElementById("barcode-scanner-input")?.focus();
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Reset newItemAdded after focus is handled (optional, but good for cleanup)
@@ -549,17 +622,22 @@ export default function CreatePurchaseOrder({ initialData }) {
 
   // Calculations
   const watchedItems = form.watch("items");
+  const watchedOverallDiscount = form.watch("overallDiscount");
+
   const calculateTotals = () => {
     const subtotal = watchedItems.reduce((acc, item) => {
-      return acc + (Number(item.unitCost) || 0) * (Number(item.quantity) || 0);
+      const baseTotal = (Number(item.unitCost) || 0) * (Number(item.quantity) || 0);
+      const discountAmount = baseTotal * ((Number(item.discount) || 0) / 100);
+      return acc + (baseTotal - discountAmount);
     }, 0);
+    const overallDiscount = Number(watchedOverallDiscount) || 0;
     const taxRate = 0.0;
     const tax = subtotal * taxRate;
-    const total = subtotal + tax;
-    return { subtotal, tax, total };
+    const total = Math.max(0, subtotal + tax - overallDiscount);
+    return { subtotal, overallDiscount, tax, total };
   };
 
-  const { subtotal, total } = calculateTotals();
+  const { subtotal, overallDiscount, total } = calculateTotals();
 
   // --- Filtered Products Logic ---
   const selectedSupplierId = form.watch("supplierId");
@@ -596,44 +674,90 @@ export default function CreatePurchaseOrder({ initialData }) {
     }
   };
 
+  const processBarcodeMatch = (variant) => {
+    const currentItems = form.getValues("items");
+
+    // Check if it exists to increment quantity
+    const existingIndex = currentItems.findIndex(item => String(item.productId) === String(variant.id));
+
+    if (existingIndex > -1 && currentItems[existingIndex].productId !== "") {
+      const qty = Number(currentItems[existingIndex].quantity) || 0;
+      form.setValue(`items.${existingIndex}.quantity`, qty + 1);
+    } else {
+      // If first item is empty, use it. Otherwise prepend.
+      if (currentItems.length === 1 && !currentItems[0].productId) {
+        form.setValue("items.0.productId", String(variant.id));
+        form.setValue("items.0.unitCost", Number(variant.cost_price) || 0);
+      } else {
+        prepend({
+          productId: String(variant.id),
+          unitCost: Number(variant.cost_price) || 0,
+          quantity: 1,
+          discount: 0,
+          taxRate: 0,
+          notes: "",
+        });
+      }
+    }
+    setBarcodeInput("");
+
+    // Ensure focus stays on the scanner for the next item
+    setTimeout(() => {
+      document.getElementById("barcode-scanner-input")?.focus();
+    }, 50);
+  };
+
+  useEffect(() => {
+    if (!barcodeInput) return;
+
+    const handler = setTimeout(() => {
+      const code = barcodeInput.trim();
+      if (!code) return;
+
+      const matchingVariants = products.filter((p) =>
+        String(p.barcode || "").trim() === code ||
+        String(p.sku || "").trim() === code ||
+        String(p.id).trim() === code
+      );
+
+      if (matchingVariants.length === 1) {
+        processBarcodeMatch(matchingVariants[0]);
+      } else if (matchingVariants.length > 1) {
+        setMultipleMatches(matchingVariants);
+        setIsMultipleMatchesOpen(true);
+        setBarcodeInput("");
+      } else {
+        // Not found - show alert if reasonable length to prevent annoying popups while typing manually
+        if (code.length >= 4) {
+          setNotFoundBarcode(code);
+          setBarcodeInput("");
+        }
+      }
+    }, 400); // slightly longer debounce to allow manual typing without aggressive popups
+
+    return () => clearTimeout(handler);
+  }, [barcodeInput, products, form, prepend]);
+
   const handleBarcodeKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const code = barcodeInput.trim();
       if (!code) return;
 
-      const variant = products.find((p) => p.barcode === code || p.sku === code);
-      if (variant) {
-        const currentItems = form.getValues("items");
+      const matchingVariants = products.filter((p) =>
+        String(p.barcode || "").trim() === code ||
+        String(p.sku || "").trim() === code ||
+        String(p.id).trim() === code
+      );
 
-        // Check if it exists to increment quantity
-        const existingIndex = currentItems.findIndex(item => String(item.productId) === String(variant.id));
-
-        if (existingIndex > -1 && currentItems[existingIndex].productId !== "") {
-          const qty = Number(currentItems[existingIndex].quantity) || 0;
-          form.setValue(`items.${existingIndex}.quantity`, qty + 1);
-          toast.success(`Increased quantity for ${variant.fullName}`);
-        } else {
-          // If first item is empty, use it. Otherwise prepend.
-          if (currentItems.length === 1 && !currentItems[0].productId) {
-            form.setValue("items.0.productId", String(variant.id));
-            form.setValue("items.0.unitCost", Number(variant.cost_price) || 0);
-            toast.success(`Selected ${variant.fullName}`);
-          } else {
-            prepend({
-              productId: String(variant.id),
-              unitCost: Number(variant.cost_price) || 0,
-              quantity: 1,
-              discount: 0,
-              taxRate: 0,
-              notes: "",
-            });
-            toast.success(`Added ${variant.fullName}`);
-          }
-        }
+      if (matchingVariants.length === 1) {
+        processBarcodeMatch(matchingVariants[0]);
+      } else if (matchingVariants.length > 1) {
+        setMultipleMatches(matchingVariants);
+        setIsMultipleMatchesOpen(true);
         setBarcodeInput("");
       } else {
-        toast.error("Product not found");
+        setNotFoundBarcode(code);
         setBarcodeInput("");
       }
     }
@@ -656,16 +780,18 @@ export default function CreatePurchaseOrder({ initialData }) {
         payment_terms: data.paymentTerms || "Net 30",
         delivery_address: data.deliveryAddress || "",
         notes: data.notes || "",
+        discount_amount: data.overallDiscount || 0,
         status: initialData?.status || "pending",
         items: data.items.map((item) => ({
           variant_id: item.productId, // This is the variant ID from the flattened list
           quantity_ordered: Number(item.quantity),
           unit_cost: Number(item.unitCost),
+          discount: Number(item.discount) || 0,
           notes: item.notes || "",
         })),
       };
 
-      console.log("Submitting Payload:", payload);
+
 
       const url = isEditing
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders/${initialData.id}`
@@ -724,6 +850,42 @@ export default function CreatePurchaseOrder({ initialData }) {
     return <CreatePOSkeleton />;
   }
 
+  const handleProductCreated = (newProduct) => {
+    // Flatten the new product variant (if multiple variants, take the first or the one created)
+    const newVariant = newProduct.variants?.[0] || newProduct;
+    const formattedVariant = {
+      ...newVariant,
+      productName: newProduct.name || newVariant.productName,
+      fullName: `${newProduct.name || newVariant.productName} - ${newVariant.name || newVariant.sku || newVariant.barcode || 'Default'}`,
+      parentProduct: newProduct
+    };
+
+    setProducts(prev => [...prev, formattedVariant]);
+
+    if (pendingItemIndex !== null) {
+      handleProductSelect(pendingItemIndex, formattedVariant.id);
+    } else {
+      // From global scan, add to list
+      const currentItems = form.getValues("items");
+      if (currentItems.length === 1 && !currentItems[0].productId) {
+        form.setValue("items.0.productId", String(formattedVariant.id));
+        form.setValue("items.0.unitCost", Number(formattedVariant.cost_price) || 0);
+      } else {
+        prepend({
+          productId: String(formattedVariant.id),
+          unitCost: Number(formattedVariant.cost_price) || 0,
+          quantity: 1,
+          discount: 0,
+          taxRate: 0,
+          notes: "",
+        });
+      }
+    }
+
+    setIsCreateProductOpen(false);
+    setPrefillProductData(null);
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
       {/* ── Premium Header ── */}
@@ -761,9 +923,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                     <Building2 className="w-4 h-4 text-emerald-600" />
                     <CardTitle className="text-[13px] font-bold">Supplier & Delivery Details</CardTitle>
                   </div>
-                  <Badge variant="outline" className="bg-background text-[10px] font-bold border-border/60">
-                    Step 1: Basic Information
-                  </Badge>
+
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
@@ -823,7 +983,8 @@ export default function CreatePurchaseOrder({ initialData }) {
                                         value={supplier.name}
                                         key={supplier.id}
                                         onSelect={() => {
-                                          form.setValue("supplierId", supplier.id);
+                                          form.setValue("supplierId", String(supplier.id));
+                                          form.clearErrors("supplierId");
                                           setSupplierOpen(false);
                                         }}
                                       >
@@ -894,6 +1055,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                                         key={branch.id}
                                         onSelect={() => {
                                           form.setValue("branchId", String(branch.id));
+                                          form.clearErrors("branchId");
                                           setBranchOpen(false);
                                         }}
                                       >
@@ -945,12 +1107,12 @@ export default function CreatePurchaseOrder({ initialData }) {
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full h-11 pl-3 text-left font-medium border-border/60 hover:border-emerald-500/30 transition-all",
+                                    "w-full justify-start text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
-                                  {field.value ? format(field.value, "PPP") : "Set Date"}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-40 text-emerald-600" />
+                                  <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                                  {field.value ? format(field.value, "PPP") : <span>Set Date</span>}
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -985,12 +1147,12 @@ export default function CreatePurchaseOrder({ initialData }) {
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full h-11 pl-3 text-left font-medium border-border/60 hover:border-blue-500/30 transition-all",
-                                    !field.value && "text-muted-foreground font-normal"
+                                    "w-full justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
                                   )}
                                 >
-                                  {field.value ? format(field.value, "PPP") : "Estimate Delivery Target"}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-40 text-blue-600" />
+                                  <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                                  {field.value ? format(field.value, "PPP") : <span>Estimate Delivery Target</span>}
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -1107,80 +1269,72 @@ export default function CreatePurchaseOrder({ initialData }) {
             {/* Full Width: Documentation & Protocol Attachments */}
             <div className="xl:col-span-12">
               <Card className="border border-border/40 shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
-                <CardHeader className="bg-muted/50 dark:bg-muted/20 border-b border-border/40 px-5 py-3 flex flex-row items-center justify-between space-y-0">
+                <CardHeader
+                  className="bg-muted/50 dark:bg-muted/20 border-b border-border/40 px-5 py-3 flex flex-row items-center justify-between space-y-0 cursor-pointer hover:bg-muted/70 transition-colors"
+                  onClick={() => setIsDocsMinimized(!isDocsMinimized)}
+                >
                   <div className="flex items-center gap-2">
                     <Paperclip className="w-4 h-4 text-emerald-600" />
                     <CardTitle className="text-[13px] font-bold">Documentation & Protocols</CardTitle>
                   </div>
-                  <Badge variant="outline" className="bg-background text-[10px] font-bold border-border/60">
-                    Compliance Artifacts
-                  </Badge>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
-                    {/* Upload Zone */}
-                    <div className="lg:col-span-4 relative group/upload">
-                      <Input
-                        type="file"
-                        multiple
-                        className="hidden"
-                        id="file-upload"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files);
-                          setSelectedFiles(prev => [...prev, ...files]);
-                        }}
-                      />
-                      <label
-                        htmlFor="file-upload"
-                        className="flex flex-col items-center justify-center border-2 border-dashed border-border/60 rounded-2xl p-8 bg-muted/20 hover:bg-emerald-500/5 hover:border-emerald-500/30 cursor-pointer transition-all group"
-                      >
-                        <div className="bg-background p-3 rounded-xl shadow-sm mb-3 group-hover:scale-110 transition-transform border border-border/40">
-                          <Upload className="w-6 h-6 text-emerald-600" />
-                        </div>
-                        <span className="text-sm font-bold text-foreground">Attach Procurement Artifacts</span>
-                        <span className="text-[11px] text-muted-foreground mt-2 text-center max-w-[200px]">Drag and drop or click to upload quotes, agreements or invoices</span>
-                      </label>
+                  <div className="flex items-center gap-4">
+                    <Badge variant="outline" className="bg-background text-[10px] font-bold border-border/60">
+                      Compliance Artifacts
+                    </Badge>
+                    <div className="text-muted-foreground">
+                      {isDocsMinimized ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
                     </div>
-
-                    {/* File List */}
-                    <div className="lg:col-span-8">
-                      {selectedFiles.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                  </div>
+                </CardHeader>
+                <div className={cn(isDocsMinimized && "hidden")}>
+                  <CardContent className="p-6">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-4">
+                        <Input
+                          type="file"
+                          multiple
+                          id="file-upload"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            setSelectedFiles(prev => [...prev, ...files]);
+                          }}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          className="flex items-center justify-center gap-2 h-9 px-4 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm shadow-sm transition-colors shrink-0"
+                        >
+                          <Paperclip className="h-4 w-4 shrink-0" />
+                          <span>Attach Document</span>
+                        </label>
+                        <span className="text-sm text-muted-foreground truncate">
+                          {selectedFiles.length > 0 ? `${selectedFiles.length} files selected` : "No documents attached yet."}
+                        </span>
+                      </div>
+                      
+                      {selectedFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
                           {selectedFiles.map((file, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-background border border-border/60 shadow-sm group hover:border-emerald-500/30 transition-all animate-in fade-in zoom-in-95 duration-300">
-                              <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="h-10 w-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                  <Paperclip className="w-5 h-5" />
-                                </div>
-                                <div className="flex flex-col truncate">
-                                  <span className="text-xs font-bold text-foreground truncate">{file.name}</span>
-                                  <span className="text-[10px] text-muted-foreground uppercase font-medium">{(file.size / 1024).toFixed(1)} KB</span>
-                                </div>
-                              </div>
+                            <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-md border border-border text-sm">
+                              <span className="truncate max-w-[200px] text-foreground">{file.name}</span>
+                              <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(0)} KB)</span>
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 hover:bg-red-50 text-muted-foreground hover:text-red-600 rounded-lg transition-colors"
+                                className="h-5 w-5 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 text-muted-foreground hover:text-red-600 rounded-full ml-1"
                                 onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
                               >
-                                <X className="w-4 h-4" />
+                                <X className="w-3 h-3" />
                               </Button>
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        <div className="h-full min-h-[160px] border-2 border-dotted border-border/40 rounded-2xl flex flex-col items-center justify-center bg-muted/10 opacity-60">
-                          <div className="p-3 bg-muted/40 rounded-full mb-2">
-                            <Info className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <p className="text-xs font-medium text-muted-foreground">No documents attached to this order yet.</p>
-                        </div>
                       )}
                     </div>
-                  </div>
-                </CardContent>
+                  </CardContent>
+                </div>
               </Card>
             </div>
           </div>
@@ -1235,32 +1389,35 @@ export default function CreatePurchaseOrder({ initialData }) {
                   }}
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add Row
+                  Add Row (F2)
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="p-4 md:p-5">
               {/* Table Header - Desktop (More compact) */}
               <div className="hidden md:grid grid-cols-12 gap-4 mb-3 text-[10px] font-bold text-muted-foreground/60 uppercase px-4">
-                <div className="col-span-1 md:col-span-5">Product Discovery & Selection</div>
+                <div className="col-span-1 md:col-span-4">Product Discovery & Selection</div>
                 <div className="col-span-1 md:col-span-2">Unit cost (LKR)</div>
                 <div className="col-span-1 md:col-span-1">QTY</div>
+                <div className="col-span-1 md:col-span-2">Discount (%)</div>
                 <div className="col-span-1 md:col-span-2 text-right">Line Subtotal</div>
-                <div className="col-span-1 md:col-span-2 text-right">Actions</div>
+                <div className="col-span-1 md:col-span-1 text-right">Actions</div>
               </div>
 
               {/* Dynamic Rows (Compact gaps) */}
               <div className="space-y-2">
                 {fields.map((field, index) => {
                   const isFirstItem = index === 0;
-                  const currentCost =
-                    form.getValues(`items.${index}.unitCost`) || 0;
-                  const currentQty =
-                    form.getValues(`items.${index}.quantity`) || 0;
-                  const lineTotal = (currentCost * currentQty).toLocaleString(
-                    "en-LK",
-                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                  );
+                  const currentCost = form.getValues(`items.${index}.unitCost`) || 0;
+                  const currentQty = form.getValues(`items.${index}.quantity`) || 0;
+                  const currentDiscount = form.getValues(`items.${index}.discount`) || 0;
+                  const baseTotal = currentCost * currentQty;
+                  const discountAmount = baseTotal * (currentDiscount / 100);
+                  const lineTotalAmount = baseTotal - discountAmount;
+                  const lineTotal = lineTotalAmount.toLocaleString("en-LK", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
 
                   return (
                     <Collapsible
@@ -1270,7 +1427,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                       <div className="p-2 px-4">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                           {/* 1. Product Select (Low padding) */}
-                          <div className="col-span-1 md:col-span-5">
+                          <div className="col-span-1 md:col-span-4">
                             <ProductSelect
                               value={form.watch(`items.${index}.productId`)}
                               products={filteredProducts}
@@ -1278,6 +1435,10 @@ export default function CreatePurchaseOrder({ initialData }) {
                               onChange={(val) =>
                                 handleProductSelect(index, val)
                               }
+                              onCreateProduct={() => {
+                                setPendingItemIndex(index);
+                                setIsCreateProductOpen(true);
+                              }}
                             />
                           </div>
 
@@ -1338,26 +1499,60 @@ export default function CreatePurchaseOrder({ initialData }) {
                             />
                           </div>
 
-                          {/* 4. Line Total & Actions */}
+                          {/* 4. Discount */}
+                          <div className="col-span-1 md:col-span-2">
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.discount`}
+                              render={({ field }) => (
+                                <FormItem className="space-y-0">
+                                  <FormControl>
+                                    <div className="relative group/input">
+                                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
+                                        %
+                                      </span>
+                                      <Input
+                                        type="number"
+                                        className="pr-8 focus:ring-emerald-500/20"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                        {...field}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </div>
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* 5. Line Total & Actions */}
                           <div className="col-span-1 md:col-span-2 text-right overflow-hidden">
                             <p className="font-bold text-foreground text-[13px] break-all">
                               {lineTotal}
                             </p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 opacity-60">
+                              LKR {(currentCost * currentQty).toLocaleString("en-LK", { minimumFractionDigits: 2 })} Base
+                            </p>
                           </div>
 
-                          <div className="col-span-1 md:col-span-2 flex items-center justify-end gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
+                          <div className="col-span-1 md:col-span-1 flex items-center justify-end gap-1">
                             <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-slate-100">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 rounded-full hover:bg-muted"
+                              >
                                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                               </Button>
                             </CollapsibleTrigger>
                             <Button
-                              type="button"
                               variant="ghost"
-                              size="icon"
-                              className="text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 h-8 w-8 rounded-lg"
+                              size="sm"
+                              type="button"
                               onClick={() => remove(index)}
-                              disabled={fields.length === 1}
+                              className="h-8 w-8 p-0 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -1368,29 +1563,6 @@ export default function CreatePurchaseOrder({ initialData }) {
                       {/* --- EXPANDABLE SECTION (Accordion) --- */}
                       <CollapsibleContent className="bg-muted/20 border-t border-border/30 px-4 py-4 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Discount Field */}
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.discount`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs text-muted-foreground">
-                                  Discount (%)
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    className="bg-background h-9"
-                                    placeholder="0"
-                                    {...field}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-
                           {/* Tax Rate Field */}
                           <FormField
                             control={form.control}
@@ -1453,6 +1625,29 @@ export default function CreatePurchaseOrder({ initialData }) {
                       LKR {subtotal.toLocaleString("en-LK", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
+
+                  <div className="space-y-1 overflow-hidden">
+                    <FormField
+                      control={form.control}
+                      name="overallDiscount"
+                      render={({ field }) => (
+                        <FormItem className="space-y-0.5">
+                          <FormLabel className="text-[10px] font-bold text-muted-foreground uppercase truncate m-0">General Discount (LKR)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              className="h-9 w-full bg-background border-border/60 focus:ring-emerald-500/20 px-3 font-semibold text-sm rounded-lg"
+                              {...field}
+                              onFocus={(e) => e.target.select()}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <div className="space-y-1 overflow-hidden">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase truncate">Tax (VAT 0%)</p>
                     <p className="text-lg font-bold text-foreground leading-none pt-1 break-all">LKR 0.00</p>
@@ -1470,7 +1665,7 @@ export default function CreatePurchaseOrder({ initialData }) {
                     type="button"
                     variant="ghost"
                     onClick={() => router.back()}
-                    className="font-bold text-muted-foreground hover:bg-muted/50"
+                    className="font-bold text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
                   >
                     Discard
                   </Button>
@@ -1504,6 +1699,121 @@ export default function CreatePurchaseOrder({ initialData }) {
           setSupplierOpen(false);
         }}
       />
+      {/* Create Product Dialog */}
+      <Dialog open={isCreateProductOpen} onOpenChange={setIsCreateProductOpen}>
+        <DialogContent className="sm:max-w-[95vw] w-[95vw] h-[95vh] flex flex-col p-0 border-none shadow-2xl overflow-hidden rounded-2xl bg-background">
+          <div className="px-6 py-4 bg-muted/30 border-b border-border/40 shrink-0">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">Create New Product</DialogTitle>
+              <DialogDescription className="text-xs">
+                Add a new product to your inventory and include it in this purchase order.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <ProductForm
+              isModal={true}
+              onSuccess={handleProductCreated}
+              prefillData={prefillProductData}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Multiple Matches Dialog */}
+      <Dialog open={isMultipleMatchesOpen} onOpenChange={setIsMultipleMatchesOpen}>
+        <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden rounded-2xl border-border/50 shadow-2xl">
+          <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-6 border-b border-border/40">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-500/20 rounded-xl">
+                  <Layers className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-bold tracking-tight text-foreground">Multiple Products Found</DialogTitle>
+                  <DialogDescription className="text-xs mt-1 text-muted-foreground/80 font-medium">
+                    Several variants share this exact barcode. Please select the correct item below to add to the order.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border">
+              {multipleMatches.map((product, idx) => (
+                <button
+                  key={`${product.id}-${idx}`}
+                  type="button"
+                  className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-emerald-50 hover:border-emerald-200 transition-all text-left group ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                  onClick={() => {
+                    processBarcodeMatch(product);
+                    setIsMultipleMatchesOpen(false);
+                    setMultipleMatches([]);
+                  }}
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <span className="font-bold text-sm text-foreground group-hover:text-emerald-700 transition-colors">
+                      {product.fullName || product.name}
+                    </span>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
+                      <span className="flex items-center gap-1"><Hash className="h-3 w-3" /> SKU: {product.sku || "N/A"}</span>
+                      <span className="w-1 h-1 rounded-full bg-border"></span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">LKR {(Number(product.cost_price) || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge variant={(product.stock_quantity || 0) > 0 ? "success" : "destructive"} className="shadow-sm">
+                      {product.stock_quantity || 0} in stock
+                    </Badge>
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
+                      <Plus className="h-3 w-3 text-emerald-700" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Not Found Alert Dialog */}
+      <Dialog open={!!notFoundBarcode} onOpenChange={(open) => !open && setNotFoundBarcode(null)}>
+        <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border-border/50 shadow-2xl">
+          <div className="bg-gradient-to-br from-rose-500/10 to-orange-500/5 p-6 border-b border-border/40 text-center flex flex-col items-center pt-8">
+            <div className="h-16 w-16 bg-rose-100 dark:bg-rose-500/20 rounded-full flex items-center justify-center mb-4 shadow-sm border border-rose-200 dark:border-rose-500/30">
+              <Info className="h-8 w-8 text-rose-600 dark:text-rose-400" />
+            </div>
+            <DialogHeader className="flex flex-col items-center">
+              <DialogTitle className="text-2xl font-black text-foreground tracking-tight">Product Not Found</DialogTitle>
+              <DialogDescription className="text-sm font-medium text-muted-foreground mt-2 max-w-[85%] text-center leading-relaxed">
+                We couldn't find any item matching the scanned barcode <strong className="text-foreground bg-muted px-1.5 py-0.5 rounded font-mono mx-1">{notFoundBarcode}</strong> in your inventory system.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-6 bg-card flex items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              className="h-11 px-6 font-bold hover:bg-muted/50 transition-colors"
+              onClick={() => setNotFoundBarcode(null)}
+            >
+              Cancel Scan
+            </Button>
+            <Button
+              className="h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md active:scale-95 transition-all flex items-center gap-2"
+              onClick={() => {
+                const code = notFoundBarcode;
+                setNotFoundBarcode(null);
+                setPrefillProductData({ barcode: code, sku: code });
+                setIsCreateProductOpen(true);
+                setPendingItemIndex(null);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Create Product Now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

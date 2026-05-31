@@ -67,6 +67,7 @@
     "nextjs-toploader": "^3.9.17",
     "papaparse": "^5.5.3",
     "qrcode.react": "^4.2.0",
+    "qz-tray": "^2.2.6",
     "react": "^19.2.1",
     "react-barcode": "^1.6.1",
     "react-day-picker": "^9.11.1",

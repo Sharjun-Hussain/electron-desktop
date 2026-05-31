@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useReactToPrint } from "react-to-print";
@@ -14,6 +14,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useShift } from "@/app/hooks/swr/useShift";
 import { useSettings } from "@/app/hooks/swr/useSettings";
 import { useFullscreen } from "@/hooks/use-fullscreen";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 import {
   Search, X, Loader2, Plus, Minus, Trash2,
@@ -21,7 +22,7 @@ import {
   ShoppingCart, RefreshCcw, ShieldCheck, CreditCard,
   Settings, User, Clock, Monitor, Calculator as CalcIcon,
   Maximize, Minimize, Printer, RotateCcw, PackageSearch,
-  LayoutGrid, Trash, Sun, Moon, Briefcase, AlertTriangle
+  LayoutGrid, Trash, Sun, Moon, Briefcase, AlertTriangle, UtensilsCrossed
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
+import { db } from "@/lib/indexedDB/db";
 import { usePosData } from "./hooks/usePosData";
 import { usePosCart } from "./hooks/usePosCart";
 import { usePosActions } from "./hooks/usePosActions";
@@ -42,7 +44,7 @@ import Calculator from "./components/Calculator";
 import { CustomerSelector } from "./components/CustomerSelector";
 import BatchSelectorDialog from "./components/BatchSelectorDialog";
 import TenderModal from "./components/TenderModal";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import clsx from "clsx";
 import { cn } from "@/lib/utils";
 
@@ -70,15 +72,36 @@ const ActionButton = ({ icon: Icon, label, shortcut, onClick, className, color =
 
 export default function ClassicPosPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryDiningType = searchParams ? searchParams.get("dining_type") : null;
+  const queryTableId = searchParams ? searchParams.get("dining_table_id") : null;
+  const queryTableNum = searchParams ? searchParams.get("table_number") : null;
+  const querySaleId = searchParams ? searchParams.get("sale_id") : null;
   const { theme, setTheme } = useTheme();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
-  const { data: session } = useSession();
-  const { receipt: receiptSettings, setReceiptSettings, business: localBusiness, setBusinessSettings, setGeneralSettings } = useSettingsStore();
+  const { isInstallAvailable, handleInstallClick } = usePwaInstall();
+  const { data: nextAuthSession } = useSession();
+  const { 
+    receipt: receiptSettings, setReceiptSettings, 
+    business: localBusiness, setBusinessSettings, 
+    setGeneralSettings,
+    session: localSession, setSession: setLocalSession
+  } = useSettingsStore();
+
+  // effectiveSession provides fallback to local storage if next-auth is loading/offline
+  const session = useMemo(() => nextAuthSession || localSession, [nextAuthSession, localSession]);
+
+  useEffect(() => {
+    if (nextAuthSession) {
+      setLocalSession(nextAuthSession);
+    }
+  }, [nextAuthSession, setLocalSession]);
   const { useBusinessSettings, useModularSettings } = useSettings();
   const { data: businessResponse } = useBusinessSettings();
   const { data: posResponse } = useModularSettings("pos");
   const { data: generalResponse } = useModularSettings("general");
   const { business, general, refreshSettings } = useAppSettings();
+  const isRestaurant = (business?.business_type || session?.user?.organization?.business_type || "").toLowerCase() === 'restaurant';
   const { t } = useTranslation();
   const { playBeep } = useBeep();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
@@ -86,12 +109,12 @@ export default function ClassicPosPage() {
   const { useActiveShift, openShift, closeShift } = useShift();
   const { data: activeShiftRes, isLoading: isShiftLoading } = useActiveShift();
   const activeShift = activeShiftRes?.data || null;
-
   const [isOnline, setIsOnline] = useState(true);
 
   // -- Clock --
   useEffect(() => {
     const t = setInterval(() => setCurrentDateTime(new Date()), 1000);
+    document.title = "POS | Inzeedo POS";
     return () => clearInterval(t);
   }, []);
 
@@ -104,8 +127,8 @@ export default function ClassicPosPage() {
   // -- Core hooks --
   const {
     allProducts, flattenedVariants, customers, distributors,
-    activeEmployees, selectedBranch, setSelectedBranch,
-    isLoading
+    activeEmployees, branches, selectedBranch, setSelectedBranch,
+    isLoading, refreshData
   } = usePosData();
   const { state, dispatch, handleSelectCustomer, handleSelectDistributor } = usePosCart();
 
@@ -129,6 +152,7 @@ export default function ClassicPosPage() {
   const [lastSaleInfo, setLastSaleInfo] = useState({ bill: 0, paid: 0, balance: 0, timestamp: null });
 
   const [barcodeInput, setBarcodeInput] = useState("");
+  const debouncedBarcodeInput = useDebounce(barcodeInput, 50);
   const [selectedCartIndex, setSelectedCartIndex] = useState(-1);
   const searchRef = useRef(null);
   const printRef = useRef(null);
@@ -144,9 +168,35 @@ export default function ClassicPosPage() {
     }
   }, [state.cart.length]);
 
+  const [pendingSalesCount, setPendingSalesCount] = useState(0);
+
   useEffect(() => {
     const saved = localStorage.getItem("pos_terminal_id");
     if (saved) setTerminalName(saved);
+
+    // Online/Offline Listeners
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOnline(navigator.onLine);
+    
+    // Monitor pending sales count for the UI badge
+    const checkPending = async () => {
+      try {
+        const count = await db.pendingSales.count();
+        setPendingSalesCount(count);
+      } catch (e) { console.error("Failed to count pending sales", e); }
+    };
+
+    const itv = setInterval(checkPending, 5000);
+    checkPending();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(itv);
+    };
   }, []);
 
   // -- Totals computation --
@@ -179,11 +229,30 @@ export default function ClassicPosPage() {
   const {
     handlePayNow: rawHandlePayNow, handleHoldSale: rawHandleHoldSale, fetchSales, deleteSale, resumeSale,
     searchSales,
-    fetchStock, clearStockData, salesData, isLoadingSales, stockData, isLoadingStock, syncPendingSales
+    fetchStock, clearStockData, salesData, isLoadingSales, stockData, isLoadingStock, syncPendingSales, isSyncing
   } = usePosActions({
     state, dispatch, selectedBranch, setPrintableSale,
     flattenedVariants, customers, distributors, setIsHoldListOpen,
   });
+
+  const [statusMessage, setStatusMessage] = useState("System Ready");
+  const [isVerboseLoading, setIsVerboseLoading] = useState(false);
+
+  // Verbose Status Monitor Logic
+  useEffect(() => {
+    if (isLoadingSales || isLoadingStock || isLoading) {
+      setIsVerboseLoading(true);
+      setStatusMessage("> Fetching Product & Stock Data...");
+    } else if (isSyncing) {
+      setIsVerboseLoading(true);
+      setStatusMessage(`> Syncing Offline Queue (${pendingSalesCount} left)...`);
+    } else if (pendingSalesCount > 0 && isOnline) {
+      setStatusMessage("> Preparing Cloud Sync...");
+    } else {
+      setIsVerboseLoading(false);
+      setStatusMessage(`System Ready - ${flattenedVariants.length} Items Loaded`);
+    }
+  }, [isLoadingSales, isLoadingStock, isLoading, isSyncing, pendingSalesCount, isOnline]);
 
   const handlePayNow = useCallback((args) => {
     const { onSuccess, billTotal, total_paid, balance, ...rest } = args;
@@ -191,6 +260,10 @@ export default function ClassicPosPage() {
     return rawHandlePayNow({
       ...rest,
       activeShiftId: activeShift?.id,
+      dining_type: queryDiningType || rest.dining_type,
+      dining_table_id: queryTableId || rest.dining_table_id,
+      sale_id: querySaleId || rest.sale_id,
+      waiter_id: session?.user?.id,
       onSuccess: () => {
         // Capture last bill details from the closure
         setLastSaleInfo({
@@ -203,8 +276,16 @@ export default function ClassicPosPage() {
         onSuccess?.();
       }
     });
-  }, [rawHandlePayNow, activeShift]);
-  const handleHoldSale = useCallback((args) => rawHandleHoldSale({ ...args, activeShiftId: activeShift?.id }), [rawHandleHoldSale, activeShift]);
+  }, [rawHandlePayNow, activeShift, queryDiningType, queryTableId, querySaleId, session]);
+
+  const handleHoldSale = useCallback((args) => rawHandleHoldSale({
+    ...args,
+    activeShiftId: activeShift?.id,
+    dining_type: queryDiningType || args.dining_type,
+    dining_table_id: queryTableId || args.dining_table_id,
+    sale_id: querySaleId || args.sale_id,
+    waiter_id: session?.user?.id
+  }), [rawHandleHoldSale, activeShift, queryDiningType, queryTableId, querySaleId, session]);
 
   // -- Print Logic (Sync with main-page.jsx) --
   const handleStandardPrint = useReactToPrint({
@@ -221,7 +302,7 @@ export default function ClassicPosPage() {
       try {
         const printerName = posResponse?.data?.receiptPrinterName || "DEFAULT";
         const html = printRef.current.innerHTML;
-        
+
         const fullHtml = `
           <html>
             <head>
@@ -234,9 +315,9 @@ export default function ClassicPosPage() {
           </html>
         `;
 
-        const result = await window.api.printSilent({ 
-          html: fullHtml, 
-          printerName: printerName === "DEFAULT" ? "" : printerName 
+        const result = await window.api.printSilent({
+          html: fullHtml,
+          printerName: printerName === "DEFAULT" ? "" : printerName
         });
 
         if (result.success) {
@@ -270,23 +351,23 @@ export default function ClassicPosPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // Predictive Search logic
+  // Predictive Search logic - Debounced for performance
   useEffect(() => {
-    if (barcodeInput.length > 1) {
-      const search = barcodeInput.toLowerCase();
+    if (debouncedBarcodeInput.length > 1) {
+      const search = debouncedBarcodeInput.toLowerCase();
       const results = flattenedVariants.filter(v =>
         v.barcode?.toLowerCase().includes(search) ||
         v.item_code?.toLowerCase().includes(search) ||
         v.sku?.toLowerCase().includes(search) ||
         v.name?.toLowerCase().includes(search)
-      ).slice(0, 8); // Show top 8 results
+      ).slice(0, 8);
       setSearchResults(results);
       setSelectedIndex(results.length > 0 ? 0 : -1);
     } else {
       setSearchResults([]);
       setSelectedIndex(-1);
     }
-  }, [barcodeInput, flattenedVariants]);
+  }, [debouncedBarcodeInput, flattenedVariants]);
 
   const handleSearchKeyDown = (e) => {
     if (searchResults.length > 0) {
@@ -307,14 +388,18 @@ export default function ClassicPosPage() {
     e.preventDefault();
     if (!barcodeInput) return;
 
-    if (selectedIndex > -1 && searchResults[selectedIndex]) {
-      handleAddToCart(searchResults[selectedIndex]);
+    const targetItem = selectedIndex > -1 ? searchResults[selectedIndex] : (searchResults.length > 0 ? searchResults[0] : null);
+    if (targetItem) {
+      handleAddToCart(targetItem);
       setBarcodeInput("");
       setSearchResults([]);
       playBeep("success");
+      return;
     }
 
-    const search = barcodeInput.toLowerCase();
+    const search = barcodeInput.trim().toLowerCase();
+    if (!search) return;
+
     const variant = flattenedVariants.find(v =>
       v.barcode?.toLowerCase() === search ||
       v.item_code?.toLowerCase() === search ||
@@ -334,28 +419,130 @@ export default function ClassicPosPage() {
     }
   };
 
-  const handleAddToCart = useCallback((item, quantity = 1, batch = null) => {
-    // If product has batches and no batch is selected, show modal
-    if (!batch && item.product_batches?.length > 1) {
-      setItemPendingBatch(item);
-      return;
+  const handleAddToCart = useCallback(async (rawItem, quantity = 1, skipBatchCheck = false) => {
+    let item = { ...rawItem };
+    const vId = item.variantId || item.id;
+
+    // --- 1. LOCAL BATCH LOOKUP (NEAR INSTANT) ---
+    let localBatches = item.batches || [];
+    
+    if (localBatches.length === 0 && !skipBatchCheck && vId) {
+      try {
+        // Try looking up by variantId first, then fallback to productId if it's a simple product
+        localBatches = await db.batches.where('variantId').equals(vId).toArray();
+        if (localBatches.length === 0) {
+           localBatches = await db.batches.where('productId').equals(item.productId || item.id).toArray();
+        }
+      } catch (err) { console.error("Local batch lookup failed:", err); }
     }
 
-    // Auto-pick first batch if only one exists and no batch specified
-    const selectedBatch = batch || (item.product_batches?.length === 1 ? item.product_batches[0] : null);
+    // --- 2. OPTIMISTIC ADD (ONLY IF NO LOCAL DATA) ---
+    // Only add a temporary row if we truly have to wait for the network
+    if (!skipBatchCheck && vId && localBatches.length === 0 && navigator.onLine) {
+      dispatch({
+        type: "ADD_ITEM",
+        payload: {
+          product: { ...item, stock: item.stock || 0 },
+          quantity,
+          batchId: 'pending', // Mark as pending to prevent duplicates
+          price: state.isWholesale ? (item.wholesalePrice || 0) : (item.retailPrice || 0)
+        }
+      });
+    }
+
+    // --- 3. CLOUD FETCH & SYNC (IF NEEDED) ---
+    if (!skipBatchCheck && vId && localBatches.length === 0 && navigator.onLine) {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/variants/${vId}/batches?branch_id=${selectedBranch?.id || ""}`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` }
+        });
+        const result = await res.json();
+        if (result.status === "success" && result.data) {
+          localBatches = result.data;
+          await db.batches.bulkPut(localBatches.map(b => ({ ...b, variantId: vId })));
+        }
+      } catch (err) { console.error("Cloud batch fetch failed:", err); }
+    }
+
+    // --- 4. FINAL RESOLUTION ---
+    if (localBatches.length > 0) {
+      const settings = posResponse?.data || receiptSettings || {};
+      const pricingMode = settings.posPricingMode || 'fifo';
+      const forceOnConflict = settings.enableBatchSelection === true;
+
+      if (localBatches.length === 1) {
+        const b = localBatches[0];
+        item.batchId = b.id;
+        item.expiry_date = b.expiry_date;
+        item.batch_number = b.batch_number;
+        item.price = state.isWholesale ? (Number(b.wholesale_price) || 0) : (Number(b.selling_price) || 0);
+      } else {
+        let shouldShowSelector = false;
+        if (pricingMode === 'manual_batch') shouldShowSelector = true;
+        else if (pricingMode === 'fifo' && forceOnConflict) {
+          const prices = new Set(localBatches.map(b => parseFloat(b.selling_price).toFixed(2)));
+          if (prices.size > 1) shouldShowSelector = true;
+        }
+
+        if (shouldShowSelector) {
+          // If we had a pending item, we should remove it before showing selector
+          dispatch({ type: "REMOVE_ITEM", payload: `${vId}_pending` });
+          setAvailableBatches(localBatches);
+          setItemPendingBatch({ item, quantity });
+          setIsBatchSelectorOpen(true);
+          return;
+        } else {
+          const b = localBatches[0];
+          item.batchId = b.id;
+          item.expiry_date = b.expiry_date;
+          item.batch_number = b.batch_number;
+          item.price = state.isWholesale ? (Number(b.wholesale_price) || 0) : (Number(b.selling_price) || 0);
+        }
+      }
+    }
+
+    // Replace the pending item or add the final resolved item
+    // Note: If we had a pending item, ADD_ITEM with the real batchId will either increment 
+    // or create a new row. We need to clear the 'pending' one if it exists.
+    if (!skipBatchCheck && vId) {
+      dispatch({ type: "REMOVE_ITEM", payload: `${vId}_pending` });
+    }
 
     dispatch({
       type: "ADD_ITEM",
       payload: {
-        product: { ...item, stock: item.stock || 0 },
+        product: { 
+          ...item, 
+          stock: item.stock || 0,
+          expiry_date: item.expiry_date || null,
+          batch_number: item.batch_number || null 
+        },
         quantity,
-        batch: selectedBatch
+        batchId: item.batchId || null,
+        price: item.price || (state.isWholesale ? item.wholesalePrice : item.retailPrice)
       }
     });
 
-    // Re-focus search for next scan
     setTimeout(() => searchRef.current?.focus(), 10);
-  }, [dispatch]);
+  }, [dispatch, session, receiptSettings, state.isWholesale, selectedBranch, posResponse]);
+
+  const handleBatchSelect = useCallback(async (batch) => {
+    if (!itemPendingBatch) return;
+    const { item, quantity } = itemPendingBatch;
+    
+    // Ensure this batch is cached locally
+    await db.batches.put({ ...batch, variantId: item.variantId || item.id });
+
+    handleAddToCart({
+      ...item,
+      batchId: batch.id,
+      price: state.isWholesale ? (Number(batch.wholesale_price) || 0) : (Number(batch.selling_price) || 0),
+      expiry_date: batch.expiry_date,
+      batch_number: batch.batch_number
+    }, quantity, true);
+    setIsBatchSelectorOpen(false);
+    setItemPendingBatch(null);
+  }, [itemPendingBatch, handleAddToCart, state.isWholesale]);
 
   const handleUpdateItem = useCallback((id, updates) => {
     dispatch({ type: "UPDATE_ITEM", payload: { id, ...updates } });
@@ -381,6 +568,13 @@ export default function ClassicPosPage() {
           searchRef.current?.focus();
           break;
         case "F2":
+          e.preventDefault();
+          if (isRestaurant) {
+            router.push("/dining");
+          } else {
+            dispatch({ type: "CLEAR_CART" });
+          }
+          break;
         case "Delete":
           e.preventDefault();
           dispatch({ type: "CLEAR_CART" });
@@ -462,6 +656,47 @@ export default function ClassicPosPage() {
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [handleHoldSale, handlePayNow, fetchSales, netBill, dispatch, clearStockData, state.cart, selectedCartIndex]);
 
+  // -- Navigation Guard: Prevent accidental back/refresh --
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (state.cart.length > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (state.cart.length > 0) {
+        if (!window.confirm("Active sale in progress. Are you sure you want to leave?")) {
+          // Push current state back into history to "stay" here
+          window.history.pushState(null, "", window.location.href);
+        } else {
+          router.push("/");
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    // Initialize history state to capture next back click
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [state.cart.length, router]);
+
+  const handleDashboardExit = () => {
+    if (state.cart.length > 0) {
+      if (window.confirm("You have items in your cart. Are you sure you want to exit to the Dashboard?")) {
+        router.push("/");
+      }
+    } else {
+      router.push("/");
+    }
+  };
+
   // -- Last added item --
   const lastItem = state.cart.length > 0 ? state.cart[state.cart.length - 1] : null;
 
@@ -474,7 +709,7 @@ export default function ClassicPosPage() {
             variant="ghost"
             size="icon"
             className="h-9 w-9 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 transition-all rounded-lg"
-            onClick={() => router.push("/")}
+            onClick={handleDashboardExit}
             title="Go to Dashboard"
           >
             <LayoutGrid className="h-5 w-5" />
@@ -483,8 +718,42 @@ export default function ClassicPosPage() {
           <div className="flex items-center gap-2 text-emerald-500 font-medium">
             <User className="h-5 w-5" />
             <span className="text-sm uppercase tracking-wide">
-              {session?.user?.name || "System"} [{activeShift?.invoice_prefix || "OFFLINE"}]
+              {session?.user?.name || "System"}
             </span>
+          </div>
+          <Separator orientation="vertical" className="h-6" />
+          
+          {/* --- SYNC & OFFLINE INDICATORS --- */}
+          <div className="flex items-center gap-3">
+             {/* Connection Status */}
+             <div className={cn(
+               "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border",
+               isOnline ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+             )}>
+               <div className={cn("h-2 w-2 rounded-full", isOnline ? "bg-emerald-500 animate-pulse" : "bg-amber-500")} />
+               {isOnline ? "System Online" : "System Local"}
+             </div>
+
+             {/* Pending Sync Counter */}
+             {pendingSalesCount > 0 && (
+               <Badge 
+                 variant="destructive" 
+                 className="flex items-center gap-2 py-1 px-3 bg-red-600 hover:bg-red-700 text-white border-none shadow-lg animate-pulse"
+               >
+                 <RefreshCcw className="h-3 w-3" />
+                 <span className="font-bold text-[10px] tracking-wide">
+                   {pendingSalesCount} PENDING SALES
+                 </span>
+               </Badge>
+             )}
+
+             {/* Data Optimization Progress */}
+             {isLoading && (
+               <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase animate-pulse">
+                 <Loader2 className="h-3 w-3 animate-spin" />
+                 Optimizing POS...
+               </div>
+             )}
           </div>
           <Separator orientation="vertical" className="h-6" />
           <CustomerSelector
@@ -532,85 +801,143 @@ export default function ClassicPosPage() {
         </div>
       </header>
 
-      {/* 2. Top Controls (Input & Flags) */}
       <div className="h-12 bg-muted/30 border-b border-border/30 flex items-center px-4 gap-6 shrink-0">
-        <div className="flex items-center gap-2 relative">
-          <span className="text-xs font-medium text-muted-foreground uppercase">Barcode / ItemCode</span>
-          <form onSubmit={handleBarcodeSubmit} className="relative">
-            <div className="flex items-center gap-2">
-              <input
-                autoFocus
-                ref={searchRef}
-                value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                className="bg-yellow-400 dark:bg-yellow-500 text-black font-black px-4 py-1 h-11 w-96 outline-none border-none rounded-lg shadow-inner focus:ring-2 focus:ring-yellow-600 transition-all uppercase font-mono text-base"
-                placeholder="SCAN OR TYPE... (F1)"
-              />
+        <div className="flex items-center gap-2 relative w-full">
+          {isRestaurant ? (
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 h-11 uppercase flex gap-2 items-center rounded-xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all cursor-pointer border-none"
+                onClick={() => router.push("/dining")}
+              >
+                <UtensilsCrossed className="h-5 w-5 animate-pulse" />
+                Dining Floor Plan (F2)
+              </Button>
+              <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[10px] uppercase px-3 py-1.5 h-8">
+                Restaurant Mode Active
+              </Badge>
               <Button
                 type="button"
                 variant="destructive"
-                className="px-4 h-11 font-black uppercase flex gap-2 items-center rounded-lg shadow-lg active:scale-95 transition-all cursor-pointer"
+                className="px-4 h-11 font-black uppercase flex gap-2 items-center rounded-lg shadow-lg active:scale-95 transition-all cursor-pointer border-none"
                 onClick={() => dispatch({ type: "CLEAR_CART" })}
               >
                 <Trash2 className="h-5 w-5" />
                 CLEAR (DEL)
               </Button>
             </div>
-            {/* Predictive Results Dropdown */}
-            {searchResults.length > 0 && (
-              <div className="absolute top-full left-0 w-[450px] bg-card border border-border mt-1.5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-[100] overflow-hidden backdrop-blur-md">
-                <div className="bg-muted/40 px-3 py-1.5 border-b border-border/50 flex justify-between items-center">
-                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Intelligent Search Results</span>
-                  <span className="text-[9px] text-muted-foreground font-medium">↑↓ to navigate • Enter to select</span>
+          ) : (
+            <>
+              <span className="text-xs font-medium text-muted-foreground uppercase">Barcode / ItemCode</span>
+              <form onSubmit={handleBarcodeSubmit} className="relative">
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    ref={searchRef}
+                    value={barcodeInput}
+                    onChange={(e) => setBarcodeInput(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    className="bg-yellow-400 dark:bg-yellow-500 text-black font-black px-4 py-1 h-11 w-96 outline-none border-none rounded-lg shadow-inner focus:ring-2 focus:ring-yellow-600 transition-all uppercase font-mono text-base"
+                    placeholder="SCAN OR TYPE... (F1)"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="px-4 h-11 font-black uppercase flex gap-2 items-center rounded-lg shadow-lg active:scale-95 transition-all cursor-pointer"
+                    onClick={() => dispatch({ type: "CLEAR_CART" })}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                    CLEAR (DEL)
+                  </Button>
                 </div>
-                <div className="max-h-[320px] overflow-auto custom-scrollbar">
-                  {searchResults.map((item, idx) => (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        handleAddToCart(item);
-                        setBarcodeInput("");
-                        setSearchResults([]);
-                      }}
-                      onMouseEnter={() => setSelectedIndex(idx)}
-                      className={cn(
-                        "p-3 flex items-center justify-between cursor-pointer border-b border-border/20 last:border-0 transition-all duration-150",
-                        idx === selectedIndex
-                          ? "bg-yellow-500 text-black scale-[1.01] z-10 shadow-sm"
-                          : "hover:bg-muted/50"
-                      )}
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <span className={cn("text-xs font-bold uppercase tracking-tight", idx === selectedIndex ? "text-black" : "text-foreground")}>
-                          {item.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className={cn("text-[10px] font-mono font-medium px-1 rounded", idx === selectedIndex ? "bg-black/10 text-black" : "bg-muted text-muted-foreground")}>
-                            {item.item_code || item.barcode}
-                          </span>
-                          <span className={cn("text-[9px] font-medium opacity-60 uppercase", idx === selectedIndex ? "text-black/60" : "text-muted-foreground")}>
-                            {item.brand}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className={cn("text-sm font-bold tracking-tighter", idx === selectedIndex ? "text-black" : "text-emerald-600 dark:text-emerald-400")}>
-                          LKR {(state.isWholesale ? item.wholesalePrice : item.retailPrice).toFixed(2)}
-                        </div>
-                        <div className={cn("text-[9px] font-medium flex items-center justify-end gap-1", idx === selectedIndex ? "text-black/60" : "text-muted-foreground")}>
-                          <span>AVL: {item.stock || 0} {item.unit || 'pcs'}</span>
-                          {(item.stock || 0) < 10 && (
-                            <AlertTriangle className={cn("h-3 w-3 animate-pulse", idx === selectedIndex ? "text-black" : "text-amber-500")} />
-                          )}
-                        </div>
-                      </div>
+                
+                {/* Predictive Results Dropdown */}
+                {searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 w-[450px] bg-card border border-border mt-1.5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-[100] overflow-hidden backdrop-blur-md">
+                    <div className="bg-muted/40 px-3 py-1.5 border-b border-border/50 flex justify-between items-center">
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Intelligent Search Results</span>
+                      <span className="text-[9px] text-muted-foreground font-medium">↑↓ to navigate • Enter to select</span>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div className="max-h-[320px] overflow-auto custom-scrollbar">
+                      {searchResults.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            handleAddToCart(item);
+                            setBarcodeInput("");
+                            setSearchResults([]);
+                          }}
+                          onMouseEnter={() => setSelectedIndex(idx)}
+                          className={cn(
+                            "p-3 flex items-center justify-between cursor-pointer border-b border-border/20 last:border-0 transition-all duration-150",
+                            idx === selectedIndex
+                              ? "bg-yellow-500 text-black scale-[1.01] z-10 shadow-sm"
+                              : "hover:bg-muted/50"
+                          )}
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className={cn("text-xs font-bold uppercase tracking-tight", idx === selectedIndex ? "text-black" : "text-foreground")}>
+                              {item.name}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={cn("text-[10px] font-mono font-medium px-1 rounded", idx === selectedIndex ? "bg-black/10 text-black" : "bg-muted text-muted-foreground")}>
+                                {item.item_code || item.barcode}
+                              </span>
+                              <span className={cn("text-[9px] font-medium opacity-60 uppercase", idx === selectedIndex ? "text-black/60" : "text-muted-foreground")}>
+                                {item.brand}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={cn("text-sm font-bold tracking-tighter", idx === selectedIndex ? "text-black" : "text-emerald-600 dark:text-emerald-400")}>
+                              LKR {(Number(state.isWholesale ? item.wholesalePrice : item.retailPrice) || 0).toFixed(2)}
+                            </div>
+                            <div className={cn("text-[9px] font-medium flex items-center justify-end gap-1", idx === selectedIndex ? "text-black/60" : "text-muted-foreground")}>
+                              <span>AVL: {item.stock || 0} {item.unit || 'pcs'}</span>
+                              {(item.stock || 0) < 10 && (
+                                <AlertTriangle className={cn("h-3 w-3 animate-pulse", idx === selectedIndex ? "text-black" : "text-amber-500")} />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </form>
+            </>
+          )}
+          
+          {/* Minimal Terminal Prompt */}
+          <div className="flex items-center gap-2 ml-auto font-mono pr-4">
+            <span className="text-emerald-500 font-black animate-pulse opacity-80">{">"}</span>
+            <span className={cn(
+              "text-[12px] font-bold tracking-tight leading-none",
+              isVerboseLoading ? "text-amber-500" : "text-emerald-500"
+            )}>
+              {statusMessage}
+            </span>
+            {isVerboseLoading ? (
+              <span className="text-amber-500/30 text-[9px] animate-pulse ml-2 font-black uppercase tracking-widest">Active</span>
+            ) : (
+              <button 
+                onClick={refreshData}
+                className="ml-2 text-emerald-500/30 hover:text-emerald-500 transition-colors"
+                title="Force Master Data Sync"
+              >
+                <RefreshCcw className="h-2.5 w-2.5" />
+              </button>
             )}
-          </form>
+
+            {isInstallAvailable && (
+              <button
+                onClick={handleInstallClick}
+                className="ml-4 px-2 py-0.5 border border-emerald-500/50 text-emerald-500 text-[10px] font-black uppercase hover:bg-emerald-500 hover:text-black transition-all rounded"
+              >
+                [Install App]
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -643,10 +970,13 @@ export default function ClassicPosPage() {
                   {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("discount_percent") && (
                     <th className="border-b border-r border-border/50 p-2 text-right w-16">Disc(%)</th>
                   )}
-                  {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("total") && (
+                  {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"]).includes("total") && (
                     <th className="border-b border-r border-border/50 p-2 text-right w-24">Net Total</th>
                   )}
-                  {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("expire") && (
+                  {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"]).includes("batch") && (
+                    <th className="border-b border-r border-border/50 p-2 text-left w-20">Batch</th>
+                  )}
+                  {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"]).includes("expire") && (
                     <th className="border-b border-border/50 p-2 text-left w-20">Expire</th>
                   )}
                 </tr>
@@ -680,6 +1010,17 @@ export default function ClassicPosPage() {
                               </div>
                             )}
                           </div>
+                          {isRestaurant && (
+                            <div className="mt-1">
+                              <input
+                                type="text"
+                                placeholder="Cooking notes (e.g. no onion)..."
+                                value={item.cooking_notes || ""}
+                                onChange={(e) => handleUpdateItem(item.id, { cooking_notes: e.target.value })}
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-[9px] focus:outline-none focus:border-emerald-500 placeholder:text-muted-foreground/30 transition-colors"
+                              />
+                            </div>
+                          )}
                         </div>
                       </td>
                     )}
@@ -698,7 +1039,7 @@ export default function ClassicPosPage() {
                       <td className="border-b border-r border-border/30 p-2 text-right">0.00</td>
                     )}
                     {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("price") && (
-                      <td className="border-b border-r border-border/30 p-2 text-right font-medium">{item.price.toFixed(2)}</td>
+                      <td className="border-b border-r border-border/30 p-2 text-right font-medium">{(Number(item.price) || 0).toFixed(2)}</td>
                     )}
                     {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("discount") && (
                       <td className="border-b border-r border-border/30 p-1 text-right">
@@ -707,7 +1048,6 @@ export default function ClassicPosPage() {
                           value={item.discount_amt || 0}
                           onChange={(e) => handleUpdateItem(item.id, { discount_amt: parseFloat(e.target.value) || 0 })}
                           onFocus={(e) => e.target.select()}
-                          disabled={!receiptSettings?.showDiscount}
                           className="w-full bg-muted/30 border-none text-right focus:ring-1 focus:ring-emerald-500 rounded p-1 outline-none"
                         />
                       </td>
@@ -720,21 +1060,27 @@ export default function ClassicPosPage() {
                             value={item.discount}
                             onChange={(e) => handleUpdateItem(item.id, { discount: parseFloat(e.target.value) || 0 })}
                             onFocus={(e) => e.target.select()}
-                            disabled={!receiptSettings?.showDiscount}
                             className="w-12 bg-rose-500/10 border-none text-right focus:ring-1 focus:ring-rose-500 rounded p-1 outline-none text-rose-500 font-bold"
                           />
                           <span className="text-xs">%</span>
                         </div>
                       </td>
                     )}
-                    {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("total") && (
+                    {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"]).includes("total") && (
                       <td className="border-b border-r border-border/30 p-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                        {(item.price * item.quantity - (item.discount_amt || 0) - (item.price * item.quantity * (item.discount / 100))).toFixed(2)}
+                        {( (Number(item.price) * item.quantity) - (Number(item.discount_amt) || 0) - (Number(item.price) * item.quantity * (Number(item.discount) / 100)) ).toFixed(2)}
                       </td>
                     )}
-                    {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("expire") && (
+                    {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"]).includes("batch") && (
+                      <td className="border-b border-r border-border/30 p-2 text-[10px] text-muted-foreground font-mono italic">
+                        {item.batch_number || "N/A"}
+                      </td>
+                    )}
+                    {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"]).includes("expire") && (
                       <td className="border-b border-border/30 p-2 text-[10px] text-muted-foreground font-mono italic">
-                        {item.expiry_date ? format(new Date(item.expiry_date), "dd/MM/yy") : "N/A"}
+                        {item.expiry_date 
+                          ? (isValid(new Date(item.expiry_date)) ? format(new Date(item.expiry_date), "dd/MM/yy") : "Err Date") 
+                          : "N/A"}
                       </td>
                     )}
                   </tr>
@@ -753,7 +1099,7 @@ export default function ClassicPosPage() {
           <div className="h-16 bg-muted/10 border-t border-border/50 flex items-center px-6 shrink-0 shadow-inner">
             {lastItem && (
               <div className="text-rose-500 dark:text-rose-400 text-2xl font-bold uppercase tracking-tight drop-shadow-sm">
-                {lastItem.name} <span className="text-foreground/40 mx-2">|</span> {lastItem.price.toFixed(2)} X {lastItem.quantity} = {(lastItem.price * lastItem.quantity).toFixed(2)}
+                {lastItem.name} <span className="text-foreground/40 mx-2">|</span> {(Number(lastItem.price) || 0).toFixed(2)} X {lastItem.quantity} = {(Number(lastItem.price) * lastItem.quantity).toFixed(2)}
               </div>
             )}
           </div>
@@ -775,6 +1121,24 @@ export default function ClassicPosPage() {
         {/* Right Section (Summary - 1/4 width) */}
         <div className="w-1/4 bg-card border-l border-border/50 flex flex-col shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
           <div className="p-3 space-y-2">
+            {/* Restaurant Active Context Indicator */}
+            {(queryDiningType || queryTableNum || querySaleId) && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-3 py-2 rounded-xl mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wide">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[9px] text-emerald-600/70 font-black">Dining Mode</span>
+                  <span className="text-xs font-black tracking-tight text-foreground">
+                    {queryDiningType === 'dine_in' ? 'Dine-In' : queryDiningType}
+                  </span>
+                </div>
+                {queryTableNum && (
+                  <div className="flex flex-col gap-0.5 items-end">
+                    <span className="text-[9px] text-emerald-600/70 font-black">Table Assigned</span>
+                    <span className="text-xs font-black tracking-tight text-foreground">Table {queryTableNum}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Net Bill - Most Important */}
             <div className="bg-emerald-600 dark:bg-emerald-700 text-white p-4 rounded-xl shadow-lg mb-2 border border-emerald-500/20">
               <div className="flex items-center justify-between mb-2">
@@ -914,16 +1278,11 @@ export default function ClassicPosPage() {
         )}
       </div>
       <BatchSelectorDialog
-        isOpen={!!itemPendingBatch}
-        onOpenChange={(open) => !open && setItemPendingBatch(null)}
-        productName={itemPendingBatch?.name}
-        batches={itemPendingBatch?.product_batches}
-        onSelect={(batch) => {
-          handleAddToCart(itemPendingBatch, 1, batch);
-          setItemPendingBatch(null);
-          setBarcodeInput("");
-          playBeep("success");
-        }}
+        isOpen={isBatchSelectorOpen}
+        onOpenChange={setIsBatchSelectorOpen}
+        productName={itemPendingBatch?.item?.name}
+        batches={availableBatches}
+        onSelect={handleBatchSelect}
       />
       <TenderModal
         isOpen={isTenderModalOpen}

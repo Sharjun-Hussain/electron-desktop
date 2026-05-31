@@ -74,7 +74,7 @@ export function SubscriptionDetails() {
                 <span className="text-xs font-semibold uppercase tracking-tight">Expiry Date</span>
               </div>
               <p className="text-lg font-bold text-slate-900 dark:text-white">
-                {expiryDate ? formatDate(expiryDate) : "Never"}
+                {business?.is_master ? "Lifetime" : (expiryDate ? formatDate(expiryDate) : "Never")}
               </p>
               <p className="text-[11px] text-muted-foreground">Renews on {business?.billing_cycle || "Monthly"} cycle</p>
             </div>
@@ -86,15 +86,15 @@ export function SubscriptionDetails() {
                 <span className="text-xs font-semibold uppercase tracking-tight">Time Remaining</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <p className={cn("text-2xl font-black", daysRemaining <= 7 ? "text-amber-500" : "text-emerald-500")}>
-                  {daysRemaining}
+                <p className={cn("text-2xl font-black", business?.is_master ? "text-emerald-500" : (daysRemaining <= 7 ? "text-amber-500" : "text-emerald-500"))}>
+                  {business?.is_master ? "∞" : daysRemaining}
                 </p>
-                <span className="text-sm font-bold text-slate-500">Days</span>
+                <span className="text-sm font-bold text-slate-500">{business?.is_master ? "Unlimited" : "Days"}</span>
               </div>
               <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                 <div 
-                  className={cn("h-full transition-all duration-1000", daysRemaining <= 7 ? "bg-amber-500" : "bg-emerald-500")}
-                  style={{ width: `${Math.min(100, (daysRemaining / 30) * 100)}%` }}
+                  className={cn("h-full transition-all duration-1000", business?.is_master ? "bg-emerald-500" : (daysRemaining <= 7 ? "bg-amber-500" : "bg-emerald-500"))}
+                  style={{ width: business?.is_master ? "100%" : `${Math.min(100, (daysRemaining / 30) * 100)}%` }}
                 />
               </div>
             </div>
@@ -127,8 +127,8 @@ export function SubscriptionDetails() {
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { label: "Maximum Branches", value: plan?.max_branches === -1 ? "Unlimited" : plan?.max_branches || "1 Branch" },
-              { label: "Active Users", value: plan?.max_users || "5 Users" },
+              { label: "Maximum Branches", value: (business?.is_master || plan?.max_branches === -1) ? "Unlimited" : (plan?.max_branches || "1 Branch") },
+              { label: "Active Users", value: business?.is_master ? "Unlimited" : (plan?.max_users || "5 Users") },
               { label: "Feature Access", value: "Standard Modules" }
             ].map((feature, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0">

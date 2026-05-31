@@ -13,7 +13,8 @@ import {
   XCircle,
   FileText,
   Zap,
-  Loader2
+  Loader2,
+  ClipboardCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -84,7 +85,7 @@ export const getColumns = ({ onDelete, session }) => [
     cell: ({ row }) => {
       const po = row.original;
       return (
-        <Link href={`/purchase/purchase-orders/view?id=${po.id}`}>
+        <Link href={`/purchase/purchase-orders/view?poid=${po.id}`}>
           <span className="font-bold text-emerald-600 text-[14px] hover:underline cursor-pointer">
             {row.getValue("po_number")}
           </span>
@@ -154,21 +155,32 @@ export const getColumns = ({ onDelete, session }) => [
     id: "actions",
     cell: ({ row }) => {
       const po = row.original;
+      const canReceive = po.status !== 'cancelled' && po.status !== 'received';
+      
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-muted transition-colors">
-              <span className="sr-only">Open actions</span>
-              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
+        <div className="flex items-center justify-end gap-2">
+          {canReceive && (
+            <Link href={`/purchase/grn/${po.id}`}>
+              <Button size="sm" className="h-8 gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold text-[11px] px-3 transition-all active:scale-95">
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                Receive Goods
+              </Button>
+            </Link>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-muted transition-colors">
+                <span className="sr-only">Open actions</span>
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>
-              Protocol Actions
+              PO Actions
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            <Link href={`/purchase/purchase-orders/view?id=${po.id}`} passHref>
+            <Link href={`/purchase/purchase-orders/view?poid=${po.id}`} passHref>
               <DropdownMenuItem className="cursor-pointer">
                 <Eye className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span>View PO</span>
@@ -176,7 +188,7 @@ export const getColumns = ({ onDelete, session }) => [
             </Link>
 
             {po.status !== 'cancelled' && po.status !== 'received' && (
-              <Link href={`/purchase/purchase-orders/edit?poid=${po.id}`} passHref>
+              <Link href={`/purchase/purchase-orders/edit?id=${po.id}`} passHref>
                 <DropdownMenuItem className="cursor-pointer">
                   <Edit className="h-4 w-4 mr-2 text-muted-foreground" />
                   <span>Edit PO</span>
@@ -245,6 +257,7 @@ export const getColumns = ({ onDelete, session }) => [
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       );
     },
   },

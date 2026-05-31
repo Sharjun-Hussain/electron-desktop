@@ -38,6 +38,7 @@ import {
   Warehouse,
   FileText,
   Hash,
+  Calendar,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -125,6 +126,8 @@ const formSchema = z.object({
   cost_price: z.string().optional(),
   mrp_price: z.string().optional(),
   stock_quantity: z.string().optional(),
+  batch_number: z.string().optional(),
+  expiry_date: z.string().optional(),
   sku: z.string().optional(),
   barcode: z.string().optional(),
 });
@@ -308,7 +311,7 @@ const SearchableSelect = ({
 
 // --- MAIN COMPONENT ---
 // Accepts initialData prop for Edit Mode
-export function ProductForm({ initialData = null }) {
+export function ProductForm({ initialData = null, onSuccess = null, isModal = false, prefillData = null }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [insightOpen, setInsightOpen] = useState(false);
@@ -399,8 +402,16 @@ export function ProductForm({ initialData = null }) {
         price: initialData.variants?.[0]?.price?.toString() || "",
         wholesale_price: initialData.variants?.[0]?.wholesale_price?.toString() || "",
         cost_price: initialData.variants?.[0]?.cost_price?.toString() || "",
-        mrp_price: initialData.variants?.[0]?.mrp_price?.toString() || "",
-        stock_quantity: initialData.variants?.[0]?.stock_quantity?.toString() || "",
+        mrp_price: initialData.variants?.[0]?.mrp_price?.toString() || "0",
+        stock_quantity: (
+          (initialData.variants?.[0]?.stocks?.length > 0
+            ? initialData.variants[0].stocks.reduce((sum, s) => sum + parseFloat(s.quantity || 0), 0)
+            : parseFloat(initialData.variants?.[0]?.stock_quantity || 0)) || 0
+        ).toString(),
+        batch_number: initialData.variants?.[0]?.batches?.[0]?.batch_number || "",
+        expiry_date: initialData.variants?.[0]?.batches?.[0]?.expiry_date 
+          ? new Date(initialData.variants[0].batches[0].expiry_date).toISOString().split('T')[0] 
+          : "",
         sku: initialData.variants?.[0]?.sku || "",
         barcode: initialData.variants?.[0]?.barcode || "",
       }
@@ -427,10 +438,21 @@ export function ProductForm({ initialData = null }) {
         cost_price: "",
         mrp_price: "",
         stock_quantity: "",
+        batch_number: "",
+        expiry_date: "",
         sku: "",
-        barcode: "",
+        barcode: prefillData?.barcode || "",
       },
   });
+
+  // Pre-fill effect for modal usage
+  useEffect(() => {
+    if (prefillData && !loading) {
+      if (prefillData.barcode) form.setValue("barcode", prefillData.barcode);
+      if (prefillData.sku) form.setValue("sku", prefillData.sku);
+      if (prefillData.name) form.setValue("name", prefillData.name);
+    }
+  }, [prefillData, loading, form]);
 
   const { clearSavedData } = useFormRestore(form);
 
@@ -452,13 +474,13 @@ export function ProductForm({ initialData = null }) {
   // --- Barcode Insight Logic ---
   const checkBarcodeInsight = useCallback(async (barcode) => {
     if (!barcode || barcode.length < 3 || isEditing) return;
-    
+
     try {
       setIsCheckingBarcode(true);
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/barcode/${barcode}`, {
         headers: { Authorization: `Bearer ${session?.accessToken}` }
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         if (data.status === "success") {
@@ -477,11 +499,11 @@ export function ProductForm({ initialData = null }) {
   const barcodeValue = form.watch("barcode");
   useEffect(() => {
     if (!barcodeValue || barcodeValue.length < 3 || isEditing) return;
-    
+
     const timer = setTimeout(() => {
       checkBarcodeInsight(barcodeValue);
     }, 500); // 500ms debounce to allow for scanning/typing
-    
+
     return () => clearTimeout(timer);
   }, [barcodeValue, checkBarcodeInsight, isEditing]);
 
@@ -566,6 +588,11 @@ export function ProductForm({ initialData = null }) {
 
             const nextCode = `${orgPrefix}-${nextNumber.toString().padStart(7, '0')}`;
             form.setValue("code", nextCode);
+            
+            // Auto-generate SKU in SKU-XXXXX format
+            const randomSKU = Math.floor(10000 + Math.random() * 89999).toString();
+            form.setValue("sku", `SKU-${randomSKU}`);
+            
             setCodePrefix(orgPrefix);
           }
         }
@@ -782,6 +809,11 @@ export function ProductForm({ initialData = null }) {
         icon: "✅",
       });
 
+      if (onSuccess) {
+        onSuccess(result.data);
+        return;
+      }
+
       if (resetAfter && !isEditing) {
         // Create Mode: Reset and stay
         clearSavedData();
@@ -791,7 +823,7 @@ export function ProductForm({ initialData = null }) {
           description: "",
           is_variant: false,
           is_active: true,
-          brand_id: data.brand_id, // Keep previous selections for ease
+          brand_id: data.brand_id,
           main_category_id: data.main_category_id,
           sub_category_id: data.sub_category_id,
           measurement_id: data.measurement_id,
@@ -805,8 +837,7 @@ export function ProductForm({ initialData = null }) {
           sku: "",
           barcode: "",
         });
-        const codeInput = document.querySelector('input[name="code"]');
-        if (codeInput) codeInput.focus();
+        generateCode();
       } else {
         // Edit Mode OR Create & Exit: Go back
         clearSavedData();
@@ -827,15 +858,21 @@ export function ProductForm({ initialData = null }) {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:px-8 md:pt-4 md:pb-12">
-      <div className="fixed inset-0 -z-10 h-full w-full bg-background">
-        <div className="absolute top-0 z-[-2] h-screen w-screen bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.05),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.1),rgba(0,0,0,0))]"></div>
-      </div>
+    <div className={cn(
+      "bg-background",
+      !isModal ? "min-h-screen p-4 md:px-8 md:pt-4 md:pb-12" : "p-0"
+    )}>
+      {!isModal && (
+        <div className="fixed inset-0 -z-10 h-full w-full bg-background">
+          <div className="absolute top-0 z-[-2] h-screen w-screen bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.05),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.1),rgba(0,0,0,0))]"></div>
+        </div>
+      )}
       <Form {...form}>
         <form className="max-w-[1400px] mx-auto">
 
           {/* Header Section */}
-          <div className="mb-5 bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800 p-3.5 rounded-2xl shadow-sm backdrop-blur-xl sticky top-2 z-30 mx-0.5">
+          {!isModal && (
+            <div className="mb-5 bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800 p-3.5 rounded-2xl shadow-sm backdrop-blur-xl sticky top-2 z-30 mx-0.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-md bg-emerald-500/10 border border-emerald-500/20 shadow-inner">
@@ -922,8 +959,12 @@ export function ProductForm({ initialData = null }) {
               </div>
             </div>
           </div>
+        )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className={cn(
+            "grid grid-cols-1 lg:grid-cols-3 gap-6",
+            isModal ? "p-6 pt-2 pb-12" : ""
+          )}>
             {/* Left Column - Main Form */}
             <div className="lg:col-span-2 space-y-4">
               {/* Card 1: Identity */}
@@ -987,87 +1028,90 @@ export function ProductForm({ initialData = null }) {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      name="barcode"
-                      control={form.control}
-                      render={({ field }) => (
-                        <FormItem className="space-y-0.5">
-                          <FormLabel className="text-sm font-semibold text-slate-900 dark:text-white ml-0.5">Barcode <span className="text-muted-foreground font-normal">(Scannable)</span></FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2 group/barcode">
-                              <div className="relative flex-1">
-                                <Barcode className={cn("absolute left-3 top-2.5 h-4 w-4 text-muted-foreground", isCheckingBarcode && "animate-pulse text-emerald-500")} />
-                                <Input 
-                                  placeholder="Scan or enter barcode" 
-                                  className="pl-9 h-9" 
-                                  {...field} 
-                                />
+                    {!hasVariants && (
+                      <FormField
+                        name="barcode"
+                        control={form.control}
+                        render={({ field }) => (
+                          <FormItem className="space-y-0.5">
+                            <FormLabel className="text-sm font-semibold text-slate-900 dark:text-white ml-0.5">Barcode <span className="text-muted-foreground font-normal">(Scannable)</span></FormLabel>
+                            <FormControl>
+                              <div className="flex gap-2 group/barcode">
+                                <div className="relative flex-1">
+                                  <Barcode className={cn("absolute left-3 top-2.5 h-4 w-4 text-muted-foreground", isCheckingBarcode && "animate-pulse text-emerald-500")} />
+                                  <Input
+                                    placeholder="Scan or enter barcode"
+                                    className="pl-9 h-9"
+                                    {...field}
+                                  />
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => generateNumericBarcode(5)}
+                                  className="h-9 px-3 rounded-md bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
+                                  title="Generate 5-digit code for weighing scales"
+                                >
+                                  <RefreshCw className="size-3.5" />
+                                  <span className="text-xs">Scale</span>
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => generateNumericBarcode(13)}
+                                  className="h-9 px-3 rounded-md bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
+                                  title="Generate standard 13-digit barcode"
+                                >
+                                  <Zap className="size-3.5" />
+                                  <span className="text-xs">Std</span>
+                                </Button>
                               </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => generateNumericBarcode(5)}
-                                className="h-9 px-3 rounded-md bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                title="Generate 5-digit code for weighing scales"
-                              >
-                                <RefreshCw className="size-3.5" />
-                                <span className="text-xs">Scale</span>
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => generateNumericBarcode(13)}
-                                className="h-9 px-3 rounded-md bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                title="Generate standard 13-digit barcode"
-                              >
-                                <Zap className="size-3.5" />
-                                <span className="text-xs">Std</span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs font-medium text-red-500/80 ml-0.5 " />
-                        </FormItem>
-                      )}
-                    />
+                            </FormControl>
+                            <FormMessage className="text-xs font-medium text-red-500/80 ml-0.5 " />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      name="sku"
-                      control={form.control}
-                      render={({ field }) => (
-                        <FormItem className="space-y-0.5">
-                          <FormLabel className="text-sm font-semibold">SKU <span className="text-muted-foreground font-normal">(Internal Code)</span></FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2">
-                              <div className="relative flex-1">
-                                <Hash className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="e.g. PRD-001 (auto if empty)" className="pl-9 h-9" {...field} />
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const code = form.getValues("code") || "PRD";
-                                  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-                                  form.setValue("sku", `${code}-${random}`);
-                                }}
-                                className="h-9 px-3 rounded-md bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
-                                title="Generate unique SKU"
-                              >
-                                <RefreshCw className="size-3.5" />
-                                <span className="text-xs">Gen</span>
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs font-medium text-red-500/80 ml-0.5 " />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                    {!hasVariants && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          name="sku"
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0.5">
+                              <FormLabel className="text-sm font-semibold">SKU <span className="text-muted-foreground font-normal">(Internal Code)</span></FormLabel>
+                              <FormControl>
+                                <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                    <Hash className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input placeholder="e.g. SKU-00001 (auto if empty)" className="pl-9 h-9" {...field} />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const random = Math.floor(10000 + Math.random() * 89999).toString();
+                                      form.setValue("sku", `SKU-${random}`);
+                                    }}
+                                    className="h-9 px-3 rounded-md bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600 shadow-sm transition-all flex items-center gap-2 font-semibold"
+                                    title="Generate unique SKU"
+                                  >
+                                    <RefreshCw className="size-3.5" />
+                                    <span className="text-xs">Gen</span>
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-xs font-medium text-red-500/80 ml-0.5 " />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                   <FormField
                     name="description"
                     control={form.control}
@@ -1363,7 +1407,7 @@ export function ProductForm({ initialData = null }) {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                       <FormField
                         name="stock_quantity"
                         control={form.control}
@@ -1377,6 +1421,40 @@ export function ProductForm({ initialData = null }) {
                               </div>
                             </FormControl>
                             <FormDescription className="text-[10px]">Initial quantity available in your branch.</FormDescription>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        name="batch_number"
+                        control={form.control}
+                        render={({ field }) => (
+                          <FormItem className="space-y-0.5">
+                            <FormLabel className="text-sm font-semibold">Batch Number</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Hash className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input placeholder="BT-AUTO-GEN" className="pl-9 h-9 uppercase font-mono" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormDescription className="text-[10px]">Leave empty for auto-generation.</FormDescription>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        name="expiry_date"
+                        control={form.control}
+                        render={({ field }) => (
+                          <FormItem className="space-y-0.5">
+                            <FormLabel className="text-sm font-semibold">Expiry Date</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input type="date" className="pl-9 h-9" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormDescription className="text-[10px]">Date of product expiration.</FormDescription>
                             <FormMessage className="text-xs" />
                           </FormItem>
                         )}
@@ -1631,6 +1709,34 @@ export function ProductForm({ initialData = null }) {
 
             </div>
           </div>
+
+          {/* Modal Footer (Sticky) */}
+          {isModal && (
+            <div className="sticky bottom-0 left-0 right-0 p-4 bg-background border-t border-border shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex items-center justify-end gap-3 z-50">
+              {!isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={submitting}
+                  onClick={form.handleSubmit((d) => handleServerSubmit(d, true))}
+                  className="h-10 px-6 gap-2 border-emerald-500/20 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/10 transition-all rounded-xl text-sm font-bold"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <SaveAll className="w-4 h-4" />}
+                  Save & continue
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="primary"
+                disabled={submitting}
+                onClick={form.handleSubmit((d) => handleServerSubmit(d, false))}
+                className="px-8 h-10 rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20"
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {isEditing ? "Save Changes" : "Create Product"}
+              </Button>
+            </div>
+          )}
         </form>
       </Form>
 
@@ -1664,7 +1770,7 @@ export function ProductForm({ initialData = null }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <ProductInsightSheet 
+      <ProductInsightSheet
         isOpen={insightOpen}
         onClose={() => setInsightOpen(false)}
         insightData={insightData}

@@ -95,7 +95,7 @@ export const getColumns = () => [
     id: "actions",
     cell: ({ row }) => (
       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-emerald-500/5 transition-all" asChild>
-        <Link href={`/purchase/returns/view?id=${row.original.id}`}>
+        <Link href={`/purchase/returns/${row.original.id}`}>
           <Eye className="h-4 w-4 text-muted-foreground" />
         </Link>
       </Button>

@@ -177,6 +177,39 @@ export const getProductVariantColumns = ({
       },
     },
     {
+      accessorKey: "cost_price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Cost" />,
+      cell: ({ row }) => <span className="text-sm font-medium">LKR {parseFloat(row.original.cost_price || 0).toLocaleString()}</span>,
+    },
+    {
+      accessorKey: "mrp_price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="MRP" />,
+      cell: ({ row }) => <span className="text-sm font-medium text-slate-500">LKR {parseFloat(row.original.mrp_price || 0).toLocaleString()}</span>,
+    },
+    {
+      accessorKey: "price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Selling" />,
+      cell: ({ row }) => <span className="text-sm font-bold text-emerald-600">LKR {parseFloat(row.original.price || 0).toLocaleString()}</span>,
+    },
+    {
+      accessorKey: "wholesale_price",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Wholesale" />,
+      cell: ({ row }) => <span className="text-sm font-medium text-blue-600">LKR {parseFloat(row.original.wholesale_price || 0).toLocaleString()}</span>,
+    },
+    {
+      id: "batch_number",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Batch" />,
+      cell: ({ row }) => <span className="text-xs font-mono font-bold text-slate-500">{row.original.batches?.[0]?.batch_number || "-"}</span>,
+    },
+    {
+      id: "expiry_date",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Expiry" />,
+      cell: ({ row }) => {
+        const exp = row.original.batches?.[0]?.expiry_date;
+        return <span className="text-xs font-medium text-orange-600">{exp ? new Date(exp).toLocaleDateString() : "Not Applicable"}</span>;
+      },
+    },
+    {
       accessorKey: "is_active",
       header: "Status",
       cell: ({ row }) => {

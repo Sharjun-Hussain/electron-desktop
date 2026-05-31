@@ -69,7 +69,7 @@ export const DataTablePagination = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 gap-3 border-t border-border bg-muted/30">
+    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 gap-3 border-t border-gray-100 dark:border-border/50 bg-gray-50/30 dark:bg-muted/10">
       <div className="text-xs text-muted-foreground">
         {selectedRows > 0 ? (
           <span>
@@ -92,7 +92,7 @@ export const DataTablePagination = ({
               table.setPageSize(Number(value));
             }}
           >
-            <SelectTrigger className="h-8 w-[70px] border-border focus:ring-emerald-500/20 bg-transparent">
+            <SelectTrigger className="h-8 w-[70px] border-gray-200 dark:border-border/50 focus:ring-emerald-500/20 dark:bg-transparent">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -110,7 +110,7 @@ export const DataTablePagination = ({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+              className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
               onClick={() => table.setPageIndex(0)}
               disabled={!canPreviousPage}
             >
@@ -119,7 +119,7 @@ export const DataTablePagination = ({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+              className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
               onClick={() => table.previousPage()}
               disabled={!canPreviousPage}
             >
@@ -138,7 +138,7 @@ export const DataTablePagination = ({
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+                      : "border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
                   )}
                   onClick={() => table.setPageIndex(pageNum - 1)}
                 >
@@ -150,7 +150,7 @@ export const DataTablePagination = ({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+              className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
               onClick={() => table.nextPage()}
               disabled={!canNextPage}
             >
@@ -159,7 +159,7 @@ export const DataTablePagination = ({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+              className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
               onClick={() => table.setPageIndex(totalPages - 1)}
               disabled={!canNextPage}
             >
@@ -176,13 +176,11 @@ export const DataTablePagination = ({
 const TableSkeleton = ({ columns, rows = 5 }) => (
   <>
     {Array.from({ length: rows }).map((_, i) => (
-      <TableRow key={i} className="border-b border-border">
-        {columns.map((col, j) => (
-          <TableCell key={j} className="py-4 px-4 border-b border-border">
-            <div className="h-4 w-full bg-gray-100 dark:bg-muted animate-pulse rounded" />
-          </TableCell>
-        ))}
-      </TableRow>
+      <TableRow key={i} className="border-b border-gray-100">{columns.map((col, j) => (
+        <TableCell key={j} className="py-4 px-4 border-b border-gray-100 dark:border-border/50">
+          <div className="h-4 w-full bg-gray-100 dark:bg-muted animate-pulse rounded" />
+        </TableCell>
+      ))}</TableRow>
     ))}
   </>
 );
@@ -199,7 +197,42 @@ const EmptyState = ({ columns, message = "No results found." }) => (
   </TableRow>
 );
 
+
+// --- Table Row (plain component — no memo to avoid stale selection state) ---
+function DataTableRow({ row, onRowClick, rowClassName }) {
+  const isSelected = row.getIsSelected();
+  return (
+    <TableRow
+      data-state={isSelected && "selected"}
+      className={cn(
+        "border-b border-gray-100 dark:border-border/50 hover:bg-gray-50/50 dark:hover:bg-muted/20 transition-colors",
+        isSelected && "bg-emerald-50/30 dark:bg-emerald-500/10 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/20",
+        onRowClick && "cursor-pointer",
+        rowClassName
+      )}
+      onClick={() => onRowClick?.(row.original)}
+    >{row.getVisibleCells().map((cell) => (
+      <TableCell
+        key={cell.id}
+        className="py-3 px-4 text-sm text-foreground"
+        onClick={(e) => {
+          if (cell.column.id === "select" || cell.column.id === "actions") {
+            e.stopPropagation();
+          }
+        }}
+      >
+        {flexRender(
+          cell.column.columnDef.cell,
+          cell.getContext()
+        )}
+      </TableCell>
+    ))}</TableRow>
+  );
+}
+
 // --- Main Data Table Component ---
+import React from "react";
+
 export function DataTable({
   table,
   columns,
@@ -214,28 +247,26 @@ export function DataTable({
 
   return (
     <div className="relative">
-      <div className="rounded-lg overflow-hidden bg-card border border-border">
+      <div className="rounded-lg overflow-hidden bg-white dark:bg-background border border-border/50">
         <UITable>
-          <TableHeader className="bg-muted/50">
+          <TableHeader className="bg-gray-50 dark:bg-muted/30">
             {headerGroups.map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className="hover:bg-transparent border-b border-border"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="h-10 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
-                ))}
-              </TableRow>
+                className="hover:bg-transparent border-b border-gray-200 dark:border-border"
+              >{headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className="h-10 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                </TableHead>
+              ))}</TableRow>
             ))}
           </TableHeader>
 
@@ -244,29 +275,12 @@ export function DataTable({
               <TableSkeleton columns={columns} />
             ) : rows.length ? (
               rows.map((row) => (
-                <TableRow
+                <DataTableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={cn(
-                    "border-b border-border hover:bg-muted/30 transition-colors",
-                    row.getIsSelected() && "bg-emerald-50/30 dark:bg-emerald-500/10 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/20",
-                    onRowClick && "cursor-pointer",
-                    rowClassName
-                  )}
-                  onClick={() => onRowClick?.(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="py-3 px-4 text-sm text-foreground"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                  row={row}
+                  onRowClick={onRowClick}
+                  rowClassName={rowClassName}
+                />
               ))
             ) : (
               <EmptyState columns={columns} message={emptyMessage} />

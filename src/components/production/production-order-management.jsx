@@ -147,7 +147,7 @@ export default function ProductionOrderManagement() {
           <DropdownMenuContent align="end" className="w-52 p-2 rounded-xl shadow-2xl border-border/50 animate-in zoom-in-95 duration-200">
             {row.original.status !== 'completed' && (
               <DropdownMenuItem 
-                onClick={() => router.push(`/production/orders/complete?id=${row.original.id}`)}
+                onClick={() => router.push(`/production/orders/${row.original.id}/complete`)}
                 className="rounded-lg focus:bg-emerald-50 dark:focus:bg-emerald-900/20 text-emerald-600 font-semibold cursor-pointer"
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Finalize Production

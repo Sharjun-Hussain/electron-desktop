@@ -310,7 +310,7 @@ export function ProductVariantForm({ initialData = null }) {
       ? { ...initialData, images: [] }
       : {
         product_id: "",
-        sku: "",
+        sku: `SKU-${Math.floor(10000 + Math.random() * 89999)}`,
         code: "",
         barcode: "",
         price: 0,
@@ -439,16 +439,8 @@ export function ProductVariantForm({ initialData = null }) {
   }, [initialData]);
 
   const generateUniqueSKU = () => {
-    if (!detailedParent) {
-      toast.error("Please select a parent product first");
-      return;
-    }
-    const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
-    const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-    const parentCode = detailedParent?.code || "VAR";
-    const code = `${parentCode}-${timestamp}`;
-    const sku = `${parentCode}-${timestamp}-${random}`;
-    form.setValue("code", code);
+    const random = Math.floor(10000 + Math.random() * 89999).toString();
+    const sku = `SKU-${random}`;
     form.setValue("sku", sku);
   };
 
@@ -1127,7 +1119,7 @@ export function ProductVariantForm({ initialData = null }) {
                               <FormControl>
                                 <div className="relative flex-1">
                                   <Input
-                                    placeholder="e.g., VAR-DELTA-9"
+                                    placeholder="e.g., SKU-VAR-001"
                                     className="h-9 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm group-focus-within/code:border-emerald-500/40 transition-all"
                                     {...field}
                                   />

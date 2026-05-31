@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import {
   Printer,
@@ -88,8 +88,8 @@ const getStatusConfig = (status) => {
 
 export default function ReturnDetails({ id: propId }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const id = propId || searchParams.get('id');
+  const params = useParams();
+  const id = propId || params?.id;
 
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(true);

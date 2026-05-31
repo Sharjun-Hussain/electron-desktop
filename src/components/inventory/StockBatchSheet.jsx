@@ -62,15 +62,15 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-xl w-[95vw] p-0 overflow-hidden flex flex-col border-none shadow-2xl rounded-l-3xl">
-        <SheetHeader className="p-8 pb-6 bg-linear-to-br from-indigo-50 to-white dark:from-indigo-950/20 dark:to-background shrink-0">
+      <SheetContent side="right" className="sm:max-w-xl w-[95vw] p-0 overflow-hidden flex flex-col border-none shadow-2xl rounded-l-3xl">
+        <SheetHeader className="p-8 pb-6 bg-linear-to-br from-emerald-50 to-white dark:from-emerald-950/20 dark:to-background shrink-0">
           <div className="flex items-start gap-5">
-            <div className="size-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-sm shrink-0">
-              <Layers className="size-8 text-indigo-600" />
+            <div className="size-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm shrink-0">
+              <Layers className="size-8 text-emerald-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
-                <Badge variant="outline" className="bg-indigo-500/5 text-indigo-600 border-indigo-500/10 text-[10px] font-bold uppercase tracking-wider">
+                <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 text-[10px] font-bold uppercase tracking-wider">
                   Batch Repository
                 </Badge>
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md">
@@ -91,19 +91,19 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
         <div className="flex-1 overflow-hidden flex flex-col">
           {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 opacity-60">
-              <Loader2 className="size-8 animate-spin text-indigo-600" />
+              <Loader2 className="size-8 animate-spin text-emerald-600" />
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Synchronizing Batch Data...</p>
             </div>
           ) : (
-            <ScrollArea className="flex-1 px-8">
+            <ScrollArea className="flex-1 px-8 h-full">
               <div className="py-6 space-y-8">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 rounded-3xl bg-indigo-500/5 border border-indigo-500/10">
-                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <div className="p-5 rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                       <TrendingUp className="size-3" /> On Hand
                     </p>
-                    <p className="text-2xl font-black text-indigo-700 tabular-nums">
+                    <p className="text-2xl font-black text-emerald-700 tabular-nums">
                       {parseFloat(stock.quantity).toLocaleString()}
                       <span className="text-xs font-bold ml-1 opacity-60">Units</span>
                     </p>
@@ -132,9 +132,9 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
                       batches.map((batch, idx) => {
                         const isExpired = batch.expiry_date && new Date(batch.expiry_date) < new Date();
                         return (
-                          <div key={idx} className="group relative flex items-center justify-between p-4 rounded-3xl border border-border/60 bg-card hover:border-indigo-500/30 hover:shadow-xl transition-all duration-300">
+                          <div key={idx} className="group relative flex items-center justify-between p-4 rounded-3xl border border-border/60 bg-card hover:border-emerald-500/30 hover:shadow-xl transition-all duration-300">
                             <div className="flex items-center gap-4">
-                              <div className={`size-10 rounded-2xl flex items-center justify-center transition-colors ${isExpired ? 'bg-rose-500/10 text-rose-600' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-500/10 group-hover:text-indigo-600'}`}>
+                              <div className={`size-10 rounded-2xl flex items-center justify-center transition-colors ${isExpired ? 'bg-rose-500/10 text-rose-600' : 'bg-slate-100 text-slate-500 group-hover:bg-emerald-500/10 group-hover:text-emerald-600'}`}>
                                 <Barcode className="size-5" />
                               </div>
                               <div className="space-y-1">

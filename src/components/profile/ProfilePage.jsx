@@ -65,7 +65,7 @@ export default function ProfilePage() {
       // This ensures that on initial load or after session update, the correct image is shown
       if (!avatarFile && session.user.image) {
         const base = getImageUrl(session.user.image);
-        const version = session.user.imageLastUpdated || Date.now();
+        const version = Date.now(); // Use current time as fallback version
         setAvatarPreview(`${base}${base.includes('?') ? '&' : '?'}v=${version}`);
       }
     }

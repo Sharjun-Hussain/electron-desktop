@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import ZoomControl from "@/components/common/ZoomControl";
 
 import { useBreadcrumbStore } from "@/store/useBreadcrumbStore";
+import { useNavigationStore } from "@/store/useNavigationStore";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -42,6 +43,7 @@ export function SystemBreadcrumb() {
   const [breadcrumbItems, setBreadcrumbItems] = useState([]);
   const [showBackButton, setShowBackButton] = useState(false);
   const { breadcrumbs } = useBreadcrumbStore();
+  const { getBackPath } = useNavigationStore();
   const { theme, setTheme } = useTheme();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
@@ -149,29 +151,43 @@ export function SystemBreadcrumb() {
               variant="ghost"
               size="sm"
               onClick={() => {
+                // 1. Try to go back using stored history
+                const backPath = getBackPath();
+                if (backPath) {
+                  return router.push(backPath);
+                }
+
+                // 2. Fallback to Intelligent Logical Parent Redirection
+                if (pathname.startsWith('/purchase/')) {
+                  if (pathname === '/purchase/suppliers') return router.push('/');
+                  return router.push('/purchase/suppliers');
+                }
+                
+                if (pathname.startsWith('/inventory/')) {
+                  return router.push('/products');
+                }
+
+                if (pathname.startsWith('/reports/')) {
+                  // If we are deep in a report, go back to the main reports hub
+                  const segments = pathname.split('/').filter(Boolean);
+                  if (segments.length > 2) {
+                     // Try to map back to the specific tab if possible
+                     const category = segments[1].toLowerCase();
+                     const categoryMap = { stocks: "Stocks", sales: "Sales", finance: "Finance", customer: "Customer", purchase: "Purchase" };
+                     return router.push(`/reports?tab=${categoryMap[category] || 'Sales'}`);
+                  }
+                  return router.push('/reports');
+                }
+
+                if (pathname.startsWith('/settings/')) {
+                  return router.push('/settings');
+                }
+
+                // 2. Default Hierarchy Popping
                 const segments = pathname.split("/").filter((segment) => segment !== "" && segment !== "pos");
-                
-                // 1. Hierarchical Action Navigation
-                // If we're on a sub-page (like /view, /edit, /create, /details), go back to the parent module
-                const actionKeywords = ["view", "edit", "create", "details", "new"];
-                const actionIndex = segments.findIndex(s => actionKeywords.includes(s));
-                
-                if (actionIndex !== -1) {
-                   // Slice up to the module root (before the action)
-                   const parentSegments = segments.slice(0, actionIndex);
-                   router.push("/" + parentSegments.join("/"));
-                   return;
-                }
-
-                // 2. Report Hub Navigation
-                if (segments[0] === "reports" && segments.length > 1) {
-                  router.push("/reports");
-                  return;
-                }
-
-                // 3. Fallback History Navigation
-                if (window.history.length > 1) {
-                  router.back();
+                if (segments.length > 1) {
+                  segments.pop();
+                  router.push("/" + segments.join("/"));
                 } else {
                   router.push("/");
                 }

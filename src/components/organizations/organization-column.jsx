@@ -1,7 +1,7 @@
 // app/organizations/organization-columns.tsx
 "use client";
 
-import { ArrowUpDown, MoreHorizontal, Building } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Building, Copy, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const DataTableColumnHeader = ({ column, title }) => {
   return (
@@ -81,6 +82,37 @@ export const getOrganizationColumns = ({ onDelete, onToggleStatus }) => [
             </span>
             <span className="text-xs text-muted-foreground">
               {organization.email || "No email provided"}
+            </span>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Org ID" />
+    ),
+    cell: ({ row }) => {
+      const id = row.original.id;
+      return (
+        <div 
+          className="group flex items-center gap-2 cursor-pointer max-w-[120px]"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(id);
+            toast.success("Organization ID copied to clipboard!");
+          }}
+        >
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-[11px] font-bold text-muted-foreground group-hover:text-emerald-600 transition-colors truncate">
+                {id.substring(0, 8)}...
+              </span>
+              <Copy className="h-3 w-3 text-emerald-600 opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100" />
+            </div>
+            <span className="text-[9px] text-muted-foreground/60 uppercase font-bold tracking-tighter group-hover:text-emerald-500/60 transition-colors">
+              Click to copy
             </span>
           </div>
         </div>

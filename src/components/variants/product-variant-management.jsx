@@ -432,7 +432,7 @@ export default function ProductVariantsPage() {
       setError(null);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/products?size=1000`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/products?size=1000&is_variant=1`,
         {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         }

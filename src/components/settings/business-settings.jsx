@@ -24,7 +24,7 @@ export function BusinessSettings() {
   const [formData, setFormData] = useState({
     businessName: '', taxId: '', businessType: 'retail',
     website: '', email: '', phone: '', address: '', city: '', state: '', zipCode: '',
-    shopify_enabled: false, whatsapp_enabled: false
+    shopify_enabled: false, whatsapp_enabled: false, textlk_enabled: false
   });
 
   useEffect(() => {
@@ -35,18 +35,10 @@ export function BusinessSettings() {
         businessType: org.business_type || 'retail', website: org.website || '',
         email: org.email || '', phone: org.phone || '', address: org.address || '',
         city: org.city || '', state: org.state || '', zipCode: org.zip_code || '',
-        shopify_enabled: !!org.shopify_enabled, whatsapp_enabled: !!org.whatsapp_enabled
+        shopify_enabled: !!org.shopify_enabled, whatsapp_enabled: !!org.whatsapp_enabled,
+        textlk_enabled: !!org.textlk_enabled
       });
-
-      if (org.logo) {
-        try {
-          const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace('/api/v1', '');
-          const logoUrl = org.logo.startsWith('http') ? org.logo : `${baseUrl}/${org.logo}`;
-          setLogoPreview(logoUrl);
-        } catch (err) {
-          console.error("Failed to parse logo URL:", err);
-        }
-      }
+      if (org.logo) setLogoPreview(`${process.env.NEXT_PUBLIC_API_BASE_URL.replace('/api/v1', '')}/${org.logo}`);
     }
   }, [response]);
 
@@ -55,60 +47,32 @@ export function BusinessSettings() {
       toast.error("You do not have permission to modify business settings");
       return;
     }
-    
     setIsSaving(true);
-    try {
-      const payload = {
-        name: formData.businessName, tax_id: formData.taxId,
-        business_type: formData.businessType, website: formData.website,
-        email: formData.email, phone: formData.phone, address: formData.address,
-        city: formData.city, state: formData.state, zip_code: formData.zipCode,
-        shopify_enabled: formData.shopify_enabled, whatsapp_enabled: formData.whatsapp_enabled
-      };
-      
-      const result = await updateBusinessSettings(payload);
-      
-      if (logoFile) {
-        const logoResult = await uploadLogo(logoFile);
-        if (!logoResult.success) {
-          toast.error("Failed to synchronize brand logo: " + logoResult.error);
-        } else {
-          // Clear logo file after successful upload to prevent redundant saves
-          setLogoFile(null);
-        }
-      }
-      
-      if (result.success) {
-        toast.success("Business identity synchronized successfully");
-      } else {
-        toast.error(result.error || "Failed to synchronize identity");
-      }
-    } catch (error) {
-      console.error("Save error:", error);
-      toast.error("A structural error occurred while saving. Please try again.");
-    } finally {
-      setIsSaving(false);
+    const payload = {
+      name: formData.businessName, tax_id: formData.taxId,
+      business_type: formData.businessType, website: formData.website,
+      email: formData.email, phone: formData.phone, address: formData.address,
+      city: formData.city, state: formData.state, zip_code: formData.zipCode,
+      shopify_enabled: formData.shopify_enabled, whatsapp_enabled: formData.whatsapp_enabled,
+      textlk_enabled: formData.textlk_enabled
+    };
+    const result = await updateBusinessSettings(payload);
+    if (logoFile) {
+      const logoResult = await uploadLogo(logoFile);
+      if (!logoResult.success) toast.error("Failed to synchronize brand logo: " + logoResult.error);
     }
+    if (result.success) toast.success("Business identity synchronized successfully");
+    else toast.error(result.error || "Failed to synchronize identity");
+    setIsSaving(false);
   };
 
   const handleLogoChange = (e) => {
-    try {
-      const file = e.target.files?.[0];
-      if (file) {
-        if (file.size > 2 * 1024 * 1024) return toast.error("Asset size exceeds 2MB structural limit");
-        
-        // Revoke previous blob URL to avoid memory leaks
-        if (logoPreview && logoPreview.startsWith('blob:')) {
-          URL.revokeObjectURL(logoPreview);
-        }
-
-        setLogoFile(file);
-        setLogoPreview(URL.createObjectURL(file));
-        toast.info("Brand asset updated. Save to persist.");
-      }
-    } catch (error) {
-      console.error("Logo selection error:", error);
-      toast.error("Failed to process selected image.");
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) return toast.error("Asset size exceeds 2MB structural limit");
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
+      toast.info("Brand asset updated. Save to persist.");
     }
   };
 

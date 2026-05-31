@@ -61,6 +61,7 @@ const InventoryInsightsDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // all, low, out, healthy
+  const [expireFilterStatus, setExpireFilterStatus] = useState("all"); // all, expired, expiring, low, out
   
   const containerRef = useRef(null);
 
@@ -127,7 +128,7 @@ const InventoryInsightsDashboard = () => {
       }
     } catch (error) {
       console.error("Error fetching inventory data:", error);
-      toast.error("Failed to load inventory intelligence");
+      toast.error("Failed to load stock reports");
     } finally {
       setLoading(false);
     }
@@ -172,10 +173,10 @@ const InventoryInsightsDashboard = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground tracking-tight">
-              Inventory Intelligence
+              Stock Reports
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Real-time stock status & predictive intelligence center
+              Real-time stock status & performance reporting center
             </p>
           </div>
         </div>
@@ -259,9 +260,9 @@ const InventoryInsightsDashboard = () => {
             {/* Status Filters */}
             <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1">
                 <FilterButton active={filterStatus === 'all'} onClick={() => handleFilterChange('all')} label="All Status" />
-                <FilterButton active={filterStatus === 'healthy'} onClick={() => handleFilterChange('healthy')} label="Healthy" color="emerald" />
-                <FilterButton active={filterStatus === 'low'} onClick={() => handleFilterChange('low')} label="Low Stock" color="amber" />
-                <FilterButton active={filterStatus === 'out'} onClick={() => handleFilterChange('out')} label="Out of Stock" color="red" />
+                <FilterButton active={filterStatus === 'healthy'} onClick={() => handleFilterChange('healthy')} label="Healthy" color="emerald" count={summaryStats.totalItems - summaryStats.lowStock - summaryStats.outOfStock} />
+                <FilterButton active={filterStatus === 'low'} onClick={() => handleFilterChange('low')} label="Low Stock" color="amber" count={summaryStats.lowStock} />
+                <FilterButton active={filterStatus === 'out'} onClick={() => handleFilterChange('out')} label="Out of Stock" color="red" count={summaryStats.outOfStock} />
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -365,11 +366,37 @@ const InventoryInsightsDashboard = () => {
         {/* Expiration Watchlist */}
         <Card className="border border-border shadow-xs bg-card overflow-hidden">
           <CardHeader className="border-b border-border py-4">
-            <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-              <History className="h-5 w-5 text-amber-500" />
-              Expiration Watchlist
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-0.5">Batches approaching or past their expiration date</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <History className="h-5 w-5 text-amber-500" />
+                  Expiration Watchlist
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">Batches approaching or past their expiration date</p>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {(() => {
+                  const outCount = expiringItems.filter(i => parseFloat(i.quantity) <= 0).length;
+                  const lowCount = expiringItems.filter(i => {
+                    const qty = parseFloat(i.quantity);
+                    return qty > 0 && qty <= parseFloat(i.variant?.low_stock_threshold || 10);
+                  }).length;
+                  const expiredCount = expiringItems.filter(i => i.expiration_status === 'expired').length;
+                  const expiringSoonCount = expiringItems.filter(i => i.expiration_status === 'critical' || i.expiration_status === 'warning').length;
+
+                  return (
+                    <>
+                      <FilterButton active={expireFilterStatus === 'all'} onClick={() => setExpireFilterStatus('all')} label="All Batches" count={expiringItems.length} />
+                      <FilterButton active={expireFilterStatus === 'expired'} onClick={() => setExpireFilterStatus('expired')} label="Expired" color="red" count={expiredCount} />
+                      <FilterButton active={expireFilterStatus === 'expiring'} onClick={() => setExpireFilterStatus('expiring')} label="Expiring Soon" color="amber" count={expiringSoonCount} />
+                      <div className="h-4 w-px bg-border mx-1 shrink-0" />
+                      <FilterButton active={expireFilterStatus === 'out'} onClick={() => setExpireFilterStatus('out')} label="Out of Stock" color="slate" count={outCount} />
+                      <FilterButton active={expireFilterStatus === 'low'} onClick={() => setExpireFilterStatus('low')} label="Low Stock" color="slate" count={lowCount} />
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -385,8 +412,21 @@ const InventoryInsightsDashboard = () => {
                 <TableBody>
                   {loading ? (
                     <StatusShimmer rows={5} />
-                  ) : expiringItems.length > 0 ? (
-                    expiringItems.map((item) => {
+                  ) : (
+                    (() => {
+                      const filteredItems = expiringItems.filter(item => {
+                        const qty = parseFloat(item.quantity);
+                        const threshold = parseFloat(item.variant?.low_stock_threshold || 10);
+                        
+                        if (expireFilterStatus === 'expired') return item.expiration_status === 'expired';
+                        if (expireFilterStatus === 'expiring') return item.expiration_status === 'critical' || item.expiration_status === 'warning';
+                        if (expireFilterStatus === 'out') return qty <= 0;
+                        if (expireFilterStatus === 'low') return qty > 0 && qty <= threshold;
+                        return true;
+                      });
+
+                      if (filteredItems.length > 0) {
+                        return filteredItems.map((item) => {
                       const getExpiryStatus = (status) => {
                         switch(status) {
                           case 'expired': return { label: 'Expired', color: 'bg-red-600', bg: 'bg-red-50', text: 'text-red-600' };
@@ -400,7 +440,7 @@ const InventoryInsightsDashboard = () => {
                         <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border/40">
                           <TableCell className="pl-6 py-3">
                             <div>
-                              <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight">{item.product?.name}</h4>
+                               <h4 className="font-bold text-foreground text-sm leading-tight">{item.product?.name}</h4>
                               <p className="text-[11px] text-slate-500 font-medium mt-1">
                                 {item.variant?.name || "Standard"} • Batch: {item.batch_number || 'N/A'}
                               </p>
@@ -421,13 +461,19 @@ const InventoryInsightsDashboard = () => {
                           </TableCell>
                         </TableRow>
                       );
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="h-32 text-center text-slate-400 font-medium italic">
-                        No expiring batches detected. Your inventory is healthy!
-                      </TableCell>
-                    </TableRow>
+                        });
+                      } else {
+                        return (
+                          <TableRow>
+                            <TableCell colSpan={4} className="h-32 text-center text-slate-400 font-medium italic">
+                              {expireFilterStatus === 'all' 
+                                ? "No expiring batches detected. Your inventory is healthy!" 
+                                : `No expiring batches match the ${expireFilterStatus} stock filter.`}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                    })()
                   )}
                 </TableBody>
               </Table>
@@ -558,6 +604,7 @@ const FilterButton = ({ active, onClick, label, count, color = "indigo" }) => {
         emerald: active ? "bg-emerald-600 text-white border-emerald-600" : "bg-background text-emerald-600 border-emerald-500/20 dark:border-emerald-500/10 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5",
         amber: active ? "bg-amber-600 text-white border-amber-600" : "bg-background text-amber-600 border-amber-500/20 dark:border-amber-500/10 hover:bg-amber-50/50 dark:hover:bg-amber-500/5",
         red: active ? "bg-red-600 text-white border-red-600" : "bg-background text-red-600 border-red-500/20 dark:border-red-500/10 hover:bg-red-50/50 dark:hover:bg-red-500/5",
+        slate: active ? "bg-slate-600 text-white border-slate-600" : "bg-background text-slate-600 border-slate-500/20 dark:border-slate-500/10 hover:bg-slate-50/50 dark:hover:bg-slate-500/5",
     };
 
     return (

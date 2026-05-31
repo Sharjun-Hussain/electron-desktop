@@ -17,7 +17,7 @@ export const useSettingsStore = create(
                 theme: 'light',
                 zoomLevel: 1,
                 sidebarCollapsed: false,
-                posLayout: 'modern', // 'modern' or 'classic'
+                posLayout: 'modern', // 'modern' | 'classic'
             },
             // Business Settings (Synced from backend)
             business: {},
@@ -25,6 +25,8 @@ export const useSettingsStore = create(
             receipt: {},
             // General Settings (Synced from backend)
             general: {},
+            // Persisted Session for Offline Use
+            session: null,
             
             setGlobalSettings: (settings) =>
                 set((state) => ({
@@ -43,6 +45,11 @@ export const useSettingsStore = create(
                     global: { ...state.global, theme: theme }
                 })),
 
+            setPosLayout: (layout) =>
+                set((state) => ({
+                    global: { ...state.global, posLayout: layout }
+                })),
+
             setBusinessSettings: (settings) =>
                 set(() => ({ 
                     business: typeof settings === 'object' && settings !== null ? settings : {} 
@@ -56,6 +63,11 @@ export const useSettingsStore = create(
             setGeneralSettings: (settings) =>
                 set(() => ({ 
                     general: typeof settings === 'object' && settings !== null ? settings : {} 
+                })),
+
+            setSession: (session) =>
+                set(() => ({ 
+                    session: typeof session === 'object' && session !== null ? session : null 
                 })),
         }),
         {

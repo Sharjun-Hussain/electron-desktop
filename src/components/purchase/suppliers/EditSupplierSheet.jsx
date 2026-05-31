@@ -42,10 +42,11 @@ const phoneRegex = new RegExp(
 
 const supplierSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
+  code: z.string().optional(),
   email: z.string().email("Invalid email address").or(z.literal("")),
-  phone: z.string().regex(phoneRegex, "Invalid phone number"),
+  phone: z.string().regex(phoneRegex, "Invalid phone number").or(z.literal("")).optional(),
   contact_person: z.string().min(2, "Contact person is required"),
-  address: z.string().min(5, "Address is required"),
+  address: z.string().optional(),
 });
 
 export function EditSupplierSheet({ open, onOpenChange, supplier, onSuccess }) {
@@ -56,6 +57,7 @@ export function EditSupplierSheet({ open, onOpenChange, supplier, onSuccess }) {
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
+      code: "",
       email: "",
       phone: "",
       contact_person: "",
@@ -67,6 +69,7 @@ export function EditSupplierSheet({ open, onOpenChange, supplier, onSuccess }) {
     if (supplier && open) {
       form.reset({
         name: supplier.name || "",
+        code: supplier.code || "",
         email: supplier.email || "",
         phone: supplier.phone || "",
         contact_person: supplier.contact_person || "",
@@ -146,6 +149,23 @@ export function EditSupplierSheet({ open, onOpenChange, supplier, onSuccess }) {
                         <FormLabel className="font-semibold text-foreground">Supplier Name</FormLabel>
                         <FormControl>
                           <Input className="shadow-sm" placeholder="e.g. Acme Corporation" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-semibold text-foreground flex items-center justify-between">
+                          Supplier Code
+                          <span className="text-[10px] font-normal opacity-60 italic">Optional unique identifier</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input className="shadow-sm" placeholder="e.g. SUP-001" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

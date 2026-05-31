@@ -3,8 +3,8 @@
 import React, { useState, memo, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "@/components/auth/DesktopAuthProvider";
 import { useForm } from "react-hook-form";
-import { desktopLogin } from "@/lib/desktop-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -97,7 +97,7 @@ const AuthFields = memo(({ control, showPassword, setShowPassword }) => (
       name="password"
       render={({ field }) => (
         <FormItem>
-          {/* <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <FormLabel className="text-slate-700 dark:text-zinc-300 font-medium">
               Password
             </FormLabel>
@@ -107,7 +107,7 @@ const AuthFields = memo(({ control, showPassword, setShowPassword }) => (
             >
               Forgot password?
             </Link>
-          </div> */}
+          </div>
           <div className="relative group">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
             <FormControl>
@@ -207,15 +207,22 @@ function LoginForm() {
       });
 
       try {
-        const result = await desktopLogin(values.email, values.password);
+        const result = await signIn("credentials", {
+          redirect: false,
+          email: values.email,
+          password: values.password,
+        });
 
-        if (!result?.ok) {
+        if (result?.error) {
           toast.error("Invalid Credentials");
           updateState({
             isLoading: false,
             isShaking: true,
             statusMessage: "Sign In",
-            serverError: result.error || "The email or password you entered is incorrect.",
+            serverError:
+              result.error === "CredentialsSignin"
+                ? "The email or password you entered is incorrect."
+                : result.error,
           });
 
           setTimeout(() => updateState({ isShaking: false }), 600);
@@ -227,13 +234,9 @@ function LoginForm() {
           toast.success("Access Granted");
 
           setTimeout(() => {
-            let returnUrl = searchParams.get("redirect") || "/";
-            // If redirect points back to the login page, go to dashboard instead
-            if (!returnUrl || returnUrl.startsWith("/login") || returnUrl === "/") {
-              returnUrl = "/";
-            }
-            // Hard reload ensures DesktopAuthProvider picks up the new session immediately.
-            window.location.href = returnUrl;
+            const returnUrl = searchParams.get("redirect") || "/";
+            router.push(returnUrl);
+            router.refresh();
           }, 600);
           return;
         }
@@ -245,7 +248,7 @@ function LoginForm() {
         });
       }
     },
-    [updateState, searchParams],
+    [updateState, router, searchParams],
   );
 
   return (

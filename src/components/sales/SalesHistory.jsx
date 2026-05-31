@@ -23,7 +23,8 @@ import {
   Tag,
   Package2,
   Filter,
-  FileText
+  FileText,
+  WifiOff
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { useRef } from "react";
@@ -325,10 +326,18 @@ export default function SalesHistory() {
           >
             {row.getValue("invoice_number")}
           </button>
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <span className="text-[10px] text-muted-foreground uppercase font-bold">{row.original.branch?.name || 'Main Hub'}</span>
             <span className="text-[10px] opacity-20">•</span>
             <span className="text-[9px] font-black text-emerald-600/50 tabular-nums tracking-tighter">REF: {generateDocNumber('sale', row.original.id)}</span>
+            {row.original.source === 'ecommerce' && (
+              <>
+                <span className="text-[10px] opacity-20">•</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-linear-to-r from-indigo-500 to-violet-500 text-white shadow-xs tracking-wider uppercase border border-indigo-400/20">
+                  E-Commerce
+                </span>
+              </>
+            )}
           </div>
         </div>
       )
@@ -464,9 +473,24 @@ export default function SalesHistory() {
         exportData={exportData}
         exportFileName={`Sales_History_Export_${format(new Date(), "yyyyMMdd")}`}
         extraActions={
-          <Button onClick={fetchSales} variant="outline" size="icon" className="h-9 w-9 p-0 border-gray-200 hover:bg-emerald-50 hover:border-emerald-200">
-            <RefreshCcw className={cn("h-4 w-4", loading && "animate-spin")} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => router.push("/sales/offline")}
+              variant="outline"
+              className="gap-2 border-indigo-500/30 bg-indigo-500/5 text-indigo-700 hover:bg-indigo-500/10 transition-all font-bold text-xs h-9 px-4"
+            >
+              <WifiOff className="h-3.5 w-3.5" />
+              Offline Sync Monitor
+            </Button>
+            <Button
+              onClick={fetchSales}
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 p-0 border-gray-200 hover:bg-emerald-50 hover:border-emerald-200"
+            >
+              <RefreshCcw className={cn("h-4 w-4", loading && "animate-spin")} />
+            </Button>
+          </div>
         }
         isFiltered={searchQuery !== ""}
         onClearFilters={handleClearFilters}

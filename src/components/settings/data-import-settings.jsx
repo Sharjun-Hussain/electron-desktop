@@ -118,8 +118,8 @@ export function DataImportSettings() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Restore failed");
       setRestoreStage('success');
-      toast.success("Database restored successfully!");
-      setTimeout(() => window.location.reload(), 3000);
+      toast.success("Database restored! Backend is restarting...");
+      setTimeout(() => window.location.reload(), 10000);
     } catch (err) {
       setRestoreError(err.message || 'Restore failed. Please check the file and try again.');
       setRestoreStage('error');
@@ -264,7 +264,7 @@ export function DataImportSettings() {
                   <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                 </div>
                 <p className="font-bold text-lg text-foreground">Restoration Successful!</p>
-                <p className="text-sm text-muted-foreground">The application will refresh in 3 seconds...</p>
+                <p className="text-sm text-muted-foreground">Backend is restarting — refreshing in 10 seconds...</p>
               </div>
             )}
 

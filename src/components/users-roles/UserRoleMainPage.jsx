@@ -29,6 +29,7 @@ import {
   Settings,
   ShieldAlert,
   ChevronRight,
+  Grid3X3,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -86,6 +87,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { ProtectedComponent } from "@/components/auth/ProtectedComponent";
 import { usePermission } from "@/hooks/use-permission";
@@ -141,6 +151,26 @@ const getAvatarColor = (name) => {
 const roleSchema = z.object({
   name: z.string().min(1, "Role name is required"),
   permissions: z.array(z.string()).default([]),
+});
+
+const userSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().optional().or(z.literal("")),
+  password_confirmation: z.string().optional().or(z.literal("")),
+  organizationId: z.string().min(1, "Organization is required"),
+  roleId: z.string().min(1, "Role is required"),
+  branchIds: z.array(z.any()).min(1, "Select at least one branch"),
+  isActive: z.boolean().default(true),
+}).refine((data) => {
+  if (data.password && data.password !== data.password_confirmation) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Passwords do not match",
+  path: ["password_confirmation"],
 });
 
 // --- COMPONENT: ROLE FORM SHEET ---
@@ -417,6 +447,511 @@ const RoleFormDialog = ({
   );
 };
 
+// --- COMPONENT: USER FORM DIALOG ---
+const UserFormDialog = ({
+  isOpen,
+  onClose,
+  initialData,
+  onSave,
+  roles,
+  organizations,
+  branches,
+  isSuperAdmin,
+  session,
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Email Verification States
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationRequested, setVerificationRequested] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+
+  const form = useForm({
+    resolver: zodResolver(userSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      password_confirmation: "",
+      roleId: "",
+      organizationId: "",
+      branchIds: [],
+      isActive: true,
+    },
+  });
+
+  const { reset, handleSubmit, control, watch, setValue } = form;
+  const selectedOrgId = watch("organizationId");
+  const currentBranchIds = watch("branchIds");
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        reset({
+          firstName: initialData.firstName || "",
+          lastName: initialData.lastName || "",
+          email: initialData.email || "",
+          password: "",
+          password_confirmation: "",
+          roleId: String(initialData.roleId || ""),
+          organizationId: String(initialData.organization_id || ""),
+          branchIds: initialData.branchIds || [],
+          isActive: initialData.isActive ?? true,
+        });
+      } else {
+        reset({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          password_confirmation: "",
+          roleId: "",
+          organizationId: isSuperAdmin ? "" : String(session?.user?.organization_id || ""),
+          branchIds: [],
+          isActive: true,
+        });
+      }
+      // Reset verification state on open
+      setEmailVerified(false);
+      setVerificationRequested(false);
+      setOtpValue("");
+    }
+  }, [isOpen, initialData, reset, isSuperAdmin, session]);
+
+  const handleRequestCode = async () => {
+    const email = watch("email");
+    if (!email || !z.string().email().safeParse(email).success) {
+      toast.error("Please enter a valid email address first.");
+      return;
+    }
+
+    setIsRequesting(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify-email/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to send verification code");
+
+      // Check if already verified (handles case where form was closed but email was verified)
+      if (data.data?.verified) {
+        setEmailVerified(true);
+        toast.success(data.message || "Email already verified.");
+        return;
+      }
+
+      setVerificationRequested(true);
+      toast.success("Verification code sent to " + email);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const email = watch("email");
+    if (!otpValue || otpValue.length < 6) {
+      toast.error("Please enter the 6-digit code.");
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify-email/confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify({ email, code: otpValue }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Invalid or expired code");
+
+      setEmailVerified(true);
+      setVerificationRequested(false);
+      toast.success("Email verified successfully!");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
+    try {
+      await onSave(data, initialData?.id);
+      onClose();
+    } catch (error) {
+      console.error("Failed to save user:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredBranches = branches.filter(b =>
+    !selectedOrgId || String(b.organization_id) === String(selectedOrgId)
+  );
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[550px] p-0 border-none bg-card/95 backdrop-blur-xl shadow-3xl rounded-3xl overflow-hidden">
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <DialogHeader className="px-6 py-4 bg-emerald-500/5 border-b border-border/40">
+              <div className="flex items-center gap-4">
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 shadow-sm">
+                  {initialData ? <Pencil className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-bold">
+                    {initialData ? "Record Refinement" : "Provision Member"}
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground font-medium">
+                    {initialData ? "Update system identity and access scope" : "Create a high-access system account"}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-medium text-muted-foreground ml-1">First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John" {...field} className="h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
+                      </FormControl>
+                      <FormMessage className="text-[10px] font-medium" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-medium text-muted-foreground ml-1">Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Doe" {...field} className="h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
+                      </FormControl>
+                      <FormMessage className="text-[10px] font-medium" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-sm font-medium text-muted-foreground ml-1">Authorization Email</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input
+                          placeholder="staff@enterprise.com"
+                          {...field}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val);
+                            if (emailVerified) setEmailVerified(false);
+                          }}
+                          className={cn(
+                            "h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm flex-1",
+                            emailVerified && "border-emerald-500 bg-emerald-500/5 text-emerald-700",
+                            verificationRequested && !emailVerified && "bg-muted/50 border-emerald-500/30"
+                          )}
+                          disabled={!!initialData || emailVerified || verificationRequested}
+                        />
+                      </FormControl>
+                      {!initialData && !emailVerified && !verificationRequested && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRequestCode}
+                          disabled={isRequesting}
+                          className="h-9 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/5 px-4 font-bold"
+                        >
+                          {isRequesting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify Email"}
+                        </Button>
+                      )}
+                      {!initialData && verificationRequested && !emailVerified && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setVerificationRequested(false);
+                            setOtpValue("");
+                          }}
+                          className="h-9 text-red-500 hover:text-red-600 hover:bg-red-50 font-bold text-xs"
+                        >
+                          Change Email?
+                        </Button>
+                      )}
+                      {emailVerified && (
+                        <div className="flex items-center gap-1.5 px-3 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md text-xs font-bold">
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                          VERIFIED
+                        </div>
+                      )}
+                    </div>
+                    <FormMessage className="text-[10px] font-medium" />
+                  </FormItem>
+                )}
+              />
+
+              {verificationRequested && !emailVerified && (
+                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-emerald-700 flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5" />
+                      ENTER VERIFICATION CODE
+                    </Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setVerificationRequested(false)}
+                      className="h-6 w-6 p-0 hover:bg-emerald-500/10"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="6-digit code"
+                      value={otpValue}
+                      onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      className="h-9 bg-white border-emerald-500/30 focus-visible:ring-emerald-500 font-mono tracking-widest text-center text-base font-bold"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      disabled={isVerifying || otpValue.length < 6}
+                      className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5"
+                    >
+                      {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify Code"}
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-medium">
+                    Please check your inbox. If you don't see it, check your spam folder.
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-medium text-muted-foreground ml-1">
+                        {initialData ? "Override Password" : "Password"}
+                      </FormLabel>
+                      <div className="relative group">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...field}
+                            className="h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all pr-10 font-medium text-sm"
+                          />
+                        </FormControl>
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-emerald-500 transition-colors">
+                          {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                      <FormMessage className="text-[10px] font-medium" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="password_confirmation"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="text-sm font-medium text-muted-foreground ml-1">Confirm Password</FormLabel>
+                      <div className="relative group">
+                        <FormControl>
+                          <Input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...field}
+                            className="h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all pr-10 font-medium text-sm"
+                          />
+                        </FormControl>
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-emerald-500 transition-colors">
+                          {showConfirmPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                      <FormMessage className="text-[10px] font-medium" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className={cn("grid gap-4", isSuperAdmin ? "grid-cols-2" : "grid-cols-1")}>
+                {isSuperAdmin && (
+                  <FormField
+                    control={control}
+                    name="organizationId"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-muted-foreground ml-1">Organization</FormLabel>
+                        <Select
+                          onValueChange={(val) => {
+                            field.onChange(val);
+                            setValue("branchIds", []);
+                          }}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm">
+                              <div className="flex items-center gap-2">
+                                <Building className="w-3.5 h-3.5 text-emerald-600" />
+                                <SelectValue placeholder="Select Org" />
+                              </div>
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="rounded-xl border-border/40 bg-card/95 backdrop-blur-xl p-1 shadow-2xl">
+                            {organizations.map((org) => (
+                              <SelectItem key={org.id} value={String(org.id)} className="rounded-lg py-2 font-medium text-sm">
+                                {org.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-[10px] font-medium" />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                <FormField
+                  control={control}
+                  name="roleId"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium text-muted-foreground ml-1">Security Privilege</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                              <SelectValue placeholder="Identify Role" />
+                            </div>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-border/40 bg-card/95 backdrop-blur-xl p-1 shadow-2xl">
+                          {roles.filter(r => isSuperAdmin || r.name !== 'Super Admin').map((r) => (
+                            <SelectItem key={r.id} value={String(r.id)} className="rounded-lg py-2 font-medium text-sm">
+                              {r.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-[10px] font-medium" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={control}
+                name="branchIds"
+                render={() => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-sm font-medium text-muted-foreground ml-1">Operations Domain (Branches)</FormLabel>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border border-border/60 bg-muted/30 dark:bg-muted/10 rounded-xl">
+                      {filteredBranches.map((b) => (
+                        <div
+                          key={b.id}
+                          onClick={() => {
+                            const bId = String(b.id);
+                            const stringIds = currentBranchIds.map(id => String(id));
+                            const newIds = stringIds.includes(bId)
+                              ? stringIds.filter(id => id !== bId)
+                              : [...stringIds, bId];
+                            setValue("branchIds", newIds, { shouldValidate: true });
+                          }}
+                          className={cn(
+                            "flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all",
+                            currentBranchIds.some(id => String(id) === String(b.id))
+                              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 shadow-sm"
+                              : "hover:bg-white/5 border-transparent opacity-60"
+                          )}
+                        >
+                          {currentBranchIds.some(id => String(id) === String(b.id)) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                          <span className="text-xs font-bold">{b.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage className="text-[10px] font-medium" />
+                  </FormItem>
+                )}
+              />
+
+              {initialData && (
+                <FormField
+                  control={control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/40 mt-4">
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground">Operational Status</h4>
+                        <p className="text-xs font-medium text-muted-foreground opacity-60">Grant or suspend system compute access</p>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-emerald-600" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            <DialogFooter className="px-6 py-4 border-t border-border bg-muted/20 dark:bg-muted/5 flex flex-row items-center justify-end gap-3">
+              <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting} className="h-9 px-5 border-border/60 font-medium text-sm transition-all">
+                {initialData ? "Reject Changes" : "Cancel"}
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || (!initialData && !emailVerified)} 
+                className={cn(
+                  "h-9 px-8 text-white font-medium text-sm shadow-sm transition-all active:scale-95 border-none",
+                  !initialData && !emailVerified ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"
+                )}
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : (initialData ? <Check className="w-4 h-4 mr-2" /> : <Settings className="w-4 h-4 mr-2" />)}
+                {initialData ? "Commit Refinement" : "Initialize Member"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 // --- COMPONENT: PERMISSION MATRIX ---
 const PermissionMatrix = ({ roles, permissions, onToggle, isUpdating }) => {
   const groupedPermissions = useMemo(
@@ -549,39 +1084,42 @@ export default function UserManagement() {
 
   // UI States
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [userSearch, setUserSearch] = useState("");
-  const [roleViewMode, setRoleViewMode] = useState("cards");
   const [permSearch, setPermSearch] = useState("");
-
-  // New User Form State
-  const [newUser, setNewUser] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    password_confirmation: "",
-    roleId: "",
-    branchIds: [],
-    organizationId: "",
-  });
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isSuperAdmin = session?.user?.roles?.includes('Super Admin');
 
   const maxUsers = business?.plan?.max_users || (business?.is_master ? Infinity : 0);
   const userLimitReached = !isSuperAdmin && !business?.is_master && users.length >= maxUsers;
   const canManageRBAC = isSuperAdmin || business?.is_master || (business?.subscription_tier !== 'Essential');
 
-  useEffect(() => {
-    if (isUserDialogOpen && !isSuperAdmin && session?.user?.organization_id) {
-      setNewUser(prev => ({ ...prev, organizationId: String(session.user.organization_id) }));
-    }
-  }, [isUserDialogOpen, isSuperAdmin, session]);
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) =>
+      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearch.toLowerCase())
+    );
+  }, [users, userSearch]);
+
+  const groupedUsers = useMemo(() => {
+    if (!isSuperAdmin) return { [session?.user?.organization?.name || "Member Access"]: filteredUsers };
+
+    return filteredUsers.reduce((acc, user) => {
+      const orgName = user.organization?.name || "System Base";
+      if (!acc[orgName]) acc[orgName] = [];
+      acc[orgName].push(user);
+      return acc;
+    }, {});
+  }, [filteredUsers, isSuperAdmin, session]);
+
+  const filteredPermissions = useMemo(() => {
+    return permissions.filter(p =>
+      !permSearch || p.name.toLowerCase().includes(permSearch.toLowerCase()) || p.group_name?.toLowerCase().includes(permSearch.toLowerCase())
+    );
+  }, [permissions, permSearch]);
+
+  const groupedPermissions = useMemo(() => groupPermissionsBySection(filteredPermissions), [filteredPermissions]);
 
   useEffect(() => {
     if (!canManageRBAC && (activeTab === "roles" || activeTab === "permissions")) {
@@ -742,38 +1280,58 @@ export default function UserManagement() {
       firstName: user.name.split(' ')[0] || "",
       lastName: user.name.split(' ').slice(1).join(' ') || "",
       email: user.email,
-      roleId: user.roles?.[0]?.name || "",
+      roleId: user.roles?.[0]?.id || "",
       branchIds: user.branches?.map(b => b.id) || [],
       isActive: user.is_active,
       organization_id: user.organization_id,
       organization_name: user.organization?.name || "Organization"
     });
-    setIsEditUserDialogOpen(true);
+    setIsUserDialogOpen(true);
   };
 
-  const handleUpdateUser = async () => {
-    try {
-      const payload = {
-        name: `${editingUser.firstName} ${editingUser.lastName}`,
-        email: editingUser.email,
-        is_active: editingUser.isActive,
-        role_ids: [roles.find(r => r.name === editingUser.roleId)?.id].filter(Boolean),
-        branch_ids: editingUser.branchIds,
-        organization_id: editingUser.organization_id
-      };
-      if (editingUser.password) payload.password = editingUser.password;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${editingUser.id}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("User updated successfully");
-        setIsEditUserDialogOpen(false);
-        setEditingUser(null);
-        fetchData();
-      } else {
-        throw new Error(data.message || "Failed to update user");
-      }
-    } catch (error) {
-      toast.error(error.message);
+  const handleSaveUser = async (formData, userId = null) => {
+    const isEdit = !!userId;
+    if (!isEdit && userLimitReached) {
+      toast.error("Account Limit Reached: Please upgrade your subscription to provision more system members.");
+      return;
+    }
+
+    const selectedRole = roles.find(r => String(r.id) === String(formData.roleId));
+    const payload = {
+      name: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      is_active: formData.isActive,
+      role: selectedRole?.name || "",
+      roles: [selectedRole?.name].filter(Boolean),
+      role_ids: [formData.roleId],
+      branch_ids: formData.branchIds,
+      organization_id: formData.organizationId,
+    };
+
+    if (formData.password) {
+      payload.password = formData.password;
+      payload.password_confirmation = formData.password_confirmation;
+    }
+
+    const url = isEdit
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`
+      : `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
+
+    const res = await fetch(url, {
+      method: isEdit ? "PUT" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      toast.success(isEdit ? "User record refined successfully" : "New member provisioned successfully");
+      fetchData();
+    } else {
+      throw new Error(data.message || "Failed to process user record");
     }
   };
 
@@ -842,33 +1400,6 @@ export default function UserManagement() {
     }
   };
 
-  const handleCreateUser = async () => {
-    if (userLimitReached) {
-      toast.error("Account Limit Reached: Please upgrade your subscription to provision more system members.");
-      return;
-    }
-    if (!newUser.firstName || !newUser.lastName || !newUser.email || !newUser.password || !newUser.password_confirmation || !newUser.roleId) { toast.error("Please fill in all fields"); return; }
-    if (newUser.password !== newUser.password_confirmation) { toast.error("Passwords do not match"); return; }
-    setIsCreatingUser(true);
-    try {
-      const selectedRole = roles.find(r => String(r.id) === String(newUser.roleId));
-      const payload = {
-        name: `${newUser.firstName} ${newUser.lastName}`,
-        email: newUser.email,
-        password: newUser.password,
-        password_confirmation: newUser.password_confirmation,
-        role: selectedRole?.name || "",
-        roles: [selectedRole?.name].filter(Boolean),
-        role_ids: [newUser.roleId],
-        branch_ids: newUser.branchIds,
-        organization_id: newUser.organizationId
-      };
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (res.ok) { toast.success("User created successfully"); setIsUserDialogOpen(false); setNewUser({ firstName: "", lastName: "", email: "", password: "", password_confirmation: "", roleId: "", branchIds: [] }); setShowPassword(false); setShowConfirmPassword(false); fetchData(); } else { throw new Error(data.message || "Failed to create user"); }
-    } catch (error) { toast.error(error.message); } finally { setIsCreatingUser(false); }
-  };
 
   const handleResendWelcome = async (userId) => {
     try {
@@ -886,19 +1417,6 @@ export default function UserManagement() {
       toast.error(error.message);
     }
   };
-
-  const filteredUsers = users.filter((u) => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()));
-
-  const groupedUsers = useMemo(() => {
-    if (!isSuperAdmin) return { [session?.user?.organization?.name || "Member Access"]: filteredUsers };
-
-    return filteredUsers.reduce((acc, user) => {
-      const orgName = user.organization?.name || "System Base";
-      if (!acc[orgName]) acc[orgName] = [];
-      acc[orgName].push(user);
-      return acc;
-    }, {});
-  }, [filteredUsers, isSuperAdmin, session]);
 
   if (loading && users.length === 0) return <div className="p-10"><UsersPageSkeleton /></div>;
 
@@ -983,7 +1501,7 @@ export default function UserManagement() {
             <div className="flex items-center gap-4 w-full sm:w-auto">
               <div className="relative group w-full sm:w-[400px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
-                <Input placeholder="Search users by name or email..." className="pl-10 h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+                <Input placeholder="Search users by name or email..." className="pl-10 h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -1153,17 +1671,9 @@ export default function UserManagement() {
         </TabsContent>
 
         {/* ================= ROLES TAB ================= */}
-        <TabsContent value="roles" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          {loadingRoles ? (
-            <div className="flex items-center justify-center py-24">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-                <span className="text-sm font-medium text-muted-foreground">Loading roles...</span>
-              </div>
-            </div>
-          ) : (
+        <TabsContent value="roles" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          {activeTab === "roles" && (
             <Card className="border-border/40 rounded-xl shadow-sm">
-              {/* Toolbar */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-emerald-600" />
@@ -1282,46 +1792,33 @@ export default function UserManagement() {
           )}
         </TabsContent>
 
-
-
         {/* ================= PERMISSIONS TAB ================= */}
         <TabsContent value="permissions" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative group w-full sm:w-[400px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
-              <Input
-                placeholder="Search permissions..."
-                className="pl-10 h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm"
-                value={permSearch}
-                onChange={(e) => setPermSearch(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              {loadingPermissions && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-              <Badge variant="outline" className="text-xs font-medium bg-emerald-500/5 text-emerald-600 border-emerald-500/20">
-                {permissions.length} Total Permissions
-              </Badge>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-md" onClick={fetchPermissions} disabled={loadingPermissions}>
-                <ChevronRight className="w-4 h-4 rotate-[-90deg]" />
-              </Button>
-            </div>
-          </div>
-
-          {loadingPermissions ? (
-            <div className="flex items-center justify-center py-24">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-                <span className="text-sm font-medium text-muted-foreground">Loading permissions...</span>
+          {activeTab === "permissions" && (
+            <>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="relative group w-full sm:w-[400px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
+                  <Input
+                    placeholder="Search permissions..."
+                    className="pl-10 h-9 bg-background border-border rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm"
+                    value={permSearch}
+                    onChange={(e) => setPermSearch(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  {loadingPermissions && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                  <Badge variant="outline" className="text-xs font-medium bg-emerald-500/5 text-emerald-600 border-emerald-500/20">
+                    {permissions.length} Total Permissions
+                  </Badge>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-md" onClick={fetchPermissions} disabled={loadingPermissions}>
+                    <ChevronRight className="w-4 h-4 rotate-[-90deg]" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (() => {
-            const filteredPerms = permissions.filter(p =>
-              !permSearch || p.name.toLowerCase().includes(permSearch.toLowerCase()) || p.group_name?.toLowerCase().includes(permSearch.toLowerCase())
-            );
-            const grouped = groupPermissionsBySection(filteredPerms);
-            return (
+
               <div className="space-y-8">
-                {Object.keys(grouped).sort().map((group) => (
+                {Object.keys(groupedPermissions).sort().map((group) => (
                   <div key={group}>
                     <div className="flex items-center gap-3 mb-4">
                       <div className="p-1.5 rounded-md bg-emerald-500/10">
@@ -1329,11 +1826,11 @@ export default function UserManagement() {
                       </div>
                       <h3 className="font-bold text-sm text-foreground">{group}</h3>
                       <Badge variant="outline" className="text-xs font-medium bg-muted/30 border-border/40 text-muted-foreground">
-                        {grouped[group].length}
+                        {groupedPermissions[group].length}
                       </Badge>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {grouped[group].map((perm) => (
+                      {groupedPermissions[group].map((perm) => (
                         <div key={perm.id} className="flex items-start gap-3 p-3 rounded-xl border border-border/40 bg-card/60 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-200">
                           <div className="p-1 rounded-md bg-emerald-500/10 shrink-0 mt-0.5">
                             <Lock className="w-3 h-3 text-emerald-600" />
@@ -1347,255 +1844,35 @@ export default function UserManagement() {
                     </div>
                   </div>
                 ))}
-                {Object.keys(grouped).length === 0 && (
+                {Object.keys(groupedPermissions).length === 0 && (
                   <div className="flex flex-col items-center justify-center py-24 text-center">
                     <Lock className="w-10 h-10 text-muted-foreground/20 mb-4" />
                     <p className="text-sm font-medium text-muted-foreground">No permissions found</p>
                   </div>
                 )}
               </div>
-            );
-          })()}
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
       {/* ─── ROLE FORM DIALOG ─── */}
       <RoleFormDialog isOpen={isRoleDialogOpen} onClose={() => setIsRoleDialogOpen(false)} initialData={editingRole} allPermissions={permissions} onSave={handleSaveRole} />
 
-      {/* ─── ADD USER DIALOG ─── */}
-      <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="sm:max-w-[550px] p-0 border-none bg-card/95 backdrop-blur-xl shadow-3xl rounded-3xl overflow-hidden">
-          <DialogHeader className="px-6 py-4 bg-emerald-500/5 border-b border-border/40">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 shadow-sm">
-                <UserPlus className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-bold">Provision Member</DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground font-medium">Create a high-access system account</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar pb-10">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Legal First Name</Label>
-                <Input placeholder="John" value={newUser.firstName} onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Legal Last Name</Label>
-                <Input placeholder="Doe" value={newUser.lastName} onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-muted-foreground ml-1">Authorization Email</Label>
-              <Input type="email" placeholder="staff@enterprise.com" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Secure Code</Label>
-                <div className="relative group">
-                  <Input type={showPassword ? "text" : "password"} placeholder="••••••••" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all pr-10 font-medium text-sm" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-emerald-500 transition-colors">{showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</button>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Verify Code</Label>
-                <div className="relative group">
-                  <Input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" value={newUser.password_confirmation} onChange={(e) => setNewUser({ ...newUser, password_confirmation: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all pr-10 font-medium text-sm" />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-emerald-500 transition-colors">{showConfirmPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</button>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Associated Organization</Label>
-                <Select
-                  value={newUser.organizationId}
-                  onValueChange={(val) => setNewUser({ ...newUser, organizationId: val, branchIds: [] })}
-                  disabled={!isSuperAdmin}
-                >
-                  <SelectTrigger className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm">
-                    <div className="flex items-center gap-2">
-                      <Building className="w-3.5 h-3.5 text-emerald-600" />
-                      <SelectValue placeholder="Select Organization" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border/40 bg-card/95 backdrop-blur-xl p-1 shadow-2xl">
-                    {organizations.length > 0 ? (
-                      organizations.map((org) => (
-                        <SelectItem key={org.id} value={String(org.id)} className="rounded-lg py-2 focus:bg-emerald-500/10 focus:text-emerald-600 font-medium text-sm">
-                          {org.name}
-                        </SelectItem>
-                      ))
-                    ) : session?.user?.organization_id ? (
-                      <SelectItem value={String(session.user.organization_id)} className="rounded-lg py-2 font-medium text-sm">
-                        Your Organization
-                      </SelectItem>
-                    ) : (
-                      <div className="p-4 text-center">
-                        <Loader2 className="w-4 h-4 animate-spin mx-auto text-muted-foreground mb-1" />
-                        <p className="text-[10px] text-muted-foreground">Syncing Organizations...</p>
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Security Privilege</Label>
-                <Select value={newUser.roleId} onValueChange={(val) => setNewUser({ ...newUser, roleId: val })}>
-                  <SelectTrigger className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                      <SelectValue placeholder="Identify Role" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border/40 bg-card/95 backdrop-blur-xl p-1 shadow-2xl">
-                    {roles.filter(role => isSuperAdmin || role.name !== 'Super Admin').length > 0 ? roles
-                      .filter(role => isSuperAdmin || role.name !== 'Super Admin')
-                      .map((r) => (
-                        <SelectItem key={r.id} value={String(r.id)} className="rounded-lg py-2 focus:bg-emerald-500/10 focus:text-emerald-600 font-medium text-sm">{r.name}</SelectItem>
-                      )) : (
-                      <div className="p-4 text-center">
-                        <Loader2 className="w-4 h-4 animate-spin mx-auto text-muted-foreground mb-1" />
-                        <p className="text-[10px] text-muted-foreground">Syncing Roles...</p>
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground ml-1">Operations Domain (Branches)</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border border-border/40 bg-muted/20 rounded-xl">
-                {branches
-                  .filter(b => !newUser.organizationId || String(b.organization_id) === String(newUser.organizationId))
-                  .map((b) => (
-                    <div key={b.id} onClick={() => { const newIds = newUser.branchIds.includes(b.id) ? newUser.branchIds.filter(id => id !== b.id) : [...newUser.branchIds, b.id]; setNewUser({ ...newUser, branchIds: newIds }); }} className={cn("flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all", newUser.branchIds.includes(b.id) ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 shadow-sm" : "hover:bg-white/5 border-transparent opacity-60")}>
-                      {newUser.branchIds.includes(b.id) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                      <span className="text-xs font-bold">{b.name}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="px-6 py-4 border-t border-border/40 bg-muted/10 flex flex-row items-center justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsUserDialogOpen(false)} disabled={isCreatingUser} className="h-9 px-5 border-border/60 font-medium text-sm transition-all">Cancel</Button>
-            <Button onClick={handleCreateUser} disabled={isCreatingUser} className="h-9 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-sm transition-all active:scale-95 border-none">
-              {isCreatingUser ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Settings className="w-4 h-4 mr-2" />} Initialize Member
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ─── EDIT USER DIALOG ─── */}
-      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
-        <DialogContent className="sm:max-w-[550px] p-0 border-none bg-card/95 backdrop-blur-xl shadow-3xl rounded-3xl overflow-hidden">
-          <DialogHeader className="px-6 py-4 bg-emerald-500/5 border-b border-border/40">
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 shadow-sm">
-                <Pencil className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-bold">Record Refinement</DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground font-medium">Update system identity and access scope</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar pb-10">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Revised First Name</Label>
-                <Input placeholder="John" value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({ ...editingUser, firstName: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Revised Last Name</Label>
-                <Input placeholder="Doe" value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({ ...editingUser, lastName: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-muted-foreground ml-1">Registered Email</Label>
-              <Input type="email" placeholder="staff@enterprise.com" value={editingUser?.email || ""} onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })} className="h-9 bg-muted border-gray-200 rounded-md transition-all opacity-80 cursor-not-allowed font-medium text-sm" disabled />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-muted-foreground ml-1">Override Password (Optional)</Label>
-              <Input type="password" placeholder="Leave blank to maintain current" onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })} className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Associated Organization</Label>
-                <Select
-                  value={String(editingUser?.organization_id || "")}
-                  onValueChange={(val) => setEditingUser({ ...editingUser, organization_id: val, branchIds: [] })}
-                  disabled={!isSuperAdmin}
-                >
-                  <SelectTrigger className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm">
-                    <div className="flex items-center gap-2">
-                      <Building className="w-3.5 h-3.5 text-emerald-600" />
-                      <SelectValue placeholder="Organization" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border/40 bg-card/95 backdrop-blur-xl p-1 shadow-2xl">
-                    {organizations.length > 0 ? (
-                      organizations.map((org) => (
-                        <SelectItem key={org.id} value={String(org.id)} className="rounded-lg py-2 focus:bg-emerald-500/10 focus:text-emerald-600 font-medium text-sm">
-                          {org.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value={String(editingUser?.organization_id)} className="rounded-lg py-2 font-medium text-sm">
-                        {editingUser?.organization_name || "Current Organization"}
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-muted-foreground ml-1">Promotion / Demotion</Label>
-                <Select value={editingUser?.roleId || ""} onValueChange={(val) => setEditingUser({ ...editingUser, roleId: val })}>
-                  <SelectTrigger className="h-9 bg-white border-gray-200 rounded-md focus-visible:ring-emerald-500 transition-all font-medium text-sm">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                      <SelectValue placeholder="Update Role" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border/40 bg-card/95 backdrop-blur-xl p-1 shadow-2xl">
-                    {roles
-                      .filter(r => isSuperAdmin || r.name !== 'Super Admin')
-                      .map((r) => <SelectItem key={r.id} value={String(r.name)} className="rounded-lg py-2 focus:bg-emerald-500/10 focus:text-emerald-600 font-medium text-sm">{r.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground ml-1">Expand / Limit Domain</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border border-border/40 bg-muted/20 rounded-xl">
-                {branches
-                  .filter(b => !editingUser?.organization_id || b.organization_id === editingUser.organization_id)
-                  .map((b) => (
-                    <div key={b.id} onClick={() => { const newIds = editingUser.branchIds.includes(b.id) ? editingUser.branchIds.filter(id => id !== b.id) : [...editingUser.branchIds, b.id]; setEditingUser({ ...editingUser, branchIds: newIds }); }} className={cn("flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-all", editingUser?.branchIds?.includes(b.id) ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 shadow-sm" : "hover:bg-white/5 border-transparent opacity-60")}>
-                      {editingUser?.branchIds?.includes(b.id) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                      <span className="text-xs font-bold">{b.name}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/40 mt-4">
-              <div>
-                <h4 className="font-bold text-sm text-foreground">Operational Status</h4>
-                <p className="text-xs font-medium text-muted-foreground opacity-60">Grant or suspend system compute access</p>
-              </div>
-              <Switch checked={editingUser?.isActive} onCheckedChange={(val) => setEditingUser({ ...editingUser, isActive: val })} className="data-[state=checked]:bg-emerald-600" />
-            </div>
-          </div>
-          <DialogFooter className="px-6 py-4 border-t border-border/40 bg-muted/10 flex flex-row items-center justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsEditUserDialogOpen(false)} className="h-9 px-5 border-border/60 font-medium text-sm transition-all">Reject Changes</Button>
-            <Button onClick={handleUpdateUser} className="h-9 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-sm transition-all active:scale-95 border-none">
-              Commit Refinement
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UserFormDialog
+        isOpen={isUserDialogOpen}
+        onClose={() => {
+          setIsUserDialogOpen(false);
+          setEditingUser(null);
+        }}
+        initialData={editingUser}
+        onSave={handleSaveUser}
+        roles={roles}
+        organizations={organizations}
+        branches={branches}
+        isSuperAdmin={isSuperAdmin}
+        session={session}
+      />
     </div>
   );
 }

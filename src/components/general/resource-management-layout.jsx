@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -43,9 +43,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AccessDenied } from "./access-denied";
+import { DataTableViewOptions } from "./data-table-view-options";
 
-// Pagination Component
-const PaginationControls = ({ table, paginationState, pageCount }) => {
+// Pagination Component - Memoized
+const PaginationControls = React.memo(({ table, paginationState, pageCount }) => {
   const currentPage = paginationState?.pageIndex ?? table.getState().pagination.pageIndex;
   const totalPages = pageCount ?? table.getPageCount();
   const canPreviousPage = table.getCanPreviousPage();
@@ -54,7 +55,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-border/50 bg-gray-50/30 dark:bg-muted/10">
       <div className="flex items-center gap-2">
         <p className="text-sm text-muted-foreground">
           Page {currentPage + 1} of {totalPages}
@@ -65,7 +66,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
             table.setPageSize(Number(value));
           }}
         >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
+          <SelectTrigger className="h-8 w-[70px] text-xs border-gray-200 dark:border-border/50 dark:bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +84,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
           onClick={() => table.setPageIndex(0)}
           disabled={!canPreviousPage}
         >
@@ -92,14 +93,13 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
           onClick={() => table.previousPage()}
           disabled={!canPreviousPage}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        {/* Page Numbers */}
         <div className="flex items-center gap-1 mx-1">
           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
             let pageNum;
@@ -123,7 +123,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
                     "h-8 w-8",
                     currentPage === pageNum
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+                      : "border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
                   )}
                   onClick={() => table.setPageIndex(pageNum)}
                 >
@@ -138,7 +138,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
           onClick={() => table.nextPage()}
           disabled={!canNextPage}
         >
@@ -147,7 +147,7 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 bg-transparent"
+          className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
           onClick={() => table.setPageIndex(totalPages - 1)}
           disabled={!canNextPage}
         >
@@ -156,9 +156,10 @@ const PaginationControls = ({ table, paginationState, pageCount }) => {
       </div>
     </div>
   );
-};
+});
 
-const ResourceTableToolbar = ({
+// ResourceTableToolbar - Uncontrolled Input & Maximum Optimization
+const ResourceTableToolbar = React.memo(({
   table,
   searchColumn,
   searchPlaceholder,
@@ -173,96 +174,101 @@ const ResourceTableToolbar = ({
   viewMode,
   onViewModeChange,
   enableBulkActions = true,
+  selectedRowCount = 0,
 }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState(table.getColumn(searchColumn)?.getFilterValue() ?? "");
+  const inputRef = useRef(null);
+  const [hasValue, setHasValue] = useState(false);
 
-  // Debounce search update to improve performance
-  React.useEffect(() => {
+  // Sync ref with table state on mount or reset
+  useEffect(() => {
+    const currentValue = table.getColumn(searchColumn)?.getFilterValue() ?? "";
+    if (inputRef.current) {
+      inputRef.current.value = currentValue;
+      setHasValue(!!currentValue);
+    }
+  }, [table, searchColumn]);
+
+  const handleSearchChange = useCallback((e) => {
+    const val = e.target.value;
+    setHasValue(!!val);
+
+    // Debounce actual state update
     const timeout = setTimeout(() => {
-      table.getColumn(searchColumn)?.setFilterValue(searchValue);
-      if (onSearchChange) onSearchChange(searchValue);
+      table.getColumn(searchColumn)?.setFilterValue(val);
+      if (onSearchChange) onSearchChange(val);
     }, 300);
-    return () => clearTimeout(timeout);
-  }, [searchValue, searchColumn, table, onSearchChange]);
 
-  // Sync internal search value if external filter is reset
-  const tableSearchValue = table.getColumn(searchColumn)?.getFilterValue() ?? "";
-  React.useEffect(() => {
-    setSearchValue(tableSearchValue);
-  }, [tableSearchValue]);
+    return () => clearTimeout(timeout);
+  }, [table, searchColumn, onSearchChange]);
+
+  const handleClear = useCallback(() => {
+    if (inputRef.current) inputRef.current.value = "";
+    setHasValue(false);
+    table.getColumn(searchColumn)?.setFilterValue("");
+    if (onSearchChange) onSearchChange("");
+    inputRef.current?.focus();
+  }, [table, searchColumn, onSearchChange]);
 
   const columnFilters = table.getState().columnFilters;
   const internalIsFiltered = columnFilters.length > 0;
   const showClear = externalIsFiltered || internalIsFiltered;
   const activeFilterCount = columnFilters.length + (externalIsFiltered ? 1 : 0);
 
-  const isAllSelected = table.getIsAllPageRowsSelected();
-  const isSomeSelected = table.getIsSomePageRowsSelected();
-
   return (
     <div className="flex flex-col gap-2">
-      {/* Single compact toolbar row */}
       <div className="flex items-center gap-2 px-4 py-2">
-        {/* Select-all Checkbox - Only show if bulk actions are enabled */}
-        {enableBulkActions && (
-          <>
-            <Checkbox
-              checked={isAllSelected ? true : isSomeSelected ? "indeterminate" : false}
-              onCheckedChange={(val) => table.toggleAllPageRowsSelected(!!val)}
-              className="h-4 w-4 rounded border-gray-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 data-[state=indeterminate]:bg-emerald-600 data-[state=indeterminate]:border-emerald-600 shrink-0"
-            />
-            <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
-          </>
-        )}
-
-        {/* Bulk Actions - Only show if enabled and component provided */}
         {enableBulkActions && bulkActionsComponent ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                id="inventory-bulk-actions"
-                variant="outline"
-                size="sm"
-                disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-                className="h-8 px-3 text-sm font-medium border-border bg-card hover:bg-muted text-foreground rounded-md shadow-none gap-1.5 shrink-0"
-              >
-                Bulk Actions {table.getFilteredSelectedRowModel().rows.length > 0 && `(${table.getFilteredSelectedRowModel().rows.length})`}
-                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 rounded-xl border-border bg-card shadow-2xl p-1.5 animate-in zoom-in-95">
-              {bulkActionsComponent}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : enableBulkActions ? (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled
-            className="h-8 px-3 text-sm font-medium border-border bg-card text-muted-foreground rounded-md shadow-none gap-1.5 shrink-0 opacity-60 cursor-default"
-          >
-            Bulk Actions
-            <ChevronDown className="h-3.5 w-3.5 opacity-40" />
-          </Button>
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={selectedRowCount === 0}
+                  className="h-8 px-3 text-sm font-medium border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-md shadow-none gap-1.5 shrink-0"
+                >
+                  Bulk Actions {selectedRowCount > 0 && `(${selectedRowCount})`}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-1.5 animate-in zoom-in-95">
+                {bulkActionsComponent}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-0.5 shrink-0" />
+          </>
         ) : null}
 
-        {enableBulkActions && <div className="w-px h-5 bg-border mx-0.5 shrink-0" />}
-
-        {/* Search */}
-        <div id="inventory-search" className="relative flex-1 min-w-0 group">
+        <div className="relative flex-1 min-w-0 group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none" />
           <Input
+            ref={inputRef}
             placeholder={searchPlaceholder || "Search..."}
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            className="h-8 pl-8 pr-3 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-gray-600 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
+            onChange={(e) => {
+              const val = e.target.value;
+              setHasValue(!!val);
+              // Simple inline debounce
+              if (window.searchTimeout) clearTimeout(window.searchTimeout);
+              window.searchTimeout = setTimeout(() => {
+                table.getColumn(searchColumn)?.setFilterValue(val);
+                if (onSearchChange) onSearchChange(val);
+              }, 300);
+            }}
+            className="h-8 pl-8 pr-8 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-gray-600 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
           />
+          {hasValue && (
+            <button
+              onClick={handleClear}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
-        <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
+        <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-0.5 shrink-0" />
 
-        {/* Filters toggle */}
         {filterComponents && (
           <Button
             variant="ghost"
@@ -285,87 +291,75 @@ const ResourceTableToolbar = ({
           </Button>
         )}
 
-        {/* Sort */}
         {(sortOptions && onSortChange) && (
-          <div id="inventory-sort">
-            <Select value={sortValue} onValueChange={onSortChange}>
-              <SelectTrigger className="h-8 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 text-sm font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-100 transition-colors gap-1 px-2 w-auto shrink-0">
-                <span className="text-gray-400 dark:text-slate-500 font-normal mr-0.5">Sort:</span>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-border bg-card shadow-2xl animate-in zoom-in-95">
-                {sortOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-sm font-medium rounded-md">
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={sortValue} onValueChange={onSortChange}>
+            <SelectTrigger className="h-8 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 text-sm font-medium text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-100 transition-colors gap-1 px-2 w-auto shrink-0">
+              <span className="text-gray-400 dark:text-slate-500 font-normal mr-0.5">Sort:</span>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
+              {sortOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
 
-        <div className="w-px h-5 bg-border mx-0.5 shrink-0" />
+        <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-0.5 shrink-0" />
 
-        {/* View-mode toggle */}
         {onViewModeChange && (
           <div className="flex items-center gap-0.5 shrink-0">
             <button
-              id="inventory-view-list"
               onClick={() => onViewModeChange("list")}
               className={cn(
                 "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
-                viewMode === "list"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                viewMode === "list" ? "bg-emerald-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
-              title="List view"
             >
               <LayoutList className="h-4 w-4" />
             </button>
             <button
-              id="inventory-view-grid"
               onClick={() => onViewModeChange("grid")}
               className={cn(
                 "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
-                viewMode === "grid"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                viewMode === "grid" ? "bg-emerald-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
-              title="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        {/* Clear filters */}
+        <DataTableViewOptions table={table} />
+
         {showClear && (
           <button
             onClick={() => {
               table.resetColumnFilters();
+              handleClear();
               if (onClearFilters) onClearFilters();
             }}
             className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
-            title="Clear filters"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
-      {/* Collapsible filter panel */}
       {filtersOpen && filterComponents && (
-        <div className="flex items-center gap-3 flex-wrap px-4 pt-2 pb-3 border-t border-border animate-in slide-in-from-top-1 fade-in duration-200">
+        <div className="flex items-center gap-3 flex-wrap px-4 pt-2 pb-3 border-t border-gray-100 dark:border-white/5 animate-in slide-in-from-top-1 fade-in duration-200">
           {filterComponents(table)}
         </div>
       )}
     </div>
   );
-};
+});
 
 import { DataActions } from "@/components/general/DataActions";
 
-export const ResourceManagementLayout = ({
+export const ResourceManagementLayout = React.memo(({
   data,
   columns,
   isLoading,
@@ -390,59 +384,46 @@ export const ResourceManagementLayout = ({
   onClearFilters,
   onPrint,
   showPrint = false,
-  // Row action props
   onRowClick,
   rowClassName,
-  // Pagination props
   pageCount,
   paginationState,
   onPaginationChange,
   enablePagination = true,
-  // Search props
   onSearchChange,
-  // Sort props
   sortOptions,
   sortValue,
   onSortChange,
-  // View mode props
   viewMode = "list",
   onViewModeChange,
   renderGridItem,
   gridClassName,
-  // Bulk actions toggle
   enableBulkActions = true,
   tableMeta,
+  initialColumnVisibility = {},
   children,
 }) => {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
-  const [internalPagination, setInternalPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [columnVisibility, setColumnVisibility] = useState(initialColumnVisibility);
+  const [internalPagination, setInternalPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
-  // Use manual pagination if pageCount is provided, otherwise use auto pagination
   const isManualPagination = !!pageCount && onPaginationChange;
+  const pagination = isManualPagination ? paginationState : internalPagination;
 
-  const pagination = isManualPagination
-    ? paginationState
-    : internalPagination;
-
-  const handlePaginationChange = (updater) => {
+  const handlePaginationChange = useCallback((updater) => {
     if (isManualPagination && onPaginationChange) {
       onPaginationChange(updater);
     } else {
-      const newState = typeof updater === 'function'
-        ? updater(internalPagination)
-        : updater;
-      setInternalPagination(newState);
+      setInternalPagination((prev) => (typeof updater === 'function' ? updater(prev) : updater));
     }
-  };
+  }, [isManualPagination, onPaginationChange]);
 
+  // MAXIMUM TABLE OPTIMIZATION - Stable instance
   const table = useReactTable({
-    data: data || [],
-    columns,
+    data: useMemo(() => data || [], [data]),
+    columns: useMemo(() => columns, [columns]),
     meta: tableMeta,
     pageCount: isManualPagination ? pageCount : undefined,
     manualPagination: isManualPagination,
@@ -453,99 +434,53 @@ export const ResourceManagementLayout = ({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
+    onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: handlePaginationChange,
-    state: {
-      sorting,
-      columnFilters,
-      rowSelection,
-      pagination,
-    },
+    state: { sorting, columnFilters, rowSelection, columnVisibility, pagination },
+    getRowId: (row, index) => row.id || row.uuid || row._id || index.toString(),
   });
 
-  const renderedBulkActions = bulkActionsComponent && enableBulkActions
-    ? React.cloneElement(bulkActionsComponent, { table })
-    : null;
+  const renderedBulkActions = useMemo(() =>
+    bulkActionsComponent && enableBulkActions ? React.cloneElement(bulkActionsComponent, { table }) : null,
+    [bulkActionsComponent, enableBulkActions, table]
+  );
 
   const isEmpty = !data || (Array.isArray(data) && data.length === 0);
 
-  if (isLoading && isEmpty) {
-    return loadingSkeleton || (
-      <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
-        <LoaderIcon className="h-8 w-8 animate-spin text-emerald-600" />
-        <p className="text-muted-foreground">Loading data...</p>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <AccessDenied
-        errorMessage={errorMessage}
-        onRetry={onRetry}
-      />
-    );
-  }
+  if (isLoading && isEmpty) return loadingSkeleton || <div className="flex h-[50vh] flex-col items-center justify-center space-y-4"><LoaderIcon className="h-8 w-8 animate-spin text-emerald-600" /><p className="text-muted-foreground">Loading...</p></div>;
+  if (isError) return <AccessDenied errorMessage={errorMessage} onRetry={onRetry} />;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="flex flex-col gap-6 max-w-full mx-auto">
-        {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {headerTitle}
           <div className="flex items-center gap-2">
             {extraActions}
-
             {(onExportClick || data) && (
               <div id="inventory-export" className="shrink-0">
                 {onExportClick ? (
-                  <Button
-                    variant="outline"
-                    className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
-                    onClick={onExportClick}
-                  >
-                    <Download className="h-4 w-4" />
-                    Export
+                  <Button variant="outline" className="gap-2 border-gray-200 hover:border-emerald-200 hover:bg-emerald-50" onClick={onExportClick}>
+                    <Download className="h-4 w-4" /> Export
                   </Button>
                 ) : (
-                  <DataActions
-                    data={exportData || data}
-                    fileName={exportFileName}
-                    onPrint={onPrint}
-                    showPrint={showPrint}
-                  />
+                  <DataActions data={exportData || data} table={exportData ? null : table} fileName={exportFileName} onPrint={onPrint} showPrint={showPrint} />
                 )}
               </div>
             )}
-
             {onAddClick && (
-              <Button
-                id="inventory-add-product"
-                onClick={onAddClick}
-                disabled={isAdding}
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-              >
-                {isAdding ? (
-                  <LoaderIcon className="h-4 w-4 animate-spin" />
-                ) : (
-                  <PlusCircle className="h-4 w-4" />
-                )}
-                {addButtonLabel}
+              <Button onClick={onAddClick} disabled={isAdding} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+                {isAdding ? <LoaderIcon className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />} {addButtonLabel}
               </Button>
             )}
           </div>
         </div>
 
-        {/* Statistics Cards */}
-        {statCardsComponent && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {statCardsComponent}
-          </div>
-        )}
+        {statCardsComponent && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">{statCardsComponent}</div>}
 
-        {/* Main Content Card */}
-        <Card className="border border-border shadow-sm rounded-lg overflow-hidden bg-card">
+        <Card className="border border-gray-200 dark:border-white/5 shadow-sm rounded-lg overflow-hidden bg-white dark:bg-card">
           <CardContent className="p-0">
-            <div className="border-b border-border bg-card">
+            <div className="border-b border-gray-100 dark:border-white/10 bg-white dark:bg-card">
               <ResourceTableToolbar
                 table={table}
                 searchColumn={searchColumn}
@@ -561,43 +496,21 @@ export const ResourceManagementLayout = ({
                 viewMode={viewMode}
                 onViewModeChange={onViewModeChange}
                 enableBulkActions={enableBulkActions}
+                selectedRowCount={table.getFilteredSelectedRowModel().rows.length}
               />
             </div>
-
-            <div className={cn(
-              "transition-all duration-300",
-              viewMode === "grid" && "bg-muted/30"
-            )}>
+            <div className={cn("transition-all duration-300", viewMode === "grid" && "bg-gray-50/30 dark:bg-slate-950/20")}>
               {viewMode === "grid" && renderGridItem ? (
-                <DataGrid
-                  table={table}
-                  renderGridItem={renderGridItem}
-                  isLoading={isLoading}
-                  gridClassName={gridClassName}
-                />
+                <DataGrid table={table} renderGridItem={renderGridItem} isLoading={isLoading} gridClassName={gridClassName} />
               ) : (
-                <DataTable
-                  table={table}
-                  columns={columns}
-                  isLoading={isLoading}
-                  onRowClick={onRowClick}
-                  rowClassName={rowClassName}
-                />
+                <DataTable table={table} columns={columns} isLoading={isLoading} onRowClick={onRowClick} rowClassName={rowClassName} />
               )}
             </div>
-
-            {/* Pagination Controls */}
-            {enablePagination && (
-              <PaginationControls
-                table={table}
-                paginationState={pagination}
-                pageCount={pageCount}
-              />
-            )}
+            {enablePagination && <PaginationControls table={table} paginationState={pagination} pageCount={pageCount} />}
           </CardContent>
         </Card>
         {children}
       </div>
     </div>
   );
-};
+});

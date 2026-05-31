@@ -1,17 +1,16 @@
 "use client";
 
-import { useReducer, useCallback } from "react";
+import { useReducer, useCallback, useEffect } from "react";
 
 function cartReducer(state, action) {
   switch (action.type) {
     case "ADD_ITEM": {
-      const { product, quantity: payloadQty, batchId: pbId, batch } = action.payload;
-      const bId = pbId || batch?.id || null;
+      const { product, quantity: payloadQty, batchId } = action.payload;
       const qtyToAdd = payloadQty !== undefined ? parseFloat(payloadQty) : 1;
-      const price = action.payload.price || batch?.selling_price || (state.isWholesale ? (product.wholesalePrice || 0) : (product.retailPrice || 0)) || 0;
-      
+      const price = action.payload.price || (state.isWholesale ? (product.wholesalePrice || 0) : (product.retailPrice || 0)) || 0;
+
       // Items are now unique by (variantId + batchId)
-      const itemKey = `${product.variantId || product.id}_${bId || 'default'}`;
+      const itemKey = `${product.variantId || product.id}_${batchId || 'default'}`;
       const existingIndex = state.cart.findIndex((i) => `${i.variantId}_${i.batchId || 'default'}` === itemKey);
 
       if (existingIndex > -1) {
@@ -25,18 +24,21 @@ function cartReducer(state, action) {
           ...state.cart,
           {
             id: itemKey, // Unique key for cart items
-            productId: product.productId,
-            variantId: product.variantId || product.id,
-            batchId: bId || null,
+            productId: product.productId || product.product_id || (product.variants ? product.id : null),
+            variantId: product.variantId || (product.variants ? (product.variants[0]?.id) : product.id),
+            batchId: batchId || null,
             barcode: product.barcode,
-            item_code: product.item_code || product.barcode,
-            name: product.name,
+            name: product.name || product.fullName || "Unknown Item",
             size: product.size,
             quantity: qtyToAdd,
             price,
+            mrp: product.mrpPrice || product.mrp || price,
             discount: 0,
+            discount_amt: 0,
             unit: product.unit || 'pc',
-            expiry_date: batch?.expiry_date || null,
+            stock: product.stock || 0,
+            expiry_date: product.expiry_date || null,
+            batch_number: product.batch_number || null,
           },
         ],
       };
@@ -84,6 +86,24 @@ const INITIAL_STATE = { cart: [], customer: null, distributor: null, isWholesale
 // Lean hook — only cart + customer. ALL checkout inputs live in CheckoutPanel.
 export function usePosCart() {
   const [state, dispatch] = useReducer(cartReducer, INITIAL_STATE);
+
+  // Broadcast cart updates in real-time to the customer-facing secondary display
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const channel = new BroadcastChannel("pos_customer_display");
+      channel.postMessage({
+        type: "cart_update",
+        payload: {
+          cart: state.cart,
+          customer: state.customer,
+          isWholesale: state.isWholesale
+        }
+      });
+      return () => {
+        channel.close();
+      };
+    }
+  }, [state.cart, state.customer, state.isWholesale]);
 
   const handleSelectCustomer = useCallback((customer) => {
     dispatch({ type: "SET_CUSTOMER", payload: customer });

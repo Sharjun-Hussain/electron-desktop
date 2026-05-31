@@ -29,11 +29,11 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
 
   const fontConfig = {
     family: fontFamily === "sans" ? "font-sans" : fontFamily === "serif" ? "font-serif" : "font-mono",
-    size: fontSize === "xsmall" ? "text-[9px]" :
+    size: fontSize === "xsmall" ? "text-[10px]" :
       fontSize === "small" ? "text-[10px]" :
         fontSize === "large" ? "text-sm" :
           fontSize === "xlarge" ? "text-base" :
-            "text-xs" // medium
+            "text-[10px]" // medium/default
   };
 
   const getLogoUrl = (logoPath) => {
@@ -55,6 +55,11 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
     >
       {/* Header */}
       <div className="text-center space-y-1 mb-4">
+        {sale.source === 'ecommerce' && (
+          <div className="border-2 border-black py-1 px-2 font-black text-xs uppercase tracking-widest text-center my-1 bg-black text-white">
+            *** {t("pos.ecommerce_order") || "E-COMMERCE ORDER"} ***
+          </div>
+        )}
         {showLogo && business?.logo && (
           <img
             src={getLogoUrl(business.logo)}
@@ -63,7 +68,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
           />
         )}
         <h1 className="text-lg font-black">{business?.name || "Inzeedo POS"}</h1>
-        <div className="leading-tight opacity-80">
+        <div className="leading-tight text-black font-bold">
           <p>{business?.address || branch?.address}</p>
           <p>{t("pos.tel_label")}: {business?.phone || branch?.phone}</p>
           {business?.tax_id && <p>{t("pos.vat_label")}: {business.tax_id}</p>}
@@ -74,6 +79,11 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
       </div>
 
       <div className="border-y border-dashed border-black py-2 my-2 space-y-0.5">
+        {sale.source === 'ecommerce' && (
+          <div className="text-center font-black border border-black py-0.5 text-[10px] my-1 uppercase">
+            {t("pos.online_checkout") || "ONLINE CHECKOUT"}
+          </div>
+        )}
         <div className="flex justify-between">
           <span>{t("pos.invoice_label")}:</span>
           <span className="font-bold">{sale.invoice_number || "Draft"}</span>
@@ -85,7 +95,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
           </div>
         )}
         {(settings.showSalesType ?? true) && (
-          <div className="text-center font-bold text-[10px] my-1 border-b border-dashed border-black/30 pb-0.5">
+          <div className="text-center font-bold text-[10px] my-1 border-b border-dashed border-black pb-0.5">
             {sale.is_wholesale ? t("pos.wholesale_label") : t("pos.retail_label")} {t("pos.sale").toUpperCase()}
           </div>
         )}
@@ -103,7 +113,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
         )}
         {/* Terminal ID Trail */}
         {terminalName && (
-          <div className="flex justify-between border-t border-dashed border-black/10 mt-1 pt-0.5 text-[9px] opacity-60">
+          <div className="flex justify-between border-t border-dashed border-black mt-1 pt-0.5 text-[10px]">
             <span>{t("pos.terminal_label")}:</span>
             <span>{terminalName.toUpperCase()}</span>
           </div>
@@ -121,27 +131,27 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
             <th className="text-right py-1">{t("pos.total_col")}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-dashed divide-black/20">
+        <tbody className="divide-y divide-dashed divide-black">
           {sale.items?.map((item, idx) => (
             <tr key={idx} className="align-top">
               <td className="py-2 pr-2">
                 <div className="leading-tight">
                   <span className="font-bold">
-                    {item.product_name || 
-                     item.product_variant?.product?.name || 
-                     item.product?.name || 
-                     item.name || 
-                     t("pos.item")}
+                    {item.product_name ||
+                      item.product_variant?.product?.name ||
+                      item.product?.name ||
+                      item.name ||
+                      t("pos.item")}
                   </span>
-                  <span className="font-normal opacity-70 ml-1 whitespace-nowrap">
+                  <span className="font-normal ml-1 whitespace-nowrap">
                     (x{parseFloat(item.quantity || 0)})
                   </span>
                 </div>
                 {(item.product_variant?.name || item.variant_name) && (
-                  <div className="text-[10px] opacity-70">{item.product_variant?.name || item.variant_name}</div>
+                  <div className="text-[10px]">{item.product_variant?.name || item.variant_name}</div>
                 )}
                 {item.mrp_price > item.unit_price && (
-                  <div className="text-[9px] text-gray-500 italic">
+                  <div className="text-[10px] italic font-bold">
                     MRP: {parseFloat(item.mrp_price).toLocaleString()} (Save: {parseFloat(item.mrp_price - item.unit_price).toLocaleString()})
                   </div>
                 )}
@@ -174,7 +184,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
           <span>{parseFloat(sale.total_amount).toLocaleString()}</span>
         </div>
         {showDiscount && parseFloat(sale.discount_amount) > 0 && (
-          <div className="flex justify-between text-[10px] text-green-700 border-b border-dashed border-black/20 pb-1 mb-1">
+          <div className="flex justify-between text-[10px] border-b border-dashed border-black pb-1 mb-1">
             <span>{t("pos.your_total_discount_is")}</span>
             <span>{parseFloat(sale.discount_amount).toLocaleString()}</span>
           </div>
@@ -188,7 +198,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
           }, 0);
           if (totalMrpSavings > 0) {
             return (
-              <div className="flex justify-between text-[10px] font-bold text-gray-600 border-b border-dashed border-black/20 pb-1 mb-1">
+              <div className="flex justify-between text-[10px] font-bold border-b border-dashed border-black pb-1 mb-1">
                 <span>YOU SAVED (MRP):</span>
                 <span>{totalMrpSavings.toLocaleString()}</span>
               </div>
@@ -228,9 +238,9 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
             <span className="font-bold">{parseFloat(sale.paid_amount || sale.payable_amount).toLocaleString()}</span>
           </div>
         )}
-        
+
         {parseFloat(sale.paid_amount) > parseFloat(sale.payable_amount) && (
-          <div className="flex justify-between font-bold border-t border-black/10 mt-1 pt-1">
+          <div className="flex justify-between font-bold border-t border-black mt-1 pt-1">
             <span>{t("pos.change_label")}:</span>
             <span>{(parseFloat(sale.paid_amount) - parseFloat(sale.payable_amount)).toLocaleString()}</span>
           </div>
@@ -239,21 +249,21 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
 
       {/* Barcode Section for Returns */}
       <div className="mt-4 flex flex-col items-center justify-center space-y-1 overflow-hidden">
-        <Barcode 
-          value={sale.invoice_number || "000000"} 
-          width={1.2} 
-          height={40} 
+        <Barcode
+          value={sale.invoice_number || "000000"}
+          width={1.2}
+          height={40}
           fontSize={10}
           margin={0}
           background="transparent"
         />
-        <p className="text-[7px] font-bold opacity-40 uppercase tracking-widest">Scan for returns & verification</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest">Scan for returns & verification</p>
       </div>
 
       {/* Footer */}
-      <div className="mt-4 text-center space-y-2 border-t border-dashed border-black/20 pt-2">
+      <div className="mt-4 text-center space-y-2 border-t border-dashed border-black pt-2">
         {refundPolicy && (
-          <div className="border-b border-dashed border-black/10 pb-2 mb-2 text-[9px] leading-tight">
+          <div className="border-b border-dashed border-black pb-2 mb-2 text-[10px] leading-tight">
             <span className="font-bold block mb-1">{t("pos.refund_return_policy_label")}</span>
             {refundPolicy}
           </div>
@@ -261,9 +271,9 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
         {showFooter && footerText && (
           <div className="whitespace-pre-wrap leading-tight text-[10px] mb-2">{footerText}</div>
         )}
-        <div className="opacity-40 leading-tight">
-          <p className="font-bold text-[8px] whitespace-nowrap">A next-generation enterprise solution by Inzeedo</p>
-          <p className="text-[7px]">© 2026 Inzeedo. All rights reserved.</p>
+        <div className="leading-tight">
+          <p className="font-bold text-[10px] whitespace-nowrap">A next-generation enterprise solution by Inzeedo</p>
+          <p className="text-[10px] font-bold">© 2026 Inzeedo. All rights reserved.</p>
         </div>
       </div>
     </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 import { db, syncMasterData } from "@/lib/indexedDB/db";
 
@@ -26,17 +27,17 @@ function getImageUrl(imageField) {
   return null;
 }
 
-// Session-level flag to prevent redundant fetching within the same application session
-let hasFetchedInSession = false;
-
 export function usePosData() {
-  const { data: session } = useSession();
+  const { data: nextAuthSession } = useSession();
+  const { session: localSession } = useSettingsStore();
+  const session = nextAuthSession || localSession;
 
   const [allProducts, setAllProducts] = useState([]);
-  const [flattenedVariants, setFlattenedVariants] = useState([]);
+  // flattenedVariants is now memoized based on allProducts and selectedBranch
   const [customers, setCustomers] = useState([]);
   const [distributors, setDistributors] = useState([]);
   const [activeEmployees, setActiveEmployees] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
@@ -48,6 +49,7 @@ export function usePosData() {
       const localCustomers = await db.customers.toArray();
       const localDistributors = await db.distributors.toArray();
       const localEmployees = await db.employees.toArray();
+      const localBranches = await db.branches.toArray();
 
       // Optimized pre-grouping of variants to avoid O(n²) lookups
       const variantsByProduct = localVariants.reduce((acc, v) => {
@@ -57,50 +59,51 @@ export function usePosData() {
       }, {});
       
       // We need to re-group variants into products for allProducts state
-      const grouped = localProducts.map(p => ({
-        ...p,
-        variants: variantsByProduct[p.id] || []
-      }));
+      const grouped = localProducts.map(p => {
+        const variants = variantsByProduct[p.id] || [];
+        const minRetail = variants.length > 0 ? Math.min(...variants.map(v => parseFloat(v.price) || 0)) : 0;
+        const minWholesale = variants.length > 0 ? Math.min(...variants.map(v => parseFloat(v.wholesale_price) || parseFloat(v.price) || 0)) : 0;
+
+        return {
+          ...p,
+          variants,
+          minRetail,
+          minWholesale
+        };
+      });
 
       setAllProducts(grouped);
-      setFlattenedVariants(localVariants);
       setCustomers(localCustomers);
       setDistributors(localDistributors);
       setActiveEmployees(localEmployees);
+      setBranches(localBranches);
       console.log("Loaded POS data from IndexedDB (Offline Mode)");
-      return localProducts.length > 0;
     } catch (err) {
       console.error("Failed to load from IndexedDB:", err);
-      return false;
     }
   }, []);
 
-  const fetchData = useCallback(async (force = false) => {
-    // 1. Always prioritize fast local loading first
-    const hasDataLocally = allProducts.length > 0;
-    if (!hasDataLocally) {
-      const dataFound = await loadFromDB();
-      // If we found local data, we can stop "initial loading" state immediately
-      if (dataFound) {
-        setIsLoading(false);
-      }
-    }
-
-    // 2. Decide if we need to fetch from network
-    if (!session?.accessToken) {
+  const forceReset = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await db.delete(); // Delete the entire IndexedDB database
+      window.location.reload(); // Reload to recreate it and fetch fresh
+    } catch (err) {
+      console.error("Force reset failed:", err);
+      toast.error("Failed to reset local data");
+    } finally {
       setIsLoading(false);
-      return;
     }
+  }, []);
 
-    // If we've already synced in this session and aren't forcing, stop here
-    if (hasFetchedInSession && !force) {
-      setIsLoading(false);
-      return;
-    }
+  const fetchData = useCallback(async () => {
+    if (!session?.accessToken) return;
+    setIsLoading(true);
     
     // Check if browser is online
     if (!navigator.onLine) {
        setIsOffline(true);
+       await loadFromDB();
        setIsLoading(false);
        return;
     }
@@ -112,6 +115,7 @@ export function usePosData() {
         { key: 'customers', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/active/list` },
         { key: 'distributors', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/distributors/active/list` },
         { key: 'sellers', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/active-sellers` },
+        { key: 'branches', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/active/list` },
       ];
 
       // Fetch all with Settled to prevent one failure from blocking others
@@ -119,7 +123,8 @@ export function usePosData() {
         endpoints.map(e => 
           fetch(e.url, { 
             headers: { Authorization: `Bearer ${session.accessToken}` },
-            signal: AbortSignal.timeout(15000) // 15s timeout for large datasets
+            cache: 'no-store',
+            signal: AbortSignal.timeout(10000) // 10s timeout
           }).then(async res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
@@ -131,6 +136,7 @@ export function usePosData() {
       let processedCustomers = [];
       let processedDistributors = [];
       let processedEmployees = [];
+      let processedBranches = [];
 
       // Helper to check if a result was successful
       const isSuccess = (res) => res.status === 'fulfilled' && res.value.status === 'success';
@@ -140,24 +146,15 @@ export function usePosData() {
         const prodData = results[0].value;
         const rawProductList = prodData.data.data || [];
 
+        // For manufacturing businesses, only Finished Goods are sold at POS
         const businessType = (session?.user?.organization?.business_type || "").toLowerCase();
         const isManufacturing = businessType === "manufacturing";
         
-        const filteredList = isManufacturing
-          ? rawProductList.filter(p => {
-              const type = (p.product_type || "").toLowerCase();
-              return type === "finished good" || type === "";
-            })
-          : rawProductList;
+        // Relaxed Filter: Show all products unless explicitly excluded
+        const filteredList = rawProductList;
 
-        processedProducts = filteredList.map((p) => ({
-          id: p.id,
-          name: p.name,
-          code: p.code,
-          image: getImageUrl(p.image),
-          category: p.main_category?.name,
-          unit: p.unit?.short_name || 'pc',
-          variants: (p.variants || []).map((v) => {
+        processedProducts = filteredList.map((p) => {
+          const variants = (p.variants || []).map((v) => {
             let variantLabel = v.name;
             if (!variantLabel && v.attribute_values && v.attribute_values.length > 0) {
               variantLabel = v.attribute_values.map((av) => av.value).join(" / ");
@@ -175,20 +172,60 @@ export function usePosData() {
               mrpPrice: parseFloat(v.mrp_price) || 0,
               wholesalePrice: parseFloat(v.wholesale_price) || 0,
               image: getImageUrl(v.image) || getImageUrl(p.image),
-              stock: (v.stocks || []).reduce((sum, s) => sum + parseFloat(s.quantity || 0), 0),
+              stocks: v.stocks || [],
+              stock: (v.stocks || []).reduce((acc, s) => acc + parseFloat(s.quantity || 0), 0),
+              batches: v.batches || []
             };
-          }),
-        }));
+          });
 
-        const variantsFlat = processedProducts.flatMap((p) => p.variants);
+          // Pre-calculate min prices for the grid
+          const minRetail = variants.length > 0 ? Math.min(...variants.map(v => v.retailPrice)) : 0;
+          const minWholesale = variants.length > 0 ? Math.min(...variants.map(v => v.wholesalePrice || v.retailPrice)) : 0;
+
+          return {
+            id: p.id,
+            name: p.name,
+            code: p.code,
+            image: getImageUrl(p.image),
+            category: p.main_category?.name,
+            unit: p.unit?.short_name || 'pc',
+            variants,
+            minRetail,
+            minWholesale
+          };
+        });
+
+        // Extract all batches for separate sync if needed by classic-page
+        const allBatches = processedProducts.flatMap(p => 
+          p.variants.flatMap(v => (v.batches || []).map(b => ({ ...b, variantId: v.id })))
+        );
+
         setAllProducts(processedProducts);
-        setFlattenedVariants(variantsFlat);
         setIsOffline(false);
+      } else {
+        console.warn("Product sync failed, using local DB", results[0].reason);
+        const localProducts = await db.products.toArray();
+        const localVariants = await db.variants.toArray();
+        const variantsByProduct = localVariants.reduce((acc, v) => {
+          if (!acc[v.productId]) acc[v.productId] = [];
+          acc[v.productId].push(v);
+          return acc;
+        }, {});
+
+        const grouped = localProducts.map(p => ({
+          ...p,
+          variants: variantsByProduct[p.id] || []
+        }));
+         setAllProducts(grouped);
       }
 
       // 2. Handle Customers
       if (isSuccess(results[1])) {
         processedCustomers = results[1].value.data;
+        setCustomers(processedCustomers);
+      } else {
+        console.warn("Customer sync failed", results[1].reason);
+        processedCustomers = await db.customers.toArray();
         setCustomers(processedCustomers);
       }
 
@@ -196,37 +233,121 @@ export function usePosData() {
       if (isSuccess(results[2])) {
         processedDistributors = results[2].value.data;
         setDistributors(processedDistributors);
+      } else {
+        console.warn("Distributor sync failed", results[2].reason);
+        processedDistributors = await db.distributors.toArray();
+        setDistributors(processedDistributors);
       }
 
       // 4. Handle Sellers
       if (isSuccess(results[3])) {
         processedEmployees = results[3].value.data;
         setActiveEmployees(processedEmployees);
+      } else {
+        console.warn("Seller sync failed", results[3].reason);
+        processedEmployees = await db.employees.toArray();
+        setActiveEmployees(processedEmployees);
       }
 
-      // Sync successful results to IndexedDB
+      // 5. Handle Branches
+      if (isSuccess(results[4])) {
+        processedBranches = results[4].value.data;
+        setBranches(processedBranches);
+      } else {
+        console.warn("Branch sync failed", results[4].reason);
+        processedBranches = await db.branches.toArray();
+        setBranches(processedBranches);
+      }
+
+      // 6. Finalize Sync
+      const allBatches = processedProducts.flatMap(p => 
+        (p.variants || []).flatMap(v => (v.batches || []).map(b => ({ 
+          ...b, 
+          variantId: v.id,
+          productId: p.id 
+        })))
+      );
+
       await syncMasterData({
         products: processedProducts.length > 0 ? processedProducts : undefined,
+        batches: allBatches.length > 0 ? allBatches : undefined,
         customers: processedCustomers.length > 0 ? processedCustomers : undefined,
         distributors: processedDistributors.length > 0 ? processedDistributors : undefined,
-        employees: processedEmployees.length > 0 ? processedEmployees : undefined
+        employees: processedEmployees.length > 0 ? processedEmployees : undefined,
+        branches: processedBranches.length > 0 ? processedBranches : undefined
       });
 
-      hasFetchedInSession = true;
     } catch (error) {
-      console.error("Error syncing POS data:", error);
+      console.error("Error fetching POS data, falling back to IndexedDB:", error);
       setIsOffline(true);
+      await loadFromDB();
+      toast.error("Offline Mode: Using cached data");
     } finally {
       setIsLoading(false);
     }
-  }, [session, loadFromDB, allProducts.length]);
+  }, [session, loadFromDB]);
+
+  const flattenedVariants = useMemo(() => {
+    return allProducts.flatMap((p) =>
+      p.variants.map((v) => ({
+        ...v,
+        stock: selectedBranch
+          ? parseFloat((v.stocks || []).find((s) => s.branch_id === selectedBranch.id)?.quantity || 0)
+          : (v.stocks || []).reduce((acc, s) => acc + parseFloat(s.quantity || 0), 0),
+      }))
+    );
+  }, [allProducts, selectedBranch]);
+  
+  useEffect(() => {
+    const init = async () => {
+      const currentOrgId = session?.user?.organization?.id;
+      const lastOrgId = localStorage.getItem("pos_last_org_id");
+
+      // 1. Check if organization has changed
+      if (currentOrgId && lastOrgId && String(lastOrgId) !== String(currentOrgId)) {
+        console.log("Organization change detected. Clearing local cache...");
+        await db.transaction('rw', [db.products, db.variants, db.customers, db.distributors, db.employees, db.batches, db.branches], async () => {
+          await Promise.all([
+            db.products.clear(),
+            db.variants.clear(),
+            db.customers.clear(),
+            db.distributors.clear(),
+            db.employees.clear(),
+            db.batches.clear(),
+            db.branches.clear()
+          ]);
+        });
+      }
+
+      // Store current org ID for next time
+      if (currentOrgId) {
+        localStorage.setItem("pos_last_org_id", String(currentOrgId));
+      }
+
+      // 2. Always try to load what we have in DB first (Very fast UI feedback)
+      await loadFromDB();
+      
+      // 3. MANDATORY INITIAL SYNC: Always fetch fresh data on app open
+      // This prevents "old data confusion" by ensuring local DB matches server.
+      if (navigator.onLine) {
+        console.log("App opened: Performing mandatory initial sync to ensure fresh data...");
+        await fetchData();
+      } else {
+        console.warn("App opened offline: Using cached data until connection restored.");
+        setIsLoading(false);
+      }
+    };
+
+    if (session?.accessToken) {
+      init();
+    }
+  }, [session?.accessToken, session?.user?.organization?.id, loadFromDB, fetchData]);
 
   useEffect(() => {
-    fetchData();
-    if (session?.user?.branches?.length > 0) {
-      setSelectedBranch(session.user.branches[0]);
+    if (branches.length > 0 && !selectedBranch) {
+      setSelectedBranch(branches[0]);
     }
-  }, [fetchData, session]);
+  }, [branches, selectedBranch]);
 
   const addCustomerToList = useCallback((newCustomer) => {
     setCustomers((prev) => [...prev, newCustomer]);
@@ -242,12 +363,12 @@ export function usePosData() {
     customers,
     distributors,
     activeEmployees,
+    branches,
     selectedBranch,
     setSelectedBranch,
     isLoading,
     addCustomerToList,
-    addDistributorToList,
+    refreshData: fetchData,
     session,
-    refetch: () => fetchData(true)
   };
 }
