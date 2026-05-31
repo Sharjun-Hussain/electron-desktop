@@ -306,7 +306,7 @@ export function GeneralSettings() {
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{t("settings.language")}</Label>
                   <Select value={settings.localization.language} onValueChange={(v) => updateSetting('localization', 'language', v)}>
-                    <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-bold text-sm focus:ring-emerald-500/20"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90 focus:ring-emerald-500/20"><SelectValue /></SelectTrigger>
                     <SelectContent className="rounded-md">
                       <SelectItem value="en">English (US)</SelectItem>
                       <SelectItem value="ta">Tamil (தமிழ்)</SelectItem>
@@ -318,7 +318,7 @@ export function GeneralSettings() {
                   <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{t("settings.timezone")}</Label>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-bold text-sm hover:bg-slate-50 transition-all shadow-none">
+                      <Button variant="outline" className="w-full justify-between h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90 hover:bg-slate-50 transition-all shadow-none">
                         {settings.localization.timeZone}
                         <Search className="w-4 h-4 text-slate-400" />
                       </Button>
@@ -333,7 +333,7 @@ export function GeneralSettings() {
                           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                           <Input
                             placeholder="Search timezones..."
-                            className="h-10 pl-11 rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-sm font-bold focus-visible:ring-emerald-500"
+                            className="h-10 pl-11 rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-sm font-medium focus-visible:ring-emerald-500"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
@@ -362,7 +362,7 @@ export function GeneralSettings() {
                   <div className="space-y-2">
                     <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Date Format</Label>
                     <Select value={settings.localization.dateFormat} onValueChange={(v) => updateSetting('localization', 'dateFormat', v)}>
-                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-bold text-sm"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-md">
                         <SelectItem value="dmy">DD/MM/YYYY</SelectItem>
                         <SelectItem value="mdy">MM/DD/YYYY</SelectItem>
@@ -373,7 +373,7 @@ export function GeneralSettings() {
                   <div className="space-y-2">
                     <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Time Format</Label>
                     <Select value={settings.localization.timeFormat} onValueChange={(v) => updateSetting('localization', 'timeFormat', v)}>
-                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-bold text-sm"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-md">
                         <SelectItem value="12">12 Hour (AM/PM)</SelectItem>
                         <SelectItem value="24">24 Hour (ISO)</SelectItem>
@@ -398,7 +398,7 @@ export function GeneralSettings() {
                 <div className="space-y-2">
                   <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Trading Currency</Label>
                   <Select value={settings.localization.currency} onValueChange={(v) => updateSetting('localization', 'currency', v)}>
-                    <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-bold text-sm"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90"><SelectValue /></SelectTrigger>
                     <SelectContent className="rounded-md">
                       {CURRENCIES.map(c => (
                         <SelectItem key={c.code} value={c.code}>{c.code} — {c.name}</SelectItem>
@@ -411,7 +411,7 @@ export function GeneralSettings() {
                   <div className="space-y-2">
                     <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Placement</Label>
                     <Select value={settings.finance.currencyPos} onValueChange={(v) => updateSetting('finance', 'currencyPos', v)}>
-                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-bold text-sm"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-md">
                         <SelectItem value="before">Leading ($XXX)</SelectItem>
                         <SelectItem value="after">Trailing (XXX$)</SelectItem>
@@ -421,7 +421,7 @@ export function GeneralSettings() {
                   <div className="space-y-2">
                     <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">FY Start</Label>
                     <Select value={settings.finance.fyStart} onValueChange={(v) => updateSetting('finance', 'fyStart', v)}>
-                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-bold text-sm"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-md">
                         <SelectItem value="jan">January 01</SelectItem>
                         <SelectItem value="apr">April 01</SelectItem>
@@ -449,7 +449,7 @@ export function GeneralSettings() {
                       <Label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tax Rate (%)</Label>
                       <Input
                         type="number"
-                        className="h-10 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-sm focus-visible:ring-emerald-500"
+                        className="h-10 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-medium text-sm text-foreground/90 focus-visible:ring-emerald-500"
                         value={settings.finance.taxRate}
                         onChange={(e) => updateSetting('finance', 'taxRate', e.target.value)}
                         placeholder="e.g. 8"
@@ -578,16 +578,16 @@ export function GeneralSettings() {
                   }} className="p-6 space-y-4">
                     <div className="space-y-1.5">
                       <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Institutional Title</Label>
-                      <Input name="name" placeholder="e.g. Primary Savings" className="h-10 rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 font-bold focus-visible:ring-emerald-500" required />
+                      <Input name="name" placeholder="e.g. Primary Savings" className="h-10 rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 font-medium focus-visible:ring-emerald-500" required />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Account No</Label>
-                      <Input name="accountNo" placeholder="**** 4242" className="h-10 rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 font-bold focus-visible:ring-emerald-500" required />
+                      <Input name="accountNo" placeholder="**** 4242" className="h-10 rounded-md border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 font-medium focus-visible:ring-emerald-500" required />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Currency</Label>
                       <Select name="currency" defaultValue="LKR">
-                        <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 rounded-md font-bold text-sm"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 rounded-md font-medium text-sm text-foreground/90"><SelectValue /></SelectTrigger>
                         <SelectContent className="rounded-md">
                           {CURRENCIES.map(c => <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>)}
                         </SelectContent>
@@ -605,7 +605,7 @@ export function GeneralSettings() {
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {(!settings.bankAccounts || settings.bankAccounts.length === 0) ? (
-                  <div className="md:col-span-2 flex flex-col items-center justify-center py-10 rounded-md border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50">
+                  <div className="md:col-span-2 flex flex-col items-center justify-center py-10 rounded-md border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                     <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">No operational accounts discovered</p>
                   </div>
                 ) : (
@@ -789,7 +789,7 @@ export function GeneralSettings() {
                         #
                       </div>
                       <Input
-                        className="h-9 rounded-md rounded-l-none font-bold text-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-950 focus-visible:ring-1 focus-visible:ring-emerald-500 text-foreground placeholder:text-slate-200"
+                        className="h-9 rounded-md rounded-l-none font-medium text-sm text-foreground/90 border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-950 focus-visible:ring-1 focus-visible:ring-emerald-500 text-foreground placeholder:text-slate-200"
                         placeholder={item.placeholder}
                         value={settings.prefixes?.[item.key] || ""}
                         onChange={(e) => updateSetting('prefixes', item.key, e.target.value)}

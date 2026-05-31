@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { 
   Send, 
@@ -34,7 +34,44 @@ export function TextLkMessages() {
   const [loading, setLoading] = useState(false);
   const [recipient, setRecipient] = useState("");
   const [message, setMessage] = useState("");
-  const [templateId, setTemplateId] = useState("");
+  const [templateId, setTemplateId] = useState("none");
+  const [templates, setTemplates] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [fetchingLogs, setFetchingLogs] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!session?.accessToken) return;
+    try {
+      setFetchingLogs(true);
+      const [tplRes, statsRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/crm/text-lk/templates`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` }
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/crm/text-lk/stats`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` }
+        })
+      ]);
+
+      const [tplData, statsData] = await Promise.all([
+        tplRes.json(), statsRes.json()
+      ]);
+
+      if (tplData.status === 'success') {
+        setTemplates(tplData.data || []);
+      }
+      if (statsData.status === 'success' && statsData.data) {
+        setLogs(statsData.data.logs || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch text.lk data", err);
+    } finally {
+      setFetchingLogs(false);
+    }
+  }, [session?.accessToken]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSend = async () => {
     if (!recipient || !message) {
@@ -57,6 +94,8 @@ export function TextLkMessages() {
       toast.success("Message sent successfully!");
       setRecipient("");
       setMessage("");
+      setTemplateId("none");
+      fetchData();
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -88,18 +127,23 @@ export function TextLkMessages() {
 
           <div className="space-y-2">
             <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Quick Template</Label>
-            <Select onValueChange={(val) => {
+            <Select value={templateId} onValueChange={(val) => {
               setTemplateId(val);
-              if (val === "receipt") setMessage("Thank you for your purchase at our store! Your bill total is LKR {{amount}}. View receipt: {{link}}");
-              if (val === "welcome") setMessage("Welcome to our loyalty program! Show this message to get 5% off on your next visit.");
+              if (val === "none") {
+                setMessage("");
+              } else {
+                const tpl = templates.find(t => t.id.toString() === val);
+                if (tpl) setMessage(tpl.body || "");
+              }
             }}>
               <SelectTrigger className="h-10 bg-muted/40 border-border text-sm text-foreground">
                 <SelectValue placeholder="Select a template" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Custom Message</SelectItem>
-                <SelectItem value="receipt">Sales Receipt</SelectItem>
-                <SelectItem value="welcome">Welcome Offer</SelectItem>
+                {templates.map(tpl => (
+                  <SelectItem key={tpl.id} value={tpl.id.toString()}>{tpl.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -152,38 +196,56 @@ export function TextLkMessages() {
         </CardHeader>
         <CardContent className="p-0 flex-1 overflow-auto">
           <div className="divide-y divide-border/60">
-            {/* Mock History Item */}
-            {[
-              { to: "94771234567", time: "2 mins ago", status: "delivered", body: "Thank you for your purchase! Your total is LKR 4,500.00." },
-              { to: "94715556677", time: "1 hour ago", status: "delivered", body: "Your order is ready for pickup. See you soon!" },
-              { to: "94789998877", time: "Yesterday", status: "failed", body: "Welcome to our store! Claim your discount today." }
-            ].map((log, i) => (
-              <div key={i} className="p-4 hover:bg-muted/20 transition-colors cursor-pointer group">
-                <div className="flex items-start gap-4">
-                  <div className={`shrink-0 h-10 w-10 rounded-xl flex items-center justify-center border ${log.status === 'delivered' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}>
-                    {log.status === 'delivered' ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-foreground">{log.to}</p>
-                      <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-wider">
-                        <Clock className="h-3 w-3" />
-                        {log.time}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground/80 line-clamp-1 pr-12 leading-relaxed">{log.body}</p>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-indigo-500 dark:group-hover:text-indigo-400" />
-                  </div>
-                </div>
+            {fetchingLogs ? (
+              <div className="p-8 flex justify-center text-muted-foreground">
+                <Clock className="h-6 w-6 animate-spin" />
               </div>
-            ))}
+            ) : logs.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground font-medium text-xs">
+                No message history available.
+              </div>
+            ) : (
+              logs.map((log, i) => {
+                const isDelivered = log.status?.toLowerCase() === 'delivered';
+                const isFailed = log.status?.toLowerCase() === 'failed';
+                
+                return (
+                  <div key={i} className="p-4 hover:bg-muted/20 transition-colors cursor-pointer group">
+                    <div className="flex items-start gap-4">
+                      <div className={`shrink-0 h-10 w-10 rounded-xl flex items-center justify-center border ${isDelivered ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : isFailed ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
+                        {isDelivered ? <CheckCircle2 className="h-5 w-5" /> : isFailed ? <XCircle className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+                      </div>
+                      <div className="flex-1 space-y-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-foreground truncate mr-2">{log.to || log.recipient}</p>
+                          <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-wider shrink-0">
+                            <Clock className="h-3 w-3" />
+                            {log.sent_at ? new Date(log.sent_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground/80 line-clamp-1 pr-12 leading-relaxed">{log.message || log.body}</p>
+                        <div className="pt-1 flex items-center gap-2">
+                          <Badge variant="outline" className={`text-[8px] uppercase px-1.5 py-0 border ${isDelivered ? 'border-emerald-500/30 text-emerald-600' : isFailed ? 'border-rose-500/30 text-rose-600' : 'border-amber-500/30 text-amber-600'}`}>
+                            {log.status || 'Pending'}
+                          </Badge>
+                          <span className="text-[9px] font-bold text-muted-foreground/60">{log.cost || 1} Credit</span>
+                        </div>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-indigo-500 dark:group-hover:text-indigo-400" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
 
-            <div className="p-8 text-center space-y-2">
-              <p className="text-[11px] font-bold text-muted-foreground">End of message history</p>
-              <Button variant="link" className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline h-auto p-0">Load older messages</Button>
-            </div>
+            {!fetchingLogs && logs.length > 0 && (
+              <div className="p-8 text-center space-y-2">
+                <p className="text-[11px] font-bold text-muted-foreground">End of message history</p>
+                <Button variant="link" className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline h-auto p-0">Load older messages</Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
