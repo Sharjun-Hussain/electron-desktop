@@ -280,16 +280,6 @@ export default function GRNReportPage() {
       header: "Status",
       cell: ({ row }) => <StatusBadge value={row.getValue("status")} />,
     },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-emerald-50" asChild>
-          <Link href={`/purchase/grn/view?id=${row.original.id}`}>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        </Button>
-      ),
-    },
   ];
 
   const router = useRouter();
@@ -334,9 +324,16 @@ export default function GRNReportPage() {
       columns={columns}
       isLoading={loading}
       isFiltered={isFiltered}
+      onRowClick={(row) => router.push(`/purchase/grn/view/${row.id}`)}
       onClearFilters={handleClearFilters}
       addButtonLabel="New GRN"
       onAddClick={() => router.push("/purchase/purchase-orders")}
+      extraActions={
+        <Button onClick={() => router.push("/purchase/grn/direct")} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border-0">
+          <Package className="h-4 w-4" />
+          Direct GRN (Skip PO)
+        </Button>
+      }
       exportData={exportData}
       exportFileName={exportFileName}
       pageCount={pagination.pages}

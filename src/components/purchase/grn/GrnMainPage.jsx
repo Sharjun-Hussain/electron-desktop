@@ -165,12 +165,22 @@ export default function GRNPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [poData, setPoData] = useState(null);
 
-  const [visibleColumns, setVisibleColumns] = useState({
-    batch: false,
-    expiry: false,
-    bonus: false,
-    wholesale: false,
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("grn-visible-columns");
+      if (saved) return JSON.parse(saved);
+    }
+    return {
+      batch: false,
+      expiry: false,
+      bonus: false,
+      wholesale: false,
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem("grn-visible-columns", JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),

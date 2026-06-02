@@ -27,7 +27,8 @@ import {
   Download,
   CheckCircle2,
   User,
-  CalendarIcon
+  CalendarIcon,
+  Building2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -431,12 +432,17 @@ export default function GRNDetailPage() {
         {/* Sidebar Details */}
         <div className="space-y-6">
           <Card className="border border-border/60 shadow-sm bg-background rounded-xl overflow-hidden">
-            <div className="bg-emerald-600 p-6">
-              <div className="text-[10px] font-bold text-emerald-100/70 mb-1">Supplier Entity</div>
-              <div className="text-white font-bold text-lg truncate">{grn.supplier?.name}</div>
-              <div className="text-emerald-100/80 text-xs font-semibold mt-1 truncate">{grn.supplier?.email}</div>
-            </div>
             <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-4 group/sidebar">
+                <div className="h-10 w-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-md flex items-center justify-center border border-emerald-100 dark:border-emerald-500/20 group-hover/sidebar:bg-emerald-100 transition-colors">
+                  <Building2 className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-[10px] font-bold text-muted-foreground mb-1">Supplier Entity</span>
+                  <span className="font-bold text-foreground text-sm truncate">{grn.supplier?.name}</span>
+                </div>
+              </div>
+              <Separator className="bg-border/60" />
               <div className="flex items-center gap-4 group/sidebar">
                 <div className="h-10 w-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-md flex items-center justify-center border border-emerald-100 dark:border-emerald-500/20 group-hover/sidebar:bg-emerald-100 transition-colors">
                   <User className="w-5 h-5 text-emerald-600" />
@@ -462,14 +468,14 @@ export default function GRNDetailPage() {
           <Card className="border border-border/60 shadow-sm bg-background rounded-xl overflow-hidden">
             <CardContent className="p-6 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground font-bold text-[10px]">Target Branch</span>
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold text-[10px] py-1 px-2.5 rounded-md shadow-none">
-                  {grn.branch?.name}
+                <span className="text-muted-foreground font-semibold text-xs uppercase tracking-wider">Target Branch</span>
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold text-xs py-1 px-2.5 rounded-md shadow-none">
+                  {grn.branch?.name || 'Main Branch'}
                 </Badge>
               </div>
               <Separator className="bg-border/60" />
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground font-bold text-[10px]">Logging Staff</span>
+                <span className="text-muted-foreground font-semibold text-xs uppercase tracking-wider">Received By</span>
                 <span className="text-foreground font-bold text-sm tabular-nums">{grn.received_by_user?.name || 'Administrative'}</span>
               </div>
             </CardContent>
@@ -507,33 +513,12 @@ export default function GRNDetailPage() {
                     <AttachmentItem
                       key={file.id}
                       file={file}
-                      onDelete={handleDeleteAttachment}
-                      isDeleting={deletingAttachmentId === file.id}
                     />
                   ))
                 ) : (
-                  <p className="text-xs text-muted-foreground italic text-center py-2">No attachments uploaded.</p>
+                  <p className="text-xs text-muted-foreground italic text-center py-2">No attachments available.</p>
                 )}
               </div>
-
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept=".pdf,.jpg,.jpeg,.png"
-              />
-
-              <Button
-                variant="outline"
-                className="w-full h-10 border-dashed border-2 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all font-bold text-xs gap-2"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {isUploading ? "Uploading..." : "Upload Attachments"}
-              </Button>
             </CardContent>
           </Card>
         </div>
