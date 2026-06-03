@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import {
   Store,
   RefreshCw,
@@ -83,6 +91,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ShopifySettingsPage() {
   const { data: session } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -127,6 +138,34 @@ export default function ShopifySettingsPage() {
   const prevInventoryParams = React.useRef({ page: 1, size: 10, field: "name", order: "ASC" });
   const prevShopifyParams = React.useRef({ search: "", status: "all", vendor: "" });
 
+  // Product Detailed Sheet State
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetProduct, setSheetProduct] = useState(null);
+  const [sheetLoading, setSheetLoading] = useState(false);
+
+  const fetchShopifyProductDetails = async (id) => {
+    try {
+      setSheetLoading(true);
+      setSheetOpen(true);
+      setSheetProduct(null);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/shopify/shopify-products/${id}`, {
+        headers: { Authorization: `Bearer ${session?.accessToken}` }
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setSheetProduct(data.data);
+      } else {
+        toast.error(data.message || "Failed to load product details");
+        setSheetOpen(false);
+      }
+    } catch (err) {
+      toast.error("Network error while fetching product details");
+      setSheetOpen(false);
+    } finally {
+      setSheetLoading(false);
+    }
+  };
+
   const [config, setConfig] = useState({
     shop_url: "",
     access_token: "",
@@ -138,7 +177,12 @@ export default function ShopifySettingsPage() {
   });
   const [branches, setBranches] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState("idle");
-  const [activeTab, setActiveTab] = useState("settings");
+  const [activeTab, setActiveTab] = useState(tabParam || "settings");
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    router.push(`?tab=${value}`, { scroll: false });
+  };
   const [sortField, setSortField] = useState("name");
   const [sortOrder, setSortOrder] = useState("ASC");
 
@@ -982,7 +1026,7 @@ export default function ShopifySettingsPage() {
                     ) : filteredProducts.map(product => (
                       <React.Fragment key={product.id}>
                         <tr
-                          className="hover:bg-[#f6f6f7] dark:hover:bg-zinc-800/30 transition-colors cursor-pointer group border-l-4 border-transparent hover:border-[#008060]"
+                          className={cn("transition-colors cursor-pointer group hover:bg-slate-50 dark:hover:bg-zinc-900/50", expandedProducts.includes(product.id) && "bg-slate-50 dark:bg-zinc-900/50")}
                           onClick={() => toggleProductExpand(product.id)}
                         >
                           <td className="p-4 w-12 text-center">
@@ -1043,7 +1087,7 @@ export default function ShopifySettingsPage() {
                         </tr>
 
                         {expandedProducts.includes(product.id) && product.variants?.map(variant => (
-                          <tr key={variant.id} className="bg-[#fafbfc] dark:bg-zinc-950/40 border-l-4 border-[#008060]/20 animate-in slide-in-from-top-1 duration-200">
+                          <tr key={variant.id} className="bg-slate-50/50 dark:bg-zinc-900/30 animate-in slide-in-from-top-1 duration-200">
                             <td className="p-4 pl-8 w-12 text-center">
                               <Checkbox
                                 checked={selectedVariantIds.includes(variant.id)}
@@ -1320,7 +1364,12 @@ export default function ShopifySettingsPage() {
                           </td>
                           <td className="p-4">
                             <div className="flex flex-col">
-                              <span className="text-[13px] font-bold text-[#202223] dark:text-white leading-tight">{product.title}</span>
+                              <span 
+                                className="text-[13px] font-bold text-[#202223] dark:text-white leading-tight hover:text-[#008060] dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors"
+                                onClick={() => fetchShopifyProductDetails(product.id)}
+                              >
+                                {product.title}
+                              </span>
                               <span className="text-[10px] text-[#6d7175] font-medium mt-0.5">ID: {product.id}</span>
                             </div>
                           </td>
@@ -1394,6 +1443,14 @@ export default function ShopifySettingsPage() {
                                     <AlertCircle className="size-3.5" /> SKU Mismatch
                                   </DropdownMenuItem>
                                 )}
+
+                                <DropdownMenuSeparator className="my-1.5 bg-[#f4f6f8]" />
+                                <DropdownMenuItem 
+                                  className="flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-bold text-blue-600 focus:bg-blue-50 cursor-pointer"
+                                  onClick={() => fetchShopifyProductDetails(product.id)}
+                                >
+                                  <Info className="size-3.5" /> View Detailed Sheet
+                                </DropdownMenuItem>
 
                                 <DropdownMenuSeparator className="my-1.5 bg-[#f4f6f8]" />
                                 <DropdownMenuLabel className="text-[10px] font-bold text-zinc-400 px-2 py-1.5 uppercase tracking-wider">Shopify Status</DropdownMenuLabel>
@@ -1897,6 +1954,117 @@ export default function ShopifySettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Shopify Product Detailed Sheet */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-xl md:max-w-2xl bg-white dark:bg-zinc-950 border-l border-[#dfe3e8] dark:border-zinc-800 p-0 overflow-y-auto">
+          <SheetHeader className="p-6 border-b border-[#dfe3e8] dark:border-zinc-800 bg-[#f4f6f8] dark:bg-zinc-900 sticky top-0 z-10">
+            <SheetTitle className="text-xl font-bold text-[#202223] dark:text-white flex items-center gap-3">
+              <Store className="size-5 text-[#008060]" />
+              Product Detailed Sheet
+            </SheetTitle>
+            <SheetDescription className="text-xs text-[#6d7175] dark:text-zinc-400">
+              Live data fetched directly from Shopify Admin API.
+            </SheetDescription>
+          </SheetHeader>
+
+          {sheetLoading ? (
+            <div className="p-12 flex flex-col items-center justify-center space-y-4">
+              <RefreshCw className="size-8 animate-spin text-[#008060]" />
+              <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading live data from Shopify...</p>
+            </div>
+          ) : sheetProduct ? (
+            <div className="p-6 space-y-8">
+              {/* Header Info */}
+              <div className="flex gap-6 items-start">
+                <div className="w-24 h-24 bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-[#dfe3e8] dark:border-zinc-800 shadow-sm shrink-0">
+                  {sheetProduct.image ? (
+                    <img src={sheetProduct.image.src} alt={sheetProduct.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Package className="size-8 text-slate-300" /></div>
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <h2 className="text-xl font-black text-[#202223] dark:text-white leading-tight">{sheetProduct.title}</h2>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={cn(
+                      "inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold border",
+                      sheetProduct.status === 'active' ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
+                    )}>
+                      Status: {sheetProduct.status.toUpperCase()}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-50 text-slate-700 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
+                      ID: {sheetProduct.id}
+                    </span>
+                    {sheetProduct.vendor && (
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        Vendor: {sheetProduct.vendor}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              {sheetProduct.body_html && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-[#202223] dark:text-white flex items-center gap-2">
+                    <Info className="size-4 text-[#008060]" /> Description
+                  </h3>
+                  <div 
+                    className="prose prose-sm max-w-none dark:prose-invert text-[#6d7175] dark:text-zinc-300 p-4 bg-[#f4f6f8] dark:bg-zinc-900 rounded-xl border border-[#dfe3e8] dark:border-zinc-800 max-h-60 overflow-y-auto"
+                    dangerouslySetInnerHTML={{ __html: sheetProduct.body_html }}
+                  />
+                </div>
+              )}
+
+              {/* Variants Table */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-[#202223] dark:text-white flex items-center gap-2">
+                  <Layers className="size-4 text-[#008060]" /> Variants ({sheetProduct.variants?.length || 0})
+                </h3>
+                <div className="rounded-xl border border-[#dfe3e8] dark:border-zinc-800 overflow-hidden shadow-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-[#f4f6f8] dark:bg-zinc-900 border-b border-[#dfe3e8] dark:border-zinc-800">
+                      <tr>
+                        <th className="p-3 text-[11px] font-bold text-[#6d7175] dark:text-zinc-400">Variant Title</th>
+                        <th className="p-3 text-[11px] font-bold text-[#6d7175] dark:text-zinc-400">SKU</th>
+                        <th className="p-3 text-[11px] font-bold text-[#6d7175] dark:text-zinc-400">Price</th>
+                        <th className="p-3 text-[11px] font-bold text-[#6d7175] dark:text-zinc-400 text-center">Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#dfe3e8] dark:divide-zinc-800 bg-white dark:bg-zinc-950">
+                      {sheetProduct.variants?.map((variant) => (
+                        <tr key={variant.id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/50">
+                          <td className="p-3">
+                            <span className="text-[12px] font-bold text-[#202223] dark:text-zinc-100">{variant.title}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="text-[11px] font-mono font-medium text-slate-500 dark:text-slate-400">{variant.sku || '--'}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">LKR {variant.price}</span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className={cn(
+                              "inline-flex px-2 py-0.5 rounded text-[10px] font-bold",
+                              variant.inventory_quantity > 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                            )}>
+                              {variant.inventory_quantity || 0}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-12 text-center text-sm text-muted-foreground">No product data loaded.</div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
