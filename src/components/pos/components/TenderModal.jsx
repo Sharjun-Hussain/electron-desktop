@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { useSettingsStore } from "@/store/useSettingsStore";
+import { VirtualNumpad } from "./VirtualNumpad";
 
 const AVAILABLE_METHODS = [
   { id: "cash", label: "Cash", icon: Banknote },
@@ -45,6 +47,8 @@ const TenderModal = ({
   const [selectedMethod, setSelectedMethod] = useState("cash");
   const [cardChargePercent, setCardChargePercent] = useState(0);
   const inputRef = useRef(null);
+  
+  const posTouchUI = useSettingsStore((state) => state.global?.posTouchUI || false);
 
   useEffect(() => {
     if (isOpen) {
@@ -270,6 +274,18 @@ const TenderModal = ({
                                 placeholder="0.00"
                             />
                         </div>
+                    </div>
+                )}
+
+                {/* Touch UI Virtual Numpad */}
+                {posTouchUI && (
+                    <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+                        <VirtualNumpad 
+                            value={payments[selectedMethod] || ""}
+                            onChange={(val) => handlePaymentChange(selectedMethod, val)}
+                            onExact={(amount) => handlePaymentChange(selectedMethod, amount.toString())}
+                            totalAmount={totalAmount}
+                        />
                     </div>
                 )}
             </div>

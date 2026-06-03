@@ -84,6 +84,8 @@ export function PosSettings() {
   const tier = business?.subscription_tier;
   const posLayout = useSettingsStore((state) => state.global?.posLayout || "modern");
   const setPosLayout = useSettingsStore((state) => state.setPosLayout);
+  const posTouchUI = useSettingsStore((state) => state.global?.posTouchUI || false);
+  const setPosTouchUI = useSettingsStore((state) => state.setPosTouchUI);
 
   const {
     isReady: isHardwareReady, isConnecting, selectedPrinter,
@@ -459,6 +461,17 @@ export function PosSettings() {
                           </div>
                         );
                       })}
+                    </div>
+                    <div className="mt-4 p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                      <ToggleRow 
+                        label="Enable Touch UI Mode" 
+                        desc="Activates on-screen numpads for keyboard-less devices" 
+                        checked={posTouchUI} 
+                        onCheckedChange={(c) => {
+                          setPosTouchUI(c);
+                          toast.success(c ? "Touch UI enabled globally" : "Touch UI disabled");
+                        }} 
+                      />
                     </div>
                   </div>
 

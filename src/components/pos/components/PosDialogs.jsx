@@ -829,41 +829,43 @@ export const PaymentDialog = memo(({
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
-              Select Customer (Default: Walk-in)
-            </label>
-            <div className="border border-border/40 rounded-xl overflow-hidden bg-muted/5">
-              <CustomerSelector 
-                customers={allCustomers} 
-                selectedCustomer={selectedCustomer} 
-                onSelect={onSelectCustomer}
-                isCompact={true}
-              />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+                Select Customer (Default: Walk-in)
+              </label>
+              <div className="border border-border/40 rounded-xl overflow-hidden bg-muted/5 h-10 flex items-center">
+                <CustomerSelector 
+                  customers={allCustomers} 
+                  selectedCustomer={selectedCustomer} 
+                  onSelect={onSelectCustomer}
+                  isCompact={true}
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
-              Payment Method
-            </label>
-            <select
-              value={method}
-              onChange={(e) => setMethod(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-border/40 bg-muted/20 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/20 appearance-none cursor-pointer"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='激M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 0.75rem center',
-                backgroundSize: '1rem'
-              }}
-            >
-              {paymentMethods.map((m) => (
-                <option key={m} value={m} className="bg-card text-foreground uppercase">
-                  {m}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+                Payment Method
+              </label>
+              <select
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+                className="w-full h-10 px-3 rounded-xl border border-border/40 bg-muted/20 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/20 appearance-none cursor-pointer"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.75rem center',
+                  backgroundSize: '1rem'
+                }}
+              >
+                {paymentMethods.map((m) => (
+                  <option key={m} value={m} className="bg-card text-foreground uppercase">
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="space-y-2">

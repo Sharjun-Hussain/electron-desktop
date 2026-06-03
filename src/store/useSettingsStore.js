@@ -18,6 +18,7 @@ export const useSettingsStore = create(
                 zoomLevel: 1,
                 sidebarCollapsed: false,
                 posLayout: 'modern', // 'modern' | 'classic'
+                posTouchUI: false, // Enable touch-optimized inputs and virtual numpads
             },
             // Business Settings (Synced from backend)
             business: {},
@@ -48,6 +49,11 @@ export const useSettingsStore = create(
             setPosLayout: (layout) =>
                 set((state) => ({
                     global: { ...state.global, posLayout: layout }
+                })),
+
+            setPosTouchUI: (enabled) =>
+                set((state) => ({
+                    global: { ...state.global, posTouchUI: enabled }
                 })),
 
             setBusinessSettings: (settings) =>
