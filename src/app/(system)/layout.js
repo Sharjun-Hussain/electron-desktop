@@ -8,6 +8,7 @@ import { DashboardLayoutSkeleton } from '../skeletons/dashboard/dashboard-skelet
 import { SystemBreadcrumb } from '@/components/general/breadcrumb/Breadcrumb';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppSettings } from '@/app/hooks/useAppSettings';
+import { useWakeLock } from '@/hooks/use-wake-lock';
 
 export default function AppLayout({ children }) {
   const { status } = useSession();
@@ -21,6 +22,9 @@ export default function AppLayout({ children }) {
   const fontSize = general?.interface?.fontSize || '14';
 
   const isPosScreen = pathname?.includes('/pos');
+
+  // Keep the screen awake on POS screens
+  useWakeLock(isPosScreen);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
