@@ -248,17 +248,19 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
       </div>
 
       {/* Barcode Section for Returns */}
-      <div className="mt-4 flex flex-col items-center justify-center space-y-1 overflow-hidden">
-        <Barcode
-          value={sale.invoice_number || "000000"}
-          width={1.2}
-          height={40}
-          fontSize={10}
-          margin={0}
-          background="transparent"
-        />
-        <p className="text-[10px] font-bold uppercase tracking-widest">Scan for returns & verification</p>
-      </div>
+      {(settings.showBarcode ?? true) && (
+        <div className="mt-4 flex flex-col items-center justify-center space-y-1 overflow-hidden">
+          <Barcode
+            value={sale.invoice_number || "000000"}
+            width={1.2}
+            height={40}
+            fontSize={10}
+            margin={0}
+            background="transparent"
+          />
+          <p className="text-[10px] font-bold uppercase tracking-widest">Scan for returns & verification</p>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="mt-4 text-center space-y-2 border-t border-dashed border-black pt-2">

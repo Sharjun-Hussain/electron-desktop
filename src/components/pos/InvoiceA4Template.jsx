@@ -224,15 +224,17 @@ export const InvoiceA4Template = forwardRef(({ sale, settings, business, branch,
              )}
           </div>
 
-          <div className="mt-6 flex justify-center pt-4 border-t border-slate-100">
-             <Barcode 
-               value={sale.invoice_number || "000000"} 
-               width={1.2} 
-               height={40} 
-               fontSize={10}
-               margin={0}
-             />
-          </div>
+          {(settings.showBarcode ?? true) && (
+            <div className="mt-6 flex justify-center pt-4 border-t border-slate-100">
+               <Barcode 
+                 value={sale.invoice_number || "000000"} 
+                 width={1.2} 
+                 height={40} 
+                 fontSize={10}
+                 margin={0}
+               />
+            </div>
+          )}
         </div>
       </div>
 

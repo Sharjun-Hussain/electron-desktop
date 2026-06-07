@@ -72,12 +72,17 @@ export function SettingsPage() {
 
   // Filter sidebar items based on permissions and feature flags
   const allowedItems = useMemo(() => {
+    const isOrganization = session?.user?.roles?.some(role => role.toLowerCase().includes('organization'));
+    const isSuperAdmin = session?.user?.roles?.some(role => role.toLowerCase() === 'super admin');
+
     return sidebarItems.filter(item => {
       if (item.id === "loyalty" && !isLoyaltyEnabled) return false;
       if (item.id === "backup" && !isBackupEnabled) return false;
+      if (isOrganization && (item.id === "health" || item.id === "ai")) return false;
+      if (item.id === "communication" && !isSuperAdmin) return false;
       return hasPermission(item.permission);
     });
-  }, [hasPermission, isLoyaltyEnabled, isBackupEnabled]);
+  }, [hasPermission, isLoyaltyEnabled, isBackupEnabled, session?.user?.roles]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");

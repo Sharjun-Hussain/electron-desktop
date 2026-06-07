@@ -727,6 +727,7 @@ export function PosSettings() {
                       <ToggleRow label="Show Sales Category" desc="Wholesale vs Retail identifier" checked={formData.showSalesType} onCheckedChange={(c) => updateField('showSalesType', c)} />
                       <ToggleRow label="Tax Breakdown" desc="Render fiscal tax identifiers" checked={formData.showTax} onCheckedChange={(c) => updateField('showTax', c)} />
                       <ToggleRow label="Discount Details" desc="Line item and total adjustments" checked={formData.showDiscount} onCheckedChange={(c) => updateField('showDiscount', c)} />
+                      <ToggleRow label="Print Invoice Barcode" desc="Render barcode at bottom of receipt for returns" checked={formData.showBarcode ?? true} onCheckedChange={(c) => updateField('showBarcode', c)} />
                     </div>
                   </CardContent>
                 </Card>

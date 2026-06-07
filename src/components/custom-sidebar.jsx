@@ -210,7 +210,7 @@ export function CustomSidebar() {
         title: t("sidebar.reports"),
         url: "/reports",
         icon: BarChart3,
-        requiredPermission: PERMISSIONS.REPORT_VIEW,
+        requiredPermission: [PERMISSIONS.REPORT_VIEW, PERMISSIONS.PRODUCT_VIEW, PERMISSIONS.STOCK_VIEW],
         moduleKey: "reports_basic",
         items: [
           { title: t("sidebar.inventory_insights"), url: "/inventory-insights", icon: Lightbulb, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "reports_basic" },
