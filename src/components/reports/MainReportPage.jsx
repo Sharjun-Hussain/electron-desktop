@@ -439,6 +439,22 @@ function ReportsContent({ isNested }) {
     }
   }, [searchParams]);
 
+  // Load favorites from local storage on mount
+  useEffect(() => {
+    try {
+      const savedFavorites = localStorage.getItem("report_favorites");
+      if (savedFavorites) {
+        const favoriteIds = JSON.parse(savedFavorites);
+        setReports(prev => prev.map(r => ({
+          ...r,
+          isFavorite: favoriteIds.includes(r.id)
+        })));
+      }
+    } catch (e) {
+      console.error("Failed to load favorites", e);
+    }
+  }, []);
+
   const handleCategoryChange = (catId) => {
     const params = new URLSearchParams(searchParams);
     params.set("tab", catId);
@@ -449,9 +465,19 @@ function ReportsContent({ isNested }) {
   // --- HANDLERS ---
 
   const toggleFavorite = (id) => {
-    setReports((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isFavorite: !r.isFavorite } : r))
-    );
+    setReports((prev) => {
+      const newReports = prev.map((r) => (r.id === id ? { ...r, isFavorite: !r.isFavorite } : r));
+      
+      // Save favorites to local storage
+      try {
+        const favoriteIds = newReports.filter(r => r.isFavorite).map(r => r.id);
+        localStorage.setItem("report_favorites", JSON.stringify(favoriteIds));
+      } catch (e) {
+        console.error("Failed to save favorites", e);
+      }
+      
+      return newReports;
+    });
   };
 
   // Filter Logic
