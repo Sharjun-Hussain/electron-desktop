@@ -122,10 +122,10 @@ const REPORTS_DATA = [
     isFavorite: true,
   },
   {
-    id: "sales-profit-loss",
+    id: "finance-profit-loss",
     name: "Profit & Loss",
-    href: "/reports/sales/profit-loss",
-    category: "Sales",
+    href: "/reports/finance/profit-loss",
+    category: "Finance",
     description: "Summary of revenues, costs, and net expenses.",
     isFavorite: false,
   },
