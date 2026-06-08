@@ -784,34 +784,60 @@ export const PaymentDialog = memo(({
   allCustomers = [],
   selectedCustomer = null,
   onSelectCustomer,
+  enableMultiplePayments = false,
 }) => {
   const { t } = useTranslation();
-  const [cashIn, setCashIn] = useState("");
-  const [method, setMethod] = useState("cash");
+  const [payments, setPayments] = useState([{ id: 1, method: "cash", amount: "" }]);
+
+  const totalReceived = useMemo(() => {
+    return payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+  }, [payments]);
 
   const balance = useMemo(() => {
-    const received = parseFloat(cashIn) || 0;
-    return received > netTotal ? received - netTotal : 0;
-  }, [cashIn, netTotal]);
+    return totalReceived > netTotal ? totalReceived - netTotal : 0;
+  }, [totalReceived, netTotal]);
 
   const remaining = useMemo(() => {
-    const received = parseFloat(cashIn) || 0;
-    return netTotal > received ? netTotal - received : 0;
-  }, [cashIn, netTotal]);
+    return netTotal > totalReceived ? netTotal - totalReceived : 0;
+  }, [totalReceived, netTotal]);
 
   useEffect(() => {
     if (isOpen) {
-      setCashIn("");
-      setMethod("cash");
+      setPayments([{ id: Date.now(), method: "cash", amount: "" }]);
     }
   }, [isOpen]);
 
   const handleConfirm = () => {
+    const validPayments = payments
+      .map(p => ({ method: p.method, received: parseFloat(p.amount) || 0 }))
+      .filter(p => p.received > 0);
+    
+    if (validPayments.length === 0) {
+      validPayments.push({ method: payments[0].method, received: netTotal });
+    }
+
     onConfirm({
-      method,
-      received: parseFloat(cashIn) || netTotal,
+      payments: validPayments,
+      received: totalReceived || netTotal, // Keep for backward compatibility if needed by parent
       balance
     });
+  };
+
+  const addPaymentMethod = () => {
+    if (remaining > 0) {
+      setPayments(prev => [
+        ...prev, 
+        { id: Date.now(), method: paymentMethods.find(m => !prev.some(p => p.method === m)) || paymentMethods[0], amount: remaining.toString() }
+      ]);
+    }
+  };
+
+  const updatePayment = (id, field, value) => {
+    setPayments(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const removePayment = (id) => {
+    setPayments(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -829,7 +855,7 @@ export const PaymentDialog = memo(({
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
                 Select Customer (Default: Walk-in)
@@ -843,53 +869,75 @@ export const PaymentDialog = memo(({
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
-                Payment Method
-              </label>
-              <select
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl border border-border/40 bg-muted/20 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/20 appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 0.75rem center',
-                  backgroundSize: '1rem'
-                }}
-              >
-                {paymentMethods.map((m) => (
-                  <option key={m} value={m} className="bg-card text-foreground uppercase">
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
-              Amount Received
-            </label>
-            <div className="relative">
-              <Input
-                type="number"
-                placeholder="0.00"
-                value={cashIn}
-                onChange={(e) => setCashIn(e.target.value)}
-                autoFocus
-                className="h-12 text-xl font-bold bg-muted/20 border-border/40 rounded-xl focus:ring-1 focus:ring-violet-500/20"
-                onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
-              />
+          <div className="space-y-3">
+            {payments.map((p, index) => (
+              <div key={p.id} className={clsx("grid gap-3 items-end", payments.length > 1 ? "grid-cols-[1fr_1.5fr_auto]" : "grid-cols-[1fr_1.5fr]")}>
+                <div className="space-y-2">
+                  {index === 0 && <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">Payment Method</label>}
+                  <select
+                    value={p.method}
+                    onChange={(e) => updatePayment(p.id, "method", e.target.value)}
+                    className="w-full h-12 px-3 rounded-xl border border-border/40 bg-muted/20 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/20 appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1rem'
+                    }}
+                  >
+                    {paymentMethods.map((m) => (
+                      <option key={m} value={m} className="bg-card text-foreground uppercase">{m}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2 relative">
+                  {index === 0 && <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">Amount Received</label>}
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      value={p.amount}
+                      onChange={(e) => updatePayment(p.id, "amount", e.target.value)}
+                      autoFocus={index === 0}
+                      className="h-12 text-xl font-bold bg-muted/20 border-border/40 rounded-xl focus:ring-1 focus:ring-violet-500/20"
+                      onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
+                    />
+                    {index === 0 && payments.length === 1 && (
+                      <Button 
+                        variant="ghost" 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-2 text-[10px] font-bold text-violet-600 hover:bg-violet-500/5"
+                        onClick={() => updatePayment(p.id, "amount", netTotal.toString())}
+                      >
+                        EXACT
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {payments.length > 1 && (
+                  <Button 
+                    variant="ghost" 
+                    className="h-12 w-12 p-0 text-rose-500 hover:bg-rose-50 rounded-xl mb-[1px]"
+                    onClick={() => removePayment(p.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+
+            {enableMultiplePayments && remaining > 0 && (
               <Button 
-                variant="ghost" 
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-2 text-[10px] font-bold text-violet-600 hover:bg-violet-500/5"
-                onClick={() => setCashIn(netTotal.toString())}
+                variant="outline" 
+                className="w-full h-10 border-dashed border-border/60 text-xs font-bold text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/50 hover:bg-emerald-500/5 mt-2"
+                onClick={addPaymentMethod}
               >
-                EXACT
+                <Plus className="h-3 w-3 mr-1" /> Add Payment Method (Remaining: {remaining.toFixed(2)})
               </Button>
-            </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-2">

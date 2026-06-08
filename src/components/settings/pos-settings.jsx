@@ -162,7 +162,7 @@ export function PosSettings() {
     posPricingMode: "fifo", // "fifo" or "manual_batch"
     enableBatchSelection: false,
     showUser: true, showCustomer: true, showDateTime: true, showSalesType: true,
-    autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false,
+    autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false, enableMultiplePayments: false,
     posTableColumns: ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"],
   });
 
@@ -511,6 +511,7 @@ export function PosSettings() {
                     checked={isShiftEnabled && formData.requireShift}
                     onCheckedChange={(c) => isShiftEnabled && updateField('requireShift', c)}
                   />
+                  <ToggleRow label="Enable Split Payments" desc="Allow multiple payment methods for a single invoice" checked={formData.enableMultiplePayments} onCheckedChange={(c) => updateField('enableMultiplePayments', c)} />
 
                   <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
                     <SectionHeader icon={Package} title="Inventory & Pricing Strategy" description="Configure how the system identifies and prices products with multiple batches" />

@@ -255,7 +255,9 @@ export default function PosPage() {
     // Merge modal data with original checkout args
     const finalizedArgs = {
       ...pendingPaymentArgs,
-      payments: [{ payment_method: paymentData.method, amount: paymentData.received }],
+      payments: paymentData.payments 
+        ? paymentData.payments.map(p => ({ payment_method: p.method, amount: p.received }))
+        : [{ payment_method: paymentData.method, amount: paymentData.received }],
       paid_amount: paymentData.received,
       activeShiftId: activeShift?.id
     };
@@ -766,6 +768,7 @@ export default function PosPage() {
           allCustomers={customers}
           selectedCustomer={state.customer}
           onSelectCustomer={(c) => dispatch({ type: 'SET_CUSTOMER', payload: c })}
+          enableMultiplePayments={posResponse?.data?.enableMultiplePayments}
         />
 
       <ShiftManagerDialog

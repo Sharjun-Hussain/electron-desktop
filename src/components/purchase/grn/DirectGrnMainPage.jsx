@@ -151,8 +151,28 @@ const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
                     )}
                   />
                   <div className="flex flex-col w-full">
-                    <span className="font-medium text-foreground text-sm">{product.name}</span>
-                    <span className="text-[11px] text-muted-foreground">{product.sku || product.barcode || '-'}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-foreground text-sm">{product.name}</span>
+                      <span className="text-[11px] text-muted-foreground/60">{product.sku || product.barcode || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-[11px] text-muted-foreground">
+                        Stock:
+                        <span
+                          className={cn(
+                            "ml-1 font-medium",
+                            (product?.stock_quantity || 0) <= 0
+                              ? "text-red-500"
+                              : "text-emerald-500"
+                          )}
+                        >
+                          {product?.stock_quantity ?? "0"} units
+                        </span>
+                      </span>
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        LKR {(Number(product.cost_price) || 0).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </CommandItem>
               ))}
@@ -283,27 +303,55 @@ export default function DirectGRNPage() {
         setIsDataLoading(false);
       }
     }
+    if (status === "authenticated") {
+      fetchSuppliers();
+    }
+  }, [status, session]);
 
+  const watchedBranchId = form.watch("branchId");
+
+  useEffect(() => {
     async function fetchProducts() {
-      if (!session?.accessToken) return;
+      if (!session?.accessToken || !watchedBranchId) return;
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list?branch_id=${watchedBranchId}`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         });
         const result = await response.json();
         if (result.status === "success") {
-          setProducts(result.data || []);
+          const allProducts = result.data || [];
+          const flattened = [];
+          allProducts.forEach(product => {
+            if (product.variants && product.variants.length > 0) {
+              product.variants.forEach(variant => {
+                flattened.push({
+                  ...variant,
+                  product_id: product.id,
+                  variant_id: variant.id,
+                  name: `${product.name} - ${variant.name || variant.sku || variant.barcode || 'Default'}`,
+                  parentProduct: product
+                });
+              });
+            } else {
+              flattened.push({
+                ...product,
+                product_id: product.id,
+                variant_id: null,
+                parentProduct: product
+              });
+            }
+          });
+          setProducts(flattened);
         }
       } catch (error) {
         console.error("Failed to fetch products", error);
       }
     }
 
-    if (status === "authenticated") {
-      fetchSuppliers();
+    if (status === "authenticated" && watchedBranchId) {
       fetchProducts();
     }
-  }, [status, session]);
+  }, [status, session, watchedBranchId]);
 
   // Handle Keyboard Shortcut (F2)
   useEffect(() => {

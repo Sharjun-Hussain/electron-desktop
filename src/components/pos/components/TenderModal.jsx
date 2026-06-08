@@ -33,6 +33,7 @@ const TenderModal = ({
   activeMethods = ["cash", "card"], 
   onPay, 
   selectedCustomer = null,
+  enableMultiplePayments = false,
 }) => {
   const [payments, setPayments] = useState({
     cash: 0,
@@ -69,12 +70,23 @@ const TenderModal = ({
 
   const handleMethodChange = (methodId) => {
     setSelectedMethod(methodId);
-    // Reset all and put total in selected
-    const newPayments = {
-      cash: 0, card: 0, online: 0, qr: 0, wallet: 0, cheque: 0, credit: 0
-    };
-    newPayments[methodId] = totalAmount;
-    setPayments(newPayments);
+    if (!enableMultiplePayments) {
+      // Reset all and put total in selected
+      const newPayments = {
+        cash: 0, card: 0, online: 0, qr: 0, wallet: 0, cheque: 0, credit: 0
+      };
+      newPayments[methodId] = totalAmount;
+      setPayments(newPayments);
+    } else {
+      setPayments(prev => {
+        const currentPaid = Object.values(prev).reduce((sum, val) => sum + val, 0);
+        const remaining = totalAmount - currentPaid;
+        if (remaining > 0 && prev[methodId] === 0) {
+          return { ...prev, [methodId]: remaining };
+        }
+        return prev;
+      });
+    }
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -198,7 +210,7 @@ const TenderModal = ({
                 <Separator className="opacity-50" />
 
                 {/* Dynamic Payment Input Section */}
-                {selectedMethod === 'cash' && (
+                {(selectedMethod === 'cash' || payments.cash > 0) && (
                     <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                         <div className="grid grid-cols-2 items-center gap-4">
                             <label className={cn(LabelCls, "text-emerald-600")}>Cash Received</label>
@@ -221,7 +233,7 @@ const TenderModal = ({
                     </div>
                 )}
 
-                {selectedMethod === 'card' && (
+                {(selectedMethod === 'card' || payments.card > 0) && (
                     <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                         <div className="grid grid-cols-2 items-center gap-4">
                             <label className={cn(LabelCls, "text-blue-600")}>Card Payment</label>
@@ -258,24 +270,28 @@ const TenderModal = ({
                     </div>
                 )}
 
-                {(selectedMethod !== 'cash' && selectedMethod !== 'card') && (
-                    <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="grid grid-cols-2 items-center gap-4">
-                            <label className={cn(LabelCls, "text-amber-600")}>
-                                {AVAILABLE_METHODS.find(m => m.id === selectedMethod)?.label} Amount
-                            </label>
-                            <Input
-                                ref={inputRef}
-                                type="number"
-                                value={payments[selectedMethod] || ""}
-                                onChange={(e) => handlePaymentChange(selectedMethod, e.target.value)}
-                                onFocus={(e) => e.target.select()}
-                                className={cn(InputCls, "border-amber-500 ring-2 ring-amber-500/10")}
-                                placeholder="0.00"
-                            />
+                {AVAILABLE_METHODS.map(m => {
+                    if (m.id === 'cash' || m.id === 'card') return null;
+                    if (selectedMethod !== m.id && payments[m.id] === 0) return null;
+                    return (
+                        <div key={m.id} className="space-y-4 animate-in fade-in zoom-in-95 duration-200 mt-4">
+                            <div className="grid grid-cols-2 items-center gap-4">
+                                <label className={cn(LabelCls, "text-amber-600")}>
+                                    {m.label} Amount
+                                </label>
+                                <Input
+                                    ref={selectedMethod === m.id ? inputRef : null}
+                                    type="number"
+                                    value={payments[m.id] || ""}
+                                    onChange={(e) => handlePaymentChange(m.id, e.target.value)}
+                                    onFocus={(e) => e.target.select()}
+                                    className={cn(InputCls, "border-amber-500 ring-2 ring-amber-500/10")}
+                                    placeholder="0.00"
+                                />
+                            </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })}
 
                 {/* Touch UI Virtual Numpad */}
                 {posTouchUI && (

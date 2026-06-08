@@ -351,92 +351,6 @@ export default function ClassicPosPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // Predictive Search logic - Debounced for performance
-  useEffect(() => {
-    if (debouncedBarcodeInput.length > 1) {
-      const trimmed = debouncedBarcodeInput.trim();
-      const search = trimmed.toLowerCase();
-
-      // Auto-add on exact barcode/SKU match (scanner support - no Enter needed)
-      if (trimmed.length >= 4 && !trimmed.includes(' ')) {
-        const exactMatch = flattenedVariants.find(v =>
-          (v.barcode && v.barcode.toLowerCase() === search) ||
-          (v.sku && v.sku.toLowerCase() === search) ||
-          (v.item_code && v.item_code.toLowerCase() === search)
-        );
-        if (exactMatch) {
-          handleAddToCart(exactMatch);
-          setBarcodeInput('');
-          setSearchResults([]);
-          playBeep('success');
-          return;
-        }
-      }
-
-      const results = flattenedVariants.filter(v =>
-        v.barcode?.toLowerCase().includes(search) ||
-        v.item_code?.toLowerCase().includes(search) ||
-        v.sku?.toLowerCase().includes(search) ||
-        v.name?.toLowerCase().includes(search)
-      ).slice(0, 8);
-      setSearchResults(results);
-      setSelectedIndex(results.length > 0 ? 0 : -1);
-    } else {
-      setSearchResults([]);
-      setSelectedIndex(-1);
-    }
-  }, [debouncedBarcodeInput, flattenedVariants, handleAddToCart, playBeep]);
-
-  const handleSearchKeyDown = (e) => {
-    if (searchResults.length > 0) {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev < searchResults.length - 1 ? prev + 1 : prev));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
-      } else if (e.key === "Escape") {
-        setSearchResults([]);
-      }
-    }
-  };
-
-  // -- Barcode handling --
-  const handleBarcodeSubmit = async (e) => {
-    e.preventDefault();
-    if (!barcodeInput) return;
-
-    const targetItem = selectedIndex > -1 ? searchResults[selectedIndex] : (searchResults.length > 0 ? searchResults[0] : null);
-    if (targetItem) {
-      handleAddToCart(targetItem);
-      setBarcodeInput("");
-      setSearchResults([]);
-      playBeep("success");
-      return;
-    }
-
-    const search = barcodeInput.trim().toLowerCase();
-    if (!search) return;
-
-    const variant = flattenedVariants.find(v =>
-      v.barcode?.toLowerCase() === search ||
-      v.item_code?.toLowerCase() === search ||
-      v.sku?.toLowerCase() === search ||
-      v.name?.toLowerCase() === search
-    );
-
-    if (variant) {
-      handleAddToCart(variant);
-      setBarcodeInput("");
-      playBeep("success");
-      searchRef.current?.focus();
-    } else {
-      toast.error(t("pos.product_not_found"));
-      playBeep("error");
-      searchRef.current?.focus();
-    }
-  };
-
   const handleAddToCart = useCallback(async (rawItem, quantity = 1, skipBatchCheck = false) => {
     let item = { ...rawItem };
     const vId = item.variantId || item.id;
@@ -567,6 +481,92 @@ export default function ClassicPosPage() {
   }, [dispatch]);
 
 
+
+  // Predictive Search logic - Debounced for performance
+  useEffect(() => {
+    if (debouncedBarcodeInput.length > 1) {
+      const trimmed = debouncedBarcodeInput.trim();
+      const search = trimmed.toLowerCase();
+
+      // Auto-add on exact barcode/SKU match (scanner support - no Enter needed)
+      if (trimmed.length >= 4 && !trimmed.includes(' ')) {
+        const exactMatch = flattenedVariants.find(v =>
+          (v.barcode && v.barcode.toLowerCase() === search) ||
+          (v.sku && v.sku.toLowerCase() === search) ||
+          (v.item_code && v.item_code.toLowerCase() === search)
+        );
+        if (exactMatch) {
+          handleAddToCart(exactMatch);
+          setBarcodeInput('');
+          setSearchResults([]);
+          playBeep('success');
+          return;
+        }
+      }
+
+      const results = flattenedVariants.filter(v =>
+        v.barcode?.toLowerCase().includes(search) ||
+        v.item_code?.toLowerCase().includes(search) ||
+        v.sku?.toLowerCase().includes(search) ||
+        v.name?.toLowerCase().includes(search)
+      ).slice(0, 8);
+      setSearchResults(results);
+      setSelectedIndex(results.length > 0 ? 0 : -1);
+    } else {
+      setSearchResults([]);
+      setSelectedIndex(-1);
+    }
+  }, [debouncedBarcodeInput, flattenedVariants, handleAddToCart, playBeep]);
+
+  const handleSearchKeyDown = (e) => {
+    if (searchResults.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev < searchResults.length - 1 ? prev + 1 : prev));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
+      } else if (e.key === "Escape") {
+        setSearchResults([]);
+      }
+    }
+  };
+
+  // -- Barcode handling --
+  const handleBarcodeSubmit = async (e) => {
+    e.preventDefault();
+    if (!barcodeInput) return;
+
+    const targetItem = selectedIndex > -1 ? searchResults[selectedIndex] : (searchResults.length > 0 ? searchResults[0] : null);
+    if (targetItem) {
+      handleAddToCart(targetItem);
+      setBarcodeInput("");
+      setSearchResults([]);
+      playBeep("success");
+      return;
+    }
+
+    const search = barcodeInput.trim().toLowerCase();
+    if (!search) return;
+
+    const variant = flattenedVariants.find(v =>
+      v.barcode?.toLowerCase() === search ||
+      v.item_code?.toLowerCase() === search ||
+      v.sku?.toLowerCase() === search ||
+      v.name?.toLowerCase() === search
+    );
+
+    if (variant) {
+      handleAddToCart(variant);
+      setBarcodeInput("");
+      playBeep("success");
+      searchRef.current?.focus();
+    } else {
+      toast.error(t("pos.product_not_found"));
+      playBeep("error");
+      searchRef.current?.focus();
+    }
+  };
 
   // -- Keyboard Shortcuts (F1-F12) --
   useEffect(() => {
@@ -1308,6 +1308,7 @@ export default function ClassicPosPage() {
         totalAmount={netBill}
         activeMethods={receiptSettings?.activePaymentMethods || ["cash", "card"]}
         selectedCustomer={state.selectedCustomer}
+        enableMultiplePayments={receiptSettings?.enableMultiplePayments}
         onPay={(paymentData) => {
           handlePayNow({
             ...paymentData,
