@@ -21,6 +21,7 @@ import {
   UtensilsCrossed
 } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Gift } from "lucide-react";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
@@ -390,6 +391,9 @@ function ReportsContent({ isNested }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   
+  const { data: session } = useSession();
+  const isRestrictedRole = session?.user?.roles?.some(role => role.name === "Sales Manager");
+  
   const { business } = useAppSettings();
   const isLoyaltyEnabled = business?.loyalty_enabled;
   const isManufacturing = business?.business_type?.toLowerCase() === "manufacturing";
@@ -400,8 +404,9 @@ function ReportsContent({ isNested }) {
     if (!isLoyaltyEnabled) list = list.filter(c => c.id !== "Loyalty");
     if (!isManufacturing) list = list.filter(c => c.id !== "Manufacturing");
     if (!isRestaurant) list = list.filter(c => c.id !== "Restaurant");
+    if (isRestrictedRole) list = list.filter(c => c.id !== "Finance");
     return list;
-  }, [isLoyaltyEnabled, isManufacturing, isRestaurant]);
+  }, [isLoyaltyEnabled, isManufacturing, isRestaurant, isRestrictedRole]);
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
