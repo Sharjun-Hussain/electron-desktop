@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, Sun, Moon, ShoppingCart, Store, Wallet, 
   ChevronDown, Check, UserMinus, Gift, Plus, Network, LayoutGrid, Maximize2, Search, 
@@ -264,6 +264,28 @@ export const PosHeader = memo(({
   useEffect(() => {
     setSelectedIndex(filteredProducts.length > 0 ? 0 : -1);
   }, [productSearch, filteredProducts.length]);
+
+  // ─── Auto-add on exact barcode scan ───────────────────────────────────────
+  // Barcode scanners type all digits in <50ms then send Enter.
+  // This 80ms debounce fires right after the scanner finishes and
+  // auto-adds the item without requiring a manual Enter press.
+  useEffect(() => {
+    const trimmed = productSearch.trim();
+    // Skip short strings or anything with spaces (those are manual name searches)
+    if (trimmed.length < 4 || trimmed.includes(' ')) return;
+
+    const timer = setTimeout(() => {
+      const exactMatch = flattenedVariants?.find(
+        (v) => v.barcode && v.barcode === trimmed
+      );
+      if (exactMatch) {
+        onAddToCart(exactMatch);
+        setProductSearch('');
+      }
+    }, 80);
+
+    return () => clearTimeout(timer);
+  }, [productSearch, flattenedVariants, onAddToCart, setProductSearch]);
 
   // Auto-scroll selected item into view
   useEffect(() => {

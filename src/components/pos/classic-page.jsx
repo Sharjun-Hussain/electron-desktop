@@ -354,7 +354,25 @@ export default function ClassicPosPage() {
   // Predictive Search logic - Debounced for performance
   useEffect(() => {
     if (debouncedBarcodeInput.length > 1) {
-      const search = debouncedBarcodeInput.toLowerCase();
+      const trimmed = debouncedBarcodeInput.trim();
+      const search = trimmed.toLowerCase();
+
+      // Auto-add on exact barcode/SKU match (scanner support - no Enter needed)
+      if (trimmed.length >= 4 && !trimmed.includes(' ')) {
+        const exactMatch = flattenedVariants.find(v =>
+          (v.barcode && v.barcode.toLowerCase() === search) ||
+          (v.sku && v.sku.toLowerCase() === search) ||
+          (v.item_code && v.item_code.toLowerCase() === search)
+        );
+        if (exactMatch) {
+          handleAddToCart(exactMatch);
+          setBarcodeInput('');
+          setSearchResults([]);
+          playBeep('success');
+          return;
+        }
+      }
+
       const results = flattenedVariants.filter(v =>
         v.barcode?.toLowerCase().includes(search) ||
         v.item_code?.toLowerCase().includes(search) ||
@@ -367,7 +385,7 @@ export default function ClassicPosPage() {
       setSearchResults([]);
       setSelectedIndex(-1);
     }
-  }, [debouncedBarcodeInput, flattenedVariants]);
+  }, [debouncedBarcodeInput, flattenedVariants, handleAddToCart, playBeep]);
 
   const handleSearchKeyDown = (e) => {
     if (searchResults.length > 0) {
