@@ -111,7 +111,7 @@ export function usePosData() {
     try {
       // Define endpoints to fetch
       const endpoints = [
-        { key: 'products', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/products?size=1000` },
+        { key: 'products', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/active/list` },
         { key: 'customers', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/active/list` },
         { key: 'distributors', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/distributors/active/list` },
         { key: 'sellers', url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/active-sellers` },
@@ -144,7 +144,7 @@ export function usePosData() {
       // 1. Handle Products
       if (isSuccess(results[0])) {
         const prodData = results[0].value;
-        const rawProductList = prodData.data.data || [];
+        const rawProductList = prodData.data || [];
 
         // For manufacturing businesses, only Finished Goods are sold at POS
         const businessType = (session?.user?.organization?.business_type || "").toLowerCase();
