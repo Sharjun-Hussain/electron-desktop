@@ -259,6 +259,8 @@ export default function PosPage() {
         ? paymentData.payments.map(p => ({ payment_method: p.method, amount: p.received }))
         : [{ payment_method: paymentData.method, amount: paymentData.received }],
       paid_amount: paymentData.received,
+      generalDiscountAmt: paymentData.generalDiscountAmt || 0,
+      generalDiscount: paymentData.generalDiscount || 0,
       activeShiftId: activeShift?.id
     };
 
@@ -769,6 +771,7 @@ export default function PosPage() {
           selectedCustomer={state.customer}
           onSelectCustomer={(c) => dispatch({ type: 'SET_CUSTOMER', payload: c })}
           enableMultiplePayments={posResponse?.data?.enableMultiplePayments}
+          settings={posResponse?.data}
         />
 
       <ShiftManagerDialog

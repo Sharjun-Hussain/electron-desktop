@@ -23,6 +23,13 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Archive, List, PackageSearch, Loader2,
   Trash2, RotateCcw, Printer, Search, Plus, Truck,
 } from "lucide-react";
@@ -31,6 +38,7 @@ import { db } from "@/lib/indexedDB/db";
 import { useTranslation } from "@/hooks/useTranslation";
 import SalesReturnDialog from "../SalesReturnDialog";
 import SaleDetailSheet from "../SaleDetailSheet";
+import { CustomerSelector } from "./CustomerSelector";
 
 // ─── Reusable Sale Item HoverCard ────────────────────────────────────────────
 const SaleItemsHoverCard = memo(({ sale, accentClass }) => {
@@ -772,7 +780,6 @@ export const VariantSelectorDialog = memo(({ isOpen, onOpenChange, product, onSe
   );
 });
 VariantSelectorDialog.displayName = "VariantSelectorDialog";
-import { CustomerSelector } from "./CustomerSelector";
 
 // ─── Payment Dialog ────────────────────────────────────────────────────────
 export const PaymentDialog = memo(({ 
@@ -785,27 +792,41 @@ export const PaymentDialog = memo(({
   selectedCustomer = null,
   onSelectCustomer,
   enableMultiplePayments = false,
+  settings = {},
 }) => {
   const { t } = useTranslation();
   const [payments, setPayments] = useState([{ id: 1, method: "cash", amount: "" }]);
+  const [lastDiscount, setLastDiscount] = useState(0);
+  const [discountType, setDiscountType] = useState(settings?.defaultExtraDiscountType || "amount");
 
   const totalReceived = useMemo(() => {
     return payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
   }, [payments]);
 
+  const calculatedDiscountAmt = useMemo(() => {
+    if (discountType === "percentage") {
+      return netTotal * (lastDiscount / 100);
+    }
+    return lastDiscount;
+  }, [netTotal, lastDiscount, discountType]);
+
+  const netAmountToPay = useMemo(() => Math.max(0, netTotal - calculatedDiscountAmt), [netTotal, calculatedDiscountAmt]);
+
   const balance = useMemo(() => {
-    return totalReceived > netTotal ? totalReceived - netTotal : 0;
-  }, [totalReceived, netTotal]);
+    return totalReceived > netAmountToPay ? totalReceived - netAmountToPay : 0;
+  }, [totalReceived, netAmountToPay]);
 
   const remaining = useMemo(() => {
-    return netTotal > totalReceived ? netTotal - totalReceived : 0;
-  }, [totalReceived, netTotal]);
+    return netAmountToPay > totalReceived ? netAmountToPay - totalReceived : 0;
+  }, [totalReceived, netAmountToPay]);
 
   useEffect(() => {
     if (isOpen) {
       setPayments([{ id: Date.now(), method: "cash", amount: "" }]);
+      setLastDiscount(0);
+      setDiscountType(settings?.defaultExtraDiscountType || "amount");
     }
-  }, [isOpen]);
+  }, [isOpen, settings]);
 
   const handleConfirm = () => {
     const validPayments = payments
@@ -813,12 +834,14 @@ export const PaymentDialog = memo(({
       .filter(p => p.received > 0);
     
     if (validPayments.length === 0) {
-      validPayments.push({ method: payments[0].method, received: netTotal });
+      validPayments.push({ method: payments[0].method, received: netAmountToPay });
     }
 
     onConfirm({
       payments: validPayments,
-      received: totalReceived || netTotal, // Keep for backward compatibility if needed by parent
+      generalDiscountAmt: discountType === "amount" ? lastDiscount : 0,
+      generalDiscount: discountType === "percentage" ? lastDiscount : 0,
+      received: totalReceived || netAmountToPay, // Keep for backward compatibility if needed by parent
       balance
     });
   };
@@ -848,7 +871,7 @@ export const PaymentDialog = memo(({
           <DialogDescription className="sr-only">Choose a payment method and confirm the amount received.</DialogDescription>
           <div className="flex items-baseline justify-between">
             <span className="text-white font-black text-3xl">
-              LKR {netTotal.toFixed(2)}
+              LKR {netAmountToPay.toFixed(2)}
             </span>
             <span className="text-white font-bold uppercase text-[11px] opacity-90">Payable Total</span>
           </div>
@@ -870,6 +893,42 @@ export const PaymentDialog = memo(({
               </div>
             </div>
           </div>
+
+          {(settings?.enableExtraDiscount !== false) && (
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+                  Extra Discount
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      value={lastDiscount || ""}
+                      onChange={(e) => setLastDiscount(parseFloat(e.target.value) || 0)}
+                      onFocus={(e) => e.target.select()}
+                      className="w-full h-10 px-3 rounded-xl border border-border/40 bg-muted/20 text-sm font-bold placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-emerald-500/50"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <Select value={discountType} onValueChange={setDiscountType}>
+                    <SelectTrigger className="w-[80px] h-10 rounded-xl border border-border/40 bg-muted/20 text-sm font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="amount">LKR</SelectItem>
+                      <SelectItem value="percentage">%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {discountType === "percentage" && lastDiscount > 0 && (
+                  <p className="text-[10px] text-slate-500 font-medium ml-1">
+                    Amount: LKR {calculatedDiscountAmt.toFixed(2)}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             {payments.map((p, index) => (

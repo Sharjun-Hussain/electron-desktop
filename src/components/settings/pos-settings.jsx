@@ -163,6 +163,7 @@ export function PosSettings() {
     enableBatchSelection: false,
     showUser: true, showCustomer: true, showDateTime: true, showSalesType: true,
     autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false, enableMultiplePayments: false,
+    enableExtraDiscount: true, defaultExtraDiscountType: "amount",
     posTableColumns: ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"],
   });
 
@@ -512,6 +513,23 @@ export function PosSettings() {
                     onCheckedChange={(c) => isShiftEnabled && updateField('requireShift', c)}
                   />
                   <ToggleRow label="Enable Split Payments" desc="Allow multiple payment methods for a single invoice" checked={formData.enableMultiplePayments} onCheckedChange={(c) => updateField('enableMultiplePayments', c)} />
+                  <ToggleRow label="Enable Extra Checkout Discount" desc="Allow cashier to apply a final discount on the settlement screen" checked={formData.enableExtraDiscount ?? true} onCheckedChange={(c) => updateField('enableExtraDiscount', c)} />
+                  
+                  {(formData.enableExtraDiscount ?? true) && (
+                    <div className="flex items-center justify-between py-1.5 px-3 rounded-md border border-slate-50 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-950/20 mb-1 ml-4 transition-all">
+                      <div className="space-y-1">
+                        <p className="text-[13px] font-medium text-slate-800 dark:text-slate-200 leading-none">Default Discount Type</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-none">Initial type for extra checkout discount</p>
+                      </div>
+                      <Select value={formData.defaultExtraDiscountType || "amount"} onValueChange={(v) => updateField('defaultExtraDiscountType', v)}>
+                        <SelectTrigger className="w-[140px] h-8 bg-white dark:bg-slate-950 text-xs font-bold border-slate-200 dark:border-slate-800"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
+                          <SelectItem value="amount" className="text-xs font-bold">Fixed Amount</SelectItem>
+                          <SelectItem value="percentage" className="text-xs font-bold">Percentage (%)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/50">
                     <SectionHeader icon={Package} title="Inventory & Pricing Strategy" description="Configure how the system identifies and prices products with multiple batches" />

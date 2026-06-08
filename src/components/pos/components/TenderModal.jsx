@@ -45,11 +45,15 @@ const TenderModal = ({
     credit: 0
   });
 
+  const [lastDiscount, setLastDiscount] = useState(0);
   const [selectedMethod, setSelectedMethod] = useState("cash");
   const [cardChargePercent, setCardChargePercent] = useState(0);
   const inputRef = useRef(null);
   
   const posTouchUI = useSettingsStore((state) => state.global?.posTouchUI || false);
+  const receiptSettings = useSettingsStore((state) => state.receipt || {});
+  
+  const [discountType, setDiscountType] = useState(receiptSettings?.defaultExtraDiscountType || "amount");
 
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +67,8 @@ const TenderModal = ({
         cheque: 0,
         credit: 0
       });
+      setLastDiscount(0);
+      setDiscountType(receiptSettings?.defaultExtraDiscountType || "amount");
       setCardChargePercent(0);
       setTimeout(() => inputRef.current?.focus(), 200);
     }
@@ -98,10 +104,18 @@ const TenderModal = ({
   const cardChargeAmount = useMemo(() => (payments.card * (cardChargePercent / 100)), [payments.card, cardChargePercent]);
   const cardTotal = useMemo(() => payments.card + cardChargeAmount, [payments.card, cardChargeAmount]);
   const totalPaid = useMemo(() => Object.values(payments).reduce((sum, val) => sum + val, 0), [payments]);
+  const calculatedDiscountAmt = useMemo(() => {
+    if (discountType === "percentage") {
+      return totalAmount * (lastDiscount / 100);
+    }
+    return lastDiscount;
+  }, [totalAmount, lastDiscount, discountType]);
+
+  const netAmountToPay = useMemo(() => Math.max(0, totalAmount - calculatedDiscountAmt), [totalAmount, calculatedDiscountAmt]);
   const balance = useMemo(() => {
-    const bal = totalPaid - totalAmount;
+    const bal = totalPaid - netAmountToPay;
     return bal > 0 ? bal : 0;
-  }, [totalPaid, totalAmount]);
+  }, [totalPaid, netAmountToPay]);
 
   // Broadcast payment updates in real-time to the secondary customer display
   useEffect(() => {
@@ -141,12 +155,14 @@ const TenderModal = ({
         amount: method === 'card' ? amount + cardChargeAmount : amount
       }));
 
-    if (paymentArray.length === 0 && totalAmount > 0) {
-      paymentArray.push({ payment_method: selectedMethod, amount: totalAmount });
+    if (paymentArray.length === 0 && netAmountToPay > 0) {
+      paymentArray.push({ payment_method: selectedMethod, amount: netAmountToPay });
     }
 
     onPay({ 
       payments: paymentArray,
+      generalDiscountAmt: discountType === "amount" ? lastDiscount : 0,
+      generalDiscount: discountType === "percentage" ? lastDiscount : 0,
       total_paid: totalPaid + cardChargeAmount,
       balance: balance
     });
@@ -185,6 +201,46 @@ const TenderModal = ({
                     {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </span>
             </div>
+
+            {(receiptSettings?.enableExtraDiscount !== false) && (
+              <div className="grid grid-cols-2 items-center gap-4">
+                  <label className={LabelCls}>Extra Discount</label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                        type="number"
+                        value={lastDiscount || ""}
+                        onChange={(e) => setLastDiscount(parseFloat(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
+                        className={cn(InputCls, "border-slate-300 ring-2 ring-slate-100 flex-1")}
+                        placeholder="0.00"
+                    />
+                    <Select value={discountType} onValueChange={setDiscountType}>
+                      <SelectTrigger className="w-[80px] h-12 rounded-md border border-slate-200 text-sm font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="amount">LKR</SelectItem>
+                        <SelectItem value="percentage">%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+              </div>
+            )}
+            
+            {discountType === "percentage" && lastDiscount > 0 && (
+              <div className="flex items-center justify-end">
+                <p className="text-[11px] text-slate-500 font-bold uppercase">Discount Amount: LKR {calculatedDiscountAmt.toFixed(2)}</p>
+              </div>
+            )}
+
+            {lastDiscount > 0 && (
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <span className="text-sm font-bold text-slate-500 uppercase">Net Payable</span>
+                  <span className="text-4xl font-black text-emerald-600 font-mono">
+                      {netAmountToPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+              </div>
+            )}
 
             <div className="space-y-4 pt-2">
                 {/* Payment Method Dropdown */}

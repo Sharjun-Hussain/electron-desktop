@@ -112,24 +112,22 @@ export function usePosActions({
   }, [syncPendingSales]);
 
   // ── Helpers — compute totals from cart + discount args (no stale state) ──
-  const computeTotals = (cart, { generalDiscount = 0, wholesaleDiscount = 0, isWholesale = false, adjustment = 0, taxConfig = {}, loyaltyConfig = {}, redeemedPoints = 0 }) => {
-    // Always coerce to numbers to prevent string concatenation bugs
+  const computeTotals = (cart, { generalDiscount = 0, generalDiscountAmt = 0, wholesaleDiscount = 0, isWholesale = false, adjustment = 0, taxConfig = {}, loyaltyConfig = {}, redeemedPoints = 0 }) => {
     const adj = parseFloat(adjustment) || 0;
     const genDisc = parseFloat(generalDiscount) || 0;
+    const genDiscAmt = parseFloat(generalDiscountAmt) || 0;
     const whlDisc = parseFloat(wholesaleDiscount) || 0;
     const subtotal = cart.reduce((a, i) => a + i.price * i.quantity, 0);
     const itemDiscounts = cart.reduce((a, i) => a + i.price * i.quantity * (i.discount / 100), 0);
     const wholesaleDiscAmt = isWholesale ? subtotal * (whlDisc / 100) : 0;
-    const generalDiscAmt = subtotal * (genDisc / 100);
+    const generalDiscAmtFinal = genDiscAmt > 0 ? genDiscAmt : (subtotal * (genDisc / 100));
 
-    // Loyalty Redemption Value
     const redemptionRate = parseFloat(loyaltyConfig?.redemption_rate) || 0;
     const redemptionValue = (parseFloat(redeemedPoints) || 0) * redemptionRate;
 
-    const totalDiscount = itemDiscounts + wholesaleDiscAmt + generalDiscAmt + redemptionValue;
+    const totalDiscount = itemDiscounts + wholesaleDiscAmt + generalDiscAmtFinal + redemptionValue;
     const grandTotal = subtotal - totalDiscount;
 
-    // Tax Calculation
     const enableTax = taxConfig.enableTax !== false && taxConfig.enableTax !== 'false';
     const taxRate = (enableTax && taxConfig.taxRate) ? parseFloat(taxConfig.taxRate) / 100 : 0;
     const taxAmount = grandTotal * taxRate;
@@ -159,7 +157,7 @@ export function usePosActions({
 
   const handlePayNow = useCallback(async ({
     payments, adjustment, chequeDetails,
-    selectedEmployeeIds, generalDiscount, wholesaleDiscount, activeShiftId,
+    selectedEmployeeIds, generalDiscount, generalDiscountAmt, wholesaleDiscount, activeShiftId,
     redeemedPoints,
     onSuccess,
     dining_type,
@@ -184,7 +182,7 @@ export function usePosActions({
       const taxConfig = financeSettings || {};
 
       const { netTotal, subtotal, totalDiscount, taxAmount, redemptionValue } = computeTotals(state.cart, {
-        generalDiscount, wholesaleDiscount, isWholesale: state.isWholesale, adjustment, taxConfig,
+        generalDiscount, generalDiscountAmt, wholesaleDiscount, isWholesale: state.isWholesale, adjustment, taxConfig,
         loyaltyConfig, redeemedPoints: loyaltyEnabled ? redeemedPoints : 0
       });
 
@@ -213,7 +211,11 @@ export function usePosActions({
           const itemSubtotal = item.price * item.quantity;
           const itemLineDiscount = itemSubtotal * (item.discount / 100);
           const wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
-          const generalDiscAmt = itemSubtotal * (generalDiscount / 100);
+          const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
+          const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
+          const generalDiscAmtFinal = genDiscAmtNum > 0
+            ? genDiscAmtNum * itemProportion
+            : itemSubtotal * (generalDiscount / 100);
 
           return {
             product_id: item.productId,
@@ -221,7 +223,7 @@ export function usePosActions({
             product_batch_id: item.batchId,
             quantity: item.quantity,
             unit_price: Number(parseFloat(item.price).toFixed(2)),
-            discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmt).toFixed(2)),
+            discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2)),
             cooking_notes: item.cooking_notes || null
           };
         }),
@@ -377,14 +379,14 @@ export function usePosActions({
   }, [session]);
 
   const handleHoldSale = useCallback(async ({
-    adjustment, selectedEmployeeIds, generalDiscount, wholesaleDiscount, activeShiftId, onSuccess,
+    adjustment, selectedEmployeeIds, generalDiscount, generalDiscountAmt, wholesaleDiscount, activeShiftId, onSuccess,
     dining_type, dining_table_id, waiter_id
   }) => {
     if (state.cart.length === 0) return toast.error("Cart is empty");
 
     const terminalName = localStorage.getItem("pos_terminal_id") || "Main Terminal";
     const { subtotal, totalDiscount, netTotal } = computeTotals(state.cart, {
-      generalDiscount, wholesaleDiscount, isWholesale: state.isWholesale, adjustment,
+      generalDiscount, generalDiscountAmt, wholesaleDiscount, isWholesale: state.isWholesale, adjustment,
     });
 
     const saleData = {
@@ -397,7 +399,11 @@ export function usePosActions({
         const itemSubtotal = item.price * item.quantity;
         const itemLineDiscount = itemSubtotal * (item.discount / 100);
         const wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
-        const generalDiscAmt = itemSubtotal * (generalDiscount / 100);
+        const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
+        const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
+        const generalDiscAmtFinal = genDiscAmtNum > 0
+          ? genDiscAmtNum * itemProportion
+          : itemSubtotal * (generalDiscount / 100);
 
         return {
           product_id: item.productId,
@@ -405,7 +411,7 @@ export function usePosActions({
           product_batch_id: item.batchId,
           quantity: item.quantity,
           unit_price: Number(parseFloat(item.price).toFixed(2)),
-          discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmt).toFixed(2)),
+          discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2)),
           cooking_notes: item.cooking_notes || null
         };
       }),
