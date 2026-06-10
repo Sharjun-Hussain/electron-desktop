@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -21,7 +21,9 @@ import {
   Search,
   Plus,
   Trash2,
-  Barcode
+  Barcode,
+  Save,
+  AlertTriangle
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -214,7 +216,11 @@ const formSchema = z.object({
 
 export default function DirectGRNPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
+
+  const [currentDraftId, setCurrentDraftId] = useState(null);
+  const [isNavigationWarningOpen, setIsNavigationWarningOpen] = useState(false);
 
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -278,6 +284,84 @@ export default function DirectGRNPage() {
     control: form.control,
     name: "items",
   });
+
+  // Load Draft on Mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const draftIdParam = searchParams.get("draftId");
+      if (draftIdParam) {
+        setCurrentDraftId(draftIdParam);
+        const drafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+        const savedDraft = drafts.find(d => d.id === draftIdParam);
+        
+        if (savedDraft) {
+          try {
+            const draftData = savedDraft.data;
+            if (draftData.grnDate) draftData.grnDate = new Date(draftData.grnDate);
+            draftData.items?.forEach(item => {
+              if (item.expiryDate) item.expiryDate = new Date(item.expiryDate);
+            });
+            
+            form.reset(draftData);
+            toast.success("Draft loaded successfully");
+          } catch (e) {
+            console.error("Failed to parse draft", e);
+          }
+        }
+      } else {
+        // Generate a new draft ID if none in URL
+        setCurrentDraftId(Date.now().toString());
+      }
+    }
+  }, [searchParams, form]);
+
+  // Save Draft Action
+  const handleSaveDraft = () => {
+    if (!currentDraftId) return;
+    
+    const currentData = form.getValues();
+    const drafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+    
+    // Find supplier name for summary
+    const supplier = suppliers.find(s => String(s.id) === String(currentData.supplierId));
+    const supplierName = supplier ? supplier.name : "Unknown Supplier";
+    const itemCount = currentData.items.filter(i => i.productId).length;
+    
+    const draftObject = {
+      id: currentDraftId,
+      updatedAt: new Date().toISOString(),
+      summary: `${supplierName} - ${itemCount} item(s)`,
+      data: currentData
+    };
+    
+    const existingIndex = drafts.findIndex(d => d.id === currentDraftId);
+    if (existingIndex >= 0) {
+      drafts[existingIndex] = draftObject;
+    } else {
+      drafts.push(draftObject);
+    }
+    
+    localStorage.setItem("direct-grn-drafts", JSON.stringify(drafts));
+    form.reset({}, { keepValues: true, keepDirty: false }); // Reset dirty state to avoid prompt after explicit save
+    toast.success("Draft saved successfully");
+  };
+
+  // Prevent Refresh/Navigate if Dirty
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      const isDirty = form.formState.isDirty;
+      const currentItems = form.getValues().items;
+      const hasAddedItems = currentItems.length > 1 || (currentItems.length === 1 && currentItems[0].productId !== "");
+      
+      if (isDirty && hasAddedItems) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [form.formState.isDirty, form]);
 
   // Set default branch
   useEffect(() => {
@@ -594,6 +678,12 @@ export default function DirectGRNPage() {
         throw new Error(result.message || "Failed to create Direct GRN");
       }
 
+      if (currentDraftId) {
+        const drafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+        const updatedDrafts = drafts.filter(d => d.id !== currentDraftId);
+        localStorage.setItem("direct-grn-drafts", JSON.stringify(updatedDrafts));
+      }
+      
       toast.success("Direct GRN & PO Created Successfully");
       router.push("/purchase/grn");
     } catch (error) {
@@ -1040,8 +1130,31 @@ export default function DirectGRNPage() {
           </Card>
 
           <div className="flex gap-4 justify-end mt-8 pb-10">
-            <Button variant="outline" type="button" onClick={() => router.back()}>
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={() => {
+                const isDirty = form.formState.isDirty;
+                const currentItems = form.getValues().items;
+                const hasAddedItems = currentItems.length > 1 || (currentItems.length === 1 && currentItems[0].productId !== "");
+                
+                if (isDirty && hasAddedItems) {
+                  setIsNavigationWarningOpen(true);
+                } else {
+                  router.back();
+                }
+              }}
+            >
               Cancel Protocol
+            </Button>
+            <Button 
+              variant="secondary" 
+              type="button" 
+              onClick={handleSaveDraft}
+              className="gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
+            >
+              <Save className="h-4 w-4" />
+              Save Draft
             </Button>
             <Button type="submit" disabled={isSubmitting} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
               {isSubmitting ? (
@@ -1108,6 +1221,58 @@ export default function DirectGRNPage() {
               onClick={() => setNotFoundBarcode(null)}
             >
               Dismiss
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Navigation Warning Modal */}
+      <Dialog open={isNavigationWarningOpen} onOpenChange={setIsNavigationWarningOpen}>
+        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl border-border/50 shadow-2xl">
+          <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 p-6 border-b border-border/40 text-center flex flex-col items-center pt-8">
+            <div className="h-16 w-16 bg-amber-100 dark:bg-amber-500/20 rounded-full flex items-center justify-center mb-4 shadow-sm border border-amber-200 dark:border-amber-500/30">
+              <AlertTriangle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <DialogHeader className="flex flex-col items-center">
+              <DialogTitle className="text-2xl font-black text-foreground tracking-tight">Unsaved Changes</DialogTitle>
+              <DialogDescription className="text-sm font-medium text-muted-foreground mt-2 max-w-[85%] text-center leading-relaxed">
+                You have unsaved changes in your GRN form. If you leave now, this data will be lost. What would you like to do?
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="px-6 py-5 bg-card flex flex-col gap-3">
+            <Button
+              variant="outline"
+              className="w-full h-11 font-bold"
+              onClick={() => {
+                setIsNavigationWarningOpen(false);
+                router.back();
+              }}
+            >
+              Discard Changes & Leave
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full h-11 font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200"
+              onClick={() => {
+                handleSaveDraft();
+                setIsNavigationWarningOpen(false);
+                router.back();
+              }}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save as Draft & Leave
+            </Button>
+            <Button
+              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              onClick={() => {
+                setIsNavigationWarningOpen(false);
+                // Trigger form submission
+                form.handleSubmit(onSubmit)();
+              }}
+            >
+              <PackageCheck className="h-4 w-4 mr-2" />
+              Confirm Logistics Now
             </Button>
           </div>
         </DialogContent>

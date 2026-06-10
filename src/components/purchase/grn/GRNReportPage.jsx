@@ -22,7 +22,9 @@ import {
   FileSpreadsheet,
   Building2,
   Package,
-  DollarSign
+  DollarSign,
+  Trash2,
+  Clock
 } from "lucide-react";
 import { exportToCSV } from "@/lib/exportUtils";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +86,22 @@ export default function GRNReportPage() {
     end_date: "",
     search: ""
   });
+  const [drafts, setDrafts] = useState([]);
+  
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedDrafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+      setDrafts(savedDrafts);
+    }
+  }, []);
+
+  const deleteDraft = (id) => {
+    const newDrafts = drafts.filter(d => d.id !== id);
+    localStorage.setItem("direct-grn-drafts", JSON.stringify(newDrafts));
+    setDrafts(newDrafts);
+    toast.success("Draft deleted successfully");
+  };
+
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -319,6 +337,35 @@ export default function GRNReportPage() {
   );
 
   return (
+    <div className="flex flex-col w-full h-full">
+      {drafts.length > 0 && (
+        <div className="px-6 pt-6 pb-2">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 shadow-sm mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-5 h-5 text-amber-600" />
+              <h3 className="font-bold text-amber-900 dark:text-amber-500">Unsaved Direct GRN Drafts</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {drafts.map(draft => (
+                <div key={draft.id} className="bg-background border border-border/50 rounded-lg p-3 flex justify-between items-center shadow-sm">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-foreground">{draft.summary}</span>
+                    <span className="text-xs text-muted-foreground">{format(new Date(draft.updatedAt), "MMM dd, yyyy - hh:mm a")}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => router.push(`/purchase/grn/direct?draftId=${draft.id}`)} className="text-xs h-7 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100">
+                      Resume
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteDraft(draft.id)} className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     <ResourceManagementLayout
       data={grns}
       columns={columns}
@@ -505,5 +552,6 @@ export default function GRNReportPage() {
         </div>
       )}
     />
+    </div>
   );
 }
