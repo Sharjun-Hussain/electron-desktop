@@ -32,6 +32,8 @@ import { toast } from "sonner";
 import { Loader2, RotateCcw, AlertTriangle } from "lucide-react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useSettings } from "@/app/hooks/swr/useSettings";
+import { safeMergeSettings } from "@/lib/settings-utils";
 
 export default function SalesReturnDialog({ open, onOpenChange, sale, onSuccess }) {
   const { data: session } = useSession();
@@ -41,6 +43,8 @@ export default function SalesReturnDialog({ open, onOpenChange, sale, onSuccess 
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t } = useTranslation();
+  const { useModularSettings } = useSettings();
+  const { data: posSettingsResponse } = useModularSettings("pos");
 
   useEffect(() => {
     if (sale && sale.items) {
@@ -253,9 +257,22 @@ export default function SalesReturnDialog({ open, onOpenChange, sale, onSuccess 
                     <SelectValue placeholder={t("pos.select_method")} />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <SelectItem value="cash" className="text-xs font-medium">{t("pos.cash")}</SelectItem>
-                    <SelectItem value="bank_transfer" className="text-xs font-medium">{t("pos.bank_transfer")}</SelectItem>
-                    <SelectItem value="store_credit" className="text-xs font-medium">{t("pos.store_credit")}</SelectItem>
+                    {(safeMergeSettings({}, posSettingsResponse?.data)?.activePaymentMethods || ["cash"]).map((methodId) => {
+                      const labels = {
+                        cash: t("pos.cash") || "Cash",
+                        card: "Card Terminal",
+                        online: "Online Transfer",
+                        qr: "QR Payment",
+                        wallet: "Digital Wallet",
+                        cheque: "Cheque Basis"
+                      };
+                      return (
+                        <SelectItem key={methodId} value={methodId} className="text-xs font-medium">
+                          {labels[methodId] || methodId}
+                        </SelectItem>
+                      );
+                    })}
+                    <SelectItem value="store_credit" className="text-xs font-medium">{t("pos.store_credit") || "Store Credit"}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

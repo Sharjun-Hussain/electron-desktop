@@ -129,12 +129,12 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
         <div className="w-[400px] mb-8 space-y-2 text-sm">
           <div className="flex justify-between items-center text-slate-600 mb-4 pb-2 border-b border-slate-200">
              <span>Cash in hand:</span>
-             <span>Rs {(stats.paymentAmounts?.Cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {(stats.cashInHand ?? stats.paymentAmounts?.Cash ?? stats.paymentAmounts?.cash ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="flex justify-between items-center text-slate-600">
              <span>Cash Payment:</span>
-             <span>Rs {(stats.paymentAmounts?.Cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {(stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between items-center text-slate-600">
              <span>Cheque Payment:</span>
@@ -176,7 +176,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
 
           <div className="flex justify-between items-center text-slate-800 font-semibold mb-4">
              <span>Total Payment</span>
-             <span>Rs {(Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {((stats.totalSales || 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="flex justify-between items-center text-slate-600 mb-4">
