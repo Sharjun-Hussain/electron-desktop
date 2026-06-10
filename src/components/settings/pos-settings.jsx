@@ -44,14 +44,14 @@ const AVAILABLE_PAYMENTS = [
 ];
 
 const SectionHeader = ({ icon: Icon, title, description }) => (
-  <div className="flex flex-col mb-5">
-    <div className="flex items-center gap-2">
-      <div className="p-1.5 rounded-md bg-emerald-500/10">
-        <Icon className="w-4 h-4 text-emerald-600" />
-      </div>
-      <h3 className="text-sm font-medium text-slate-900 dark:text-white leading-none ">{title}</h3>
+  <div className="flex items-start gap-3 mb-5">
+    <div className="p-2 rounded-lg bg-emerald-500/10 shrink-0">
+      <Icon className="w-4 h-4 text-emerald-600" />
     </div>
-    {description && <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 ml-9 leading-none font-medium">{description}</p>}
+    <div className="space-y-1.5 pt-0.5">
+      <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{title}</h3>
+      {description && <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-none font-medium">{description}</p>}
+    </div>
   </div>
 );
 
