@@ -98,12 +98,21 @@ export const getProductVariantColumns = ({
                 <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/30" />
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col min-w-0 leading-tight">
+            <div className="flex flex-col min-w-0 leading-tight gap-0.5">
               <div className="text-foreground text-[13px] font-bold truncate">
-                {variant.sku}
+                {variant.parent_product_name}
+                {(() => {
+                  const displayName = variant.name ||
+                    (variant.attribute_values?.length > 0
+                      ? variant.attribute_values.map(av => av.value).join(' / ')
+                      : null);
+                  return displayName && displayName !== variant.parent_product_name ? (
+                    <span className="text-emerald-600/90 dark:text-emerald-400"> - {displayName}</span>
+                  ) : null;
+                })()}
               </div>
               <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight opacity-60 truncate">
-                {variant.parent_product_name}
+                Barcode: {variant.sku || "-"}
               </div>
             </div>
           </div>

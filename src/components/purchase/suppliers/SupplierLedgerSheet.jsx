@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -72,8 +72,9 @@ export function SupplierLedgerSheet({ supplier, open, onOpenChange, accessToken,
     setPayments(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
   }, []);
 
-  // Pure JavaScript useRef
-  const formRef = useRef(null);
+  const [description, setDescription] = useState("");
+
+  // Pure JavaScript useRef (kept for potential future use)
 
   // Automatically open settlement dialog if accessed via specific settle action
   useEffect(() => {
@@ -116,14 +117,12 @@ export function SupplierLedgerSheet({ supplier, open, onOpenChange, accessToken,
 
   const handleSettleSubmit = useCallback(async (e) => {
     if (e) e.preventDefault();
-    if (!formRef.current) return;
 
     if (totalAmountToPay <= 0) {
       toast.error("Enter a valid settlement amount");
       return;
     }
 
-    const formData = new FormData(formRef.current);
     const payload = {
       total_amount: totalAmountToPay,
       payments: payments.map(p => ({
@@ -133,7 +132,7 @@ export function SupplierLedgerSheet({ supplier, open, onOpenChange, accessToken,
         notes: null,
         reference_number: null
       })),
-      description: formData.get("description"),
+      description: description,
       transaction_date: new Date().toISOString(),
     };
 
@@ -172,7 +171,7 @@ export function SupplierLedgerSheet({ supplier, open, onOpenChange, accessToken,
     } finally {
       setSettleLoading(false);
     }
-  }, [supplier?.id, accessToken, payments, totalAmountToPay, fetchLedger]);
+  }, [supplier?.id, accessToken, payments, totalAmountToPay, description, fetchLedger]);
 
   const isPayable = currentBalance > 0;
 
@@ -406,6 +405,8 @@ export function SupplierLedgerSheet({ supplier, open, onOpenChange, accessToken,
                 <textarea
                   id="description"
                   name="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Internal notes or reference numbers..."
                   className="w-full min-h-[80px] p-3 text-xs font-medium bg-muted/10 border border-border/60 rounded-xl outline-none focus:ring-1 focus:ring-emerald-500"
                 />

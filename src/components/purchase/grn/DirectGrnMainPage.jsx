@@ -532,14 +532,18 @@ export default function DirectGRNPage() {
   const handlePreSubmit = (e) => {
     e.preventDefault();
     const currentItems = form.getValues("items");
-    // Auto-remove trailing untouched rows to improve UX
     const cleanedItems = currentItems.filter(
-      item => item.productId || item.receivedQty > 0
+      item => item.productId && String(item.productId).trim() !== ""
     );
     if (cleanedItems.length !== currentItems.length) {
       form.setValue("items", cleanedItems);
     }
-    form.handleSubmit(onSubmit)(e);
+    form.handleSubmit(onSubmit, (errors) => {
+      console.error("Form validation errors:", errors);
+      toast.error("Please fill all required fields correctly. Check the highlighted inputs.", {
+        description: "Some rows may have missing quantities, costs, or other required details.",
+      });
+    })(e);
   };
 
   async function onSubmit(data) {
@@ -895,15 +899,34 @@ export default function DirectGRNPage() {
 
                     return (
                       <tr key={field.id} className="bg-card hover:bg-muted/30 transition-colors group">
-                        <td className="px-3 py-3 relative">
+                        <td className="px-3 py-3 relative align-top">
                           <ProductSelect
-                            value={form.watch(`items.${index}.productId`)}
+                            value={form.watch(`items.${index}.productVariantId`) || form.watch(`items.${index}.productId`)}
                             products={products}
                             autoFocus={index === fields.length - 1 && newItemAdded}
                             onChange={(val, product) =>
                               handleProductSelect(index, val, product)
                             }
                           />
+                          {(() => {
+                            const pId = form.watch(`items.${index}.productVariantId`) || form.watch(`items.${index}.productId`);
+                            if (!pId) return null;
+                            const p = products.find(prod => String(prod.id || prod.product_id) === String(pId));
+                            if (!p) return null;
+                            return (
+                              <div className="mt-2 text-[11px] text-muted-foreground font-medium flex items-center gap-1.5 px-1">
+                                <span>Current Stock:</span>
+                                <span className={cn(
+                                  "px-1.5 py-0.5 rounded font-bold",
+                                  (p.stock_quantity || 0) <= 0 
+                                    ? "bg-red-500/10 text-red-600 dark:text-red-400" 
+                                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                )}>
+                                  {p.stock_quantity || 0}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </td>
                         {visibleColumns.batch && (
                           <td className="px-3 py-3">

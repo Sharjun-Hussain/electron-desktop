@@ -400,10 +400,9 @@ export default function PosPage() {
   useEffect(() => {
     const cart = state.cart;
     if (cart.length > 0) {
-      const last = cart[cart.length - 1];
       setTimeout(() => {
-        const ref = cartItemRefs.current.get(last.id);
-        if (ref) { ref.focusQty(); editModeRef.current = "cart"; selectedIndexRef.current = cart.length - 1; }
+        searchRef.current?.focus();
+        editModeRef.current = "search";
       }, 50);
     }
   }, [state.cart.length]);
