@@ -70,8 +70,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
+import { DataActions } from "@/components/general/DataActions";
+import { useReactToPrint } from "react-to-print";
+import { CardReconcilePrintTemplate } from "@/components/Template/sales/CardReconsileReportTemplate";
+import { useRef } from "react";
 
 // ── Pagination — identical to ResourceManagementLayout ──────────────────────
 const PaginationControls = ({ currentPage, totalPages, onPageChange, pageSize, onPageSizeChange }) => {
@@ -263,27 +266,45 @@ export default function CardReconciliationPage() {
     fetchData();
   }, [fetchData]);
 
-  const handleExportCSV = () => {
-    const exportData = data.map(item => ({
+  const exportData = useMemo(() => {
+    return data.map(item => ({
       "Invoice No": item.invoice_number,
       "Date": format(new Date(item.created_at), 'yyyy-MM-dd HH:mm'),
       "Store": item.branch?.name || 'N/A',
       "Payment Method": item.payment_method,
       "Amount": item.payable_amount
     }));
-    exportToCSV(exportData, "Card_Reconciliation_Report");
-  };
+  }, [data]);
 
-  const handleExportExcel = () => {
-    const exportData = data.map(item => ({
-      "Invoice No": item.invoice_number,
-      "Date": format(new Date(item.created_at), 'yyyy-MM-dd HH:mm'),
-      "Store": item.branch?.name || 'N/A',
-      "Payment Method": item.payment_method,
-      "Amount": item.payable_amount
+  const printRef = useRef();
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: "Card_Reconciliation_Report",
+  });
+
+  const printData = useMemo(() => {
+    return data.map(item => ({
+      date: format(new Date(item.created_at), 'yyyy-MM-dd HH:mm'),
+      invoice: item.invoice_number,
+      cardType: item.payment_method || "Card",
+      last4: "****",
+      authCode: "N/A",
+      amount: item.payable_amount,
+      status: "Settled"
     }));
-    exportToExcel(exportData, "Card_Reconciliation_Report");
-  };
+  }, [data]);
+
+  const printStats = useMemo(() => ({
+    totalSales: summary?.totalSales || 0,
+    totalCount: summary?.count || 0,
+    totalRefunds: 0,
+    netAmount: summary?.totalSales || 0
+  }), [summary]);
+
+  const printFilters = useMemo(() => ({
+    store: branchId === "all" ? "Whole Organization" : branches.find((b) => String(b.id) === String(branchId))?.name || "All Branches",
+    cardType: "All Cards"
+  }), [branchId, branches]);
 
   // Process data for pagination
   const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
@@ -342,26 +363,12 @@ export default function CardReconciliationPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button 
-                variant="outline" 
-                onClick={handleExportCSV} 
-                className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <Download className="h-4 w-4" /> CSV
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={handleExportExcel} 
-                className="gap-2 border-border hover:border-emerald-200 hover:bg-emerald-50"
-            >
-              <FileText className="h-4 w-4" /> Excel
-            </Button>
-            <Button 
-                onClick={() => window.print()} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Printer className="h-4 w-4" /> Print Ledger
-            </Button>
+            <DataActions 
+              data={exportData}
+              fileName="Card_Reconciliation_Report"
+              onPrint={handlePrint}
+              showPrint={true}
+            />
           </div>
         </div>
 
@@ -587,6 +594,14 @@ export default function CardReconciliationPage() {
 
         </div>
       </div>
+      
+      {/* Hidden Print Template */}
+      <CardReconcilePrintTemplate 
+        ref={printRef}
+        data={printData}
+        filters={printFilters}
+        stats={printStats}
+      />
     </div>
   );
 }

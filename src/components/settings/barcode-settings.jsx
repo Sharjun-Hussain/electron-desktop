@@ -1,6 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
     Barcode as BarcodeIcon, 
     Save, 
@@ -13,7 +29,8 @@ import {
     Settings,
     ZoomIn,
     ZoomOut,
-    Eye
+    Eye,
+    GripVertical
 } from "lucide-react";
 import { BarcodeSticker } from "@/components/barcode/barcode-sticker";
 import { Button } from "@/components/ui/button";
@@ -55,8 +72,34 @@ const DEFAULT_SETTINGS = {
         supplierCode: false,
         customText: false,
     },
+    fieldOrder: ["name", "variant", "barcodeImage", "price", "sku", "barcode", "supplierCode", "customText"],
     customTextContent: "",
     layoutMode: "classic",
+};
+
+const SortableFieldItem = ({ id, label, checked, onToggle }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className="flex items-center space-x-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 rounded-md shadow-sm mb-2 z-10 relative">
+            <div {...attributes} {...listeners} className="cursor-grab hover:text-emerald-600 text-slate-400 touch-none">
+                <GripVertical className="h-4 w-4" />
+            </div>
+            <Checkbox id={`setting-field-${id}`} checked={checked} onCheckedChange={onToggle} className="h-3.5 w-3.5" />
+            <Label htmlFor={`setting-field-${id}`} className="text-[11px] cursor-pointer select-none font-bold text-slate-700 dark:text-slate-300">{label}</Label>
+        </div>
+    );
 };
 
 const SAMPLE_PRODUCT = {
@@ -85,6 +128,29 @@ export function BarcodeSettings() {
 
     const updateSetting = (key, value) => {
         setSettings(prev => ({ ...prev, [key]: value }));
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        
+        if (active.id !== over.id) {
+            setSettings((settings) => {
+                const oldIndex = settings.fieldOrder.indexOf(active.id);
+                const newIndex = settings.fieldOrder.indexOf(over.id);
+                
+                return {
+                    ...settings,
+                    fieldOrder: arrayMove(settings.fieldOrder, oldIndex, newIndex)
+                };
+            });
+        }
     };
 
     const toggleField = (field) => {
@@ -169,20 +235,28 @@ export function BarcodeSettings() {
                                 <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">Display Fields</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-y-2.5 bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-                                {Object.keys(settings.showFields).filter(k => k !== 'customTextContent').map((key) => {
-                                    const labelMap = {
-                                        name: "Product Name", variant: "Variant Info", sku: "SKU Number",
-                                        barcode: "Barcode ID", barcodeImage: "Barcode Graphic", price: "Selling Price",
-                                        supplierCode: "Supplier Code", customText: "Custom Footer"
-                                    };
-                                    return (
-                                        <div key={key} className="flex items-center space-x-2.5">
-                                            <Checkbox id={`setting-field-${key}`} checked={settings.showFields[key]} onCheckedChange={() => toggleField(key)} className="h-3.5 w-3.5" />
-                                            <Label htmlFor={`setting-field-${key}`} className="text-[11px] cursor-pointer select-none font-bold text-slate-700 dark:text-slate-300">{labelMap[key] || key}</Label>
-                                        </div>
-                                    );
-                                })}
+                            <div className="bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                    <SortableContext items={settings.fieldOrder || DEFAULT_SETTINGS.fieldOrder} strategy={verticalListSortingStrategy}>
+                                        {(settings.fieldOrder || DEFAULT_SETTINGS.fieldOrder).map((key) => {
+                                            if (key === 'customTextContent') return null;
+                                            const labelMap = {
+                                                name: "Product Name", variant: "Variant Info", sku: "SKU Number",
+                                                barcode: "Barcode ID", barcodeImage: "Barcode Graphic", price: "Selling Price",
+                                                supplierCode: "Supplier Code", customText: "Custom Footer"
+                                            };
+                                            return (
+                                                <SortableFieldItem 
+                                                    key={key} 
+                                                    id={key} 
+                                                    label={labelMap[key] || key} 
+                                                    checked={settings.showFields[key]} 
+                                                    onToggle={() => toggleField(key)} 
+                                                />
+                                            );
+                                        })}
+                                    </SortableContext>
+                                </DndContext>
                             </div>
 
                             {!settings.showFields.barcodeImage && (

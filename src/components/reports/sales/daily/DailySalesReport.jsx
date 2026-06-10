@@ -719,6 +719,8 @@ export default function DailySalesSummaryPage() {
                 ? "All Branches"
                 : branches.find((b) => String(b.id) === String(branch))?.name ||
                   "Branch",
+            user: session?.user?.name || "Admin",
+            email: session?.user?.email || "admin@example.com"
           }}
           formatDateTime={formatDateTime}
         />

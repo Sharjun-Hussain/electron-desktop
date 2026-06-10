@@ -47,106 +47,117 @@ export const BarcodeSticker = ({ product, settings, scale = 1, showRulers = fals
                 }}
             >
                 {settings.layoutMode === "price-tag" && settings.showFields.barcodeImage === false ? (
-                    <div className="flex flex-row items-center w-full h-full justify-between gap-2 px-1 text-left">
-                        <div className="flex flex-col flex-1 min-w-0 justify-between h-full py-1">
-                            <div>
-                                {settings.showFields.name && (
-                                    <div className="font-bold text-black leading-tight whitespace-normal break-words" style={{ fontSize: `${fontSize + 1}px` }}>
-                                        {product.name}
-                                    </div>
-                                )}
-                                {settings.showFields.variant && product.variant && product.variant.toLowerCase() !== "default" && (
-                                    <div className="text-gray-500 leading-none mt-0.5 truncate" style={{ fontSize: `${fontSize - 1}px` }}>
-                                        {product.variant}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="mt-auto">
-                                {settings.showFields.sku && (
-                                    <div className="font-mono text-gray-400 font-medium" style={{ fontSize: `${fontSize - 2}px` }}>
-                                        SKU: {product.sku}
-                                    </div>
-                                )}
-                                {settings.showFields.barcode && (
-                                    <div className="font-mono text-gray-400 font-medium mt-0.5" style={{ fontSize: `${fontSize - 2}px` }}>
-                                        ID: {product.barcode}
-                                    </div>
-                                )}
-                                {settings.showFields.customText && settings.customTextContent && (
-                                    <div className="text-gray-400 italic truncate" style={{ fontSize: `${fontSize - 2}px` }}>
-                                        {settings.customTextContent}
-                                    </div>
-                                )}
-                            </div>
+                    <div className="flex flex-col items-center justify-center w-full h-full gap-2 px-2 py-1.5 text-center">
+                        <div className="flex flex-col w-full gap-0.5">
+                            {settings.showFields.name && (
+                                <div className="font-bold text-black leading-tight whitespace-normal break-words w-full" style={{ fontSize: `${fontSize + 2}px` }}>
+                                    {product.name}
+                                </div>
+                            )}
+                            {settings.showFields.variant && product.variant && product.variant.toLowerCase() !== "default" && (
+                                <div className="text-gray-500 leading-none truncate w-full" style={{ fontSize: `${fontSize - 1}px` }}>
+                                    {product.variant}
+                                </div>
+                            )}
                         </div>
                         
-                        <div className="flex flex-col items-end justify-between h-full py-1 shrink-0">
-                            {settings.showFields.price && (
-                                <div className="flex flex-col items-center justify-center shrink-0 border border-slate-200 bg-slate-50 rounded-lg p-2 min-w-[70px] text-center shadow-inner">
-                                    <span className="text-black font-extrabold tracking-tight leading-none" style={{ fontSize: `${fontSize + 5}px` }}>
-                                        {formatCurrency(product.price)}
-                                    </span>
+                        {settings.showFields.price && (
+                            <div className="flex flex-col items-center justify-center shrink-0 border border-slate-200 bg-slate-50 rounded-lg px-4 py-1.5 min-w-[90px] text-center shadow-sm w-fit mx-auto">
+                                <span className="text-black font-extrabold tracking-tight leading-none" style={{ fontSize: `${fontSize + 4}px` }}>
+                                    {formatCurrency(product.price)}
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-0.5 w-full">
+                            {settings.showFields.sku && (
+                                <div className="font-mono text-gray-400 font-medium" style={{ fontSize: `${fontSize - 2}px` }}>
+                                    SKU: {product.sku}
+                                </div>
+                            )}
+                            {settings.showFields.barcode && (
+                                <div className="font-mono text-gray-400 font-medium mt-0.5" style={{ fontSize: `${fontSize - 2}px` }}>
+                                    ID: {product.barcode}
+                                </div>
+                            )}
+                            {settings.showFields.customText && settings.customTextContent && (
+                                <div className="text-gray-400 italic truncate w-full" style={{ fontSize: `${fontSize - 2}px` }}>
+                                    {settings.customTextContent}
                                 </div>
                             )}
                             {settings.showFields.supplierCode && product.supplier_code && (
-                                <div className="text-emerald-600 font-black tracking-tight text-right mt-auto whitespace-nowrap" style={{ fontSize: `${fontSize + 1}px` }}>
+                                <div className="text-emerald-600 font-black tracking-tight mt-0.5" style={{ fontSize: `${fontSize + 1}px` }}>
                                     {product.supplier_code}
                                 </div>
                             )}
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center w-full h-full justify-between">
-                        <div className="w-full px-1">
-                            {settings.showFields.name && (
-                                <div className="font-bold text-black leading-tight w-full whitespace-normal break-words" style={{ fontSize: `${fontSize + 2}px` }}>
-                                    {product.name}
-                                </div>
-                            )}
-                            {settings.showFields.variant && product.variant && product.variant.toLowerCase() !== "default" && (
-                                <div className="text-gray-600 leading-none mt-1" style={{ fontSize: `${fontSize - 1}px` }}>
-                                    {product.variant}
-                                </div>
-                            )}
-                        </div>
+                    <div className={`flex flex-col items-center w-full h-full ${!settings.showFields.barcodeImage ? 'justify-center gap-1.5' : 'justify-start gap-0.5'} px-1 py-1`}>
+                        {(settings.fieldOrder || ["name", "variant", "barcodeImage", "price", "sku", "barcode", "supplierCode", "customText"]).map((field) => {
+                            if (!settings.showFields[field] && field !== 'customText') return null;
+                            if (field === 'customText' && (!settings.showFields.customText || !settings.customTextContent)) return null;
 
-                        {settings.showFields.barcodeImage !== false && (
-                            <div className="flex-1 flex items-center justify-center w-full overflow-hidden my-2">
-                                <div className="scale-100 transform transition-transform">
-                                    <Barcode
-                                        value={product.barcode}
-                                        format={settings.barcodeFormat || "CODE128"}
-                                        width={settings.barThickness * scale}
-                                        height={settings.barHeight * scale}
-                                        displayValue={settings.showFields.barcode}
-                                        fontSize={settings.barFontSize * scale}
-                                        margin={0}
-                                        background="transparent"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="w-full flex flex-col px-1">
-                            <div className="flex justify-between items-baseline w-full font-bold">
-                                {settings.showFields.price && <span className="text-black" style={{ fontSize: `${fontSize + 2}px` }}>{formatCurrency(product.price)}</span>}
-                                {settings.showFields.sku && <span className="font-medium text-gray-400" style={{ fontSize: `${fontSize - 1}px` }}>{product.sku}</span>}
-                            </div>
-                            <div className="flex justify-between items-center w-full mt-1">
-                                <div className="text-left flex-1 min-w-0">
-                                    {settings.showFields.customText && settings.customTextContent && (
-                                        <span className="text-gray-400 block truncate italic" style={{ fontSize: `${fontSize - 2}px` }}>
+                            switch (field) {
+                                case 'name':
+                                    return (
+                                        <div key="name" className="font-bold text-black leading-tight w-full text-center whitespace-normal break-words" style={{ fontSize: `${fontSize + 2}px` }}>
+                                            {product.name}
+                                        </div>
+                                    );
+                                case 'variant':
+                                    if (!product.variant || product.variant.toLowerCase() === "default") return null;
+                                    return (
+                                        <div key="variant" className="text-gray-600 leading-none w-full text-center" style={{ fontSize: `${fontSize - 1}px` }}>
+                                            {product.variant}
+                                        </div>
+                                    );
+                                case 'barcodeImage':
+                                    return (
+                                        <div key="barcodeImage" className="flex-1 flex items-center justify-center w-full overflow-hidden my-1">
+                                            <div className="scale-100 transform transition-transform">
+                                                <Barcode
+                                                    value={product.barcode}
+                                                    format={settings.barcodeFormat || "CODE128"}
+                                                    width={settings.barThickness * scale}
+                                                    height={settings.barHeight * scale}
+                                                    displayValue={settings.showFields.barcode}
+                                                    fontSize={settings.barFontSize * scale}
+                                                    margin={0}
+                                                    background="transparent"
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                case 'price':
+                                    return (
+                                        <div key="price" className="text-black font-bold w-full text-center" style={{ fontSize: `${fontSize + 2}px` }}>
+                                            {formatCurrency(product.price)}
+                                        </div>
+                                    );
+                                case 'sku':
+                                    return (
+                                        <div key="sku" className="font-medium text-gray-500 w-full text-center" style={{ fontSize: `${fontSize - 1}px` }}>
+                                            SKU: {product.sku}
+                                        </div>
+                                    );
+                                case 'supplierCode':
+                                    if (!product.supplier_code) return null;
+                                    return (
+                                        <div key="supplierCode" className="text-emerald-600 font-extrabold w-full text-center" style={{ fontSize: `${fontSize + 1}px` }}>
+                                            {product.supplier_code}
+                                        </div>
+                                    );
+                                case 'customText':
+                                    return (
+                                        <div key="customText" className="text-gray-400 italic truncate w-full text-center" style={{ fontSize: `${fontSize - 2}px` }}>
                                             {settings.customTextContent}
-                                        </span>
-                                    )}
-                                </div>
-                                {settings.showFields.supplierCode && product.supplier_code && (
-                                    <span className="text-emerald-600 font-extrabold text-right whitespace-nowrap ml-auto" style={{ fontSize: `${fontSize + 1}px` }}>
-                                        {product.supplier_code}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                                        </div>
+                                    );
+                                default:
+                                    return null;
+                            }
+                        })}
                     </div>
                 )}
             </div>

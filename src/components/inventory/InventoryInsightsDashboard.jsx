@@ -20,11 +20,20 @@ import {
   ChevronLeft,
   ChevronRight,
   History,
+  Columns,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -62,6 +71,38 @@ const InventoryInsightsDashboard = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // all, low, out, healthy
   const [expireFilterStatus, setExpireFilterStatus] = useState("all"); // all, expired, expiring, low, out
+  
+  // Column Visibility State
+  const [visibleColumns, setVisibleColumns] = useState({
+    details: true,
+    branch: true,
+    status: true,
+    costPrice: false,
+    sellingPrice: true,
+    mrpPrice: false,
+    onHand: true,
+  });
+
+  useEffect(() => {
+    try {
+        const saved = localStorage.getItem("inventoryInsightsColumns");
+        if (saved) setVisibleColumns(JSON.parse(saved));
+    } catch (e) {
+        console.error("Could not parse saved column settings", e);
+    }
+  }, []);
+
+  const toggleColumn = (key, checked) => {
+      setVisibleColumns(prev => {
+          const newState = { ...prev, [key]: checked };
+          try {
+              localStorage.setItem("inventoryInsightsColumns", JSON.stringify(newState));
+          } catch (e) {
+              console.error("Could not save column settings", e);
+          }
+          return newState;
+      });
+  };
   
   const containerRef = useRef(null);
 
@@ -254,6 +295,39 @@ const InventoryInsightsDashboard = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-10 gap-2 font-semibold shadow-sm">
+                      <Columns className="h-4 w-4 text-slate-500" />
+                      <span className="hidden md:inline">Columns</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel className="text-xs font-bold text-slate-500 uppercase tracking-wider">Toggle Data</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {Object.keys(visibleColumns).map((key) => {
+                        if (key === 'details') return null;
+                        const labelMap = {
+                            branch: "Branch",
+                            status: "Status",
+                            costPrice: "Cost Price",
+                            sellingPrice: "Selling Price",
+                            mrpPrice: "MRP",
+                            onHand: "On Hand"
+                        };
+                        return (
+                            <DropdownMenuCheckboxItem
+                                key={key}
+                                checked={visibleColumns[key]}
+                                onCheckedChange={(checked) => toggleColumn(key, checked)}
+                                className="font-medium text-sm cursor-pointer"
+                            >
+                                {labelMap[key]}
+                            </DropdownMenuCheckboxItem>
+                        );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             
@@ -271,9 +345,12 @@ const InventoryInsightsDashboard = () => {
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent border-border">
                     <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground py-3 pl-6">Product Details</TableHead>
-                    <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Branch</TableHead>
-                    <TableHead className="text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                    <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground pr-6">On Hand</TableHead>
+                    {visibleColumns.branch && <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Branch</TableHead>}
+                    {visibleColumns.status && <TableHead className="text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>}
+                    {visibleColumns.costPrice && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Cost Price</TableHead>}
+                    {visibleColumns.sellingPrice && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selling Price</TableHead>}
+                    {visibleColumns.mrpPrice && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">MRP</TableHead>}
+                    {visibleColumns.onHand && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground pr-6">On Hand</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -302,28 +379,55 @@ const InventoryInsightsDashboard = () => {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                            {item.branch?.name}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge className={cn("rounded-lg px-2.5 py-0.5 text-[11px] font-semibold border-none shadow-none", status.color, "text-white")}>
-                              {status.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right pr-6">
-                            <div className="flex flex-col items-end">
-                              <span className={cn("text-base font-bold", status.text)}>
-                                {parseFloat(item.quantity).toFixed(0)}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground font-semibold">Units</span>
-                            </div>
-                          </TableCell>
+                          
+                          {visibleColumns.branch && (
+                              <TableCell className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                                {item.branch?.name}
+                              </TableCell>
+                          )}
+                          
+                          {visibleColumns.status && (
+                              <TableCell className="text-center">
+                                <Badge className={cn("rounded-lg px-2.5 py-0.5 text-[11px] font-semibold border-none shadow-none", status.color, "text-white")}>
+                                  {status.label}
+                                </Badge>
+                              </TableCell>
+                          )}
+
+                          {visibleColumns.costPrice && (
+                              <TableCell className="text-right text-xs font-bold text-slate-700 dark:text-slate-300">
+                                {formatCurrency(item.variant?.cost_price || 0)}
+                              </TableCell>
+                          )}
+
+                          {visibleColumns.sellingPrice && (
+                              <TableCell className="text-right text-xs font-bold text-slate-900 dark:text-white">
+                                {formatCurrency(item.variant?.price || 0)}
+                              </TableCell>
+                          )}
+
+                          {visibleColumns.mrpPrice && (
+                              <TableCell className="text-right text-xs font-bold text-slate-500">
+                                {formatCurrency(item.batches?.[0]?.mrp_price || 0)}
+                              </TableCell>
+                          )}
+
+                          {visibleColumns.onHand && (
+                              <TableCell className="text-right pr-6">
+                                <div className="flex flex-col items-end">
+                                  <span className={cn("text-base font-bold", status.text)}>
+                                    {parseFloat(item.quantity).toFixed(0)}
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground font-semibold">Units</span>
+                                </div>
+                              </TableCell>
+                          )}
                         </TableRow>
                       );
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-40 text-center text-muted-foreground font-medium italic bg-muted/20">
+                      <TableCell colSpan={7} className="h-40 text-center text-muted-foreground font-medium italic bg-muted/20">
                         No products match your current filters.
                       </TableCell>
                     </TableRow>
