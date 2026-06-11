@@ -529,7 +529,7 @@ export function CustomSidebar() {
 
               <DropdownMenuItem
                 onClick={() => signOut()}
-                className="text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer rounded-lg p-3 text-xs font-bold gap-3"
+                className="text-red-600 dark:text-red-500 focus:bg-red-50 focus:text-red-700 dark:focus:bg-red-500/10 dark:focus:text-red-400 cursor-pointer rounded-lg p-3 text-xs font-bold gap-3"
               >
                 <LogOut className="h-4 w-4" />
                 {t("sidebar.logout")}
