@@ -209,6 +209,18 @@ const PaginationControls = ({
   );
 };
 
+const defaultColumns = {
+  skuEntity: true,
+  batch: true,
+  quantity: true,
+  cost: true,
+  mrp: true,
+  wholesale: true,
+  sellingPrice: true,
+  profit: true,
+  revenue: true,
+};
+
 export default function SalesByProductPage() {
   const { data: session } = useSession();
   const { formatCurrency } = useAppSettings();
@@ -234,6 +246,34 @@ export default function SalesByProductPage() {
   });
   const [pageSize, setPageSize] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedColumns, setSelectedColumns] = useState(defaultColumns);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const saved = localStorage.getItem("productSalesReportColumns");
+    if (saved) {
+      try {
+        setSelectedColumns(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse saved columns", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem(
+        "productSalesReportColumns",
+        JSON.stringify(selectedColumns)
+      );
+    }
+  }, [selectedColumns, isClient]);
+
+  const toggleColumn = (key) => {
+    setSelectedColumns((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [store, setStore] = useState("all");
@@ -474,24 +514,32 @@ export default function SalesByProductPage() {
   });
 
   const exportData = useMemo(() => {
-    return (data || []).map((item) => ({
-      "Product Name": item.name,
-      SKU: item.sku,
-      "Batch Number": item.batch,
-      "Expiry Date": item.expiry,
-      "Quantity Sold": item.sold,
-      "Cost Price": item.cost_price,
-      MRP: item.mrp_price,
-      "Wholesale Price": item.wholesale_price,
-      "Base Selling Price": item.selling_price,
-      "Average Unit Price": Number(item.price || 0),
-      "Total Revenue": Number(item.sales || 0),
-      "Total Profit": Number(item.profit || 0),
-      "Operational Unit":
+    return (data || []).map((item) => {
+      const row = {};
+      if (selectedColumns.skuEntity) {
+        row["Product Name"] = item.name;
+        row["SKU"] = item.sku;
+      }
+      if (selectedColumns.batch) {
+        row["Batch Number"] = item.batch;
+        row["Expiry Date"] = item.expiry;
+      }
+      if (selectedColumns.quantity) row["Quantity Sold"] = item.sold;
+      if (selectedColumns.cost) row["Cost Price"] = item.cost_price;
+      if (selectedColumns.mrp) row["MRP"] = item.mrp_price;
+      if (selectedColumns.wholesale) row["Wholesale Price"] = item.wholesale_price;
+      if (selectedColumns.sellingPrice) {
+        row["Base Selling Price"] = item.selling_price;
+        row["Average Unit Price"] = Number(item.price || 0);
+      }
+      if (selectedColumns.revenue) row["Total Revenue"] = Number(item.sales || 0);
+      if (selectedColumns.profit) row["Total Profit"] = Number(item.profit || 0);
+
+      row["Operational Unit"] =
         store === "all"
           ? "All Branches"
-          : branches.find((b) => String(b.id) === String(store))?.name || store,
-      Classification:
+          : branches.find((b) => String(b.id) === String(store))?.name || store;
+      row["Classification"] =
         selectedMainCategories.length > 0
           ? selectedMainCategories
               .map(
@@ -500,12 +548,14 @@ export default function SalesByProductPage() {
               )
               .filter(Boolean)
               .join(", ")
-          : "All Categories",
-      Organization: session?.organization?.name || "Inzeedo POS",
-      Horizon: date?.from
+          : "All Categories";
+      row["Organization"] = session?.organization?.name || "Inzeedo POS";
+      row["Horizon"] = date?.from
         ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}`
-        : "Global",
-    }));
+        : "Global";
+
+      return row;
+    });
   }, [
     data,
     store,
@@ -514,6 +564,7 @@ export default function SalesByProductPage() {
     categories,
     session,
     date,
+    selectedColumns,
   ]);
 
   const statsCards = [
@@ -629,6 +680,62 @@ export default function SalesByProductPage() {
               onPrint={handlePrint}
               showPrint={true}
             />
+            {isSetupComplete && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 px-3 rounded-lg text-xs font-medium text-muted-foreground hover:text-emerald-600 gap-1.5"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Columns
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2 rounded-md border-border shadow-lg bg-card" align="end">
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-xs px-2 py-1.5 border-b border-border text-foreground mb-1">
+                      Toggle Columns
+                    </h4>
+                    <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                      {Object.keys(selectedColumns).map((key) => {
+                        const labels = {
+                          skuEntity: "SKU Entity",
+                          batch: "Batch / Expiry",
+                          quantity: "Quantity",
+                          cost: "Cost",
+                          mrp: "MRP",
+                          wholesale: "Wholesale",
+                          sellingPrice: "Selling Price",
+                          profit: "Margin / Profit",
+                          revenue: "Yield (Revenue)",
+                        };
+                        return (
+                          <div
+                            key={key}
+                            className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                            onClick={() => toggleColumn(key)}
+                          >
+                            <div
+                              className={cn(
+                                "flex h-3.5 w-3.5 items-center justify-center rounded-sm border border-primary transition-all",
+                                selectedColumns[key]
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "opacity-50 border-muted-foreground [&_svg]:invisible"
+                              )}
+                            >
+                              <Check className="h-2.5 w-2.5" />
+                            </div>
+                            <span className="text-[11px] font-medium text-foreground select-none">
+                              {labels[key] || key}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
             {isSetupComplete && (
               <Button
                 variant="outline"
@@ -926,67 +1033,103 @@ export default function SalesByProductPage() {
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">
-                        SKU Entity
-                      </TableHead>
-                      <TableHead className="text-left text-xs font-semibold text-muted-foreground">
-                        Batch / Expiry
-                      </TableHead>
-                      <TableHead className="text-center text-xs font-semibold text-muted-foreground">
-                        Quantity
-                      </TableHead>
-                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                        Cost
-                      </TableHead>
-                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                        MRP
-                      </TableHead>
-                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                        Wholesale
-                      </TableHead>
-                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                        Selling Price
-                      </TableHead>
-                      <TableHead className="text-right text-xs font-semibold text-muted-foreground">
-                        Margin / Profit
-                      </TableHead>
-                      <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">
-                        Yield (Revenue)
-                      </TableHead>
+                      {selectedColumns.skuEntity && (
+                        <TableHead className="pl-6 py-4 text-xs font-semibold text-muted-foreground">
+                          SKU Entity
+                        </TableHead>
+                      )}
+                      {selectedColumns.batch && (
+                        <TableHead className="text-left text-xs font-semibold text-muted-foreground">
+                          Batch / Expiry
+                        </TableHead>
+                      )}
+                      {selectedColumns.quantity && (
+                        <TableHead className="text-center text-xs font-semibold text-muted-foreground">
+                          Quantity
+                        </TableHead>
+                      )}
+                      {selectedColumns.cost && (
+                        <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                          Cost
+                        </TableHead>
+                      )}
+                      {selectedColumns.mrp && (
+                        <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                          MRP
+                        </TableHead>
+                      )}
+                      {selectedColumns.wholesale && (
+                        <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                          Wholesale
+                        </TableHead>
+                      )}
+                      {selectedColumns.sellingPrice && (
+                        <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                          Selling Price
+                        </TableHead>
+                      )}
+                      {selectedColumns.profit && (
+                        <TableHead className="text-right text-xs font-semibold text-muted-foreground">
+                          Margin / Profit
+                        </TableHead>
+                      )}
+                      {selectedColumns.revenue && (
+                        <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">
+                          Yield (Revenue)
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       Array.from({ length: pageSize }).map((_, i) => (
                         <TableRow key={i} className="border-b border-border">
-                          <TableCell className="pl-6 py-4">
-                            <Skeleton className="h-4 w-48 mb-2 rounded bg-muted" />
-                            <Skeleton className="h-3.5 w-24 rounded bg-muted/70" />
-                          </TableCell>
-                          <TableCell className="py-4">
-                            <Skeleton className="h-4 w-28 rounded bg-muted" />
-                          </TableCell>
-                          <TableCell className="py-4 text-center">
-                            <Skeleton className="h-6 w-12 mx-auto rounded bg-muted" />
-                          </TableCell>
-                          <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
-                          </TableCell>
-                          <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
-                          </TableCell>
-                          <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
-                          </TableCell>
-                          <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
-                          </TableCell>
-                          <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-20 ml-auto rounded bg-muted" />
-                          </TableCell>
-                          <TableCell className="py-4 text-right pr-6">
-                            <Skeleton className="h-4 w-24 ml-auto rounded bg-muted font-bold" />
-                          </TableCell>
+                          {selectedColumns.skuEntity && (
+                            <TableCell className="pl-6 py-4">
+                              <Skeleton className="h-4 w-48 mb-2 rounded bg-muted" />
+                              <Skeleton className="h-3.5 w-24 rounded bg-muted/70" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.batch && (
+                            <TableCell className="py-4">
+                              <Skeleton className="h-4 w-28 rounded bg-muted" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.quantity && (
+                            <TableCell className="py-4 text-center">
+                              <Skeleton className="h-6 w-12 mx-auto rounded bg-muted" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.cost && (
+                            <TableCell className="py-4 text-right">
+                              <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.mrp && (
+                            <TableCell className="py-4 text-right">
+                              <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.wholesale && (
+                            <TableCell className="py-4 text-right">
+                              <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.sellingPrice && (
+                            <TableCell className="py-4 text-right">
+                              <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.profit && (
+                            <TableCell className="py-4 text-right">
+                              <Skeleton className="h-4 w-20 ml-auto rounded bg-muted" />
+                            </TableCell>
+                          )}
+                          {selectedColumns.revenue && (
+                            <TableCell className="py-4 text-right pr-6">
+                              <Skeleton className="h-4 w-24 ml-auto rounded bg-muted font-bold" />
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))
                     ) : data.length > 0 ? (
@@ -995,68 +1138,86 @@ export default function SalesByProductPage() {
                           key={idx}
                           className="hover:bg-muted/30 transition-colors border-b border-border group"
                         >
-                          <TableCell className="pl-6 py-3.5">
-                            <p className="font-semibold text-sm text-foreground group-hover:text-emerald-600 transition-colors">
-                              {item.name}
-                            </p>
-                            <p className="text-[11px] font-semibold text-muted-foreground uppercase mt-0.5 tracking-wider">
-                              SKU: {item.sku}
-                            </p>
-                          </TableCell>
-                          <TableCell className="text-left">
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-sm text-foreground">
-                                {item.batch !== "N/A" ? item.batch : "General"}
-                              </span>
-                              {item.expiry !== "N/A" && (
-                                <span className="text-[10px] font-medium text-muted-foreground">
-                                  Exp: {item.expiry}
+                          {selectedColumns.skuEntity && (
+                            <TableCell className="pl-6 py-3.5">
+                              <p className="font-semibold text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                                {item.name}
+                              </p>
+                              <p className="text-[11px] font-semibold text-muted-foreground uppercase mt-0.5 tracking-wider">
+                                SKU: {item.sku}
+                              </p>
+                            </TableCell>
+                          )}
+                          {selectedColumns.batch && (
+                            <TableCell className="text-left">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-sm text-foreground">
+                                  {item.batch !== "N/A" ? item.batch : "General"}
                                 </span>
+                                {item.expiry !== "N/A" && (
+                                  <span className="text-[10px] font-medium text-muted-foreground">
+                                    Exp: {item.expiry}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
+                          {selectedColumns.quantity && (
+                            <TableCell className="text-center">
+                              <span className="font-semibold text-sm bg-muted px-2.5 py-1 rounded-md text-foreground">
+                                {item.sold}
+                              </span>
+                            </TableCell>
+                          )}
+                          {selectedColumns.cost && (
+                            <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                              {formatCurrency(item.cost_price)}
+                            </TableCell>
+                          )}
+                          {selectedColumns.mrp && (
+                            <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                              {formatCurrency(item.mrp_price)}
+                            </TableCell>
+                          )}
+                          {selectedColumns.wholesale && (
+                            <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                              {formatCurrency(item.wholesale_price)}
+                            </TableCell>
+                          )}
+                          {selectedColumns.sellingPrice && (
+                            <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
+                              {formatCurrency(item.selling_price)}
+                            </TableCell>
+                          )}
+                          {selectedColumns.profit && (
+                            <TableCell
+                              className={cn(
+                                "text-right font-medium tabular-nums text-sm",
+                                item.profit >= 0
+                                  ? "text-emerald-600"
+                                  : "text-rose-600",
                               )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span className="font-semibold text-sm bg-muted px-2.5 py-1 rounded-md text-foreground">
-                              {item.sold}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                            {formatCurrency(item.cost_price)}
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                            {formatCurrency(item.mrp_price)}
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                            {formatCurrency(item.wholesale_price)}
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground font-medium tabular-nums text-sm">
-                            {formatCurrency(item.selling_price)}
-                          </TableCell>
-                          <TableCell
-                            className={cn(
-                              "text-right font-medium tabular-nums text-sm",
-                              item.profit >= 0
-                                ? "text-emerald-600"
-                                : "text-rose-600",
-                            )}
-                          >
-                            {item.profit > 0 ? "+" : ""}
-                            {formatCurrency(item.profit)}
-                          </TableCell>
-                          <TableCell className="text-right pr-6">
-                            <p className="font-semibold text-foreground tabular-nums">
-                              {formatCurrency(item.sales)}
-                            </p>
-                            <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                              Total Revenue
-                            </p>
-                          </TableCell>
+                            >
+                              {item.profit > 0 ? "+" : ""}
+                              {formatCurrency(item.profit)}
+                            </TableCell>
+                          )}
+                          {selectedColumns.revenue && (
+                            <TableCell className="text-right pr-6">
+                              <p className="font-semibold text-foreground tabular-nums">
+                                {formatCurrency(item.sales)}
+                              </p>
+                              <p className="text-[10px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Total Revenue
+                              </p>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={9}
+                          colSpan={Object.values(selectedColumns).filter(Boolean).length}
                           className="py-24 text-center text-muted-foreground"
                         >
                           <div className="flex flex-col items-center gap-3">
