@@ -177,36 +177,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
           </div>
         </div>
 
-        {/* Details of products sold */}
-        <div className="mb-8">
-          <h3 className="text-lg text-slate-700 mb-4 border-b border-slate-200 pb-2">Details of products sold</h3>
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-600">
-                <th className="py-2 px-2 w-12 font-medium">#</th>
-                <th className="py-2 px-2 font-medium">Brands</th>
-                <th className="py-2 px-2 font-medium text-right">Quantity</th>
-                <th className="py-2 px-2 font-medium text-right">Total amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.productBreakdown && Object.values(stats.productBreakdown).map((item, idx) => (
-                <tr key={idx} className="border-b border-slate-100/50">
-                  <td className="py-2 px-2">{idx + 1}.</td>
-                  <td className="py-2 px-2">{item.brand}</td>
-                  <td className="py-2 px-2 text-right">{item.quantity.toFixed(4)}</td>
-                  <td className="py-2 px-2 text-right">Rs {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                </tr>
-              ))}
-              <tr className="font-semibold text-slate-800 mt-2">
-                <td className="py-3 px-2">#</td>
-                <td className="py-3 px-2 text-right">{stats.productBreakdown ? Object.values(stats.productBreakdown).length : 0}</td>
-                <td className="py-3 px-2 text-right"></td>
-                <td className="py-3 px-2 text-right">Grand Total: Rs {(stats.productBreakdown ? Object.values(stats.productBreakdown).reduce((sum, item) => sum + item.amount, 0) : 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+
 
         {/* Footer info for Today Summary */}
         <div className="mt-12 text-sm text-slate-600 space-y-1">
