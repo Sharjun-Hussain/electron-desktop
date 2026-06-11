@@ -369,6 +369,7 @@ export default function GRNReportPage() {
     <ResourceManagementLayout
       data={grns}
       columns={columns}
+      storageKey="grn-registry-columns"
       isLoading={loading}
       isFiltered={isFiltered}
       onRowClick={(row) => router.push(`/purchase/grn/view/${row.id}`)}

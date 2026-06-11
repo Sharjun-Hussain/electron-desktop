@@ -401,12 +401,25 @@ export const ResourceManagementLayout = React.memo(({
   enableBulkActions = true,
   tableMeta,
   initialColumnVisibility = {},
+  storageKey,
   children,
 }) => {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
   const [internalPagination, setInternalPagination] = useState({ pageIndex: 0, pageSize: 10 });
+
+  const [persistedColumnVisibility] = useState(() => {
+    if (typeof window !== "undefined" && storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {}
+      }
+    }
+    return initialColumnVisibility;
+  });
 
   const isManualPagination = !!pageCount && onPaginationChange;
   const pagination = isManualPagination ? paginationState : internalPagination;
@@ -435,9 +448,15 @@ export const ResourceManagementLayout = React.memo(({
     onRowSelectionChange: setRowSelection,
     onPaginationChange: handlePaginationChange,
     state: { sorting, columnFilters, rowSelection, pagination },
-    initialState: { columnVisibility: initialColumnVisibility },
+    initialState: { columnVisibility: persistedColumnVisibility },
     getRowId: (row, index) => row.id || row.uuid || row._id || index.toString(),
   });
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(table.getState().columnVisibility));
+    }
+  }, [table.getState().columnVisibility, storageKey]);
 
   const renderedBulkActions = useMemo(() =>
     bulkActionsComponent && enableBulkActions ? React.cloneElement(bulkActionsComponent, { table }) : null,
