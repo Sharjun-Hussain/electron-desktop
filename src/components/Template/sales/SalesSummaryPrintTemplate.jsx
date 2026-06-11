@@ -116,12 +116,12 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
         <div className="w-[400px] mb-8 space-y-2 text-sm">
           <div className="flex justify-between items-center text-slate-600 mb-4 pb-2 border-b border-slate-200">
              <span>Cash in hand:</span>
-             <span>Rs {(stats.paymentAmounts?.Cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {(stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="flex justify-between items-center text-slate-600">
              <span>Cash Payment:</span>
-             <span>Rs {(stats.paymentAmounts?.Cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {(stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between items-center text-slate-600">
              <span>Cheque Payment:</span>
