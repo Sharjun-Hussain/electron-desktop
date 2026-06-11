@@ -71,7 +71,7 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
               ))}
             </tbody>
           </table>
-        </ReportLayout>
+
         
         {/* Today Summary Page (Register Details) */}
         {stats.paymentAmounts && (
@@ -147,6 +147,7 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
           </div>
         </div>
         )}
+        </ReportLayout>
       </div>
     </div>
   );
