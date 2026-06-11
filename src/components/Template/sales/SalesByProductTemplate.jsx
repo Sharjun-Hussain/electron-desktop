@@ -73,76 +73,81 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
           </table>
 
         
-        {/* Today Summary Page (Register Details) */}
         {stats.paymentAmounts && (
         <div style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-slate-800">
-              Register Details ( {dateRange?.from ? format(dateRange.from, "do MMM, yyyy hh:mm a") : ""} - {dateRange?.to ? format(dateRange.to, "do MMM, yyyy hh:mm a") : format(new Date(), "do MMM, yyyy hh:mm a")} )
-            </h2>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">Register & Payment Summary</h2>
+            <p className="text-sm text-slate-500">
+              {dateRange?.from ? format(dateRange.from, "do MMM, yyyy hh:mm a") : ""} - {dateRange?.to ? format(dateRange.to, "do MMM, yyyy hh:mm a") : format(new Date(), "do MMM, yyyy hh:mm a")}
+            </p>
           </div>
 
-          <div className="w-[400px] mb-8 space-y-2 text-sm">
-            <div className="flex justify-between items-center text-slate-600 mb-4 pb-2 border-b border-slate-200">
-               <span>Cash in hand:</span>
-               <span>Rs {(stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <div className="grid grid-cols-2 gap-12">
+            {/* Left Column: Payment Methods */}
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-200">Payment Breakdown</h3>
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 text-slate-600">Cash Payment</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 text-slate-600">Card Payment</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.Card || stats.paymentAmounts?.card || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 text-slate-600">Bank Transfer</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.['Bank Transfer'] || stats.paymentAmounts?.bank_transfer || stats.paymentAmounts?.Bank || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 text-slate-600">Cheque Payment</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.Cheque || stats.paymentAmounts?.cheque || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 text-slate-600">Credit Sales</td>
+                    <td className="py-3 text-right font-semibold text-amber-600">Rs {(stats.paymentAmounts?.Credit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 text-slate-600">Other Payments</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.Other || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            <div className="flex justify-between items-center text-slate-600">
-               <span>Cash Payment:</span>
-               <span>Rs {(stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600">
-               <span>Cheque Payment:</span>
-               <span>Rs {(stats.paymentAmounts?.Cheque || stats.paymentAmounts?.cheque || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600">
-               <span>Card Payment:</span>
-               <span>Rs {(stats.paymentAmounts?.Card || stats.paymentAmounts?.card || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600">
-               <span>Bank Transfer:</span>
-               <span>Rs {(stats.paymentAmounts?.['Bank Transfer'] || stats.paymentAmounts?.bank_transfer || stats.paymentAmounts?.Bank || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600">
-               <span>Advance payment:</span>
-               <span>Rs 0.00</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600">
-               <span>Custom Payment 1:</span>
-               <span>Rs 0.00</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600">
-               <span>Custom Payment 2:</span>
-               <span>Rs 0.00</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600 mb-4">
-               <span>Custom Payment 3:</span>
-               <span>Rs 0.00</span>
-            </div>
-            <div className="flex justify-between items-center text-slate-600 mb-4">
-               <span>Other Payments:</span>
-               <span>Rs {(stats.paymentAmounts?.Other || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-
-            <div className="flex justify-between items-center text-slate-800 font-semibold mb-4">
-               <span>Total Refund</span>
-               <span>Rs {(stats.totalRefund || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-
-            <div className="flex justify-between items-center text-slate-800 font-semibold mb-4">
-               <span>Total Payment</span>
-               <span>Rs {(Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-
-            <div className="flex justify-between items-center text-slate-600 mb-4">
-               <span>Credit Sales:</span>
-               <span>Rs {(stats.paymentAmounts?.Credit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-
-            <div className="flex justify-between items-center text-slate-800 font-semibold mb-8 pb-4 border-b border-slate-300">
-               <span>Total Sales:</span>
-               <span>Rs {(stats.totalSales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            {/* Right Column: Register Totals */}
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-200">Register Totals</h3>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm text-slate-600">Total Gross Sales</span>
+                  <span className="text-sm font-bold text-slate-800">Rs {(stats.totalSales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200/60">
+                  <span className="text-sm text-slate-600">Total Refunds Processed</span>
+                  <span className="text-sm font-bold text-rose-600">- Rs {(stats.totalRefund || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                </div>
+                
+                <div className="flex justify-between items-center mb-5">
+                  <span className="text-sm font-bold text-slate-700">Net Collected</span>
+                  <span className="text-lg font-black text-slate-900">
+                    Rs {(Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                
+                <div className="mt-5 pt-5 border-t border-slate-200 bg-white -mx-5 -mb-5 p-5 rounded-b-xl">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-slate-800">Expected Cash In Drawer</span>
+                    <span className="text-xl font-black text-emerald-600">
+                      Rs {(stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-medium text-slate-400 mt-1.5 text-right uppercase tracking-wider">
+                    Includes Opening Float & Cash Refunds
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
