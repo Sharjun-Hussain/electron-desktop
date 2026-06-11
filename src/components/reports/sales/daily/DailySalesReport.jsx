@@ -265,11 +265,11 @@ export default function DailySalesSummaryPage() {
   const [paymentMethods, setPaymentMethods] = useState([]);
 
   const [date, setDate] = useState({
-    from: subDays(new Date(), 7),
-    to: new Date(),
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
   });
   const [dateOpen, setDateOpen] = useState(false);
-  const [activePreset, setActivePreset] = useState("");
+  const [activePreset, setActivePreset] = useState("today");
 
   const handlePresetClick = (preset) => {
     let from, to;
