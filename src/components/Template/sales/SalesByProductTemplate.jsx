@@ -1,8 +1,9 @@
 import React from "react";
+import { format } from "date-fns";
 import { ReportLayout } from "../ReportLayout";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
-export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, stats }, ref) => {
+export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, stats, dateRange }, ref) => {
   const { formatCurrency, report } = useAppSettings();
 
   return (
@@ -71,6 +72,81 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
             </tbody>
           </table>
         </ReportLayout>
+        
+        {/* Today Summary Page (Register Details) */}
+        {stats.paymentAmounts && (
+        <div style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-800">
+              Register Details ( {dateRange?.from ? format(dateRange.from, "do MMM, yyyy hh:mm a") : ""} - {dateRange?.to ? format(dateRange.to, "do MMM, yyyy hh:mm a") : format(new Date(), "do MMM, yyyy hh:mm a")} )
+            </h2>
+          </div>
+
+          <div className="w-[400px] mb-8 space-y-2 text-sm">
+            <div className="flex justify-between items-center text-slate-600 mb-4 pb-2 border-b border-slate-200">
+               <span>Cash in hand:</span>
+               <span>Rs {(stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-slate-600">
+               <span>Cash Payment:</span>
+               <span>Rs {(stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+               <span>Cheque Payment:</span>
+               <span>Rs {(stats.paymentAmounts?.Cheque || stats.paymentAmounts?.cheque || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+               <span>Card Payment:</span>
+               <span>Rs {(stats.paymentAmounts?.Card || stats.paymentAmounts?.card || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+               <span>Bank Transfer:</span>
+               <span>Rs {(stats.paymentAmounts?.['Bank Transfer'] || stats.paymentAmounts?.bank_transfer || stats.paymentAmounts?.Bank || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+               <span>Advance payment:</span>
+               <span>Rs 0.00</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+               <span>Custom Payment 1:</span>
+               <span>Rs 0.00</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600">
+               <span>Custom Payment 2:</span>
+               <span>Rs 0.00</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 mb-4">
+               <span>Custom Payment 3:</span>
+               <span>Rs 0.00</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-600 mb-4">
+               <span>Other Payments:</span>
+               <span>Rs {(stats.paymentAmounts?.Other || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-slate-800 font-semibold mb-4">
+               <span>Total Refund</span>
+               <span>Rs {(stats.totalRefund || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-slate-800 font-semibold mb-4">
+               <span>Total Payment</span>
+               <span>Rs {(Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-slate-600 mb-4">
+               <span>Credit Sales:</span>
+               <span>Rs {(stats.paymentAmounts?.Credit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-slate-800 font-semibold mb-8 pb-4 border-b border-slate-300">
+               <span>Total Sales:</span>
+               <span>Rs {(stats.totalSales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        </div>
+        )}
       </div>
     </div>
   );

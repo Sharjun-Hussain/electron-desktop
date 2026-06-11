@@ -560,7 +560,9 @@ export default function SalesByProductPage() {
             totalProfit: 0,
             topSellingItem: data[0] || null,
             topRevenueItem: data[0] || null,
+            ...summary.registerDetails,
           }}
+          dateRange={date}
           filters={{
             store:
               store === "all"
