@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import logoImg from "../../../public/logo.png";
 
 // Icons
 import {
@@ -255,7 +256,7 @@ function LoginForm() {
     <AuthLayout
       title={"Advanced POS\nManagement System"}
       description="Secure, real-time access to your industrial operations, inventory management, and financial reporting."
-      logo="/logo.png"
+      logo={logoImg.src}
       stats={[
         { value: "99.9%", label: "System Uptime" },
         { value: "Secure", label: "End-to-End Encrypted", highlight: true },
