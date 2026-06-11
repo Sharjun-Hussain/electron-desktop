@@ -41,6 +41,7 @@ export function DataTableViewOptions({ table }) {
                 className="capitalize text-sm font-medium rounded-lg m-1"
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                onSelect={(e) => e.preventDefault()}
               >
                 {column.id.replace(/_/g, " ")}
               </DropdownMenuCheckboxItem>

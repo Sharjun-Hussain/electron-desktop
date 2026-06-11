@@ -406,7 +406,6 @@ export const ResourceManagementLayout = React.memo(({
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
-  const [columnVisibility, setColumnVisibility] = useState(initialColumnVisibility);
   const [internalPagination, setInternalPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
   const isManualPagination = !!pageCount && onPaginationChange;
@@ -434,9 +433,9 @@ export const ResourceManagementLayout = React.memo(({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
-    onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: handlePaginationChange,
-    state: { sorting, columnFilters, rowSelection, columnVisibility, pagination },
+    state: { sorting, columnFilters, rowSelection, pagination },
+    initialState: { columnVisibility: initialColumnVisibility },
     getRowId: (row, index) => row.id || row.uuid || row._id || index.toString(),
   });
 
@@ -497,6 +496,7 @@ export const ResourceManagementLayout = React.memo(({
                 onViewModeChange={onViewModeChange}
                 enableBulkActions={enableBulkActions}
                 selectedRowCount={table.getFilteredSelectedRowModel().rows.length}
+                columnVisibility={table.getState().columnVisibility}
               />
             </div>
             <div className={cn("transition-all duration-300", viewMode === "grid" && "bg-gray-50/30 dark:bg-slate-950/20")}>
