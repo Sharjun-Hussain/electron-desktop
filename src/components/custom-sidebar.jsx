@@ -130,17 +130,17 @@ export function CustomSidebar() {
         requiredPermission: PERMISSIONS.PRODUCT_VIEW,
         moduleKey: "inventory_basic",
         items: [
-          { title: t("sidebar.products"), url: "/products", icon: Package, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.product_variants"), url: "/variants", icon: Layers, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.barcodes"), url: "/barcode", icon: Barcode, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "barcode_customization" },
-          { title: t("sidebar.main_categories"), url: "/main-category", icon: Tags, requiredPermission: PERMISSIONS.CATEGORY_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.sub_categories"), url: "/sub-category", icon: Tag, requiredPermission: PERMISSIONS.CATEGORY_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.brands"), url: "/brand", icon: Award, requiredPermission: PERMISSIONS.BRAND_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.stock_management"), url: "/inventory/stock", icon: ClipboardList, requiredPermission: PERMISSIONS.STOCK_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.stock_transfers"), url: "/inventory/transfers", icon: ArrowLeftRight, requiredPermission: PERMISSIONS.STOCK_VIEW, moduleKey: "inventory_transfers" },
-          { title: t("sidebar.base_units"), url: "/units", icon: Ruler, requiredPermission: PERMISSIONS.UNIT_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.measurements"), url: "/unit-measurement", icon: Scale, requiredPermission: PERMISSIONS.UNIT_VIEW, moduleKey: "inventory_basic" },
-          { title: t("sidebar.inventory_containers"), url: "/containers", icon: Archive, requiredPermission: PERMISSIONS.UNIT_VIEW, moduleKey: "inventory_basic" },
+          { title: t("sidebar.products"), url: "/products", icon: Package, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "inventory_basic", group: null },
+          { title: t("sidebar.product_variants"), url: "/variants", icon: Layers, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "inventory_basic", group: null },
+          { title: t("sidebar.barcodes"), url: "/barcode", icon: Barcode, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "barcode_customization", group: null },
+          { title: t("sidebar.main_categories"), url: "/main-category", icon: Tags, requiredPermission: PERMISSIONS.CATEGORY_VIEW, moduleKey: "inventory_basic", group: "CLASSIFICATION" },
+          { title: t("sidebar.sub_categories"), url: "/sub-category", icon: Tag, requiredPermission: PERMISSIONS.CATEGORY_VIEW, moduleKey: "inventory_basic", group: "CLASSIFICATION" },
+          { title: t("sidebar.brands"), url: "/brand", icon: Award, requiredPermission: PERMISSIONS.BRAND_VIEW, moduleKey: "inventory_basic", group: "CLASSIFICATION" },
+          { title: t("sidebar.stock_management"), url: "/inventory/stock", icon: ClipboardList, requiredPermission: PERMISSIONS.STOCK_VIEW, moduleKey: "inventory_basic", group: "OPERATIONS" },
+          { title: t("sidebar.stock_transfers"), url: "/inventory/transfers", icon: ArrowLeftRight, requiredPermission: PERMISSIONS.STOCK_VIEW, moduleKey: "inventory_transfers", group: "OPERATIONS" },
+          { title: t("sidebar.base_units"), url: "/units", icon: Ruler, requiredPermission: PERMISSIONS.UNIT_VIEW, moduleKey: "inventory_basic", group: "CONFIGURATION" },
+          { title: t("sidebar.measurements"), url: "/unit-measurement", icon: Scale, requiredPermission: PERMISSIONS.UNIT_VIEW, moduleKey: "inventory_basic", group: "CONFIGURATION" },
+          { title: t("sidebar.inventory_containers"), url: "/containers", icon: Archive, requiredPermission: PERMISSIONS.UNIT_VIEW, moduleKey: "inventory_basic", group: "CONFIGURATION" },
         ],
       },
       // Manufacturing / Production Section
@@ -546,9 +546,9 @@ export function CustomSidebar() {
           isPanelOpen ? "w-64 opacity-100 pl-0 shadow-xl" : "w-0 opacity-0 pl-0"
         )}
       >
-        <div className="flex flex-col h-full py-8 px-5 w-64">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-[11px] font-bold text-foreground">{activeCategory?.title}</h2>
+        <div className="flex flex-col h-full py-6 px-5 w-64">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-foreground tracking-tight">{activeCategory?.title}</h2>
             <button
               onClick={() => setIsPanelOpen(false)}
               className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -557,8 +557,8 @@ export function CustomSidebar() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto thin-scrollbar pr-1">
-            <div className="space-y-1.5">
+          <div className="flex-1 overflow-y-auto thin-scrollbar pr-1 -mx-2 px-2">
+            <div className="space-y-4">
               {(() => {
                 const allPossibleMatches = filteredPrimary.flatMap(p => {
                   const pMatches = [];
@@ -574,47 +574,63 @@ export function CustomSidebar() {
                 });
                 const globalLongestMatch = allPossibleMatches.sort((a, b) => b.length - a.length)[0] || "";
 
-                return activeCategory?.items?.map((sub) => {
-                  const subUrlBase = sub.url.split("?")[0];
-                  let isActive = subUrlBase === globalLongestMatch && (pathname === subUrlBase || pathname.startsWith(`${subUrlBase}/`));
+                // Group the items
+                const groupedItems = (activeCategory?.items || []).reduce((acc, sub) => {
+                  const groupName = sub.group || "UNGROUPED";
+                  if (!acc[groupName]) acc[groupName] = [];
+                  acc[groupName].push(sub);
+                  return acc;
+                }, {});
 
-                  if (isActive && sub.url.includes("?")) {
-                    const params = new URLSearchParams(sub.url.split("?")[1]);
-                    const targetTab = params.get("tab");
-                    const currentTab = searchParams ? searchParams.get("tab") : null;
-                    if (targetTab) {
-                      isActive = (currentTab === targetTab) || (!currentTab && targetTab === "dashboard");
-                    }
-                  } else if (isActive && !sub.url.includes("?") && pathname === "/crm/text-lk") {
-                    const currentTab = searchParams ? searchParams.get("tab") : null;
-                    if (currentTab && currentTab !== "dashboard") {
-                      isActive = false;
-                    }
-                  }
+                return Object.entries(groupedItems).map(([group, items]) => (
+                  <div key={group} className="flex flex-col gap-1">
+                    {group !== "UNGROUPED" && (
+                      <h3 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 mt-2">
+                        {group}
+                      </h3>
+                    )}
+                    {items.map((sub) => {
+                      const subUrlBase = sub.url.split("?")[0];
+                      let isActive = subUrlBase === globalLongestMatch && (pathname === subUrlBase || pathname.startsWith(`${subUrlBase}/`));
 
-                  return (
-                    <Link
-                      key={sub.title}
-                      id={sub.url === "/pos" ? "sidebar-pos-link" : undefined}
-                      href={sub.url}
-                      onClick={() => {
-                        if (window.innerWidth < 1024) setIsPanelOpen(false);
-                      }}
-                      className={cn(
-                        "flex items-center h-11 px-4 rounded-xl transition-all duration-300 group",
-                        isActive
-                          ? "bg-emerald-600 text-white shadow-sm"
-                          : "text-foreground hover:bg-muted font-semibold"
-                      )}
-                    >
-                      {sub.icon && (
-                        <sub.icon className={cn("size-4 mr-3 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
-                      )}
-                      <span className="text-[13px]">{sub.title}</span>
-                      <ChevronRight className={cn("size-3.5 ml-auto transition-transform", isActive ? "translate-x-1" : "opacity-0 group-hover:opacity-100 group-hover:translate-x-1")} />
-                    </Link>
-                  );
-                });
+                      if (isActive && sub.url.includes("?")) {
+                        const params = new URLSearchParams(sub.url.split("?")[1]);
+                        const targetTab = params.get("tab");
+                        const currentTab = searchParams ? searchParams.get("tab") : null;
+                        if (targetTab) {
+                          isActive = (currentTab === targetTab) || (!currentTab && targetTab === "dashboard");
+                        }
+                      } else if (isActive && !sub.url.includes("?") && pathname === "/crm/text-lk") {
+                        const currentTab = searchParams ? searchParams.get("tab") : null;
+                        if (currentTab && currentTab !== "dashboard") {
+                          isActive = false;
+                        }
+                      }
+
+                      return (
+                        <Link
+                          key={sub.title}
+                          id={sub.url === "/pos" ? "sidebar-pos-link" : undefined}
+                          href={sub.url}
+                          onClick={() => {
+                            if (window.innerWidth < 1024) setIsPanelOpen(false);
+                          }}
+                          className={cn(
+                            "flex items-center h-10 px-3 rounded-xl transition-all duration-300 group",
+                            isActive
+                              ? "bg-emerald-500/10 text-emerald-600 font-bold"
+                              : "text-foreground hover:bg-muted font-medium"
+                          )}
+                        >
+                          {sub.icon && (
+                            <sub.icon className={cn("size-4 mr-3 transition-transform group-hover:scale-110", isActive ? "text-emerald-600" : "text-muted-foreground group-hover:text-foreground")} />
+                          )}
+                          <span className="text-[13px]">{sub.title}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ));
               })()}
             </div>
           </div>
