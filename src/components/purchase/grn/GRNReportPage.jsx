@@ -26,6 +26,7 @@ import {
   Trash2,
   Clock
 } from "lucide-react";
+import { useTopLoader } from "nextjs-toploader";
 import { exportToCSV } from "@/lib/exportUtils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,8 @@ const DataTableColumnHeader = ({ column, title }) => {
 };
 
 export default function GRNReportPage() {
+  const router = useRouter();
+  const topLoader = useTopLoader();
   const { data: session } = useSession();
   const [grns, setGrns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -299,8 +302,6 @@ export default function GRNReportPage() {
       cell: ({ row }) => <StatusBadge value={row.getValue("status")} />,
     },
   ];
-
-  const router = useRouter();
   const selectedSupplierName = suppliers.find(s => s.id === filters.supplier_id)?.name || "All Suppliers";
   const isFiltered = filters.supplier_id !== "all" || !!filters.start_date || !!filters.end_date || !!filters.search;
 
@@ -353,7 +354,10 @@ export default function GRNReportPage() {
                     <span className="text-xs text-muted-foreground">{format(new Date(draft.updatedAt), "MMM dd, yyyy - hh:mm a")}</span>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/purchase/grn/direct?draftId=${draft.id}`)} className="text-xs h-7 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100">
+                    <Button variant="outline" size="sm" onClick={() => {
+                      topLoader.start();
+                      router.push(`/purchase/grn/direct?draftId=${draft.id}`);
+                    }} className="text-xs h-7 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100">
                       Resume
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteDraft(draft.id)} className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600">
@@ -372,12 +376,21 @@ export default function GRNReportPage() {
       storageKey="grn-registry-columns"
       isLoading={loading}
       isFiltered={isFiltered}
-      onRowClick={(row) => router.push(`/purchase/grn/view/${row.id}`)}
+      onRowClick={(row) => {
+        topLoader.start();
+        router.push(`/purchase/grn/view/${row.id}`);
+      }}
       onClearFilters={handleClearFilters}
       addButtonLabel="New GRN"
-      onAddClick={() => router.push("/purchase/purchase-orders")}
+      onAddClick={() => {
+        topLoader.start();
+        router.push("/purchase/purchase-orders");
+      }}
       extraActions={
-        <Button onClick={() => router.push("/purchase/grn/direct")} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border-0">
+        <Button onClick={() => {
+          topLoader.start();
+          router.push("/purchase/grn/direct");
+        }} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border-0">
           <Package className="h-4 w-4" />
           Direct GRN (Skip PO)
         </Button>
