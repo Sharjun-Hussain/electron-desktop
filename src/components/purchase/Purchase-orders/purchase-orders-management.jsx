@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Activity } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTopLoader } from "nextjs-toploader";
 import { FileSpreadsheet, ChevronDown, Trash2, ShoppingCart, Clock, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -104,6 +105,7 @@ const POBulkActions = ({ table, onDelete }) => {
 export default function PurchaseOrderPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const topLoader = useTopLoader();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -305,6 +307,7 @@ export default function PurchaseOrderPage() {
     <ResourceManagementLayout
       data={orders}
       columns={columns}
+      storageKey="purchase-orders-columns"
       isLoading={loading || status === "loading"}
       isError={!!error}
       errorMessage={error}
@@ -313,6 +316,7 @@ export default function PurchaseOrderPage() {
       addButtonLabel="Create Purchase Order"
       onAddClick={canCreate(PURCHASE) ? () => {
         setIsNavigating(true);
+        topLoader.start();
         router.push("/purchase/purchase-orders/create");
       } : null}
       isAdding={isNavigating}
