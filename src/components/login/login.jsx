@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, memo, Suspense, useCallback } from "react";
+import React, { useState, memo, Suspense, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "@/components/auth/DesktopAuthProvider";
@@ -289,14 +289,72 @@ function LoginForm() {
   );
 }
 
+const SplashLoader = memo(() => (
+  <div className="fixed inset-0 z-50 flex flex-col h-screen w-full items-center justify-center bg-slate-50 dark:bg-zinc-950 relative overflow-hidden animate-in fade-in duration-500">
+    {/* Subtle background ambient glow */}
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <div className="relative flex flex-col items-center justify-center z-10">
+      {/* Creative Geometric Loader */}
+      <div className="relative flex items-center justify-center w-24 h-24 mb-8">
+        {/* Outer slow rotating square */}
+        <div className="absolute inset-0 border-[1.5px] border-emerald-500/20 dark:border-emerald-500/30 rounded-2xl animate-[spin_8s_linear_infinite]"></div>
+        
+        {/* Middle rotating square (reverse) */}
+        <div className="absolute inset-2 border-[1.5px] border-teal-500/30 dark:border-teal-500/40 rounded-2xl animate-[spin_5s_linear_infinite_reverse]"></div>
+        
+        {/* Inner fast ring */}
+        <div className="absolute inset-4 border-[2px] border-transparent border-t-emerald-500 border-r-teal-500 rounded-full animate-spin duration-700"></div>
+
+        {/* Core glowing element */}
+        <div className="absolute h-5 w-5 bg-linear-to-tr from-emerald-500 to-teal-400 rounded-md shadow-[0_0_20px_rgba(16,185,129,0.6)] animate-pulse rotate-45 flex items-center justify-center">
+          <div className="h-1.5 w-1.5 bg-white rounded-full animate-ping"></div>
+        </div>
+      </div>
+      
+      <div className="flex flex-col items-center">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">Inzeedo ERP</h2>
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em]">
+            Initializing Environment
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_5px_rgba(16,185,129,0.5)]" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse shadow-[0_0_5px_rgba(20,184,166,0.5)]" style={{ animationDelay: '300ms' }}></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_5px_rgba(6,182,212,0.5)]" style={{ animationDelay: '600ms' }}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+));
+SplashLoader.displayName = "SplashLoader";
+
 export default function LoginPage() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen w-full bg-slate-50 dark:bg-zinc-950" />
-      }
-    >
-      <LoginForm />
-    </Suspense>
+    <>
+      {showSplash ? (
+        <SplashLoader />
+      ) : (
+        <div className="animate-in fade-in duration-700">
+          <Suspense
+            fallback={
+              <div className="min-h-screen w-full bg-slate-50 dark:bg-zinc-950" />
+            }
+          >
+            <LoginForm />
+          </Suspense>
+        </div>
+      )}
+    </>
   );
 }
