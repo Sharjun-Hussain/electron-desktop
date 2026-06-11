@@ -216,11 +216,11 @@ export default function SalesByProductPage() {
   // --- STATES ---
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [date, setDate] = useState({
-    from: startOfMonth(new Date()),
-    to: new Date(),
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
   });
   const [dateOpen, setDateOpen] = useState(false);
-  const [activePreset, setActivePreset] = useState("");
+  const [activePreset, setActivePreset] = useState("today");
   const [data, setData] = useState([]);
   const [summary, setSummary] = useState({
     totalRevenue: 0,
@@ -810,7 +810,7 @@ export default function SalesByProductPage() {
                     {[1, 2, 3, 4, 5].map((i) => (
                       <Skeleton
                         key={i}
-                        className="h-10 w-full rounded-md bg-gray-100"
+                        className="h-10 w-full rounded-md bg-muted"
                       />
                     ))}
                   </div>
@@ -958,32 +958,32 @@ export default function SalesByProductPage() {
                       Array.from({ length: pageSize }).map((_, i) => (
                         <TableRow key={i} className="border-b border-border">
                           <TableCell className="pl-6 py-4">
-                            <Skeleton className="h-4 w-48 mb-2 rounded bg-gray-100" />
-                            <Skeleton className="h-3.5 w-24 rounded bg-gray-100/70" />
+                            <Skeleton className="h-4 w-48 mb-2 rounded bg-muted" />
+                            <Skeleton className="h-3.5 w-24 rounded bg-muted/70" />
                           </TableCell>
                           <TableCell className="py-4">
-                            <Skeleton className="h-4 w-28 rounded bg-gray-100" />
+                            <Skeleton className="h-4 w-28 rounded bg-muted" />
                           </TableCell>
                           <TableCell className="py-4 text-center">
-                            <Skeleton className="h-6 w-12 mx-auto rounded bg-gray-100" />
+                            <Skeleton className="h-6 w-12 mx-auto rounded bg-muted" />
                           </TableCell>
                           <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
                           </TableCell>
                           <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
                           </TableCell>
                           <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
                           </TableCell>
                           <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-16 ml-auto rounded bg-gray-100" />
+                            <Skeleton className="h-4 w-16 ml-auto rounded bg-muted" />
                           </TableCell>
                           <TableCell className="py-4 text-right">
-                            <Skeleton className="h-4 w-20 ml-auto rounded bg-gray-100" />
+                            <Skeleton className="h-4 w-20 ml-auto rounded bg-muted" />
                           </TableCell>
                           <TableCell className="py-4 text-right pr-6">
-                            <Skeleton className="h-4 w-24 ml-auto rounded bg-gray-100 font-bold" />
+                            <Skeleton className="h-4 w-24 ml-auto rounded bg-muted font-bold" />
                           </TableCell>
                         </TableRow>
                       ))
