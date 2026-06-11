@@ -37,6 +37,7 @@ import { Separator } from "@/components/ui/separator";
 import { useReactToPrint } from "react-to-print";
 import { GRNPrintTemplate } from "@/components/Template/GRNPrintTemplate";
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // --- HELPER: Attachment Item ---
 const AttachmentItem = ({ file, onDelete, isDeleting }) => {
@@ -179,9 +180,129 @@ export default function GRNDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-4" />
-        <p className="text-sm text-muted-foreground font-medium">Retrieving GRN details...</p>
+      <div className="p-6 space-y-6 bg-background min-h-screen">
+        {/* GRN Record Header Skeleton */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-24 rounded-md" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Details Skeleton */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="border border-border/60 shadow-sm rounded-xl overflow-hidden">
+              <CardHeader className="bg-card border-b border-border/60 px-6 py-5">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-lg" />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-5 w-20 rounded-md" />
+                      </div>
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                  </div>
+                  <div className="text-right space-y-2 flex flex-col items-end">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-7 w-32" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="w-full">
+                  <div className="flex justify-between px-6 py-4 border-b border-border/60 bg-muted/10">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex justify-between items-center px-6 py-4 border-b border-border/50">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-40" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-4 w-16 rounded-md" />
+                          <Skeleton className="h-4 w-24 rounded-md" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-5 w-8" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
+                  ))}
+                </div>
+                <div className="p-6 bg-muted/20">
+                  <div className="flex justify-between items-center bg-background p-5 rounded-xl border border-border shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-10 w-10 rounded-lg" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end space-y-2">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar Skeleton */}
+          <div className="space-y-6">
+            {/* Details Card */}
+            <Card className="border border-border/60 shadow-sm bg-background rounded-xl">
+              <CardContent className="p-6 space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i}>
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-10 w-10 rounded-md" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    </div>
+                    {i < 2 && <Separator className="my-4 bg-border/60" />}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Badges Card */}
+            <Card className="border border-border/60 shadow-sm bg-background rounded-xl">
+              <CardContent className="p-6 space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between items-center">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-5 w-20 rounded-md" />
+                    </div>
+                    {i < 2 && <Separator className="my-4 bg-border/60" />}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Attachments Card */}
+            <Card className="border border-border/60 shadow-sm bg-background rounded-xl">
+              <CardHeader className="p-4 pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <Skeleton className="h-24 w-full rounded-lg border-2 border-dashed" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -195,29 +316,7 @@ export default function GRNDetailPage() {
     );
   }
 
-  const downloadPDF = async () => {
-    if (!grn || !session?.accessToken) return;
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/grn/${params.id}/pdf`, {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
-      });
 
-      if (!response.ok) throw new Error("Failed to download PDF");
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `GRN-${grn.grn_number}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("PDF downloaded successfully");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to download PDF");
-    }
-  };
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -308,13 +407,6 @@ export default function GRNDetailPage() {
             <Printer className="h-4 w-4" />
             Print
           </Button>
-          <Button
-            onClick={downloadPDF}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
-          >
-            <Download className="h-4 w-4" />
-            Download PDF
-          </Button>
         </div>
       </div>
 
@@ -368,13 +460,19 @@ export default function GRNDetailPage() {
                       <TableCell className="pl-6 py-4">
                         <div className="font-bold text-foreground group-hover:text-emerald-600 transition-colors">{item.product?.name}</div>
                         <div className="flex flex-wrap items-center gap-2 mt-2">
-                          {item.variant && (
+                          {item.variant && item.variant.name && item.variant.name !== 'Default' && item.variant.name !== item.product?.name && (
                             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold px-2 py-0.5 rounded-md">
                               {item.variant.name}
                             </Badge>
                           )}
                           {item.batch_number && (
                             <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-md">BN: {item.batch_number}</span>
+                          )}
+                          {(item.variant?.barcode || item.variant?.sku) && (
+                            <span className="font-mono text-xs font-medium text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <span className="text-[9px] uppercase tracking-wider font-sans">Barcode:</span>
+                              <span className="font-semibold text-foreground">{item.variant.barcode || item.variant.sku}</span>
+                            </span>
                           )}
                           {item.expiry_date && (
                             <span className="text-xs font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">Exp: {format(new Date(item.expiry_date), "MMM yyyy")}</span>
@@ -467,6 +565,17 @@ export default function GRNDetailPage() {
 
           <Card className="border border-border/60 shadow-sm bg-background rounded-xl overflow-hidden">
             <CardContent className="p-6 space-y-4">
+              {grn.purchase_order && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground font-semibold text-xs uppercase tracking-wider">Purchase Order</span>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-bold text-xs py-1 px-2.5 rounded-md shadow-none">
+                      {grn.purchase_order.po_number}
+                    </Badge>
+                  </div>
+                  <Separator className="bg-border/60" />
+                </>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground font-semibold text-xs uppercase tracking-wider">Target Branch</span>
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold text-xs py-1 px-2.5 rounded-md shadow-none">
