@@ -276,9 +276,9 @@ export default function CardReconciliationPage() {
     }));
   }, [data]);
 
-  const printRef = useRef();
+  const printRef = useRef(null);
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: "Card_Reconciliation_Report",
   });
 

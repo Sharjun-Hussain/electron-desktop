@@ -60,8 +60,6 @@ export const CardReconcilePrintTemplate = React.forwardRef(({ data, filters, sta
               <th className="py-2 px-2 font-bold text-slate-600">Date/Time</th>
               <th className="py-2 px-2 font-bold text-slate-600">Invoice</th>
               <th className="py-2 px-2 font-bold text-slate-600">Card</th>
-              <th className="py-2 px-2 font-bold text-slate-600">Last 4</th>
-              <th className="py-2 px-2 font-bold text-slate-600">Auth Code</th>
               <th className="py-2 px-2 font-bold text-slate-600 text-right">Amount (LKR)</th>
               <th className="py-2 px-2 font-bold text-slate-600 text-center">Status</th>
             </tr>
@@ -72,8 +70,6 @@ export const CardReconcilePrintTemplate = React.forwardRef(({ data, filters, sta
                 <td className="py-2 px-2 text-slate-700">{item.date}</td>
                 <td className="py-2 px-2 font-medium">{item.invoice}</td>
                 <td className="py-2 px-2">{item.cardType}</td>
-                <td className="py-2 px-2 font-mono text-xs">{item.last4}</td>
-                <td className="py-2 px-2 font-mono text-xs">{item.authCode}</td>
                 <td className="py-2 px-2 text-right font-medium">{item.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                 <td className="py-2 px-2 text-center text-xs uppercase font-bold">{item.status}</td>
               </tr>
