@@ -1,31 +1,18 @@
 import React from "react";
 import { format } from "date-fns";
+import { ReportLayout } from "../ReportLayout";
 
-export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, stats, formatDateTime }, ref) => {
+export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, stats, formatDateTime, selectedColumns = {} }, ref) => {
   return (
-    // The ref must be attached to the actual DOM element inside the hidden container
-    <div ref={ref} className="p-10 font-sans text-slate-900 bg-white" style={{ width: "210mm", minHeight: "297mm" }}>
-      
-      {/* Print Styles: Removes margins and forces white background */}
-      <style type="text/css" media="print">
-        {`
-          @page { size: auto; margin: 0mm; } 
-          body { margin: 0; padding: 0; background-color: white; }
-        `}
-      </style>
-
-      {/* Header */}
-      <div className="border-b-2 border-slate-800 pb-6 mb-8 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold uppercase tracking-wider">Sales Report</h1>
-          <p className="text-sm text-slate-500 mt-1">Sales Summary</p>
-        </div>
-        <div className="text-right text-sm">
-          <p><strong>Generated:</strong> {format(new Date(), "PPP p")}</p>
-          <p><strong>Period:</strong> {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}` : format(dateRange.from, "PPP")) : "All Time"}</p>
-          <p><strong>Branch:</strong> {stats.branchName || "All Branches"}</p>
-        </div>
-      </div>
+    <div ref={ref}>
+      <ReportLayout 
+        title="Sales Report" 
+        subtitle="Sales Summary"
+        filters={{
+          'Period': dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}` : format(dateRange.from, "PPP")) : "All Time",
+          'Branch': stats.branchName || "All Branches"
+        }}
+      >
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4 mb-8">
@@ -51,18 +38,18 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
       <table className="w-full text-sm text-left border-collapse">
         <thead>
           <tr className="bg-slate-100 border-b border-slate-300">
-            <th className="py-2 px-2 font-bold">Date</th>
-            <th className="py-2 px-2 font-bold">Invoice</th>
-            <th className="py-2 px-2 font-bold">Customer</th>
+            {selectedColumns.executionDate !== false && <th className="py-2 px-2 font-bold">Date</th>}
+            {selectedColumns.reference !== false && <th className="py-2 px-2 font-bold">Invoice</th>}
+            {selectedColumns.customer !== false && <th className="py-2 px-2 font-bold">Customer</th>}
             <th className="py-2 px-2 font-bold">Batches</th>
-            <th className="py-2 px-2 font-bold">Type</th>
-            <th className="py-2 px-2 font-bold">Status</th>
-            <th className="py-2 px-2 text-right font-bold">Cost</th>
-            <th className="py-2 px-2 text-right font-bold">MRP</th>
-            <th className="py-2 px-2 text-right font-bold">Wholesale</th>
-            <th className="py-2 px-2 text-right font-bold">Selling</th>
-            <th className="py-2 px-2 text-right font-bold">Total</th>
-            <th className="py-2 px-2 text-right font-bold">Profit</th>
+            {selectedColumns.settlement !== false && <th className="py-2 px-2 font-bold">Type</th>}
+            {selectedColumns.settlement !== false && <th className="py-2 px-2 font-bold">Status</th>}
+            {selectedColumns.cost !== false && <th className="py-2 px-2 text-right font-bold">Cost</th>}
+            {selectedColumns.mrp !== false && <th className="py-2 px-2 text-right font-bold">MRP</th>}
+            {selectedColumns.wholesale !== false && <th className="py-2 px-2 text-right font-bold">Wholesale</th>}
+            {selectedColumns.selling !== false && <th className="py-2 px-2 text-right font-bold">Selling</th>}
+            {selectedColumns.netRevenue !== false && <th className="py-2 px-2 text-right font-bold">Total</th>}
+            {selectedColumns.profit !== false && <th className="py-2 px-2 text-right font-bold">Profit</th>}
           </tr>
         </thead>
         <tbody>
@@ -70,9 +57,9 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
             const isCredit = item.payment_status === 'unpaid' || item.payment_status === 'partially_paid';
             return (
             <tr key={index} className={`border-b border-slate-200 ${isCredit ? 'bg-amber-50' : ''}`}>
-              <td className="py-2 px-2">{formatDateTime ? formatDateTime(item.date) : (item.date ? format(new Date(item.date), "MMM dd, HH:mm") : "-")}</td>
-              <td className="py-2 px-2">{item.id || "-"}</td>
-              <td className="py-2 px-2">{item.customer || "Walk-in"}</td>
+              {selectedColumns.executionDate !== false && <td className="py-2 px-2">{formatDateTime ? formatDateTime(item.date) : (item.date ? format(new Date(item.date), "MMM dd, HH:mm") : "-")}</td>}
+              {selectedColumns.reference !== false && <td className="py-2 px-2">{item.id || "-"}</td>}
+              {selectedColumns.customer !== false && <td className="py-2 px-2">{item.customer || "Walk-in"}</td>}
               <td className="py-2 px-2 text-[9px]">
                  {item.batchDetails?.length > 0 
                     ? [...new Map(item.batchDetails.map(b => [b.batch_number, b])).values()]
@@ -80,12 +67,12 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
                         .join(', ') 
                     : '-'}
               </td>
-              <td className="py-2 px-2 uppercase text-[10px]">
+              {selectedColumns.settlement !== false && <td className="py-2 px-2 uppercase text-[10px]">
                 {item.payments && item.payments.length > 0 
                   ? item.payments.map(p => p.payment_method).join(", ")
                   : (item.type || "-")}
-              </td>
-              <td className="py-2 px-2 text-xs">
+              </td>}
+              {selectedColumns.settlement !== false && <td className="py-2 px-2 text-xs">
                 {isCredit ? (
                   <span className="text-amber-700 font-semibold">
                     {item.payment_status === 'unpaid' ? 'UNPAID' : 'PARTIAL'}
@@ -93,20 +80,20 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
                 ) : (
                   <span className="text-emerald-700">PAID</span>
                 )}
-              </td>
-              <td className="py-2 px-2 text-right">LKR {(item.total_cost || 0).toFixed(2)}</td>
-              <td className="py-2 px-2 text-right">LKR {(item.total_mrp || 0).toFixed(2)}</td>
-              <td className="py-2 px-2 text-right">LKR {(item.total_wholesale || 0).toFixed(2)}</td>
-              <td className="py-2 px-2 text-right">LKR {(item.total_selling_base || 0).toFixed(2)}</td>
-              <td className="py-2 px-2 text-right font-semibold">
+              </td>}
+              {selectedColumns.cost !== false && <td className="py-2 px-2 text-right">LKR {(item.total_cost || 0).toFixed(2)}</td>}
+              {selectedColumns.mrp !== false && <td className="py-2 px-2 text-right">LKR {(item.total_mrp || 0).toFixed(2)}</td>}
+              {selectedColumns.wholesale !== false && <td className="py-2 px-2 text-right">LKR {(item.total_wholesale || 0).toFixed(2)}</td>}
+              {selectedColumns.selling !== false && <td className="py-2 px-2 text-right">LKR {(item.total_selling_base || 0).toFixed(2)}</td>}
+              {selectedColumns.netRevenue !== false && <td className="py-2 px-2 text-right font-semibold">
                 LKR {(item.total || 0).toFixed(2)}
                 {isCredit && (
                   <div className="text-[10px] text-amber-600 font-normal">
                     Due: LKR {(item.total - (item.paid_amount || 0)).toFixed(2)}
                   </div>
                 )}
-              </td>
-              <td className="py-2 px-2 text-right font-semibold text-emerald-700">LKR {(item.total - (item.total_cost || 0)).toFixed(2)}</td>
+              </td>}
+              {selectedColumns.profit !== false && <td className="py-2 px-2 text-right font-semibold text-emerald-700">LKR {(item.total - (item.total_cost || 0)).toFixed(2)}</td>}
             </tr>
             );
           })}
@@ -129,12 +116,12 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
         <div className="w-[400px] mb-8 space-y-2 text-sm">
           <div className="flex justify-between items-center text-slate-600 mb-4 pb-2 border-b border-slate-200">
              <span>Cash in hand:</span>
-             <span>Rs {(stats.cashInHand ?? stats.paymentAmounts?.Cash ?? stats.paymentAmounts?.cash ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {(stats.paymentAmounts?.Cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="flex justify-between items-center text-slate-600">
              <span>Cash Payment:</span>
-             <span>Rs {(stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {(stats.paymentAmounts?.Cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between items-center text-slate-600">
              <span>Cheque Payment:</span>
@@ -176,7 +163,7 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
 
           <div className="flex justify-between items-center text-slate-800 font-semibold mb-4">
              <span>Total Payment</span>
-             <span>Rs {((stats.totalSales || 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+             <span>Rs {(Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="flex justify-between items-center text-slate-600 mb-4">
@@ -227,8 +214,8 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
           <p><span className="font-medium text-slate-800">Email:</span> {stats.email || "admin@example.com"}</p>
           <p><span className="font-medium text-slate-800">Business Location:</span> {stats.branchName || "All Branches"}</p>
         </div>
-
-      </div>
+        </div>
+      </ReportLayout>
     </div>
   );
 });

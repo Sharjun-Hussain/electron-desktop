@@ -211,32 +211,39 @@ export default function DailySalesSummaryPage() {
     useAppSettings();
 
   const [isSetupComplete, setIsSetupComplete] = useState(false);
-  const [selectedColumns, setSelectedColumns] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("dailySalesReportColumns");
-      if (saved) return JSON.parse(saved);
-    }
-    return {
-      executionDate: true,
-      reference: true,
-      source: true,
-      customer: true,
-      cost: true,
-      mrp: true,
-      wholesale: true,
-      selling: true,
-      netRevenue: true,
-      profit: true,
-      settlement: true,
-      cashier: true,
-    };
-  });
+  const defaultColumns = {
+    executionDate: true,
+    reference: true,
+    source: true,
+    customer: true,
+    cost: true,
+    mrp: true,
+    wholesale: true,
+    selling: true,
+    netRevenue: true,
+    profit: true,
+    settlement: true,
+    cashier: true,
+  };
+
+  const [selectedColumns, setSelectedColumns] = useState(defaultColumns);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    setIsClient(true);
+    const saved = localStorage.getItem("dailySalesReportColumns");
+    if (saved) {
+      try {
+        setSelectedColumns(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
       localStorage.setItem("dailySalesReportColumns", JSON.stringify(selectedColumns));
     }
-  }, [selectedColumns]);
+  }, [selectedColumns, isClient]);
 
   const toggleColumn = (key) => {
     setSelectedColumns((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -723,6 +730,7 @@ export default function DailySalesSummaryPage() {
             email: session?.user?.email || "admin@example.com"
           }}
           formatDateTime={formatDateTime}
+          selectedColumns={selectedColumns}
         />
       </div>
 
