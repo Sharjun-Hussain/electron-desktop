@@ -408,11 +408,16 @@ export default function DirectGRNPage() {
           allProducts.forEach(product => {
             if (product.variants && product.variants.length > 0) {
               product.variants.forEach(variant => {
+                const variantLabel = variant.name || variant.sku || variant.barcode || 'Default';
+                const finalName = (variant.name && variant.name === product.name) || variantLabel === 'Default'
+                  ? product.name
+                  : `${product.name} - ${variantLabel}`;
+
                 flattened.push({
                   ...variant,
                   product_id: product.id,
                   variant_id: variant.id,
-                  name: `${product.name} - ${variant.name || variant.sku || variant.barcode || 'Default'}`,
+                  name: finalName,
                   parentProduct: product
                 });
               });
@@ -1004,16 +1009,24 @@ export default function DirectGRNPage() {
                             const p = products.find(prod => String(prod.id || prod.product_id) === String(pId));
                             if (!p) return null;
                             return (
-                              <div className="mt-2 text-[11px] text-muted-foreground font-medium flex items-center gap-1.5 px-1">
-                                <span>Current Stock:</span>
-                                <span className={cn(
-                                  "px-1.5 py-0.5 rounded font-bold",
-                                  (p.stock_quantity || 0) <= 0 
-                                    ? "bg-red-500/10 text-red-600 dark:text-red-400" 
-                                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                )}>
-                                  {p.stock_quantity || 0}
-                                </span>
+                              <div className="mt-2 text-[11px] text-muted-foreground font-medium flex items-center justify-between px-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span>Current Stock:</span>
+                                  <span className={cn(
+                                    "px-1.5 py-0.5 rounded font-bold",
+                                    (p.stock_quantity || 0) <= 0 
+                                      ? "bg-red-500/10 text-red-600 dark:text-red-400" 
+                                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  )}>
+                                    {p.stock_quantity || 0}
+                                  </span>
+                                </div>
+                                {(p.barcode || p.sku) && (
+                                  <span className="font-mono bg-muted/80 px-1.5 py-0.5 rounded flex items-center gap-1 text-muted-foreground opacity-100">
+                                    <span className="text-[9px] uppercase tracking-wider font-sans">Barcode:</span>
+                                    <span className="font-semibold text-foreground">{p.barcode || p.sku}</span>
+                                  </span>
+                                )}
                               </div>
                             );
                           })()}
