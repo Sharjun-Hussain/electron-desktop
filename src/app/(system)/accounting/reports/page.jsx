@@ -15,9 +15,12 @@ import { useAppSettings } from '@/app/hooks/useAppSettings';
 import { useReactToPrint } from "react-to-print";
 import { useRef } from 'react';
 import { TrialBalanceTemplate, ProfitLossTemplate, BalanceSheetTemplate } from '@/components/Template/accounting/FinancialReportsTemplates';
+import { usePermission } from "@/hooks/use-permission";
+import { AccessDenied } from "@/components/general/access-denied";
 
 export default function FinancialReportsPage() {
     const { data: session } = useSession();
+    const { hasPermission, isLoaded } = usePermission();
     const { business, formatCurrency } = useAppSettings();
     const [activeTab, setActiveTab] = useState('trial-balance');
     const [loading, setLoading] = useState(true);
@@ -72,6 +75,12 @@ export default function FinancialReportsPage() {
         contentRef: bsRef,
         documentTitle: `Balance_Sheet_${format(new Date(), 'yyyyMMdd')}`,
     });
+
+    const hasAccess = hasPermission('finance:view') || hasPermission('finance:manage');
+
+    if (isLoaded && !hasAccess) {
+        return <AccessDenied isAccessDenied={true} />;
+    }
 
     if (loading) {
         return (

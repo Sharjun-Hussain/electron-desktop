@@ -203,7 +203,7 @@ export function CustomSidebar() {
           { title: t("sidebar.customer_ledgers"), url: "/accounting/customer-ledgers", icon: UserCheck, requiredPermission: PERMISSIONS.FINANCE_VIEW, moduleKey: "accounting_ledger_customer" },
           { title: t("sidebar.supplier_ledgers"), url: "/accounting/supplier-ledgers", icon: UserPlus, requiredPermission: PERMISSIONS.FINANCE_VIEW, moduleKey: "accounting_ledger_supplier" },
           { title: t("sidebar.cheque_management"), url: "/cheques", icon: Ticket, requiredPermission: PERMISSIONS.FINANCE_VIEW, moduleKey: "accounting_basic" },
-          { title: t("sidebar.financial_reports"), url: "/accounting/reports", icon: PieChart, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "accounting_advanced" },
+          { title: t("sidebar.financial_reports"), url: "/accounting/reports", icon: PieChart, requiredPermission: PERMISSIONS.FINANCE_VIEW, moduleKey: "accounting_advanced" },
         ],
       },
       {

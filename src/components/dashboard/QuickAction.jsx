@@ -12,11 +12,13 @@ import {
   Barcode,
   CreditCard,
   Settings,
+  Banknote,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
+import { usePermission } from "@/hooks/use-permission";
 
 const quickActions = [
   {
@@ -124,13 +126,25 @@ const colorVariants = {
 
 export default function QuickActions() {
   const { business } = useAppSettings();
+  const { hasPermission } = usePermission();
   const isAccountingEnabled = business?.accounting_enabled !== false && business?.subscription_tier !== 'Essential';
+  const hasFinanceAccess = hasPermission('finance:view') || hasPermission('finance:manage');
 
-  const visibleActions = quickActions.filter(action => {
+  const visibleActions = quickActions.map(action => {
     if (action.id === "financial-reports") {
-      return isAccountingEnabled;
+      if (isAccountingEnabled && hasFinanceAccess) {
+        return action;
+      }
+      return {
+        id: "expenses",
+        name: "Expenses",
+        icon: Banknote,
+        description: "Manage Costs",
+        href: "/expenses",
+        color: "rose",
+      };
     }
-    return true;
+    return action;
   });
 
   return (

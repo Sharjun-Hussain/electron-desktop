@@ -21,9 +21,12 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
+import { usePermission } from "@/hooks/use-permission";
+import { AccessDenied } from "@/components/general/access-denied";
 
 export default function ChartOfAccountsPage() {
     const { data: session } = useSession();
+    const { hasPermission, isLoaded } = usePermission();
     
     const ACCOUNT_TYPE_GUIDE = {
         asset: {
@@ -184,6 +187,12 @@ export default function ChartOfAccountsPage() {
             default: return <Plus className="h-4 w-4 text-slate-500" />;
         }
     };
+
+    const hasAccess = hasPermission('finance:view') || hasPermission('finance:manage');
+
+    if (isLoaded && !hasAccess) {
+        return <AccessDenied isAccessDenied={true} />;
+    }
 
     return (
         <div className="p-6 space-y-6">
