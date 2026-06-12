@@ -374,9 +374,7 @@ export default function SalesHistory() {
     },
     {
       accessorKey: "searchText",
-      header: "Search",
-      enableHiding: true,
-      cell: () => null,
+      enableHiding: false,
     },
     {
       accessorKey: "payment_method",
@@ -486,6 +484,7 @@ export default function SalesHistory() {
         loadingSkeleton={<SalesHistorySkeleton />}
         searchPlaceholder="Filter by Invoice, Customer, or Branch..."
         searchColumn="searchText"
+        initialColumnVisibility={{ searchText: false }}
         onSearchChange={handleSearchChange}
         onExportClick={null}
         exportData={exportData}
