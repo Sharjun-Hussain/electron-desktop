@@ -136,7 +136,7 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                 <div className="flex justify-between items-center mb-5">
                   <span className="text-sm font-bold text-slate-700">Net Collected</span>
                   <span className="text-lg font-black text-slate-900">
-                    Rs {(Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    Rs {((Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)) - (stats.totalRefund || 0) - (stats.totalExpense || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 
