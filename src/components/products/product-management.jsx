@@ -93,7 +93,7 @@ const ProductDetailSheet = ({ product, isOpen, onClose }) => {
               <Package className="h-10 w-10 text-emerald-600" />
             </div>
             <div className="space-y-1 overflow-hidden">
-              <SheetTitle className="text-2xl font-bold text-foreground tracking-tight uppercase truncate">
+              <SheetTitle className="text-2xl font-bold text-foreground tracking-tight uppercase leading-tight">
                 {product.name}
               </SheetTitle>
               <SheetDescription className="text-sm font-medium opacity-60 flex items-center gap-2">
