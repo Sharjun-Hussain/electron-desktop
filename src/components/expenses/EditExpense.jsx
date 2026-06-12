@@ -217,8 +217,8 @@ export default function EditExpense({ id }) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+              <Card className="rounded-xl border border-border/50 shadow-sm overflow-hidden">
+                <CardHeader className="border-b bg-muted/50 px-6 py-4">
                   <CardTitle className="text-sm font-medium text-foreground">
                     Expense Information
                   </CardTitle>
@@ -268,7 +268,7 @@ export default function EditExpense({ id }) {
                         <FormLabel className="text-sm font-medium">Category</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-9 border-gray-200">
+                            <SelectTrigger className="h-9 border-input">
                               <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                           </FormControl>
@@ -295,7 +295,7 @@ export default function EditExpense({ id }) {
                           <Input 
                             type="number" 
                             step="0.01" 
-                            className="h-9 border-gray-200 shadow-none focus-visible:ring-emerald-500"
+                            className="h-9 border-input shadow-none focus-visible:ring-emerald-500"
                             {...field} 
                           />
                         </FormControl>
@@ -355,7 +355,7 @@ export default function EditExpense({ id }) {
                       <FormItem className="md:col-span-2">
                         <FormLabel className="text-sm font-medium">Reference Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="Invoice #, Receipt #" className="h-9 border-gray-200 shadow-none focus-visible:ring-emerald-500" {...field} />
+                          <Input placeholder="Invoice #, Receipt #" className="h-9 border-input shadow-none focus-visible:ring-emerald-500" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -370,7 +370,7 @@ export default function EditExpense({ id }) {
                         <FormLabel className="text-sm font-medium">Expenditure Note</FormLabel>
                         <FormControl>
                           <Textarea 
-                            className="resize-none min-h-[80px] border-gray-200 bg-background shadow-none focus-visible:ring-emerald-500"
+                            className="resize-none min-h-[80px] border-input bg-background shadow-none focus-visible:ring-emerald-500"
                             {...field} 
                           />
                         </FormControl>
@@ -383,8 +383,8 @@ export default function EditExpense({ id }) {
             </div>
 
             <div className="space-y-6">
-              <div className="bg-emerald-50/30 border border-emerald-100 rounded-xl p-6 space-y-4">
-                <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-wider border-b border-emerald-100 pb-2">
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 space-y-4">
+                <h3 className="text-xs font-semibold text-primary uppercase tracking-wider border-b border-primary/20 pb-2">
                   Summary
                 </h3>
                 <div className="space-y-2">
@@ -396,7 +396,7 @@ export default function EditExpense({ id }) {
                     <span className="text-muted-foreground">Tax</span>
                     <span className="font-semibold text-foreground">LKR 0.00</span>
                   </div>
-                  <div className="pt-2 border-t border-emerald-100 flex justify-between items-center">
+                  <div className="pt-2 border-t border-primary/20 flex justify-between items-center">
                     <span className="font-bold text-foreground">Total</span>
                     <span className="text-xl font-bold text-red-600 tabular-nums">LKR {form.watch("amount")?.toLocaleString() || "0.00"}</span>
                   </div>
@@ -494,8 +494,8 @@ export default function EditExpense({ id }) {
               </Card>
 
               {initialData?.receipt_image && (
-                <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                   <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+                <Card className="rounded-xl border border-border/50 shadow-sm overflow-hidden">
+                   <CardHeader className="border-b bg-muted/50 px-6 py-4">
                     <CardTitle className="text-sm font-semibold text-foreground">
                       Current Receipt
                     </CardTitle>
@@ -504,7 +504,7 @@ export default function EditExpense({ id }) {
                     <img 
                       src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${initialData.receipt_image}`} 
                       alt="Current receipt" 
-                      className="rounded-lg border border-gray-100 w-full h-40 object-cover"
+                      className="rounded-lg border border-border/50 w-full h-40 object-cover"
                     />
                   </CardContent>
                 </Card>
