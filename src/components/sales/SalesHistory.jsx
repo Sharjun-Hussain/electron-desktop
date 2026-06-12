@@ -3,7 +3,7 @@
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { format, subDays, startOfMonth } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfDay, endOfDay } from "date-fns";
 import {
   Printer,
   Download,
@@ -317,6 +317,35 @@ export default function SalesHistory() {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
+  const setDateShortcut = useCallback((preset) => {
+    const today = new Date();
+    let range = { from: today, to: today };
+    switch (preset) {
+      case 'today':
+        range = { from: startOfDay(today), to: endOfDay(today) };
+        break;
+      case 'yesterday':
+        const yesterday = subDays(today, 1);
+        range = { from: startOfDay(yesterday), to: endOfDay(yesterday) };
+        break;
+      case 'last7':
+        range = { from: startOfDay(subDays(today, 7)), to: endOfDay(today) };
+        break;
+      case 'last30':
+        range = { from: startOfDay(subDays(today, 30)), to: endOfDay(today) };
+        break;
+      case 'thisMonth':
+        range = { from: startOfMonth(today), to: endOfMonth(today) };
+        break;
+      case 'thisYear':
+        range = { from: startOfYear(today), to: endOfYear(today) };
+        break;
+    }
+    setInternalDate(range);
+    setDate(range);
+    setPagination(p => ({ ...p, page: 1 }));
+  }, []);
+
   const handleSearchChange = useCallback((v) => {
     setSearchQuery(v);
     setPagination(p => ({ ...p, page: 1 }));
@@ -549,7 +578,15 @@ export default function SalesHistory() {
                       <ChevronDown className="ml-2 h-4 w-4 opacity-50 shrink-0" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 flex flex-col sm:flex-row" align="start">
+                    <div className="flex flex-row sm:flex-col gap-1 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-border/50 p-3 bg-gray-50/50 dark:bg-muted/10 overflow-x-auto sm:min-w-[140px]">
+                      <Button variant="ghost" size="sm" className="justify-start text-xs font-medium h-8 shrink-0" onClick={() => setDateShortcut('today')}>Today</Button>
+                      <Button variant="ghost" size="sm" className="justify-start text-xs font-medium h-8 shrink-0" onClick={() => setDateShortcut('yesterday')}>Yesterday</Button>
+                      <Button variant="ghost" size="sm" className="justify-start text-xs font-medium h-8 shrink-0" onClick={() => setDateShortcut('last7')}>Last 7 Days</Button>
+                      <Button variant="ghost" size="sm" className="justify-start text-xs font-medium h-8 shrink-0" onClick={() => setDateShortcut('last30')}>Last 30 Days</Button>
+                      <Button variant="ghost" size="sm" className="justify-start text-xs font-medium h-8 shrink-0" onClick={() => setDateShortcut('thisMonth')}>This Month</Button>
+                      <Button variant="ghost" size="sm" className="justify-start text-xs font-medium h-8 shrink-0" onClick={() => setDateShortcut('thisYear')}>This Year</Button>
+                    </div>
                     <Calendar
                       initialFocus
                       mode="range"
