@@ -24,7 +24,8 @@ import {
   Package2,
   Filter,
   FileText,
-  WifiOff
+  WifiOff,
+  RotateCcw
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { useRef } from "react";
@@ -49,6 +50,7 @@ import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
 import { exportToCSV } from "@/lib/exportUtils";
 import SaleDetailSheet from "@/components/pos/SaleDetailSheet";
+import SalesReturnDialog from "@/components/pos/SalesReturnDialog";
 import { StatusBadge } from "../ui/status-badge";
 import { ResourceManagementLayout } from "@/components/general/resource-management-layout";
 import { Badge } from "@/components/ui/badge";
@@ -108,6 +110,8 @@ export default function SalesHistory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSale, setSelectedSale] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedReturnSale, setSelectedReturnSale] = useState(null);
+  const [isReturnOpen, setIsReturnOpen] = useState(false);
 
   // --- FILTER METADATA ---
   const [suppliers, setSuppliers] = useState([]);
@@ -260,6 +264,11 @@ export default function SalesHistory() {
     setIsDetailOpen(open);
   };
 
+  const handleOpenReturn = (sale) => {
+    setSelectedReturnSale(sale);
+    setIsReturnOpen(true);
+  };
+
   // --- REPRINT LOGIC ---
   const [printableSale, setPrintableSale] = useState(null);
   const printRef = useRef(null);
@@ -409,6 +418,15 @@ export default function SalesHistory() {
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
+            onClick={() => handleOpenReturn(row.original)}
+            title="Return Sale"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -746,6 +764,13 @@ export default function SalesHistory() {
         onOpenChange={handleCloseDetails}
         sale={selectedSale}
         onReprint={handleReprint}
+      />
+
+      <SalesReturnDialog
+        open={isReturnOpen}
+        onOpenChange={setIsReturnOpen}
+        sale={selectedReturnSale}
+        onSuccess={() => fetchSales()}
       />
 
       {/* Hidden Reprint Template */}
