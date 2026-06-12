@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,12 +87,16 @@ export const getExpenseColumns = ({ onEdit, onDelete, onView }) => [
       const expense = row.original;
       return (
         <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-emerald-500/5 transition-all" onClick={() => onView(expense)}>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-emerald-500/5 transition-all text-[#10b981]" onClick={() => onEdit(expense)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
+          <Link href={`/expenses/${expense.id}`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-emerald-500/5 transition-all">
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </Link>
+          <Link href={`/expenses/${expense.id}/edit`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-emerald-500/5 transition-all text-[#10b981]">
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </Link>
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-red-500/5 transition-all text-red-500" onClick={() => onDelete(expense.id)}>
             <Trash2 className="h-4 w-4" />
           </Button>
