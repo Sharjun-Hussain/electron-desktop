@@ -381,13 +381,13 @@ export const SaleListDialog = memo(({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-7xl w-[95vw] h-[85vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-4 py-3 flex-row items-center justify-between space-y-0">
+      <DialogContent className="!max-w-none w-screen h-[100dvh] max-h-screen m-0 border-none rounded-none flex flex-col p-0 overflow-hidden !translate-y-[-50%] !translate-x-[-50%]">
+        <DialogHeader className="p-6 py-4 flex-row items-center justify-between space-y-0">
           <div>
-            <DialogTitle className="text-lg font-black flex items-center gap-2 text-foreground leading-none mb-1">
-              <List className="h-5 w-5 text-emerald-600" /> {t("pos.recent_completed_sales_title")}
+            <DialogTitle className="text-2xl font-black flex items-center gap-2 text-foreground leading-none mb-1">
+              <List className="h-6 w-6 text-emerald-600" /> {t("pos.recent_completed_sales_title")}
             </DialogTitle>
-            <DialogDescription className="text-[10px] font-bold opacity-60 leading-none">
+            <DialogDescription className="text-sm font-medium opacity-70 mt-2">
               {t("pos.recent_completed_sales_desc")} — Scan receipt barcode to initiate return instantly.
             </DialogDescription>
           </div>
@@ -395,10 +395,10 @@ export const SaleListDialog = memo(({
       <Separator />
       <div className="p-2 px-4 bg-muted/20 border-b border-border/50 flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search invoice, customer..."
-            className="pl-8 h-7 text-[10px] bg-white dark:bg-slate-950 border-border/50 rounded-md"
+            className="pl-9 h-10 text-sm bg-white dark:bg-slate-950 border-border/50 rounded-md"
             value={filterState.search}
             onChange={(e) => setFilterState(prev => ({ ...prev, search: e.target.value }))}
           />
@@ -415,7 +415,7 @@ export const SaleListDialog = memo(({
               key={d.id}
               variant={filterState.date === d.id ? "secondary" : "ghost"}
               size="sm"
-              className={clsx("h-5 px-2 text-[8px] font-bold uppercase transition-all", 
+              className={clsx("h-8 px-3 text-xs font-bold uppercase transition-all", 
                 filterState.date === d.id ? "bg-emerald-500 text-white shadow-sm" : "text-muted-foreground")}
               onClick={() => setFilterState(prev => ({ ...prev, date: d.id }))}
             >
@@ -425,9 +425,9 @@ export const SaleListDialog = memo(({
         </div>
 
         {filterState.isFilteredByProduct && (
-          <Button variant="outline" size="sm" className="h-7 text-[9px] font-bold border-emerald-500/50 text-emerald-600"
+          <Button variant="outline" size="sm" className="h-8 text-xs font-bold border-emerald-500/50 text-emerald-600"
             onClick={() => { setLocalSales(salesData); setFilterState(prev => ({ ...prev, isFilteredByProduct: false, date: "all", search: "" })); }}>
-            <RotateCcw className="h-3 w-3 mr-1" /> Clear
+            <RotateCcw className="h-4 w-4 mr-1" /> Clear
           </Button>
         )}
       </div>
@@ -440,44 +440,44 @@ export const SaleListDialog = memo(({
           <Table>
             <TableHeader className="bg-muted/30 sticky top-0 z-10">
               <TableRow className="hover:bg-transparent border-none">
-                <TableHead className="w-[140px] px-4 py-2 font-bold text-[10px] text-foreground cursor-pointer" onClick={() => toggleSort("invoice_number")}>
+                <TableHead className="w-[160px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("invoice_number")}>
                   {t("pos.invoice_no_col")} {filterState.sortKey === "invoice_number" && (filterState.sortDir === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead className="w-[150px] px-4 py-2 font-bold text-[10px] text-foreground cursor-pointer" onClick={() => toggleSort("created_at")}>
+                <TableHead className="w-[180px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("created_at")}>
                   {t("pos.date_time_col")} {filterState.sortKey === "created_at" && (filterState.sortDir === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.customer_col")}</TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground text-center">{t("pos.items_col")}</TableHead>
-                <TableHead className="px-4 py-2 text-right font-bold text-[10px] text-foreground cursor-pointer" onClick={() => toggleSort("total")}>
+                <TableHead className="px-4 py-3 font-bold text-sm text-foreground">{t("pos.customer_col")}</TableHead>
+                <TableHead className="px-4 py-3 font-bold text-sm text-foreground text-center">{t("pos.items_col")}</TableHead>
+                <TableHead className="px-4 py-3 text-right font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("total")}>
                   {t("pos.total_col")} {filterState.sortKey === "total" && (filterState.sortDir === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead className="px-4 py-2 text-center font-bold text-[10px] text-foreground">{t("pos.status_col")}</TableHead>
-                <TableHead className="px-4 py-2 text-right font-bold text-[10px] text-foreground">{t("pos.actions_col")}</TableHead>
+                <TableHead className="px-4 py-3 text-center font-bold text-sm text-foreground">{t("pos.status_col")}</TableHead>
+                <TableHead className="px-4 py-3 text-right font-bold text-sm text-foreground">{t("pos.actions_col")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSortedSales.map((sale) => (
                 <TableRow key={sale.id} className="group hover:bg-emerald-50/30 transition-colors">
-                  <TableCell className="px-6 font-mono font-medium text-emerald-600">{sale.invoice_number}</TableCell>
-                  <TableCell className="px-6 text-muted-foreground text-xs">{new Date(sale.created_at).toLocaleString()}</TableCell>
-                  <TableCell className="px-6">
+                  <TableCell className="px-6 py-4 font-mono font-bold text-emerald-600 text-sm">{sale.invoice_number}</TableCell>
+                  <TableCell className="px-6 py-4 text-muted-foreground text-sm">{new Date(sale.created_at).toLocaleString()}</TableCell>
+                  <TableCell className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-foreground">{sale.customer?.name || t("pos.walk_in")}</span>
-                      <span className="text-[10px] text-muted-foreground">{sale.customer?.phone || t("pos.no_phone")}</span>
+                      <span className="font-bold text-foreground text-sm">{sale.customer?.name || t("pos.walk_in")}</span>
+                      <span className="text-xs text-muted-foreground">{sale.customer?.phone || t("pos.no_phone")}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6">
-                    <SaleItemsHoverCard sale={sale} accentClass="bg-emerald-500/10 text-emerald-500 group-hover/items:bg-emerald-600" />
+                  <TableCell className="px-6 py-4 text-center">
+                    <SaleItemsHoverCard sale={sale} accentClass="bg-emerald-500/10 text-emerald-500 group-hover/items:bg-emerald-600 text-xs px-2 py-1" />
                   </TableCell>
-                  <TableCell className="px-6 text-right">
-                    <span className="font-bold text-foreground">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
+                  <TableCell className="px-6 py-4 text-right">
+                    <span className="font-bold text-foreground text-base">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
                   </TableCell>
-                  <TableCell className="px-6 text-center">
+                  <TableCell className="px-6 py-4 text-center">
                     {sale.isOffline ? (
                       <Badge 
                         variant="outline" 
                         className={clsx(
-                          "h-5 px-2 border-none text-[10px] font-black animate-pulse cursor-help",
+                          "px-3 py-1 border-none text-xs font-black animate-pulse cursor-help",
                           sale.syncStatus === 'failed' ? "bg-red-500 text-white" : "bg-amber-500 text-white"
                         )}
                         title={sale.syncError ? `Sync Failed: ${sale.syncError}` : "Waiting for internet to sync..."}
@@ -485,20 +485,27 @@ export const SaleListDialog = memo(({
                         {sale.syncStatus === 'failed' ? "ERROR" : "LOCAL"}
                       </Badge>
                     ) : sale.status === 'draft' ? (
-                      <Badge variant="outline" className="h-5 px-2 bg-amber-50 text-amber-700 border-amber-100 text-[10px] font-bold">
+                      <Badge variant="outline" className="px-3 py-1 bg-amber-50 text-amber-700 border-amber-100 text-xs font-bold">
                         HELD
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="h-5 px-2 bg-green-50 text-green-700 border-green-100 text-[10px] font-bold">
-                        {sale.payment_status}
-                      </Badge>
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge variant="outline" className="px-3 py-1 bg-green-50 text-green-700 border-green-100 text-xs font-bold uppercase">
+                          {sale.payment_status}
+                        </Badge>
+                        {sale.payment_method && (
+                          <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">
+                            {sale.payment_method}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </TableCell>
-                  <TableCell className="px-6 text-right">
-                    <div className="flex justify-end gap-2">
+                  <TableCell className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-3">
                       {sale.isOffline && (
                         <Button size="sm" variant="ghost"
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          className="h-10 w-10 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                           onClick={async () => {
                             if (confirm("Delete this offline sale? It will not be synced to the cloud.")) {
                               await db.pendingSales.delete(parseInt(sale.id.replace('pending-', '')));
@@ -506,19 +513,19 @@ export const SaleListDialog = memo(({
                             }
                           }}
                           title="Delete Offline Sale">
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </Button>
                       )}
                       <Button size="sm" variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-orange-600 hover:bg-orange-50"
+                        className="h-10 w-10 p-0 text-muted-foreground hover:text-orange-600 hover:bg-orange-50"
                         onClick={() => { setSelectedReturnSale(sale); setIsReturnDialogOpen(true); }}
                         title={t("pos.sales_return")}>
-                        <RotateCcw className="h-4 w-4" />
+                        <RotateCcw className="h-5 w-5" />
                       </Button>
                       <Button size="sm" variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+                        className="h-10 w-10 p-0 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
                         onClick={() => setPrintableSale(sale)} title={t("pos.reprint_invoice")}>
-                        <Printer className="h-4 w-4" />
+                        <Printer className="h-5 w-5" />
                       </Button>
                     </div>
                   </TableCell>

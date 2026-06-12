@@ -1281,7 +1281,7 @@ export default function ClassicPosPage() {
 
       {isCalculatorOpen && <Calculator onClose={() => setIsCalculatorOpen(false)} />}
 
-      <ReturnDialogWrapper isOpen={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}
+      <ReturnDialogWrapper isOpen={isReturnDialogOpen} onOpenChange={(open) => { setIsReturnDialogOpen(open); if (!open) setIsSaleListOpen(true); }}
         sale={selectedReturnSale} onSuccess={() => fetchSales("completed")} />
 
       <SaleDetailWrapper isOpen={isDetailOpen} onOpenChange={setIsDetailOpen}

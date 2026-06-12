@@ -151,7 +151,7 @@ export default function SalesReturnDialog({ open, onOpenChange, sale, onSuccess 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-7xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="!max-w-none w-screen h-[100dvh] max-h-screen m-0 border-none rounded-none flex flex-col p-0 overflow-hidden !translate-y-[-50%] !translate-x-[-50%]">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <RotateCcw className="h-5 w-5 text-orange-600" />

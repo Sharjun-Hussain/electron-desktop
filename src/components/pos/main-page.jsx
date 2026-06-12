@@ -754,7 +754,7 @@ export default function PosPage() {
       <VariantSelectorDialog isOpen={activeDialog === 'variants'} onOpenChange={(open) => setActiveDialog(open ? 'variants' : null)}
         product={selectedProductForVariants} onSelect={handleAddToCart} />
 
-      <ReturnDialogWrapper isOpen={activeDialog === 'return'} onOpenChange={(open) => setActiveDialog(open ? 'return' : null)}
+      <ReturnDialogWrapper isOpen={activeDialog === 'return'} onOpenChange={(open) => setActiveDialog(open ? 'return' : 'saleList')}
         sale={selectedReturnSale} onSuccess={() => fetchSales("completed")} />
 
       <SaleDetailWrapper isOpen={activeDialog === 'detail'} onOpenChange={(open) => setActiveDialog(open ? 'detail' : null)}
