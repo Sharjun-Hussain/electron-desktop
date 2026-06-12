@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useReactToPrint } from "react-to-print";
 import {
   Bar,
@@ -226,7 +227,17 @@ export default function SalesByProductPage() {
   const { formatCurrency } = useAppSettings();
 
   // --- STATES ---
-  const [isSetupComplete, setIsSetupComplete] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isSetupComplete = searchParams.get('view') === 'generated';
+  const setIsSetupComplete = (val) => {
+    if (val) {
+      router.push(`${pathname}?view=generated`);
+    } else {
+      router.push(pathname);
+    }
+  };
   const [date, setDate] = useState({
     from: startOfDay(new Date()),
     to: endOfDay(new Date()),
@@ -249,6 +260,7 @@ export default function SalesByProductPage() {
 
   const [selectedColumns, setSelectedColumns] = useState(defaultColumns);
   const [isClient, setIsClient] = useState(false);
+  const [isStateRestored, setIsStateRestored] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -260,6 +272,31 @@ export default function SalesByProductPage() {
         console.error("Failed to parse saved columns", e);
       }
     }
+
+    const savedParams = sessionStorage.getItem("productSalesReportParams");
+    if (savedParams) {
+      try {
+        const parsed = JSON.parse(savedParams);
+        if (parsed.date) {
+            setDate({
+                from: parsed.date.from ? new Date(parsed.date.from) : null,
+                to: parsed.date.to ? new Date(parsed.date.to) : null,
+            });
+        }
+        if (parsed.activePreset) setActivePreset(parsed.activePreset);
+        if (parsed.store) setStore(parsed.store);
+        if (parsed.user) setUser(parsed.user);
+        if (parsed.selectedMainCategories) setSelectedMainCategories(parsed.selectedMainCategories);
+        if (parsed.selectedSubCategories) setSelectedSubCategories(parsed.selectedSubCategories);
+        if (parsed.selectedBrands) setSelectedBrands(parsed.selectedBrands);
+        if (parsed.selectedSuppliers) setSelectedSuppliers(parsed.selectedSuppliers);
+        if (parsed.selectedBatches) setSelectedBatches(parsed.selectedBatches);
+        if (parsed.searchQuery) setSearchQuery(parsed.searchQuery);
+      } catch (e) {
+        console.error("Failed to restore form params", e);
+      }
+    }
+    setIsStateRestored(true);
   }, []);
 
   useEffect(() => {
@@ -270,6 +307,8 @@ export default function SalesByProductPage() {
       );
     }
   }, [selectedColumns, isClient]);
+
+
 
   const toggleColumn = (key) => {
     setSelectedColumns((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -292,6 +331,17 @@ export default function SalesByProductPage() {
   const [suppliersOpen, setSuppliersOpen] = useState(false);
   const [selectedBatches, setSelectedBatches] = useState([]);
   const [batchesOpen, setBatchesOpen] = useState(false);
+
+  useEffect(() => {
+    if (isStateRestored) {
+      const stateToSave = {
+        date, activePreset, store, user, selectedMainCategories, 
+        selectedSubCategories, selectedBrands, selectedSuppliers, 
+        selectedBatches, searchQuery
+      };
+      sessionStorage.setItem("productSalesReportParams", JSON.stringify(stateToSave));
+    }
+  }, [date, activePreset, store, user, selectedMainCategories, selectedSubCategories, selectedBrands, selectedSuppliers, selectedBatches, searchQuery, isStateRestored]);
 
   // --- METADATA STATES ---
   const [categories, setCategories] = useState([]);
@@ -498,13 +548,13 @@ export default function SalesByProductPage() {
 
   // Fetch report only if setup is complete
   useEffect(() => {
-    if (isSetupComplete) {
+    if (isSetupComplete && isStateRestored) {
       const delayDebounceFn = setTimeout(() => {
         fetchData(1);
       }, 300);
       return () => clearTimeout(delayDebounceFn);
     }
-  }, [isSetupComplete, pageSize, searchQuery]);
+  }, [isSetupComplete, isStateRestored, pageSize, searchQuery, fetchData]);
 
   // --- PRINT ENGINE ---
   const printRef = useRef(null);
