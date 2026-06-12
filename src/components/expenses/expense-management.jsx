@@ -47,6 +47,16 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getExpenseColumns } from "./expense-column";
 
 export default function ExpenseManagement() {
@@ -60,6 +70,7 @@ export default function ExpenseManagement() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
   
   const [filters, setFilters] = useState({
     category_id: "all",
@@ -118,15 +129,19 @@ export default function ExpenseManagement() {
 
   const handleEdit = (expense) => router.push(`/expenses/edit?id=${expense.id}`);
   const handleView = (expense) => router.push(`/expenses/${expense.id}`);
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this expense record?")) return;
+  const handleDeleteTrigger = (id) => setExpenseToDelete(id);
+  
+  const confirmDelete = async () => {
+    if (!expenseToDelete) return;
     toast.promise(
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses/${id}`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses/${expenseToDelete}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${session.accessToken}` },
       }).then((res) => {
         if (!res.ok) throw new Error("Delete failed");
         fetchExpenses();
+      }).finally(() => {
+        setExpenseToDelete(null);
       }),
       { loading: "Deleting...", success: "Expense deleted!", error: "Failed to delete expense." }
     );
@@ -134,7 +149,7 @@ export default function ExpenseManagement() {
 
   const columns = useMemo(() => getExpenseColumns({ 
     onEdit: handleEdit, 
-    onDelete: handleDelete, 
+    onDelete: handleDeleteTrigger, 
     onView: handleView 
   }), [session?.accessToken]);
 
@@ -194,6 +209,7 @@ export default function ExpenseManagement() {
   }, [expenses, totalExpenses, thisMonthTotal, formatCurrency]);
 
   return (
+    <>
     <ResourceManagementLayout
       data={expenses}
       columns={columns}
@@ -330,5 +346,24 @@ export default function ExpenseManagement() {
         </div>
       )}
     />
+    
+    <AlertDialog open={!!expenseToDelete} onOpenChange={(open) => !open && setExpenseToDelete(null)}>
+      <AlertDialogContent className="rounded-xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the expense record
+            and remove its corresponding transactions from the ledger.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="h-10">Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDelete} className="h-10 bg-red-600 hover:bg-red-700 text-white">
+            Delete Expense
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

@@ -96,25 +96,25 @@ export default function ViewExpense({ id }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+          <Card className="rounded-xl border border-border/50 shadow-sm overflow-hidden">
+            <CardHeader className="border-b bg-muted/50 px-6 py-4">
               <CardTitle className="text-sm font-semibold text-foreground">
                 Expenditure Breakdown
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="grid grid-cols-2">
-                <div className="p-6 border-b border-r border-gray-100">
+                <div className="p-6 border-b border-r border-border/50">
                   <p className="text-sm text-muted-foreground mb-1">Amount Paid</p>
                   <p className="text-2xl font-bold text-red-600 tabular-nums">{formatCurrency(expense.amount)}</p>
                 </div>
-                <div className="p-6 border-b border-gray-100">
+                <div className="p-6 border-b border-border/50">
                   <p className="text-sm text-muted-foreground mb-1">Date of Transaction</p>
                   <p className="text-lg font-medium text-foreground">
                     {formatDateSafe(expense.expense_date, "MMMM dd, yyyy")}
                   </p>
                 </div>
-                <div className="p-6 border-r border-gray-100">
+                <div className="p-6 border-r border-border/50">
                   <p className="text-sm text-muted-foreground mb-1">Category</p>
                   <Badge variant="outline" className="font-medium">
                     {expense.category?.name || "Uncategorized"}
@@ -131,7 +131,7 @@ export default function ViewExpense({ id }) {
                 </div>
               </div>
 
-              <div className="p-6 bg-gray-50/10 border-t border-gray-100">
+              <div className="p-6 bg-muted/10 border-t border-border/50">
                 <p className="text-sm text-muted-foreground mb-1">Note / Description</p>
                 <p className="text-sm leading-relaxed text-foreground/80">
                   {expense.notes || "No additional notes provided for this record."}
@@ -141,8 +141,8 @@ export default function ViewExpense({ id }) {
           </Card>
 
           {expense.payment_method === 'cheque' && (
-            <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+            <Card className="rounded-xl border border-border/50 shadow-sm overflow-hidden">
+              <CardHeader className="border-b bg-muted/50 px-6 py-4">
                 <CardTitle className="text-sm font-semibold text-foreground">
                   Cheque Details
                 </CardTitle>
@@ -170,8 +170,8 @@ export default function ViewExpense({ id }) {
         </div>
 
         <div className="space-y-6">
-          <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+          <Card className="rounded-xl border border-border/50 shadow-sm overflow-hidden">
+            <CardHeader className="border-b bg-muted/50 px-6 py-4">
               <CardTitle className="text-sm font-semibold text-foreground">
                 Administrative Context
               </CardTitle>
@@ -191,7 +191,7 @@ export default function ViewExpense({ id }) {
                   <p className="font-medium text-sm">{expense.recorded_by_user?.name || "System"}</p>
                 </div>
               </div>
-              <div className="pt-4 border-t border-gray-100">
+              <div className="pt-4 border-t border-border/50">
                 <p className="text-xs text-muted-foreground">Last Updated At</p>
                 <p className="text-[13px] font-medium text-foreground">
                   {formatDateSafe(expense.updatedAt, "PPP p")}
@@ -200,8 +200,8 @@ export default function ViewExpense({ id }) {
             </CardContent>
           </Card>
 
-          <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <CardHeader className="border-b bg-gray-50/50 px-6 py-4">
+          <Card className="rounded-xl border border-border/50 shadow-sm overflow-hidden">
+            <CardHeader className="border-b bg-muted/50 px-6 py-4">
               <CardTitle className="text-sm font-semibold text-foreground">
                 Verified Receipt
               </CardTitle>
@@ -209,14 +209,14 @@ export default function ViewExpense({ id }) {
             <CardContent className="p-6 text-center">
               {expense.receipt_image ? (
                 <div className="space-y-4">
-                  <div className="aspect-square rounded-lg border border-gray-100 bg-gray-50/50 flex items-center justify-center overflow-hidden">
+                  <div className="aspect-square rounded-lg border border-border/50 bg-muted/50 flex items-center justify-center overflow-hidden">
                     <img 
                       src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${expense.receipt_image}`} 
                       alt="Verified Receipt" 
                       className="object-contain max-h-full"
                     />
                   </div>
-                  <Button variant="outline" className="w-full text-xs font-semibold h-9 border-gray-200" asChild>
+                  <Button variant="outline" className="w-full text-xs font-semibold h-9 border-input" asChild>
                     <a href={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${expense.receipt_image}`} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="mr-2 h-3 w-3" />
                       View Full Document
