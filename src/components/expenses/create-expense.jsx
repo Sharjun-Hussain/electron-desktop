@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Upload, X, Receipt, Wallet, Banknote, CreditCard as CardIcon, Landmark, Info, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Upload, X, Receipt, Wallet, Banknote, CreditCard as CardIcon, Landmark, Info, Plus, Trash2 } from "lucide-react";
 import { useFormRestore } from "@/hooks/use-form-restore";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +38,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { ExpenseCategorySheet } from "@/components/expense-categories/expense-category-sheet";
 
 const formSchema = z.object({
   date: z.date({ required_error: "Date is required" }),
@@ -61,6 +62,7 @@ export default function CreateExpense() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -105,28 +107,29 @@ export default function CreateExpense() {
     setPayments(payments.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
-  useEffect(() => {
-    async function fetchCategories() {
-      if (!session?.accessToken) return;
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/expense-categories`,
-          {
-            headers: { Authorization: `Bearer ${session.accessToken}` },
-          }
-        );
-        const data = await response.json();
-        if (data.status === "success") {
-          setCategories(data?.data?.data || data?.data || []);
+  const fetchCategories = useCallback(async () => {
+    if (!session?.accessToken) return;
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/expense-categories`,
+        {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
         }
-      } catch (error) {
-        console.error("Failed to fetch categories", error);
-      } finally {
-        setIsLoadingCategories(false);
+      );
+      const data = await response.json();
+      if (data.status === "success") {
+        setCategories(data?.data?.data || data?.data || []);
       }
+    } catch (error) {
+      console.error("Failed to fetch categories", error);
+    } finally {
+      setIsLoadingCategories(false);
     }
-    fetchCategories();
   }, [session]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   async function onSubmit(data) {
     try {
@@ -195,15 +198,7 @@ export default function CreateExpense() {
             </div>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="h-9 text-muted-foreground hover:text-foreground transition-colors group"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
-          Back to Directory
-        </Button>
+
       </div>
 
       <Form {...form}>
@@ -264,7 +259,18 @@ export default function CreateExpense() {
                     name="category_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Category</FormLabel>
+                        <div className="flex items-center justify-between">
+                          <FormLabel className="text-sm">Category</FormLabel>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-[10px] px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            onClick={() => setIsCategorySheetOpen(true)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Add New
+                          </Button>
+                        </div>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-10 border-input bg-background rounded-md shadow-sm">
@@ -327,11 +333,11 @@ export default function CreateExpense() {
                       Payment Breakdown
                     </CardTitle>
                   </div>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={addPaymentLine} 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addPaymentLine}
                     className="h-8 text-[11px] bg-background border-border text-foreground hover:bg-accent rounded-md shadow-sm"
                   >
                     <Plus className="mr-1.5 h-3 w-3" />
@@ -344,8 +350,8 @@ export default function CreateExpense() {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <div className="md:col-span-4">
                           <label className="text-[11px] text-muted-foreground mb-2 block">Payment Method</label>
-                          <Select 
-                            value={pmt.method} 
+                          <Select
+                            value={pmt.method}
                             onValueChange={(val) => updatePayment(pmt.id, "method", val)}
                           >
                             <SelectTrigger className="h-10 bg-background border-input rounded-md shadow-sm">
@@ -393,11 +399,11 @@ export default function CreateExpense() {
                         </div>
                         <div className="md:col-span-2">
                           {payments.length > 1 && (
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => removePaymentLine(pmt.id)} 
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removePaymentLine(pmt.id)}
                               className="h-10 w-full text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md transition-all"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -574,6 +580,14 @@ export default function CreateExpense() {
           </div>
         </form>
       </Form>
+
+      <ExpenseCategorySheet
+        isOpen={isCategorySheetOpen}
+        onClose={() => setIsCategorySheetOpen(false)}
+        onSuccess={() => {
+          fetchCategories();
+        }}
+      />
     </div>
   );
 }
