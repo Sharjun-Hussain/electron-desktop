@@ -103,7 +103,7 @@ const PaginationControls = ({
   pageSize,
   onPageSizeChange,
 }) => {
-  if (totalPages <= 1) return null;
+  if (totalPages === 0) return null;
 
   const canPrev = currentPage > 0;
   const canNext = currentPage < totalPages - 1;
@@ -122,9 +122,9 @@ const PaginationControls = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {[10, 20, 30, 40, 50].map((size) => (
+            {[10, 20, 30, 40, 50, 1000000].map((size) => (
               <SelectItem key={size} value={String(size)}>
-                {size}
+                {size === 1000000 ? "All" : size}
               </SelectItem>
             ))}
           </SelectContent>
