@@ -86,17 +86,28 @@ export const getStockColumns = ({ onAdjust, onViewBatches, hasEditPermission }) 
                 </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-[10px] text-muted-foreground font-medium truncate">
-                {stock.variant?.sku || stock.product?.code}
-              </p>
-              {stock.variant?.name && (
-                <>
-                  <span className="text-[10px] text-muted-foreground/30">•</span>
-                  <p className="text-[10px] text-muted-foreground font-semibold truncate italic">
-                    {stock.variant.name}
+            <div className="flex flex-col gap-0.5 mt-1">
+              <div className="flex items-center gap-2">
+                {stock.variant?.sku || stock.product?.code ? (
+                  <p className="text-[10px] text-muted-foreground font-medium truncate">
+                    SKU: {stock.variant?.sku || stock.product?.code}
                   </p>
-                </>
+                ) : null}
+                
+                {stock.variant?.barcode || stock.product?.barcode ? (
+                  <>
+                    {(stock.variant?.sku || stock.product?.code) ? <span className="text-[10px] text-muted-foreground/30">•</span> : null}
+                    <p className="text-[10px] text-muted-foreground font-medium truncate">
+                      Barcode: {stock.variant?.barcode || stock.product?.barcode}
+                    </p>
+                  </>
+                ) : null}
+              </div>
+
+              {stock.variant?.name && stock.variant.name !== "Default" && stock.variant.name !== stock.product?.name && (
+                <p className="text-[10px] text-muted-foreground font-semibold truncate italic">
+                  {stock.variant.name}
+                </p>
               )}
             </div>
           </div>
