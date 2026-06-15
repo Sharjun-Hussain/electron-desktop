@@ -157,10 +157,10 @@ export default function SalesByProductPage() {
       try {
         const parsed = JSON.parse(savedParams);
         if (parsed.date) {
-            setDate({
-                from: parsed.date.from ? new Date(parsed.date.from) : null,
-                to: parsed.date.to ? new Date(parsed.date.to) : null,
-            });
+          setDate({
+            from: parsed.date.from ? new Date(parsed.date.from) : null,
+            to: parsed.date.to ? new Date(parsed.date.to) : null,
+          });
         }
         if (parsed.activePreset) setActivePreset(parsed.activePreset);
         if (parsed.store) setStore(parsed.store);
@@ -214,8 +214,8 @@ export default function SalesByProductPage() {
   useEffect(() => {
     if (isStateRestored) {
       const stateToSave = {
-        date, activePreset, store, user, selectedMainCategories, 
-        selectedSubCategories, selectedBrands, selectedSuppliers, 
+        date, activePreset, store, user, selectedMainCategories,
+        selectedSubCategories, selectedBrands, selectedSuppliers,
         selectedBatches, searchQuery
       };
       sessionStorage.setItem("productSalesReportParams", JSON.stringify(stateToSave));
@@ -389,7 +389,7 @@ export default function SalesByProductPage() {
             profit:
               Number(item.total_revenue) -
               Number(item.total_quantity) *
-                Number(item.variant?.cost_price || 0),
+              Number(item.variant?.cost_price || 0),
           }));
           setData(mappedData);
           setSummary(result.data.summary);
@@ -446,12 +446,12 @@ export default function SalesByProductPage() {
       row["Classification"] =
         selectedMainCategories.length > 0
           ? selectedMainCategories
-              .map(
-                (cid) =>
-                  categories.find((c) => String(c.id) === String(cid))?.name,
-              )
-              .filter(Boolean)
-              .join(", ")
+            .map(
+              (cid) =>
+                categories.find((c) => String(c.id) === String(cid))?.name,
+            )
+            .filter(Boolean)
+            .join(", ")
           : "All Categories";
       row["Organization"] = session?.organization?.name || "Inzeedo POS";
       row["Horizon"] = date?.from
@@ -502,59 +502,6 @@ export default function SalesByProductPage() {
     },
   });
 
-  const exportData = useMemo(() => {
-    return (data || []).map((item) => {
-      const row = {};
-      if (selectedColumns.skuEntity) {
-        row["Product Name"] = item.name;
-        row["SKU"] = item.sku;
-      }
-      if (selectedColumns.batch) {
-        row["Batch Number"] = item.batch;
-        row["Expiry Date"] = item.expiry;
-      }
-      if (selectedColumns.quantity) row["Quantity Sold"] = item.sold;
-      if (selectedColumns.cost) row["Cost Price"] = item.cost_price;
-      if (selectedColumns.mrp) row["MRP"] = item.mrp_price;
-      if (selectedColumns.wholesale) row["Wholesale Price"] = item.wholesale_price;
-      if (selectedColumns.sellingPrice) {
-        row["Base Selling Price"] = item.selling_price;
-        row["Average Unit Price"] = Number(item.price || 0);
-      }
-      if (selectedColumns.revenue) row["Total Revenue"] = Number(item.sales || 0);
-      if (selectedColumns.profit) row["Total Profit"] = Number(item.profit || 0);
-
-      row["Operational Unit"] =
-        store === "all"
-          ? "All Branches"
-          : branches.find((b) => String(b.id) === String(store))?.name || store;
-      row["Classification"] =
-        selectedMainCategories.length > 0
-          ? selectedMainCategories
-              .map(
-                (cid) =>
-                  categories.find((c) => String(c.id) === String(cid))?.name,
-              )
-              .filter(Boolean)
-              .join(", ")
-          : "All Categories";
-      row["Organization"] = session?.organization?.name || "Inzeedo POS";
-      row["Horizon"] = date?.from
-        ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}`
-        : "Global";
-
-      return row;
-    });
-  }, [
-    data,
-    store,
-    branches,
-    selectedMainCategories,
-    categories,
-    session,
-    date,
-    selectedColumns,
-  ]);
 
   const statsCards = [
     {
@@ -593,7 +540,7 @@ export default function SalesByProductPage() {
       <div style={{ display: "none" }}>
         <SalesByProductPrintTemplate
           ref={printRef}
-          data={isPrinting ? data : []}
+          data={data}
           selectedColumns={selectedColumns}
           stats={{
             totalSold: summary.totalSold,
@@ -609,27 +556,27 @@ export default function SalesByProductPage() {
               store === "all"
                 ? "All Branches"
                 : branches.find((b) => String(b.id) === String(store))?.name ||
-                  store,
+                store,
             category:
               selectedMainCategories.length > 0
                 ? selectedMainCategories
-                    .map(
-                      (cid) =>
-                        categories.find((c) => String(c.id) === String(cid))
-                          ?.name,
-                    )
-                    .filter(Boolean)
-                    .join(", ")
+                  .map(
+                    (cid) =>
+                      categories.find((c) => String(c.id) === String(cid))
+                        ?.name,
+                  )
+                  .filter(Boolean)
+                  .join(", ")
                 : "All Categories",
             brand:
               selectedBrands.length > 0
                 ? selectedBrands
-                    .map(
-                      (bid) =>
-                        brands.find((b) => String(b.id) === String(bid))?.name,
-                    )
-                    .filter(Boolean)
-                    .join(", ")
+                  .map(
+                    (bid) =>
+                      brands.find((b) => String(b.id) === String(bid))?.name,
+                  )
+                  .filter(Boolean)
+                  .join(", ")
                 : "All Brands",
           }}
         />
@@ -787,9 +734,9 @@ export default function SalesByProductPage() {
                   <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                   {selectedMainCategories.length === 1
                     ? categories.find(
-                        (c) =>
-                          String(c.id) === String(selectedMainCategories[0]),
-                      )?.name || "1 Category"
+                      (c) =>
+                        String(c.id) === String(selectedMainCategories[0]),
+                    )?.name || "1 Category"
                     : `${selectedMainCategories.length} Categories`}
                 </Badge>
               )}
@@ -801,9 +748,9 @@ export default function SalesByProductPage() {
                   <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                   {selectedSubCategories.length === 1
                     ? subCategories.find(
-                        (c) =>
-                          String(c.id) === String(selectedSubCategories[0]),
-                      )?.name || "1 Sub-cat"
+                      (c) =>
+                        String(c.id) === String(selectedSubCategories[0]),
+                    )?.name || "1 Sub-cat"
                     : `${selectedSubCategories.length} Sub-cat`}
                 </Badge>
               )}
@@ -815,8 +762,8 @@ export default function SalesByProductPage() {
                   <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                   {selectedBrands.length === 1
                     ? brands.find(
-                        (c) => String(c.id) === String(selectedBrands[0]),
-                      )?.name || "1 Brand"
+                      (c) => String(c.id) === String(selectedBrands[0]),
+                    )?.name || "1 Brand"
                     : `${selectedBrands.length} Brands`}
                 </Badge>
               )}
@@ -828,8 +775,8 @@ export default function SalesByProductPage() {
                   <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                   {selectedSuppliers.length === 1
                     ? suppliers.find(
-                        (c) => String(c.id) === String(selectedSuppliers[0]),
-                      )?.name || "1 Supplier"
+                      (c) => String(c.id) === String(selectedSuppliers[0]),
+                    )?.name || "1 Supplier"
                     : `${selectedSuppliers.length} Suppliers`}
                 </Badge>
               )}
@@ -1398,7 +1345,7 @@ export default function SalesByProductPage() {
                         {store === "all"
                           ? "All Branches"
                           : branches.find((b) => String(b.id) === String(store))
-                              ?.name || "All Branches"}
+                            ?.name || "All Branches"}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -1441,12 +1388,12 @@ export default function SalesByProductPage() {
                               className="cursor-pointer"
                             >
                               <Check
-                              className={cn(
-                                "mr-2 h-4 w-4 text-emerald-600",
-                                String(store) === String(b.id) ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                            {b.name}
+                                className={cn(
+                                  "mr-2 h-4 w-4 text-emerald-600",
+                                  String(store) === String(b.id) ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {b.name}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -1471,7 +1418,7 @@ export default function SalesByProductPage() {
                         {user === "all"
                           ? "All Cashiers"
                           : sellers.find((u) => String(u.id) === String(user))
-                              ?.name || "All Cashiers"}
+                            ?.name || "All Cashiers"}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -1550,10 +1497,10 @@ export default function SalesByProductPage() {
                           ? "All Categories"
                           : selectedMainCategories.length === 1
                             ? categories.find(
-                                (c) =>
-                                  String(c.id) ===
-                                  String(selectedMainCategories[0]),
-                              )?.name || "1 Category"
+                              (c) =>
+                                String(c.id) ===
+                                String(selectedMainCategories[0]),
+                            )?.name || "1 Category"
                             : `${selectedMainCategories.length} Categories`}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1653,10 +1600,10 @@ export default function SalesByProductPage() {
                           ? "All Sub-categories"
                           : selectedSubCategories.length === 1
                             ? subCategories.find(
-                                (c) =>
-                                  String(c.id) ===
-                                  String(selectedSubCategories[0]),
-                              )?.name || "1 Sub-cat"
+                              (c) =>
+                                String(c.id) ===
+                                String(selectedSubCategories[0]),
+                            )?.name || "1 Sub-cat"
                             : `${selectedSubCategories.length} Sub-categories`}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1753,9 +1700,9 @@ export default function SalesByProductPage() {
                           ? "All Brands"
                           : selectedBrands.length === 1
                             ? brands.find(
-                                (c) =>
-                                  String(c.id) === String(selectedBrands[0]),
-                              )?.name || "1 Brand"
+                              (c) =>
+                                String(c.id) === String(selectedBrands[0]),
+                            )?.name || "1 Brand"
                             : `${selectedBrands.length} Brands`}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1852,10 +1799,10 @@ export default function SalesByProductPage() {
                           ? "All Suppliers"
                           : selectedSuppliers.length === 1
                             ? suppliers.find(
-                                (c) =>
-                                  String(c.id) ===
-                                  String(selectedSuppliers[0]),
-                              )?.name || "1 Supplier"
+                              (c) =>
+                                String(c.id) ===
+                                String(selectedSuppliers[0]),
+                            )?.name || "1 Supplier"
                             : `${selectedSuppliers.length} Suppliers`}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

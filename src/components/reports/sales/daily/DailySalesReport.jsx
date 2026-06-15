@@ -409,18 +409,33 @@ export default function DailySalesSummaryPage() {
   };
 
   const printRef = useRef(null);
+  const promiseResolveRef = useRef(null);
   const [isPrinting, setIsPrinting] = useState(false);
+
+  useEffect(() => {
+    if (isPrinting && promiseResolveRef.current) {
+      const timer = setTimeout(() => {
+        if (promiseResolveRef.current) {
+          promiseResolveRef.current();
+          promiseResolveRef.current = null;
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isPrinting]);
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Sales_Report",
     onBeforeGetContent: () => {
       return new Promise((resolve) => {
+        promiseResolveRef.current = resolve;
         setIsPrinting(true);
-        setTimeout(() => resolve(), 300);
       });
     },
     onAfterPrint: () => {
       setIsPrinting(false);
+      promiseResolveRef.current = null;
     },
   });
 
@@ -595,7 +610,7 @@ export default function DailySalesSummaryPage() {
       <div style={{ display: "none" }}>
         <SalesSummaryPrintTemplate
           ref={printRef}
-          data={isPrinting ? filteredData : []}
+          data={filteredData}
           dateRange={date}
           stats={{
             ...stats,
