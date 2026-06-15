@@ -1701,7 +1701,7 @@ export default function CreatePurchaseOrder({ initialData }) {
       />
       {/* Create Product Dialog */}
       <Dialog open={isCreateProductOpen} onOpenChange={setIsCreateProductOpen}>
-        <DialogContent className="sm:max-w-[95vw] w-[95vw] h-[95vh] flex flex-col p-0 border-none shadow-2xl overflow-hidden rounded-2xl bg-background">
+        <DialogContent className="max-w-none sm:max-w-none w-screen h-screen flex flex-col p-0 border-none rounded-none shadow-none bg-background">
           <div className="px-6 py-4 bg-muted/30 border-b border-border/40 shrink-0">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Create New Product</DialogTitle>
