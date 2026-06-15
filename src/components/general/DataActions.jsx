@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Download, FileText, Printer, ChevronDown, FileSpreadsheet, FileJson } from "lucide-react";
+import { Download, FileText, Printer, ChevronDown, FileSpreadsheet, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,7 +29,10 @@ export const DataActions = ({
   fileName = "Export", 
   className,
   showPrint = false,
-  onPrint = () => window.print()
+  onPrint = () => window.print(),
+  onExportCSV,
+  onExportExcel,
+  isExporting = false,
 }) => {
   const { business } = useAppSettings();
   const orgName = business?.name || "";
@@ -115,8 +118,8 @@ export const DataActions = ({
     });
   }, [data, table]);
 
-  const handleCSV = () => exportToCSV(filteredData, fileName, orgName);
-  const handleExcel = () => exportToExcel(filteredData, fileName, orgName);
+  const handleCSV = onExportCSV ?? (() => exportToCSV(filteredData, fileName, orgName));
+  const handleExcel = onExportExcel ?? (() => exportToExcel(filteredData, fileName, orgName));
 
   const disabled = !data || data.length === 0;
 
@@ -127,11 +130,13 @@ export const DataActions = ({
           <Button
             variant="outline"
             size="sm"
-            disabled={disabled}
+            disabled={disabled || isExporting}
             className="h-9 px-4 gap-2 border-border hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all font-semibold shadow-xs"
           >
-            <Download className="h-4 w-4 text-emerald-600" />
-            <span>Export Actions</span>
+            {isExporting
+              ? <Loader2 className="h-4 w-4 text-emerald-600 animate-spin" />
+              : <Download className="h-4 w-4 text-emerald-600" />}
+            <span>{isExporting ? "Exporting…" : "Export Actions"}</span>
             <ChevronDown className="h-3.5 w-3.5 opacity-50 ml-1" />
           </Button>
         </DropdownMenuTrigger>

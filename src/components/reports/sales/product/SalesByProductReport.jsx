@@ -17,10 +17,7 @@ import {
   CalendarDays,
   Calendar as CalendarIcon,
   Check,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
+
   ChevronsUpDown,
   Download,
   FileText,
@@ -95,120 +92,7 @@ import {
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
 import { cn } from "@/lib/utils";
 
-// ── Pagination — identical to ResourceManagementLayout ──────────────────────
-const PaginationControls = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-  pageSize,
-  onPageSizeChange,
-}) => {
-  if (totalPages === 0) return null;
-
-  const canPrev = currentPage > 0;
-  const canNext = currentPage < totalPages - 1;
-
-  return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
-      <div className="flex items-center gap-2">
-        <p className="text-sm text-muted-foreground">
-          Page {currentPage + 1} of {totalPages}
-        </p>
-        <Select
-          value={String(pageSize)}
-          onValueChange={(value) => onPageSizeChange(Number(value))}
-        >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-border bg-transparent">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[10, 20, 30, 40, 50, 100, 250, 500].map((size) => (
-              <SelectItem key={size} value={String(size)}>
-                {size}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-sm text-muted-foreground">per page</p>
-      </div>
-
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
-          onClick={() => onPageChange(0)}
-          disabled={!canPrev}
-        >
-          <ChevronsLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={!canPrev}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-
-        <div className="flex items-center gap-1 mx-1">
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            let pageNum;
-            if (totalPages <= 5) {
-              pageNum = i;
-            } else if (currentPage <= 2) {
-              pageNum = i;
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 5 + i;
-            } else {
-              pageNum = currentPage - 2 + i;
-            }
-
-            if (pageNum >= 0 && pageNum < totalPages) {
-              return (
-                <Button
-                  key={pageNum}
-                  variant={currentPage === pageNum ? "default" : "outline"}
-                  size="icon"
-                  className={cn(
-                    "h-8 w-8",
-                    currentPage === pageNum
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent",
-                  )}
-                  onClick={() => onPageChange(pageNum)}
-                >
-                  {pageNum + 1}
-                </Button>
-              );
-            }
-            return null;
-          })}
-        </div>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={!canNext}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50 bg-transparent"
-          onClick={() => onPageChange(totalPages - 1)}
-          disabled={!canNext}
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-};
+// Pagination completely removed
 
 const defaultColumns = {
   skuEntity: true,
@@ -250,13 +134,8 @@ export default function SalesByProductPage() {
     totalSold: 0,
     uniqueProducts: 0,
   });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    total: 0,
-    totalPages: 1,
-  });
-  const [pageSize, setPageSize] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [selectedColumns, setSelectedColumns] = useState(defaultColumns);
   const [isClient, setIsClient] = useState(false);
@@ -475,8 +354,8 @@ export default function SalesByProductPage() {
           supplier_ids: selectedSuppliers.join(","),
           batch_ids: selectedBatches.join(","),
           search: searchQuery,
-          page: targetPage,
-          limit: pageSize,
+          page: 1,
+          limit: 1000000,
         });
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/sales/product?${queryParams}`,
@@ -514,11 +393,7 @@ export default function SalesByProductPage() {
           }));
           setData(mappedData);
           setSummary(result.data.summary);
-          setPagination({
-            page: result.data.pagination.page,
-            total: result.data.pagination.total,
-            totalPages: result.data.pagination.totalPages,
-          });
+
         }
       } catch (err) {
         console.error(err);
@@ -538,9 +413,63 @@ export default function SalesByProductPage() {
       selectedSuppliers,
       selectedBatches,
       searchQuery,
-      pageSize,
     ],
   );
+
+  // Export data from current state
+  const exportData = useMemo(() => {
+    return (data || []).map((item) => {
+      const row = {};
+      if (selectedColumns.skuEntity) {
+        row["Product Name"] = item.name;
+        row["SKU"] = item.sku;
+      }
+      if (selectedColumns.batch) {
+        row["Batch Number"] = item.batch;
+        row["Expiry Date"] = item.expiry;
+      }
+      if (selectedColumns.quantity) row["Quantity Sold"] = item.sold;
+      if (selectedColumns.cost) row["Cost Price"] = item.cost_price;
+      if (selectedColumns.mrp) row["MRP"] = item.mrp_price;
+      if (selectedColumns.wholesale) row["Wholesale Price"] = item.wholesale_price;
+      if (selectedColumns.sellingPrice) {
+        row["Base Selling Price"] = item.selling_price;
+        row["Average Unit Price"] = Number(item.price || 0);
+      }
+      if (selectedColumns.revenue) row["Total Revenue"] = Number(item.sales || 0);
+      if (selectedColumns.profit) row["Total Profit"] = Number(item.profit || 0);
+
+      row["Operational Unit"] =
+        store === "all"
+          ? "All Branches"
+          : branches.find((b) => String(b.id) === String(store))?.name || store;
+      row["Classification"] =
+        selectedMainCategories.length > 0
+          ? selectedMainCategories
+              .map(
+                (cid) =>
+                  categories.find((c) => String(c.id) === String(cid))?.name,
+              )
+              .filter(Boolean)
+              .join(", ")
+          : "All Categories";
+      row["Organization"] = session?.organization?.name || "Inzeedo POS";
+      row["Horizon"] = date?.from
+        ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}`
+        : "Global";
+
+      return row;
+    });
+  }, [
+    data,
+    store,
+    branches,
+    selectedMainCategories,
+    categories,
+    session,
+    date,
+    selectedColumns,
+  ]);
 
   useEffect(() => {
     fetchMetadata();
@@ -554,13 +483,23 @@ export default function SalesByProductPage() {
       }, 300);
       return () => clearTimeout(delayDebounceFn);
     }
-  }, [isSetupComplete, isStateRestored, pageSize, searchQuery, fetchData]);
+  }, [isSetupComplete, isStateRestored, searchQuery, fetchData]);
 
   // --- PRINT ENGINE ---
   const printRef = useRef(null);
+  const [isPrinting, setIsPrinting] = useState(false);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Sales_By_Product_Report",
+    onBeforeGetContent: () => {
+      return new Promise((resolve) => {
+        setIsPrinting(true);
+        setTimeout(() => resolve(), 300); // Allow DOM to render
+      });
+    },
+    onAfterPrint: () => {
+      setIsPrinting(false);
+    },
   });
 
   const exportData = useMemo(() => {
@@ -654,7 +593,7 @@ export default function SalesByProductPage() {
       <div style={{ display: "none" }}>
         <SalesByProductPrintTemplate
           ref={printRef}
-          data={data}
+          data={isPrinting ? data : []}
           selectedColumns={selectedColumns}
           stats={{
             totalSold: summary.totalSold,
@@ -1133,7 +1072,7 @@ export default function SalesByProductPage() {
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                      Array.from({ length: pageSize }).map((_, i) => (
+                      Array.from({ length: 10 }).map((_, i) => (
                         <TableRow key={i} className="border-b border-border">
                           {selectedColumns.skuEntity && (
                             <TableCell className="pl-6 py-4">
@@ -1286,17 +1225,12 @@ export default function SalesByProductPage() {
                         </TableCell>
                       </TableRow>
                     )}
+
                   </TableBody>
                 </Table>
               </div>
 
-              <PaginationControls
-                currentPage={pagination.page - 1}
-                totalPages={pagination.totalPages}
-                onPageChange={(pageIndex) => fetchData(pageIndex + 1)}
-                pageSize={pageSize}
-                onPageSizeChange={(newSize) => setPageSize(newSize)}
-              />
+
             </Card>
           </>
         ) : (

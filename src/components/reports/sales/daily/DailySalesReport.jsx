@@ -36,10 +36,7 @@ import {
   MapPin,
   User as UserIcon,
   Zap,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
+
   Settings2,
   CheckSquare,
   Square,
@@ -90,120 +87,7 @@ import { signOut, useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
 
-// ── Pagination — identical to ResourceManagementLayout ──────────────────────
-const PaginationControls = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-  pageSize,
-  onPageSizeChange,
-}) => {
-  if (totalPages <= 1) return null;
-
-  const canPrev = currentPage > 0;
-  const canNext = currentPage < totalPages - 1;
-
-  return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
-      <div className="flex items-center gap-2">
-        <p className="text-sm text-muted-foreground">
-          Page {currentPage + 1} of {totalPages}
-        </p>
-        <Select
-          value={String(pageSize)}
-          onValueChange={(value) => onPageSizeChange(Number(value))}
-        >
-          <SelectTrigger className="h-8 w-[70px] text-xs border-border">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[10, 20, 30, 40, 50].map((size) => (
-              <SelectItem key={size} value={String(size)}>
-                {size}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-sm text-muted-foreground">per page</p>
-      </div>
-
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
-          onClick={() => onPageChange(0)}
-          disabled={!canPrev}
-        >
-          <ChevronsLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={!canPrev}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-
-        <div className="flex items-center gap-1 mx-1">
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            let pageNum;
-            if (totalPages <= 5) {
-              pageNum = i;
-            } else if (currentPage <= 2) {
-              pageNum = i;
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 5 + i;
-            } else {
-              pageNum = currentPage - 2 + i;
-            }
-
-            if (pageNum >= 0 && pageNum < totalPages) {
-              return (
-                <Button
-                  key={pageNum}
-                  variant={currentPage === pageNum ? "default" : "outline"}
-                  size="icon"
-                  className={cn(
-                    "h-8 w-8",
-                    currentPage === pageNum
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "border-border hover:border-emerald-200 hover:bg-emerald-50",
-                  )}
-                  onClick={() => onPageChange(pageNum)}
-                >
-                  {pageNum + 1}
-                </Button>
-              );
-            }
-            return null;
-          })}
-        </div>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={!canNext}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 border-border hover:border-emerald-200 hover:bg-emerald-50"
-          onClick={() => onPageChange(totalPages - 1)}
-          disabled={!canNext}
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-};
+// Pagination completely removed
 
 export default function DailySalesSummaryPage() {
   const { data: session } = useSession();
@@ -360,8 +244,7 @@ export default function DailySalesSummaryPage() {
     }
   }, [selectedMainCategories, subCategories]);
 
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+
 
   const fetchMetadata = useCallback(async () => {
     if (!session?.accessToken) return;
@@ -526,9 +409,19 @@ export default function DailySalesSummaryPage() {
   };
 
   const printRef = useRef(null);
+  const [isPrinting, setIsPrinting] = useState(false);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: "Sales_Report",
+    onBeforeGetContent: () => {
+      return new Promise((resolve) => {
+        setIsPrinting(true);
+        setTimeout(() => resolve(), 300);
+      });
+    },
+    onAfterPrint: () => {
+      setIsPrinting(false);
+    },
   });
 
   const exportData = useMemo(() => {
@@ -596,24 +489,9 @@ export default function DailySalesSummaryPage() {
     setFilteredData(result);
   }, [searchQuery, paymentFilter, amountRange, data]);
 
-  // Reset to page 0 whenever filters or search changes
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [searchQuery, date, branch, user, paymentFilter, amountRange]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+
   const activeColCount = Object.values(selectedColumns).filter(Boolean).length;
-
-  const paginatedData = useMemo(
-    () =>
-      filteredData.slice(currentPage * pageSize, (currentPage + 1) * pageSize),
-    [filteredData, currentPage, pageSize],
-  );
-
-  const handlePageSizeChange = (newSize) => {
-    setPageSize(newSize);
-    setCurrentPage(0);
-  };
 
   const PaymentBar = () => {
     const breakdown = stats.paymentBreakdown || {};
@@ -717,7 +595,7 @@ export default function DailySalesSummaryPage() {
       <div style={{ display: "none" }}>
         <SalesSummaryPrintTemplate
           ref={printRef}
-          data={filteredData}
+          data={isPrinting ? filteredData : []}
           dateRange={date}
           stats={{
             ...stats,
@@ -1925,7 +1803,7 @@ export default function DailySalesSummaryPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
+                  Array.from({ length: 10 }).map((_, i) => (
                     <TableRow key={i} className="border-border animate-pulse">
                       {selectedColumns.executionDate && <TableCell className="pl-6 py-4">
                         <Skeleton className="h-4 w-32 bg-muted rounded" />
@@ -1954,8 +1832,8 @@ export default function DailySalesSummaryPage() {
                       </TableCell>}
                     </TableRow>
                   ))
-                ) : paginatedData.length > 0 ? (
-                  paginatedData.map((item) => {
+                ) : filteredData.length > 0 ? (
+                  filteredData.map((item) => {
                     const isReturn = item.status === "Return";
                     const isCredit =
                       item.payment_status === "unpaid" ||
@@ -2117,13 +1995,7 @@ export default function DailySalesSummaryPage() {
             </Table>
           </div>
 
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            pageSize={pageSize}
-            onPageSizeChange={handlePageSizeChange}
-          />
+
             </>
           )}
         </Card>
