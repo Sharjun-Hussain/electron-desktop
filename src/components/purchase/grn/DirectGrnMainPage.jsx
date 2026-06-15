@@ -74,6 +74,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AddSupplierSheet as CreateSupplierSheet } from "@/components/purchase/suppliers/AddSupplierSheet";
 import { useMemo, useRef } from "react";
 
 const ProductSelect = ({ value, onChange, products, autoFocus, onSelect }) => {
@@ -226,6 +227,7 @@ export default function DirectGRNPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [supplierOpen, setSupplierOpen] = useState(false);
+  const [isCreateSupplierOpen, setIsCreateSupplierOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [newItemAdded, setNewItemAdded] = useState(false);
 
@@ -734,7 +736,18 @@ export default function DirectGRNPage() {
                   name="supplierId"
                   render={({ field }) => (
                     <FormItem className="flex flex-col space-y-1.5">
-                      <FormLabel className="text-sm font-medium">Supplier <span className="text-red-500">*</span></FormLabel>
+                      <div className="flex items-center justify-between h-5">
+                        <FormLabel className="text-sm font-medium">Supplier <span className="text-red-500">*</span></FormLabel>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 hover:bg-emerald-50 text-emerald-600 rounded-lg"
+                          onClick={() => setIsCreateSupplierOpen(true)}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                       <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -1290,6 +1303,15 @@ export default function DirectGRNPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <CreateSupplierSheet
+        open={isCreateSupplierOpen}
+        onOpenChange={setIsCreateSupplierOpen}
+        onSuccess={(newSupplier) => {
+          setSuppliers(prev => [newSupplier, ...prev]);
+          form.setValue("supplierId", String(newSupplier.id));
+          setSupplierOpen(false);
+        }}
+      />
     </div>
   );
 }
