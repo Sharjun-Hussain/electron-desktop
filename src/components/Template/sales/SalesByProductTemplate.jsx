@@ -133,17 +133,17 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                   <span className="text-sm font-bold text-amber-600">- Rs {(stats.totalExpense || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 
-                <div className="flex justify-between items-center mb-5">
-                  <span className="text-sm font-bold text-slate-700">Net Collected</span>
-                  <span className="text-lg font-black text-slate-900">
+                <div className="flex justify-between items-center mb-5 gap-4">
+                  <span className="text-sm font-bold text-slate-700 leading-tight">Net Collected</span>
+                  <span className="text-lg font-black text-slate-900 whitespace-nowrap shrink-0 text-right">
                     Rs {((Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)) - (stats.totalRefund || 0) - (stats.totalExpense || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 
                 <div className="mt-5 pt-5 border-t border-slate-200 bg-white -mx-5 -mb-5 p-5 rounded-b-xl">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-slate-800">Expected Cash In Drawer</span>
-                    <span className="text-xl font-black text-emerald-600">
+                  <div className="flex justify-between items-center gap-4">
+                    <span className="text-sm font-bold text-slate-800 leading-tight">Expected Cash In Drawer</span>
+                    <span className="text-xl font-black text-emerald-600 whitespace-nowrap shrink-0 text-right">
                       Rs {(stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
