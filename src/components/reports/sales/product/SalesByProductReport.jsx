@@ -655,6 +655,7 @@ export default function SalesByProductPage() {
         <SalesByProductPrintTemplate
           ref={printRef}
           data={data}
+          selectedColumns={selectedColumns}
           stats={{
             totalSold: summary.totalSold,
             totalRevenue: summary.totalRevenue,

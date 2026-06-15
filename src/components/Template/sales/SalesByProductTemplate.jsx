@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { ReportLayout } from "../ReportLayout";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
-export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, stats, dateRange }, ref) => {
+export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, stats, dateRange, selectedColumns = {} }, ref) => {
   const { formatCurrency, report } = useAppSettings();
 
   return (
@@ -39,34 +39,34 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
           <table className="w-full text-left border-collapse report-table">
             <thead>
               <tr className="text-[10px] uppercase tracking-wider">
-                <th className="py-3 px-2 font-bold">Product Name</th>
-                <th className="py-3 px-2 font-bold">SKU</th>
-                <th className="py-3 px-2 font-bold">Batch / Exp</th>
-                <th className="py-3 px-2 font-bold text-right">Qty Sold</th>
-                <th className="py-3 px-2 font-bold text-right">Cost</th>
-                <th className="py-3 px-2 font-bold text-right">MRP</th>
-                <th className="py-3 px-2 font-bold text-right">Wholesale</th>
-                <th className="py-3 px-2 font-bold text-right">Selling</th>
-                <th className="py-3 px-2 font-bold text-right">Revenue</th>
-                <th className="py-3 px-2 font-bold text-right">Profit</th>
+                {selectedColumns?.skuEntity !== false && <th className="py-3 px-2 font-bold">Product Name</th>}
+                {selectedColumns?.skuEntity !== false && <th className="py-3 px-2 font-bold">SKU</th>}
+                {selectedColumns?.batch !== false && <th className="py-3 px-2 font-bold">Batch / Exp</th>}
+                {selectedColumns?.quantity !== false && <th className="py-3 px-2 font-bold text-right">Qty Sold</th>}
+                {selectedColumns?.cost !== false && <th className="py-3 px-2 font-bold text-right">Cost</th>}
+                {selectedColumns?.mrp !== false && <th className="py-3 px-2 font-bold text-right">MRP</th>}
+                {selectedColumns?.wholesale !== false && <th className="py-3 px-2 font-bold text-right">Wholesale</th>}
+                {selectedColumns?.sellingPrice !== false && <th className="py-3 px-2 font-bold text-right">Selling</th>}
+                {selectedColumns?.revenue !== false && <th className="py-3 px-2 font-bold text-right">Revenue</th>}
+                {selectedColumns?.profit !== false && <th className="py-3 px-2 font-bold text-right">Profit</th>}
               </tr>
             </thead>
             <tbody className="text-[11px]">
               {data.map((item, index) => (
                 <tr key={index} className="break-inside-avoid">
-                  <td className="font-medium">{item.name}</td>
-                  <td className="text-slate-500">{item.sku}</td>
-                  <td className="text-slate-500">
+                  {selectedColumns?.skuEntity !== false && <td className="font-medium">{item.name}</td>}
+                  {selectedColumns?.skuEntity !== false && <td className="text-slate-500">{item.sku}</td>}
+                  {selectedColumns?.batch !== false && <td className="text-slate-500">
                     <div>{item.batch !== 'N/A' ? item.batch : '-'}</div>
                     {item.expiry !== 'N/A' && <div className="text-[9px]">{item.expiry}</div>}
-                  </td>
-                  <td className="text-right">{(item.sold || 0)}</td>
-                  <td className="text-right text-slate-600">{formatCurrency(item.cost_price || 0)}</td>
-                  <td className="text-right text-slate-600">{formatCurrency(item.mrp_price || 0)}</td>
-                  <td className="text-right text-slate-600">{formatCurrency(item.wholesale_price || 0)}</td>
-                  <td className="text-right text-slate-600">{formatCurrency(item.selling_price || 0)}</td>
-                  <td className="text-right font-medium">{formatCurrency(item.sales || 0)}</td>
-                  <td className="text-right font-bold text-emerald-700">{formatCurrency(item.profit || 0)}</td>
+                  </td>}
+                  {selectedColumns?.quantity !== false && <td className="text-right">{(item.sold || 0)}</td>}
+                  {selectedColumns?.cost !== false && <td className="text-right text-slate-600">{formatCurrency(item.cost_price || 0)}</td>}
+                  {selectedColumns?.mrp !== false && <td className="text-right text-slate-600">{formatCurrency(item.mrp_price || 0)}</td>}
+                  {selectedColumns?.wholesale !== false && <td className="text-right text-slate-600">{formatCurrency(item.wholesale_price || 0)}</td>}
+                  {selectedColumns?.sellingPrice !== false && <td className="text-right text-slate-600">{formatCurrency(item.selling_price || 0)}</td>}
+                  {selectedColumns?.revenue !== false && <td className="text-right font-medium">{formatCurrency(item.sales || 0)}</td>}
+                  {selectedColumns?.profit !== false && <td className="text-right font-bold text-emerald-700">{formatCurrency(item.profit || 0)}</td>}
                 </tr>
               ))}
             </tbody>
