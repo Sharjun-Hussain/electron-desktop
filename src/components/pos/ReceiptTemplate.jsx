@@ -137,7 +137,8 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
           const qty = parseFloat(item.quantity || 0);
           const unitPrice = parseFloat(item.unit_price || item.price || 0);
           const lineTotalBeforeDiscount = unitPrice * qty;
-          const itemDiscount = parseFloat(item.discount_amount || 0);
+          // Use manual_discount if available (to ignore apportioned global discounts), fallback to discount_amount for legacy receipts
+          const itemDiscount = item.manual_discount !== undefined ? parseFloat(item.manual_discount) : parseFloat(item.discount_amount || 0);
           const itemTax = parseFloat(item.tax_amount || 0);
           const hasDiscount = itemDiscount > 0 || parseFloat(item.discount || 0) > 0 || parseFloat(item.discount_percentage || 0) > 0;
 
