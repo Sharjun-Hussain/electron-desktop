@@ -208,6 +208,17 @@ export default function ExpenseManagement() {
     ];
   }, [expenses, totalExpenses, thisMonthTotal, formatCurrency]);
 
+  const exportData = useMemo(() => {
+    if (!expenses || expenses.length === 0) return [];
+    return expenses.map((e) => ({
+      "Date": e.date,
+      "Category": e.category_name,
+      "Amount": e.amount,
+      "Payment Method": e.payment_method,
+      "Reference #": e.reference_no,
+    }));
+  }, [expenses]);
+
   return (
     <>
     <ResourceManagementLayout
@@ -229,17 +240,9 @@ export default function ExpenseManagement() {
       }
       addButtonLabel="Add Expense"
       onAddClick={canCreate(EXPENSE) ? () => router.push("/expenses/new") : null}
-      onExportClick={() => {
-        const csvData = expenses.map(e => ({
-          Date: e.date,
-          Category: e.category_name,
-          Amount: e.amount,
-          "Payment Method": e.payment_method,
-          "Reference #": e.reference_no,
-        }));
-        toast.success("Preparing CSV Export...");
-        // Assuming exportToCSV is global or imported
-      }}
+      onExportClick={null}
+      exportData={exportData}
+      exportFileName="Expenses_Registry"
       searchLabel="Search Expenses"
       searchPlaceholder="Filter by reference #, category..."
       searchColumn="reference_no"
