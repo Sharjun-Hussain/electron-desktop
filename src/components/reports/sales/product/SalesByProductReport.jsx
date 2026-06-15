@@ -376,7 +376,11 @@ export default function SalesByProductPage() {
               : "N/A",
             name:
               item.product.name +
-              (item.variant ? ` (${item.variant.name})` : ""),
+              (item.variant &&
+              item.variant.name.trim().toLowerCase() !== "default" &&
+              item.variant.name.trim().toLowerCase() !== item.product.name.trim().toLowerCase()
+                ? ` (${item.variant.name})`
+                : ""),
             sku: item.variant?.sku || item.product.code,
             sold: Number(item.total_quantity),
             sales: Number(item.total_revenue),
