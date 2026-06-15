@@ -3,11 +3,12 @@ import { format } from "date-fns";
 
 export const LoyaltyReportPrintTemplate = React.forwardRef(({ transactions, topCustomers, summary, dateRange, formatDateTime }, ref) => {
   return (
-    <div ref={ref} className="p-10 font-sans text-slate-900 bg-white" style={{ width: "210mm", minHeight: "297mm" }}>
+    <div ref={ref} className="p-10 text-slate-900 bg-white" style={{ width: "210mm", minHeight: "297mm", fontFamily: 'Arial, Helvetica, sans-serif' }}>
       <style type="text/css" media="print">
         {`
           @page { size: auto; margin: 0mm; } 
           body { margin: 0; padding: 0; background-color: white; }
+          * { font-family: Arial, Helvetica, sans-serif !important; }
         `}
       </style>
 

@@ -38,9 +38,10 @@ export const InvoiceA4Template = forwardRef(({ sale, settings, business, branch,
   return (
     <div
       ref={ref}
-      className="bg-white text-slate-900 p-8 w-[210mm] max-w-full min-h-[297mm] mx-auto font-sans print:p-8"
-      style={{ colorAdjust: "exact", WebkitPrintColorAdjust: "exact" }}
+      className="bg-white text-slate-900 p-8 w-[210mm] max-w-full min-h-[297mm] mx-auto print:p-8"
+      style={{ colorAdjust: "exact", WebkitPrintColorAdjust: "exact", fontFamily: 'Arial, Helvetica, sans-serif' }}
     >
+      <style type="text/css" media="print">{`@page { size: A4; margin: 0mm; } body { margin: 0; } * { font-family: Arial, Helvetica, sans-serif !important; }`}</style>
       {/* Header Section */}
       <div className="flex justify-between items-start border-b-2 border-emerald-600 pb-6 mb-8">
         <div className="space-y-4">

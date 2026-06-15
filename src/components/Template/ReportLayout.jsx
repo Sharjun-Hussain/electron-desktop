@@ -9,13 +9,14 @@ export const ReportLayout = ({ children, title, subtitle, filters, stats, report
   const themeColor = report.primaryColor || "#10b981";
   
   return (
-    <div className="p-8 font-sans text-slate-900 bg-white" style={{ width: report.orientation === 'landscape' ? "297mm" : "210mm", minHeight: report.orientation === 'landscape' ? "210mm" : "297mm", fontSize: `${report.fontSize}pt` }}>
+    <div className="p-8 text-slate-900 bg-white" style={{ width: report.orientation === 'landscape' ? "297mm" : "210mm", minHeight: report.orientation === 'landscape' ? "210mm" : "297mm", fontSize: `${report.fontSize}pt`, fontFamily: 'Arial, Helvetica, sans-serif' }}>
       
       {/* Global Print CSS */}
       <style type="text/css" media="print">
         {`
           @page { size: ${report.pageSize} ${report.orientation}; margin: 0mm; }
           body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
+          * { font-family: Arial, Helvetica, sans-serif !important; }
           .report-table thead th { background-color: ${report.accentTableHead ? themeColor : '#f1f5f9'} !important; color: ${report.accentTableHead ? 'white' : '#475569'} !important; }
           .report-table th, .report-table td {
              border-bottom: ${report.showBorders ? '1px solid #e2e8f0' : 'none'} !important;

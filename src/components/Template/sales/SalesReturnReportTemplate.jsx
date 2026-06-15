@@ -11,7 +11,8 @@ export const SalesReturnReportTemplate = forwardRef(({ data, stats, dateRange, f
   };
 
   return (
-    <div ref={ref} className="p-12 bg-white text-slate-900 font-sans print:p-8">
+    <div ref={ref} className="p-12 bg-white text-slate-900 print:p-8" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <style type="text/css" media="print">{`@page { size: A4; margin: 10mm; } body { margin: 0; } * { font-family: Arial, Helvetica, sans-serif !important; }`}</style>
       {/* Header */}
       <div className="flex justify-between items-start border-b-2 border-slate-900 pb-8 mb-8">
         <div>

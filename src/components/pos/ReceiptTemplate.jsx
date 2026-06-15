@@ -28,7 +28,8 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
   const paperWidthClass = paperWidth === "58mm" ? "w-[58mm]" : paperWidth === "80mm" ? "w-[80mm]" : "w-[210mm]";
 
   const fontConfig = {
-    family: fontFamily === "sans" ? "font-sans" : fontFamily === "serif" ? "font-serif" : "font-mono",
+    family: "",
+    fontFamilyStyle: "Arial, Helvetica, sans-serif",
     size: fontSize === "xsmall" ? "text-[10px]" :
       fontSize === "small" ? "text-[10px]" :
         fontSize === "large" ? "text-sm" :
@@ -47,12 +48,14 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
     <div
       ref={ref}
       className={cn(
-        "bg-white text-black p-4 print:p-0 mx-auto transition-all",
+        "bg-white text-black p-4 print:p-0 mx-auto transition-all uppercase",
         paperWidthClass,
         fontConfig.family,
         fontConfig.size
       )}
+      style={{ fontFamily: fontConfig.fontFamilyStyle }}
     >
+      <style type="text/css" media="print">{`@page { margin: 0; } * { font-family: ${fontConfig.fontFamilyStyle} !important; }`}</style>
       {/* Header */}
       <div className="text-center space-y-1 mb-4">
         {sale.source === 'ecommerce' && (
@@ -86,7 +89,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
         )}
         <div className="flex justify-between">
           <span>{t("pos.invoice_label")}:</span>
-          <span className="font-bold">{sale.invoice_number || "Draft"}</span>
+          <span className="">{sale.invoice_number || "Draft"}</span>
         </div>
         {(settings.showDateTime ?? true) && (
           <div className="flex justify-between">
@@ -120,73 +123,96 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
         )}
       </div>
 
-      {/* Items Table --- remains unchanged --- */}
+      {/* Items List */}
       <table className="w-full my-4 border-collapse">
         <thead>
-          <tr className="border-b border-black">
-            <th className="text-left py-1">{t("pos.item_qty_label")}</th>
-            <th className="text-right py-1">{t("pos.price_col")}</th>
-            {showTax && <th className="text-right py-1">{t("pos.tax_col")}</th>}
-            {showDiscount && <th className="text-right py-1">{t("pos.disc_col")}</th>}
-            <th className="text-right py-1">{t("pos.total_col")}</th>
+          <tr className="border-b border-black font-bold">
+            <th className="text-left py-1 pr-1 w-1/2"># DESCRIPTION</th>
+            <th className="text-center py-1 px-1">QTY</th>
+            <th className="text-right py-1 px-1">PRICE</th>
+            <th className="text-right py-1 pl-1">AMOUNT</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-dashed divide-black">
-          {sale.items?.map((item, idx) => (
-            <tr key={idx} className="align-top">
-              <td className="py-2 pr-2">
-                <div className="leading-tight">
-                  <span className="font-bold">
+        {sale.items?.map((item, idx) => {
+          const qty = parseFloat(item.quantity || 0);
+          const unitPrice = parseFloat(item.unit_price || item.price || 0);
+          const lineTotalBeforeDiscount = unitPrice * qty;
+          const itemDiscount = parseFloat(item.discount_amount || 0);
+          const itemTax = parseFloat(item.tax_amount || 0);
+          const hasDiscount = itemDiscount > 0 || parseFloat(item.discount || 0) > 0 || parseFloat(item.discount_percentage || 0) > 0;
+
+          return (
+            <tbody key={idx} className="border-b border-dashed border-black last:border-b-0">
+              {/* Line 1: Index, Name, Variant */}
+              <tr>
+                <td colSpan={4} className="pt-2 pb-0.5 pr-2 leading-tight">
+                  <span className="mr-1">{idx + 1}</span>
+                  <span>
                     {item.product_name ||
                       item.product_variant?.product?.name ||
                       item.product?.name ||
                       item.name ||
                       t("pos.item")}
                   </span>
-                  <span className="font-normal ml-1 whitespace-nowrap">
-                    (x{parseFloat(item.quantity || 0)})
-                  </span>
-                </div>
-                {(item.product_variant?.name || item.variant_name) && (
-                  <div className="text-[10px]">{item.product_variant?.name || item.variant_name}</div>
-                )}
-                {item.mrp_price > item.unit_price && (
-                  <div className="text-[10px] italic font-bold">
+                  {(item.product_variant?.name || item.variant_name) ? (
+                    <span className="ml-1">#{item.product_variant?.name || item.variant_name}</span>
+                  ) : null}
+                  {/* Line 2: SKU / Barcode */}
+                  {(item.product?.code || item.product_variant?.sku) && (
+                    <div className="pl-4">
+                      {item.product?.code || item.product_variant?.sku}
+                    </div>
+                  )}
+                </td>
+              </tr>
+
+              {/* Line 3: Qty x Price   Amount */}
+              <tr>
+                <td></td>
+                <td className="text-center whitespace-nowrap pb-2">{qty.toLocaleString()} x</td>
+                <td className="text-right px-1 whitespace-nowrap pb-2">{unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td className="text-right pl-1 whitespace-nowrap pb-2">{lineTotalBeforeDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+
+              {/* Optional: Discount */}
+              {showDiscount && hasDiscount && itemDiscount > 0 && (
+                <tr>
+                  <td colSpan={3} className="text-left pb-2 whitespace-nowrap normal-case">*Line Discount</td>
+                  <td className="text-right pl-1 whitespace-nowrap pb-2">-{itemDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+              )}
+
+              {/* Optional: Tax */}
+              {showTax && itemTax > 0 && (
+                <tr>
+                  <td colSpan={3} className="text-left pb-2 whitespace-nowrap">*TAX</td>
+                  <td className="text-right pl-1 whitespace-nowrap pb-2">{itemTax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+              )}
+
+              {/* Optional: MRP Savings */}
+              {item.mrp_price > item.unit_price && (
+                <tr>
+                  <td colSpan={4} className="pl-4 italic font-bold pb-2">
                     MRP: {parseFloat(item.mrp_price).toLocaleString()} (Save: {parseFloat(item.mrp_price - item.unit_price).toLocaleString()})
-                  </div>
-                )}
-              </td>
-              <td className="text-right py-2 whitespace-nowrap">{parseFloat(item.unit_price || item.price || 0).toLocaleString()}</td>
-              {showTax && (
-                <td className="text-right py-2 text-[10px] whitespace-nowrap">
-                  {parseFloat(item.tax_amount || 0).toLocaleString()}
-                </td>
+                  </td>
+                </tr>
               )}
-              {showDiscount && (
-                <td className="text-right py-2 text-[10px] whitespace-nowrap">
-                  {(item.discount_amount || item.discount || item.discount_percentage) ? (
-                    <span>
-                      {parseFloat(item.discount_amount || 0).toLocaleString()}
-                    </span>
-                  ) : "-"}
-                </td>
-              )}
-              <td className="text-right py-2 font-bold whitespace-nowrap">{parseFloat(item.total_amount || 0).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
+            </tbody>
+          );
+        })}
       </table>
 
       {/* Totals remains unchanged --- */}
       <div className="border-t border-black pt-2 space-y-1">
         <div className="flex justify-between">
           <span>SUB TOTAL:</span>
-          <span>{parseFloat(sale.total_amount).toLocaleString()}</span>
+          <span>{parseFloat(sale.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
         {showDiscount && parseFloat(sale.discount_amount) > 0 && (
-          <div className="flex justify-between text-[10px] border-b border-dashed border-black pb-1 mb-1">
+          <div className="flex justify-between border-b border-dashed border-black pb-1 mb-1">
             <span>{t("pos.your_total_discount_is")}</span>
-            <span>{parseFloat(sale.discount_amount).toLocaleString()}</span>
+            <span>{parseFloat(sale.discount_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
         )}
         {(() => {
@@ -258,7 +284,6 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
             margin={0}
             background="transparent"
           />
-          <p className="text-[10px] font-bold uppercase tracking-widest">Scan for returns & verification</p>
         </div>
       )}
 
@@ -274,8 +299,8 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
           <div className="whitespace-pre-wrap leading-tight text-[10px] mb-2">{footerText}</div>
         )}
         <div className="leading-tight">
-          <p className="font-bold text-[10px] whitespace-nowrap">A next-generation enterprise solution by Inzeedo</p>
-          <p className="text-[10px] font-bold">© 2026 Inzeedo. All rights reserved.</p>
+          <p className="text-[10px] whitespace-nowrap">ERP SYSTEM FROM INZEEDO</p>
+          <p className="text-[10px]">© 2026 INZEEDO.LK | +94785706441</p>
         </div>
       </div>
     </div>

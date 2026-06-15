@@ -3,12 +3,13 @@ import { format } from "date-fns";
 
 export const BatchWiseSalesAuditTemplate = React.forwardRef(({ data, dateRange, stats, formatCurrency }, ref) => {
   return (
-    <div ref={ref} className="p-10 font-sans text-slate-900 bg-white" style={{ width: "210mm", minHeight: "297mm" }}>
+    <div ref={ref} className="p-10 text-slate-900 bg-white" style={{ width: "210mm", minHeight: "297mm", fontFamily: 'Arial, Helvetica, sans-serif' }}>
       
       <style type="text/css" media="print">
         {`
           @page { size: auto; margin: 10mm; } 
           body { margin: 0; padding: 0; background-color: white; }
+          * { font-family: Arial, Helvetica, sans-serif !important; }
           .print-table th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; }
         `}
       </style>

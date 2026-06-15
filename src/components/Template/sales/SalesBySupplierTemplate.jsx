@@ -13,10 +13,10 @@ export const SalesBySupplierPrintTemplate = React.forwardRef(({ data = [], filte
 
   return (
     <div style={{ display: "none" }}>
-      <div ref={ref} className="p-8 font-sans text-slate-900 bg-white" style={{ width: "210mm", minHeight: "297mm" }}>
+      <div ref={ref} className="p-8 text-slate-900 bg-white" style={{ width: "210mm", minHeight: "297mm", fontFamily: 'Arial, Helvetica, sans-serif' }}>
         
         <style type="text/css" media="print">
-          {`@page { size: A4; margin: 0mm; } body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }`}
+          {`@page { size: A4; margin: 0mm; } body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; } * { font-family: Arial, Helvetica, sans-serif !important; }`}
         </style>
 
         {/* --- HEADER --- */}

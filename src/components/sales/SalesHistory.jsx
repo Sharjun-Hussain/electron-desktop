@@ -360,14 +360,14 @@ export default function SalesHistory() {
         <div className="flex flex-col">
           <button
             onClick={() => handleViewDetails(row.original)}
-            className="text-left font-bold text-sm text-emerald-600 hover:text-emerald-700 hover:underline decoration-emerald-500/30 underline-offset-4"
+            className="text-left text-sm text-emerald-600 hover:text-emerald-700 hover:underline decoration-emerald-500/30 underline-offset-4"
           >
             {row.getValue("invoice_number")}
           </button>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            <span className="text-[10px] text-muted-foreground uppercase font-bold">{row.original.branch?.name || 'Main Hub'}</span>
-            <span className="text-[10px] opacity-20">•</span>
-            <span className="text-[9px] font-black text-emerald-600/50 tabular-nums tracking-tighter">REF: {generateDocNumber('sale', row.original.id)}</span>
+            <span className="text-[10px] text-muted-foreground uppercase">{row.original.branch?.name || 'Main Hub'}</span>
+            {/* <span className="text-[10px] opacity-20">•</span> */}
+            {/* <span className="text-[9px] font-black text-emerald-600/50 tabular-nums tracking-tighter">REF: {generateDocNumber('sale', row.original.id)}</span> */}
             {row.original.source === 'ecommerce' && (
               <>
                 <span className="text-[10px] opacity-20">•</span>
@@ -384,11 +384,16 @@ export default function SalesHistory() {
       accessorKey: "created_at",
       header: "Timestamp",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-3.5 w-3.5 opacity-50" />
-          <span className="text-xs font-medium">
-            {format(new Date(row.getValue("created_at")), 'MMM dd, yyyy • hh:mm a')}
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-foreground">
+            {format(new Date(row.getValue("created_at")), 'MMM dd, yyyy')}
           </span>
+          <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
+            <Clock className="h-3 w-3 opacity-50" />
+            <span className="text-xs">
+              {format(new Date(row.getValue("created_at")), 'hh:mm a')}
+            </span>
+          </div>
         </div>
       )
     },
@@ -396,7 +401,7 @@ export default function SalesHistory() {
       accessorKey: "customer.name",
       header: "Customer",
       cell: ({ row }) => (
-        <span className="font-bold text-foreground text-sm">
+        <span className="text-foreground text-sm">
           {row.original.customer?.name || "Walk-in Customer"}
         </span>
       )
@@ -420,7 +425,7 @@ export default function SalesHistory() {
       accessorKey: "payable_amount",
       header: () => <div className="text-right">Total</div>,
       cell: ({ row }) => (
-        <div className="text-right font-black text-foreground tabular-nums">
+        <div className="text-right text-foreground tabular-nums">
           {formatCurrency(row.getValue("payable_amount"))}
         </div>
       )
