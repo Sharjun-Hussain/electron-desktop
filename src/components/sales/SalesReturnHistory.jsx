@@ -305,7 +305,7 @@ export default function SalesReturnHistoryPage() {
             onClick={() => handleViewDetails(row.original)}
           >
             <Eye className="h-3.5 w-3.5" />
-            Audit View
+            View Details
           </Button>
         </div>
       )
@@ -346,7 +346,7 @@ export default function SalesReturnHistoryPage() {
               <RotateCcw className="h-5 w-5 text-orange-600" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Return Audits</h1>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">Returns History</h1>
               <p className="text-xs text-muted-foreground font-medium mt-0.5">Track and manage customer refunds and stock reversals</p>
             </div>
           </div>
@@ -388,7 +388,7 @@ export default function SalesReturnHistoryPage() {
             <div className="w-full md:w-[280px] space-y-2">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-3.5 w-3.5 text-orange-600" />
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Audit Timeline</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Timeline</label>
               </div>
               <Popover>
                 <PopoverTrigger asChild>
@@ -528,7 +528,7 @@ export default function SalesReturnHistoryPage() {
               {selectedReturn?.notes && (
                 <div className="bg-muted/30 rounded-xl p-4 border border-dashed">
                   <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-2">
-                    <FileText className="h-3 w-3" /> Audit Narrative
+                    <FileText className="h-3 w-3" /> Return Notes
                   </Label>
                   <p className="text-xs text-muted-foreground font-medium leading-relaxed italic border-l-2 border-orange-200 pl-3">
                     {selectedReturn.notes}
@@ -544,7 +544,7 @@ export default function SalesReturnHistoryPage() {
               onClick={() => window.print()}
             >
               <Printer className="h-4 w-4" />
-              Reprint Audit Log
+              Print Receipt
             </Button>
             <Button
               variant="outline"
