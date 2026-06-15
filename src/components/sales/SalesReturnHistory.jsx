@@ -354,6 +354,7 @@ export default function SalesReturnHistoryPage() {
         statCardsComponent={statCards}
         searchPlaceholder="Filter by Return #, Invoice, or Customer..."
         searchColumn="searchText"
+        initialColumnVisibility={{ searchText: false }}
         onExportClick={null}
         exportData={exportData}
         exportFileName="Sales_Return_Audit_Log"
