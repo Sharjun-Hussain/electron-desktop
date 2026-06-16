@@ -302,8 +302,31 @@ export default function DirectGRNPage() {
     async function loadDraft() {
       if (status !== "authenticated" || !session?.accessToken) return;
       const draftIdParam = searchParams.get("draftId");
+      const isLocalParam = searchParams.get("local") === "true";
+
       if (draftIdParam) {
         setCurrentDraftId(draftIdParam);
+        
+        if (isLocalParam && typeof window !== "undefined") {
+          try {
+            const savedDrafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+            const savedDraft = savedDrafts.find(d => String(d.id) === String(draftIdParam));
+            if (savedDraft) {
+              let draftData = savedDraft.payload || savedDraft.formData || savedDraft.data || savedDraft;
+              if (typeof draftData === "string") {
+                try { draftData = JSON.parse(draftData); } catch (e) {}
+              }
+              if (draftData.grnDate) draftData.grnDate = new Date(draftData.grnDate);
+              draftData.items?.forEach(item => {
+                if (item.expiryDate) item.expiryDate = new Date(item.expiryDate);
+              });
+              form.reset(draftData);
+              toast.success("Draft loaded from local storage");
+            }
+          } catch(e) {}
+          return;
+        }
+
         try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts?form_type=DirectGRN`, {
             headers: { Authorization: `Bearer ${session.accessToken}` }
@@ -387,8 +410,19 @@ export default function DirectGRNPage() {
         headers: { Authorization: `Bearer ${session.accessToken}` }
       });
       const result = await res.json();
+      
+      let localDrafts = [];
+      if (typeof window !== "undefined") {
+        try {
+          localDrafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+          localDrafts = localDrafts.map(d => ({ ...d, isLocal: true, updated_at: d.updatedAt }));
+        } catch(e) {}
+      }
+
       if (result.status === "success") {
-        setSavedDraftsList(result.data);
+        setSavedDraftsList([...(result.data || []), ...localDrafts]);
+      } else {
+        setSavedDraftsList(localDrafts);
       }
     } catch (error) {
       console.error("Failed to fetch drafts list", error);
@@ -398,7 +432,19 @@ export default function DirectGRNPage() {
     }
   };
 
-  const handleDeleteDraft = async (id) => {
+  const handleDeleteDraft = async (id, isLocal) => {
+    if (isLocal) {
+        if (typeof window !== "undefined") {
+            try {
+                let localDrafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+                localDrafts = localDrafts.filter(d => d.id !== id);
+                localStorage.setItem("direct-grn-drafts", JSON.stringify(localDrafts));
+                setSavedDraftsList(prev => prev.filter(d => d.id !== id));
+                toast.success("Local draft deleted");
+            } catch(e) {}
+        }
+        return;
+    }
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts/${id}`, {
         method: "DELETE",
@@ -1354,8 +1400,9 @@ export default function DirectGRNPage() {
                   className="w-full flex items-center justify-between p-4 bg-background border border-border/60 hover:border-emerald-500/30 rounded-xl transition-all shadow-sm"
                 >
                   <div className="flex flex-col gap-1.5 overflow-hidden pr-4">
-                    <span className="font-semibold text-foreground text-sm truncate">
+                    <span className="font-semibold text-foreground text-sm flex items-center gap-2 truncate">
                       {draft.summary || "Untitled Draft"}
+                      {draft.isLocal && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground border border-border/50">Local</span>}
                     </span>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
                       <Clock className="h-3.5 w-3.5" />
@@ -1368,7 +1415,7 @@ export default function DirectGRNPage() {
                       size="sm"
                       className="h-8 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-emerald-600 transition-colors"
                       onClick={() => {
-                        router.push(`/purchase/grn/direct?draftId=${draft.id}`);
+                        router.push(`/purchase/grn/direct?draftId=${draft.id}${draft.isLocal ? '&local=true' : ''}`);
                         setIsDraftsModalOpen(false);
                       }}
                     >
@@ -1378,7 +1425,7 @@ export default function DirectGRNPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
-                      onClick={() => handleDeleteDraft(draft.id)}
+                      onClick={() => handleDeleteDraft(draft.id, draft.isLocal)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

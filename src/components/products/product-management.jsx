@@ -81,7 +81,7 @@ import { cn } from "@/lib/utils";
 // 2. Helper Components
 // ----------------------------------------------------------------------
 
-const ProductDetailSheet = ({ product, isOpen, onClose }) => {
+const ProductDetailSheet = ({ product, isOpen, onClose, onEditVariant }) => {
   if (!product) return null;
 
   return (
@@ -163,9 +163,24 @@ const ProductDetailSheet = ({ product, isOpen, onClose }) => {
                           {v.barcode || "No Barcode"}
                         </p>
                       </div>
-                      <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 font-bold">
-                        {v.is_active ? "Active" : "Inactive"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {onEditVariant && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/50 transition-colors rounded-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditVariant(v);
+                            }}
+                          >
+                            <Edit3 className="h-3 w-3 mr-1" /> Edit
+                          </Button>
+                        )}
+                        <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 font-bold">
+                          {v.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -954,6 +969,11 @@ export default function ProductsPage() {
           product={productForDetail}
           isOpen={isDetailSheetOpen}
           onClose={() => setIsDetailSheetOpen(false)}
+          onEditVariant={(variant) => {
+            setIsDetailSheetOpen(false);
+            setIsNavigating(true);
+            router.push(`/variants/edit?id=${variant.id}`);
+          }}
         />
       </ResourceManagementLayout>
     </div>

@@ -102,8 +102,19 @@ export default function GRNReportPage() {
           headers: { Authorization: `Bearer ${session.accessToken}` }
         });
         const result = await res.json();
+        
+        let localDrafts = [];
+        if (typeof window !== "undefined") {
+          try {
+            localDrafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+            localDrafts = localDrafts.map(d => ({ ...d, isLocal: true, updated_at: d.updatedAt }));
+          } catch(e) {}
+        }
+
         if (result.status === "success") {
-          setDrafts(result.data || []);
+          setDrafts([...(result.data || []), ...localDrafts]);
+        } else {
+          setDrafts(localDrafts);
         }
       } catch (e) {
         console.error("Failed to fetch drafts", e);
@@ -114,7 +125,19 @@ export default function GRNReportPage() {
     fetchDrafts();
   }, [session]);
 
-  const deleteDraft = async (id) => {
+  const deleteDraft = async (id, isLocal) => {
+    if (isLocal) {
+        if (typeof window !== "undefined") {
+            try {
+                let localDrafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
+                localDrafts = localDrafts.filter(d => d.id !== id);
+                localStorage.setItem("direct-grn-drafts", JSON.stringify(localDrafts));
+                setDrafts(prev => prev.filter(d => d.id !== id));
+                toast.success("Local draft deleted successfully");
+            } catch(e) {}
+        }
+        return;
+    }
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts/${id}`, {
         method: "DELETE",
@@ -377,17 +400,20 @@ export default function GRNReportPage() {
               {drafts.map(draft => (
                 <div key={draft.id} className="bg-background border border-border/50 rounded-lg p-3 flex justify-between items-center shadow-sm">
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-foreground">{draft.summary}</span>
+                    <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      {draft.summary}
+                      {draft.isLocal && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground border border-border/50">Local</span>}
+                    </span>
                     <span className="text-xs text-muted-foreground">{format(new Date(draft.updated_at), "MMM dd, yyyy - hh:mm a")}</span>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => {
                       topLoader.start();
-                      router.push(`/purchase/grn/direct?draftId=${draft.id}`);
+                      router.push(`/purchase/grn/direct?draftId=${draft.id}${draft.isLocal ? '&local=true' : ''}`);
                     }} className="text-xs h-7 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100">
                       Resume
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteDraft(draft.id)} className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600">
+                    <Button variant="ghost" size="sm" onClick={() => deleteDraft(draft.id, draft.isLocal)} className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>

@@ -442,6 +442,7 @@ export function ProductVariantForm({ initialData = null }) {
     const random = Math.floor(10000 + Math.random() * 89999).toString();
     const sku = `SKU-${random}`;
     form.setValue("sku", sku);
+    form.setValue("code", sku);
   };
 
   // --- Barcode Insight Logic ---
@@ -877,7 +878,7 @@ export function ProductVariantForm({ initialData = null }) {
                                 <Barcode className={cn("absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground/30 transition-colors", isCheckingBarcode && "animate-pulse text-emerald-500")} />
                                  <Input 
                                    placeholder="Scan or enter barcode number" 
-                                   className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold" 
+                                   className="pl-12 h-9 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all" 
                                    {...field} 
                                  />
                               </div>
@@ -886,7 +887,7 @@ export function ProductVariantForm({ initialData = null }) {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => generateNumericBarcode(5)}
-                                className="h-11 px-4 rounded-xl bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-bold"
+                                className="h-9 px-4 rounded-md bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10 text-emerald-600 shadow-sm transition-all flex items-center gap-2 font-bold"
                                 title="Generate 5-digit code for weighing scales"
                               >
                                 <RefreshCw className="size-4" />
@@ -897,7 +898,7 @@ export function ProductVariantForm({ initialData = null }) {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => generateNumericBarcode(13)}
-                                className="h-11 px-4 rounded-xl bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-bold"
+                                className="h-9 px-4 rounded-md bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10 text-blue-600 shadow-sm transition-all flex items-center gap-2 font-bold"
                                 title="Generate standard 13-digit barcode"
                                 >
                                 <Zap className="size-4" />
@@ -980,7 +981,7 @@ export function ProductVariantForm({ initialData = null }) {
                                 <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-slate-200 dark:border-slate-800 text-slate-400 group-focus-within/field:text-emerald-500 transition-colors">
                                   <span className="text-xs font-bold font-mono">LKR</span>
                                 </div>
-                                <Input type="number" step="0.01" className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" {...field} />
+                                <Input type="number" step="0.01" className="pl-12 h-9 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage className="text-[11px]" />
@@ -998,7 +999,7 @@ export function ProductVariantForm({ initialData = null }) {
                                 <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-slate-200 dark:border-slate-800 text-slate-400 group-focus-within/field:text-emerald-500 transition-colors">
                                   <span className="text-xs font-bold font-mono">LKR</span>
                                 </div>
-                                <Input type="number" step="0.01" className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" {...field} />
+                                <Input type="number" step="0.01" className="pl-12 h-9 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage className="text-[11px]" />
@@ -1016,7 +1017,7 @@ export function ProductVariantForm({ initialData = null }) {
                                 <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-emerald-100 dark:border-emerald-900/30 text-emerald-500/50 group-focus-within/field:text-emerald-600 transition-colors">
                                   <span className="text-xs font-bold font-mono">LKR</span>
                                 </div>
-                                <Input type="number" step="0.01" className="pl-12 h-11 bg-emerald-50/10 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-900/30 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-emerald-700 dark:text-emerald-400 font-bold" {...field} />
+                                <Input type="number" step="0.01" className="pl-12 h-9 bg-emerald-50/10 border-emerald-200/50 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all text-emerald-700 dark:text-emerald-400" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage className="text-[11px]" />
@@ -1034,7 +1035,7 @@ export function ProductVariantForm({ initialData = null }) {
                                 <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center border-r border-slate-200 dark:border-slate-800 text-slate-400 group-focus-within/field:text-emerald-500 transition-colors">
                                   <span className="text-xs font-bold font-mono">LKR</span>
                                 </div>
-                                <Input type="number" step="0.01" className="pl-12 h-11 bg-slate-50/50 dark:bg-zinc-900/50 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" {...field} />
+                                <Input type="number" step="0.01" className="pl-12 h-9 bg-background border-border/60 rounded-md focus:ring-emerald-500/20 font-medium text-sm shadow-sm transition-all" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage className="text-[11px]" />
