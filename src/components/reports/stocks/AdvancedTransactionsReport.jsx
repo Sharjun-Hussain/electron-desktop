@@ -57,7 +57,6 @@ import { signOut, useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
 
 const DEFAULT_COLUMNS = {
-  barcode: true,
   item_name: true,
   sale_price: false,
   cost_price: true,
@@ -535,8 +534,7 @@ export default function AdvancedTransactionsReport() {
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                   <TableRow className="border-border hover:bg-transparent">
                     {visibleColumns.date && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 pl-6">Date</TableHead>}
-                    {visibleColumns.barcode && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Barcode</TableHead>}
-                    {visibleColumns.item_name && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Item Name</TableHead>}
+                    {visibleColumns.item_name && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Item Details</TableHead>}
                     {visibleColumns.category && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Category</TableHead>}
                     {visibleColumns.brand && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Brand</TableHead>}
                     {visibleColumns.previous_stock && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-center">Prev Stock</TableHead>}
@@ -567,28 +565,32 @@ export default function AdvancedTransactionsReport() {
                             <div className="text-[11px] text-muted-foreground/70">{format(new Date(item.date), "HH:mm")}</div>
                           </TableCell>
                         )}
-                        {visibleColumns.barcode && <TableCell className="text-[13px] font-bold text-foreground">{item.barcode}</TableCell>}
-                        {visibleColumns.item_name && <TableCell className="text-[13px] font-semibold text-foreground group-hover:text-emerald-600 transition-colors">{item.item_name}</TableCell>}
+                        {visibleColumns.item_name && (
+                          <TableCell className="text-[13px] font-medium text-foreground group-hover:text-emerald-600 transition-colors">
+                            <div>{item.item_name}</div>
+                            <div className="text-[11px] text-muted-foreground font-normal mt-0.5">{item.barcode}</div>
+                          </TableCell>
+                        )}
                         {visibleColumns.category && <TableCell className="text-[13px] font-medium text-muted-foreground">{item.category || '-'}</TableCell>}
                         {visibleColumns.brand && <TableCell className="text-[13px] font-medium text-muted-foreground">{item.brand || '-'}</TableCell>}
-                        {visibleColumns.previous_stock && <TableCell className="text-center font-medium text-muted-foreground">{item.previous_stock !== null ? item.previous_stock : '-'}</TableCell>}
+                        {visibleColumns.previous_stock && <TableCell className="text-center font-medium text-orange-600 dark:text-orange-400">{item.previous_stock !== null ? item.previous_stock : '-'}</TableCell>}
                         {visibleColumns.adjust_qty && (
                           <TableCell className="text-center">
                             <Badge variant="outline" className={cn(
-                              "font-bold px-2 py-0.5",
-                              item.type === 'addition' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                              item.type === 'subtraction' ? "bg-rose-50 text-rose-600 border-rose-100" :
-                              "bg-blue-50 text-blue-600 border-blue-100"
+                              "font-medium px-2 py-0.5 border-transparent",
+                              item.type === 'addition' ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" :
+                              item.type === 'subtraction' ? "bg-rose-500/10 text-rose-700 dark:text-rose-400" :
+                              "bg-blue-500/10 text-blue-700 dark:text-blue-400"
                             )}>
                               {item.type === 'addition' ? '+' : item.type === 'subtraction' ? '-' : ''} {item.quantity}
                             </Badge>
                           </TableCell>
                         )}
-                        {visibleColumns.after_stock && <TableCell className="text-center font-bold text-foreground">{item.after_stock !== null ? item.after_stock : '-'}</TableCell>}
-                        {visibleColumns.type && <TableCell className="text-center text-[12px] font-bold uppercase text-muted-foreground/60">{item.type}</TableCell>}
-                        {visibleColumns.cost_price && <TableCell className="text-right font-bold text-muted-foreground">{formatCurrency(item.cost_price)}</TableCell>}
-                        {visibleColumns.sale_price && <TableCell className="text-right font-bold text-foreground">{formatCurrency(item.sale_price)}</TableCell>}
-                        {visibleColumns.user && <TableCell className="text-right pr-6 font-semibold text-foreground">{item.user}</TableCell>}
+                        {visibleColumns.after_stock && <TableCell className="text-center font-medium text-foreground">{item.after_stock !== null ? item.after_stock : '-'}</TableCell>}
+                        {visibleColumns.type && <TableCell className="text-center text-[12px] font-medium uppercase text-muted-foreground/60">{item.type}</TableCell>}
+                        {visibleColumns.cost_price && <TableCell className="text-right font-medium text-muted-foreground">{formatCurrency(item.cost_price)}</TableCell>}
+                        {visibleColumns.sale_price && <TableCell className="text-right font-medium text-foreground">{formatCurrency(item.sale_price)}</TableCell>}
+                        {visibleColumns.user && <TableCell className="text-right pr-6 font-medium text-foreground">{item.user}</TableCell>}
                       </TableRow>
                     ))
                   ) : (
