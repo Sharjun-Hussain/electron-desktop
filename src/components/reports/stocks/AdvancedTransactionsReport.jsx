@@ -5,30 +5,21 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
 import { format, subDays } from "date-fns";
 import {
-  Printer,
-  FileText,
-  Download,
-  Search,
-  Calendar as CalendarIcon,
-  Filter,
-  ArrowRight,
-  SlidersHorizontal,
   RefreshCw,
+  Filter,
+  Calendar as CalendarIcon,
   Check,
-  ChevronsUpDown,
-  DollarSign,
-  Receipt,
-  Tag,
-  CreditCard as PaymentIcon,
+  Package,
+  LayoutGrid,
+  Settings2,
   CalendarDays,
   MapPin,
   User as UserIcon,
-  Zap,
-  ChevronLeft,
-  ChevronRight,
-  Package,
-  Layers,
-  LayoutGrid,
+  Tag,
+  SlidersHorizontal,
+  PlusSquare,
+  MinusSquare,
+  DollarSign
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -39,7 +30,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -56,7 +46,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -70,26 +59,20 @@ const DEFAULT_COLUMNS = {
   item_code: true,
   item_name: true,
   sale_price: false,
-  trade_price: false,
-  cost_price: false,
-  actual_qty: false,
+  cost_price: true,
   adjust_qty: true,
-  balance_qty: true,
+  type: true,
   date: true,
-  time: true,
-  batch_no: false,
-  department: true,
   category: false,
   brand: false,
-  remarks: true,
-  access_user: true,
-  id: false,
-  transaction: true,
+  user: true,
 };
 
 export default function AdvancedTransactionsReport() {
   const { data: session } = useSession();
   const { formatCurrency, formatDateTime, localization } = useAppSettings();
+
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
 
   const [date, setDate] = useState({
     from: subDays(new Date(), 7),
@@ -105,7 +88,7 @@ export default function AdvancedTransactionsReport() {
 
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_COLUMNS);
   const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Metadata
   const [products, setProducts] = useState([]);
@@ -164,6 +147,11 @@ export default function AdvancedTransactionsReport() {
       });
       const result = await res.json();
 
+      if (res.status === 401) {
+        signOut({ callbackUrl: "/login" });
+        return;
+      }
+
       if (result.status === 'success') {
         setData(result.data || []);
       } else {
@@ -182,8 +170,10 @@ export default function AdvancedTransactionsReport() {
   }, [fetchMetadata]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (isSetupComplete) {
+      fetchData();
+    }
+  }, [isSetupComplete, fetchData]);
 
   const toggleColumn = (col) => {
     setVisibleColumns(prev => ({ ...prev, [col]: !prev[col] }));
@@ -192,202 +182,353 @@ export default function AdvancedTransactionsReport() {
   const exportData = useMemo(() => {
     return data.map(item => {
       const row = {};
+      if (visibleColumns.date) row["Date"] = format(new Date(item.date), "yyyy-MM-dd HH:mm");
       if (visibleColumns.item_code) row["Item Code"] = item.item_code;
       if (visibleColumns.item_name) row["Item Name"] = item.item_name;
-      if (visibleColumns.sale_price) row["Sale Price"] = item.sale_price;
-      if (visibleColumns.cost_price) row["Cost Price"] = item.cost_price;
-      if (visibleColumns.adjust_qty) row["Adjust Qty"] = item.quantity;
-      if (visibleColumns.type) row["Type"] = item.type;
-      if (visibleColumns.date) row["Date"] = format(new Date(item.date), "yyyy-MM-dd");
       if (visibleColumns.category) row["Category"] = item.category;
       if (visibleColumns.brand) row["Brand"] = item.brand;
+      if (visibleColumns.adjust_qty) row["Adjust Qty"] = item.quantity;
+      if (visibleColumns.type) row["Type"] = item.type;
+      if (visibleColumns.cost_price) row["Cost Price"] = item.cost_price;
+      if (visibleColumns.sale_price) row["Sale Price"] = item.sale_price;
       if (visibleColumns.user) row["User"] = item.user;
       return row;
     });
   }, [data, visibleColumns]);
 
+  const stats = useMemo(() => {
+    let additions = 0;
+    let subtractions = 0;
+    let netCostImpact = 0;
+
+    data.forEach(item => {
+      const qty = Number(item.quantity);
+      const cost = Number(item.cost_price || 0);
+      if (item.type === 'addition') {
+        additions += qty;
+        netCostImpact += (qty * cost);
+      } else if (item.type === 'subtraction') {
+        subtractions += qty;
+        netCostImpact -= (qty * cost);
+      }
+    });
+
+    return {
+      totalTransactions: data.length,
+      additions,
+      subtractions,
+      netCostImpact
+    };
+  }, [data]);
+
   const printRef = useRef();
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: "Transactions_Report",
+    documentTitle: "Stock_Adjustments_Report",
   });
+
+  const statsCards = [
+    {
+      label: "Total Adjustments",
+      val: isLoading ? null : stats.totalTransactions,
+      desc: "Number of stock adjustments",
+      icon: Package,
+      gradient: "from-blue-500 to-indigo-400",
+    },
+    {
+      label: "Total Additions",
+      val: isLoading ? null : `+${stats.additions}`,
+      desc: "Quantity added to inventory",
+      icon: PlusSquare,
+      gradient: "from-emerald-500 to-teal-400",
+    },
+    {
+      label: "Total Subtractions",
+      val: isLoading ? null : `-${stats.subtractions}`,
+      desc: "Quantity removed from inventory",
+      icon: MinusSquare,
+      gradient: "from-rose-500 to-red-400",
+    },
+    {
+      label: "Net Value Impact",
+      val: isLoading ? null : formatCurrency(stats.netCostImpact),
+      desc: "Net change in inventory value",
+      icon: DollarSign,
+      gradient: "from-amber-500 to-orange-400",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 font-sans">
-      <div className="flex flex-col gap-6 max-w-[1600px] mx-auto">
+      <div className="flex flex-col gap-6 max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-md">
-              <RefreshCw className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <SlidersHorizontal className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">Stock Transactions Report</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Stock Adjustments Report</h1>
               <p className="text-sm text-muted-foreground mt-0.5">Comprehensive audit of all inventory movements and adjustments</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {isSetupComplete && (
+              <Button variant="outline" size="sm" className="h-9 border-dashed border-emerald-500/50 text-emerald-600 bg-emerald-50/50 hover:bg-emerald-100 mr-2 gap-2" onClick={() => setIsSetupComplete(false)}>
+                <Settings2 className="w-4 h-4" /> Reconfigure
+              </Button>
+            )}
             <DataActions 
               data={exportData} 
-              fileName="Transactions_Report"
+              fileName="Stock_Adjustments_Report"
               onPrint={handlePrint}
               showPrint={true}
             />
+            {isSetupComplete && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 px-3 rounded-lg text-xs font-medium text-muted-foreground hover:text-emerald-600 gap-1.5"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Columns
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2 rounded-md border-border shadow-lg bg-card" align="end">
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-xs px-2 py-1.5 border-b border-border text-foreground mb-1">
+                      Toggle Columns
+                    </h4>
+                    <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                      {Object.keys(visibleColumns).map((key) => {
+                        return (
+                          <div
+                            key={key}
+                            className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
+                            onClick={() => toggleColumn(key)}
+                          >
+                            <div
+                              className={cn(
+                                "flex h-3.5 w-3.5 items-center justify-center rounded-sm border border-primary transition-all",
+                                visibleColumns[key]
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "opacity-50 border-muted-foreground [&_svg]:invisible"
+                              )}
+                            >
+                              <Check className="h-2.5 w-2.5" />
+                            </div>
+                            <span className="text-[11px] font-medium text-foreground select-none capitalize">
+                              {key.replace('_', ' ')}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
             <Button 
               variant="outline" 
               size="icon" 
               className="border-border hover:border-emerald-200 hover:bg-emerald-50 h-9 w-9 rounded-lg" 
               onClick={fetchData} 
-              disabled={isLoading}
+              disabled={isLoading || !isSetupComplete}
             >
               <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Filters Sidebar */}
-          <Card className="xl:col-span-1 border-border shadow-sm">
-            <CardContent className="p-6 space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold flex items-center gap-2 text-foreground uppercase tracking-wider">
-                  <Filter className="size-4 text-emerald-600" /> Filters
-                </h3>
-                
-                {/* Date Range */}
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Date Range</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left h-10 border-border text-sm font-medium hover:bg-emerald-50">
-                        <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
-                        {date?.from ? (date.to ? <>{format(date.from, "LLL dd")} - {format(date.to, "LLL dd")}</> : format(date.from, "LLL dd")) : <span>Select range</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 border-border" align="start">
-                      <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
-                    </PopoverContent>
-                  </Popover>
+        {isSetupComplete && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {statsCards.map((card, idx) => (
+              <div
+                key={idx}
+                className="bg-card rounded-xl p-6 border border-border shadow-xs flex items-center gap-4"
+              >
+                <div
+                  className={`p-3 rounded-lg bg-gradient-to-br ${card.gradient} text-white shrink-0 self-start`}
+                >
+                  <card.icon className="w-5 h-5" />
                 </div>
-
-                {/* Product */}
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Product</Label>
-                  <Select value={filters.product_id} onValueChange={(val) => setFilters(f => ({ ...f, product_id: val }))}>
-                    <SelectTrigger className="h-10 border-border">
-                      <SelectValue placeholder="All Products" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Products</SelectItem>
-                      {Array.isArray(products) && products.map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Brand */}
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Brand</Label>
-                  <Select value={filters.brand_id} onValueChange={(val) => setFilters(f => ({ ...f, brand_id: val }))}>
-                    <SelectTrigger className="h-10 border-border">
-                      <SelectValue placeholder="All Brands" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Brands</SelectItem>
-                      {Array.isArray(brands) && brands.map(b => (
-                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Category (Department) */}
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Category (Department)</Label>
-                  <Select value={filters.category_id} onValueChange={(val) => setFilters(f => ({ ...f, category_id: val }))}>
-                    <SelectTrigger className="h-10 border-border">
-                      <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {Array.isArray(categories) && categories.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* User */}
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">User</Label>
-                  <Select value={filters.user_id} onValueChange={(val) => setFilters(f => ({ ...f, user_id: val }))}>
-                    <SelectTrigger className="h-10 border-border">
-                      <SelectValue placeholder="All Users" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Users</SelectItem>
-                      {Array.isArray(users) && users.map(u => (
-                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                 {/* Transaction Type */}
-                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Transaction Type</Label>
-                  <Select value={filters.transaction_type} onValueChange={(val) => setFilters(f => ({ ...f, transaction_type: val }))}>
-                    <SelectTrigger className="h-10 border-border">
-                      <SelectValue placeholder="All Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="addition">Addition (+)</SelectItem>
-                      <SelectItem value="subtraction">Subtraction (-)</SelectItem>
-                      <SelectItem value="set_to">Set To (=)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-col min-w-0 w-full">
+                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {card.label}
+                  </p>
+                  {isLoading ? (
+                    <Skeleton className="h-7 w-28 mt-1" />
+                  ) : (
+                    <h3 className="text-2xl font-bold text-foreground truncate">
+                      {card.val}
+                    </h3>
+                  )}
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {card.desc}
+                  </p>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
 
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h3 className="text-sm font-bold flex items-center gap-2 text-foreground uppercase tracking-wider">
-                  <LayoutGrid className="size-4 text-emerald-600" /> Display Options
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.keys(visibleColumns).map((col) => (
-                    <div key={col} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`col-${col}`} 
-                        checked={visibleColumns[col]} 
-                        onCheckedChange={() => toggleColumn(col)}
-                        className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                      />
-                      <label htmlFor={`col-${col}`} className="text-xs font-medium text-muted-foreground capitalize leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        {col.replace('_', ' ')}
-                      </label>
-                    </div>
-                  ))}
+        {/* Main Table Card Wrap */}
+        <Card className="border border-border shadow-sm rounded-lg overflow-hidden flex flex-col bg-card">
+          {/* Setup Wizard / Filters */}
+          <div className={cn("p-4 transition-all duration-300", !isSetupComplete ? "p-8 bg-card" : "bg-muted/10 border-b border-border")}>
+            
+            {!isSetupComplete && (
+              <div className="mb-8 text-center max-w-2xl mx-auto">
+                <div className="inline-flex p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 mb-4">
+                   <Settings2 className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Configure Your Report</h2>
+                <p className="text-sm text-muted-foreground">Select your reporting parameters and filter by product, brand, or user before generating the report.</p>
+              </div>
+            )}
+
+            {isSetupComplete ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                    <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
+                    {date?.from ? (date.to ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : format(date.from, "LLL dd, yyyy")) : "All Time"}
+                  </Badge>
+                  {filters.transaction_type !== "all" && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border capitalize">
+                      <Tag className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      Type: {filters.transaction_type}
+                    </Badge>
+                  )}
+                  {filters.user_id !== "all" && (
+                    <Badge variant="outline" className="px-3 py-1.5 text-xs font-medium border-border">
+                      <UserIcon className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                      {users.find((u) => String(u.id) === String(filters.user_id))?.name || "User"}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-sm font-medium text-muted-foreground">
+                  {data.length} records found
                 </div>
               </div>
+            ) : (
+              <div className="max-w-4xl mx-auto space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Date Range */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Date Range</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left h-10 border-border text-sm font-medium hover:bg-emerald-50">
+                          <CalendarIcon className="mr-2 h-4 w-4 text-emerald-500" />
+                          {date?.from ? (date.to ? <>{format(date.from, "LLL dd, yyyy")} - {format(date.to, "LLL dd, yyyy")}</> : format(date.from, "LLL dd, yyyy")) : <span>Select range</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 border-border" align="start">
+                        <Calendar mode="range" selected={date} onSelect={setDate} numberOfMonths={2} />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-10 font-bold" onClick={fetchData}>Submit</Button>
-                <Button variant="outline" className="flex-1 h-10 font-bold" onClick={() => {
-                  setDate({ from: subDays(new Date(), 7), to: new Date() });
-                  setFilters({ product_id: "all", brand_id: "all", category_id: "all", user_id: "all", transaction_type: "all" });
-                  setVisibleColumns(DEFAULT_COLUMNS);
-                }}>Reset</Button>
+                  {/* Transaction Type */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Transaction Type</Label>
+                    <Select value={filters.transaction_type} onValueChange={(val) => setFilters(f => ({ ...f, transaction_type: val }))}>
+                      <SelectTrigger className="h-10 border-border">
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="addition">Addition (+)</SelectItem>
+                        <SelectItem value="subtraction">Subtraction (-)</SelectItem>
+                        <SelectItem value="set_to">Set To (=)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Product */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Product</Label>
+                    <Select value={filters.product_id} onValueChange={(val) => setFilters(f => ({ ...f, product_id: val }))}>
+                      <SelectTrigger className="h-10 border-border">
+                        <SelectValue placeholder="All Products" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Products</SelectItem>
+                        {Array.isArray(products) && products.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* User */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Adjusted By (User)</Label>
+                    <Select value={filters.user_id} onValueChange={(val) => setFilters(f => ({ ...f, user_id: val }))}>
+                      <SelectTrigger className="h-10 border-border">
+                        <SelectValue placeholder="All Users" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        {Array.isArray(users) && users.map(u => (
+                          <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Category */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Category (Department)</Label>
+                    <Select value={filters.category_id} onValueChange={(val) => setFilters(f => ({ ...f, category_id: val }))}>
+                      <SelectTrigger className="h-10 border-border">
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {Array.isArray(categories) && categories.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Brand */}
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Brand</Label>
+                    <Select value={filters.brand_id} onValueChange={(val) => setFilters(f => ({ ...f, brand_id: val }))}>
+                      <SelectTrigger className="h-10 border-border">
+                        <SelectValue placeholder="All Brands" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Brands</SelectItem>
+                        {Array.isArray(brands) && brands.map(b => (
+                          <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-6 border-t border-border">
+                  <Button 
+                    className="w-full sm:w-auto min-w-[200px] h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-medium" 
+                    onClick={() => setIsSetupComplete(true)}
+                  >
+                    Generate Report
+                  </Button>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
 
           {/* Table Area */}
-          <Card className="xl:col-span-3 border-border shadow-sm overflow-hidden flex flex-col bg-card">
-            <div className="overflow-x-auto relative h-full">
-              <Table>
+          {isSetupComplete && (
+            <div className="overflow-x-auto relative min-h-[400px]">
+              <Table ref={printRef}>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                   <TableRow className="border-border hover:bg-transparent">
                     {visibleColumns.date && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 pl-6">Date</TableHead>}
@@ -397,8 +538,8 @@ export default function AdvancedTransactionsReport() {
                     {visibleColumns.brand && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Brand</TableHead>}
                     {visibleColumns.adjust_qty && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-center">Adjust Qty</TableHead>}
                     {visibleColumns.type && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-center">Type</TableHead>}
-                    {visibleColumns.sale_price && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-right">Sale Price</TableHead>}
                     {visibleColumns.cost_price && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-right">Cost Price</TableHead>}
+                    {visibleColumns.sale_price && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-right">Sale Price</TableHead>}
                     {visibleColumns.user && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-right pr-6">User</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -409,13 +550,13 @@ export default function AdvancedTransactionsReport() {
                         <TableCell className="pl-6"><Skeleton className="h-4 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                        <TableCell colSpan={6}></TableCell>
+                        <TableCell colSpan={7}></TableCell>
                       </TableRow>
                     ))
                   ) : data.length > 0 ? (
                     data.map((item) => (
                       <TableRow key={item.id} className="border-border hover:bg-muted/30 transition-colors group">
-                        {visibleColumns.date && <TableCell className="pl-6 py-4 text-[13px] font-medium text-muted-foreground tabular-nums">{format(new Date(item.date), "yyyy-MM-dd")}</TableCell>}
+                        {visibleColumns.date && <TableCell className="pl-6 py-4 text-[13px] font-medium text-muted-foreground tabular-nums">{format(new Date(item.date), "yyyy-MM-dd HH:mm")}</TableCell>}
                         {visibleColumns.item_code && <TableCell className="text-[13px] font-bold text-foreground">{item.item_code}</TableCell>}
                         {visibleColumns.item_name && <TableCell className="text-[13px] font-semibold text-foreground group-hover:text-emerald-600 transition-colors">{item.item_name}</TableCell>}
                         {visibleColumns.category && <TableCell className="text-[13px] font-medium text-muted-foreground">{item.category || '-'}</TableCell>}
@@ -433,8 +574,8 @@ export default function AdvancedTransactionsReport() {
                           </TableCell>
                         )}
                         {visibleColumns.type && <TableCell className="text-center text-[12px] font-bold uppercase text-muted-foreground/60">{item.type}</TableCell>}
-                        {visibleColumns.sale_price && <TableCell className="text-right font-bold text-foreground">{formatCurrency(item.sale_price)}</TableCell>}
                         {visibleColumns.cost_price && <TableCell className="text-right font-bold text-muted-foreground">{formatCurrency(item.cost_price)}</TableCell>}
+                        {visibleColumns.sale_price && <TableCell className="text-right font-bold text-foreground">{formatCurrency(item.sale_price)}</TableCell>}
                         {visibleColumns.user && <TableCell className="text-right pr-6 font-semibold text-foreground">{item.user}</TableCell>}
                       </TableRow>
                     ))
@@ -443,7 +584,7 @@ export default function AdvancedTransactionsReport() {
                       <TableCell colSpan={10} className="h-64 text-center">
                         <div className="flex flex-col items-center justify-center opacity-50">
                           <Package className="size-12 mb-2 text-muted-foreground" />
-                          <p className="text-sm font-semibold">No transactions found for the selected period</p>
+                          <p className="text-sm font-semibold">No stock adjustments found for the selected period</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -451,8 +592,8 @@ export default function AdvancedTransactionsReport() {
                 </TableBody>
               </Table>
             </div>
-          </Card>
-        </div>
+          )}
+        </Card>
       </div>
     </div>
   );

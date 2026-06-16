@@ -330,10 +330,10 @@ const REPORTS_DATA = [
   // ── Advanced Reports ──
   {
     id: "advanced-transactions",
-    name: "Advanced Transactions",
+    name: "Stock Adjustments",
     href: "/reports/stocks/advanced-transactions",
     category: "Stocks",
-    description: "Detailed audit of all inventory movements with dynamic column selection.",
+    description: "Wizard-based audit of inventory adjustments and manual movements.",
     isFavorite: true,
   },
   {
