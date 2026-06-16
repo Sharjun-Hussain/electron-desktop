@@ -91,18 +91,45 @@ export default function GRNReportPage() {
   });
   const [drafts, setDrafts] = useState([]);
   
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedDrafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
-      setDrafts(savedDrafts);
-    }
-  }, []);
+  const [isDraftsLoading, setIsDraftsLoading] = useState(false);
 
-  const deleteDraft = (id) => {
-    const newDrafts = drafts.filter(d => d.id !== id);
-    localStorage.setItem("direct-grn-drafts", JSON.stringify(newDrafts));
-    setDrafts(newDrafts);
-    toast.success("Draft deleted successfully");
+  useEffect(() => {
+    async function fetchDrafts() {
+      if (!session?.accessToken) return;
+      try {
+        setIsDraftsLoading(true);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts?form_type=DirectGRN`, {
+          headers: { Authorization: `Bearer ${session.accessToken}` }
+        });
+        const result = await res.json();
+        if (result.status === "success") {
+          setDrafts(result.data || []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch drafts", e);
+      } finally {
+        setIsDraftsLoading(false);
+      }
+    }
+    fetchDrafts();
+  }, [session]);
+
+  const deleteDraft = async (id) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.accessToken}` }
+      });
+      if (res.ok) {
+        setDrafts(prev => prev.filter(d => d.id !== id));
+        toast.success("Draft deleted successfully");
+      } else {
+        toast.error("Failed to delete draft");
+      }
+    } catch (e) {
+      console.error("Error deleting draft", e);
+      toast.error("Error deleting draft");
+    }
   };
 
   const [pagination, setPagination] = useState({
@@ -351,7 +378,7 @@ export default function GRNReportPage() {
                 <div key={draft.id} className="bg-background border border-border/50 rounded-lg p-3 flex justify-between items-center shadow-sm">
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-foreground">{draft.summary}</span>
-                    <span className="text-xs text-muted-foreground">{format(new Date(draft.updatedAt), "MMM dd, yyyy - hh:mm a")}</span>
+                    <span className="text-xs text-muted-foreground">{format(new Date(draft.updated_at), "MMM dd, yyyy - hh:mm a")}</span>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => {

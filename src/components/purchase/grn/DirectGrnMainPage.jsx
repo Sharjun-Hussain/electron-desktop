@@ -23,7 +23,9 @@ import {
   Trash2,
   Barcode,
   Save,
-  AlertTriangle
+  AlertTriangle,
+  FileStack,
+  Clock
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -239,6 +241,11 @@ export default function DirectGRNPage() {
   const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
   const [submitData, setSubmitData] = useState(null);
 
+  // Drafts Modal States
+  const [isDraftsModalOpen, setIsDraftsModalOpen] = useState(false);
+  const [savedDraftsList, setSavedDraftsList] = useState([]);
+  const [isDraftsLoading, setIsDraftsLoading] = useState(false);
+
   const [visibleColumns, setVisibleColumns] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("direct-grn-visible-columns");
@@ -292,63 +299,118 @@ export default function DirectGRNPage() {
 
   // Load Draft on Mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    async function loadDraft() {
+      if (status !== "authenticated" || !session?.accessToken) return;
       const draftIdParam = searchParams.get("draftId");
       if (draftIdParam) {
         setCurrentDraftId(draftIdParam);
-        const drafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
-        const savedDraft = drafts.find(d => d.id === draftIdParam);
-        
-        if (savedDraft) {
-          try {
-            const draftData = savedDraft.data;
-            if (draftData.grnDate) draftData.grnDate = new Date(draftData.grnDate);
-            draftData.items?.forEach(item => {
-              if (item.expiryDate) item.expiryDate = new Date(item.expiryDate);
-            });
-            
-            form.reset(draftData);
-            toast.success("Draft loaded successfully");
-          } catch (e) {
-            console.error("Failed to parse draft", e);
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts?form_type=DirectGRN`, {
+            headers: { Authorization: `Bearer ${session.accessToken}` }
+          });
+          const result = await res.json();
+          if (result.status === "success" && result.data?.length > 0) {
+            const savedDraft = result.data.find(d => d.id === draftIdParam);
+            if (savedDraft && savedDraft.payload) {
+              let draftData = savedDraft.payload;
+              if (typeof draftData === "string") {
+                try {
+                  draftData = JSON.parse(draftData);
+                } catch (e) {
+                  console.error("Failed to parse draft payload", e);
+                }
+              }
+              if (draftData.grnDate) draftData.grnDate = new Date(draftData.grnDate);
+              draftData.items?.forEach(item => {
+                if (item.expiryDate) item.expiryDate = new Date(item.expiryDate);
+              });
+              form.reset(draftData);
+              toast.success("Draft loaded from cloud");
+            }
           }
+        } catch (e) {
+          console.error("Failed to fetch draft", e);
         }
       } else {
         // Generate a new draft ID if none in URL
-        setCurrentDraftId(Date.now().toString());
+        setCurrentDraftId(crypto.randomUUID ? crypto.randomUUID() : Date.now().toString());
       }
     }
-  }, [searchParams, form]);
+    if (typeof window !== "undefined") {
+      loadDraft();
+    }
+  }, [searchParams, form, status, session]);
 
   // Save Draft Action
-  const handleSaveDraft = () => {
-    if (!currentDraftId) return;
-    
+  const handleSaveDraft = async () => {
+    if (!currentDraftId || status !== "authenticated" || !session?.accessToken) return;
+
     const currentData = form.getValues();
-    const drafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
     
     // Find supplier name for summary
     const supplier = suppliers.find(s => String(s.id) === String(currentData.supplierId));
     const supplierName = supplier ? supplier.name : "Unknown Supplier";
     const itemCount = currentData.items.filter(i => i.productId).length;
     
-    const draftObject = {
-      id: currentDraftId,
-      updatedAt: new Date().toISOString(),
-      summary: `${supplierName} - ${itemCount} item(s)`,
-      data: currentData
-    };
-    
-    const existingIndex = drafts.findIndex(d => d.id === currentDraftId);
-    if (existingIndex >= 0) {
-      drafts[existingIndex] = draftObject;
-    } else {
-      drafts.push(draftObject);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.accessToken}`
+        },
+        body: JSON.stringify({
+          id: currentDraftId,
+          form_type: 'DirectGRN',
+          summary: `${supplierName} - ${itemCount} item(s)`,
+          payload: currentData
+        })
+      });
+
+      if (response.ok) {
+        form.reset({}, { keepValues: true, keepDirty: false }); // Reset dirty state
+        toast.success("Draft saved securely to cloud");
+      } else {
+        toast.error("Failed to save draft");
+      }
+    } catch (e) {
+      console.error("Failed to save draft API", e);
+      toast.error("Network error while saving draft");
     }
-    
-    localStorage.setItem("direct-grn-drafts", JSON.stringify(drafts));
-    form.reset({}, { keepValues: true, keepDirty: false }); // Reset dirty state to avoid prompt after explicit save
-    toast.success("Draft saved successfully");
+  };
+
+  const fetchSavedDrafts = async () => {
+    if (status !== "authenticated" || !session?.accessToken) return;
+    try {
+      setIsDraftsLoading(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts?form_type=DirectGRN`, {
+        headers: { Authorization: `Bearer ${session.accessToken}` }
+      });
+      const result = await res.json();
+      if (result.status === "success") {
+        setSavedDraftsList(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch drafts list", error);
+      toast.error("Failed to load drafts");
+    } finally {
+      setIsDraftsLoading(false);
+    }
+  };
+
+  const handleDeleteDraft = async (id) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.accessToken}` }
+      });
+      if (res.ok) {
+        setSavedDraftsList(prev => prev.filter(d => d.id !== id));
+        toast.success("Draft deleted");
+      }
+    } catch (error) {
+      toast.error("Failed to delete draft");
+    }
   };
 
   // Prevent Refresh/Navigate if Dirty
@@ -646,9 +708,8 @@ export default function DirectGRNPage() {
   };
 
   async function processSubmit() {
-    if (!submitData) return;
+    if (!submitData || isSubmitting) return;
     const data = submitData;
-    setIsConfirmSubmitOpen(false);
     try {
       setIsSubmitting(true);
       const formData = new FormData();
@@ -697,15 +758,22 @@ export default function DirectGRNPage() {
       }
 
       if (currentDraftId) {
-        const drafts = JSON.parse(localStorage.getItem("direct-grn-drafts") || "[]");
-        const updatedDrafts = drafts.filter(d => d.id !== currentDraftId);
-        localStorage.setItem("direct-grn-drafts", JSON.stringify(updatedDrafts));
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drafts/${currentDraftId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${session.accessToken}` }
+          });
+        } catch (e) {
+          console.error("Failed to delete draft after submit", e);
+        }
       }
       
+      setIsConfirmSubmitOpen(false);
       toast.success("Direct GRN & PO Created Successfully");
       router.push("/purchase/grn");
     } catch (error) {
       console.error(error);
+      setIsConfirmSubmitOpen(false);
       toast.error(error.message || "Failed to create GRN");
     } finally {
       setIsSubmitting(false);
@@ -1184,6 +1252,18 @@ export default function DirectGRNPage() {
             >
               Cancel Protocol
             </Button>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                fetchSavedDrafts();
+                setIsDraftsModalOpen(true);
+              }}
+              className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+            >
+              <FileStack className="h-4 w-4" />
+              View Drafts
+            </Button>
             <Button 
               variant="secondary" 
               type="button" 
@@ -1237,6 +1317,75 @@ export default function DirectGRNPage() {
                 </div>
               </button>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* View Drafts Modal */}
+      <Dialog open={isDraftsModalOpen} onOpenChange={setIsDraftsModalOpen}>
+        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden rounded-2xl border-border/50 shadow-2xl bg-card">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/40 bg-muted/20">
+            <DialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <FileStack className="h-5 w-5 text-emerald-600" />
+              Saved Drafts
+            </DialogTitle>
+            <DialogDescription className="text-xs mt-1 text-muted-foreground/80 font-medium">
+              Recover a previously saved Direct GRN draft or delete drafts you no longer need.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto bg-muted/5">
+            {isDraftsLoading ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+                <span className="text-sm text-muted-foreground font-medium">Loading drafts...</span>
+              </div>
+            ) : savedDraftsList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-2 text-center px-4">
+                <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-2">
+                  <FileStack className="h-6 w-6 text-emerald-600/60" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">No saved drafts found</p>
+                <p className="text-xs text-muted-foreground">Drafts you save will appear here.</p>
+              </div>
+            ) : (
+              savedDraftsList.map((draft) => (
+                <div
+                  key={draft.id}
+                  className="w-full flex items-center justify-between p-4 bg-background border border-border/60 hover:border-emerald-500/30 rounded-xl transition-all shadow-sm"
+                >
+                  <div className="flex flex-col gap-1.5 overflow-hidden pr-4">
+                    <span className="font-semibold text-foreground text-sm truncate">
+                      {draft.summary || "Untitled Draft"}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                      <Clock className="h-3.5 w-3.5" />
+                      {format(new Date(draft.updated_at), "MMM d, yyyy 'at' h:mm a")}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 text-emerald-600 transition-colors"
+                      onClick={() => {
+                        router.push(`/purchase/grn/direct?draftId=${draft.id}`);
+                        setIsDraftsModalOpen(false);
+                      }}
+                    >
+                      Load Draft
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+                      onClick={() => handleDeleteDraft(draft.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </DialogContent>
       </Dialog>
