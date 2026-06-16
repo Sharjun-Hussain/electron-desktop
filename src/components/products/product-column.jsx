@@ -147,7 +147,7 @@ export const getProductColumns = ({
                       navigator.clipboard.writeText(product.sku);
                       toast.success(`The product ${product.name} SKU is copied`);
                     }}
-                    className="text-[10px] text-slate-400 font-mono truncate cursor-pointer hover:text-emerald-500 hover:bg-emerald-500/10 px-1 rounded-sm transition-all flex items-center gap-1 w-fit"
+                    className="text-[10px] text-black dark:text-white opacity-100 font-mono truncate cursor-pointer hover:text-emerald-500 hover:bg-emerald-500/10 px-1 rounded-sm transition-all flex items-center gap-1 w-fit"
                     title="Click to copy SKU"
                   >
                     SKU: {product.sku}
@@ -161,7 +161,7 @@ export const getProductColumns = ({
                       navigator.clipboard.writeText(product.barcode);
                       toast.success(`The product ${product.name} Barcode is copied`);
                     }}
-                    className="text-[10px] text-slate-400 font-mono truncate cursor-pointer hover:text-blue-500 hover:bg-blue-500/10 px-1 rounded-sm transition-all flex items-center gap-1 w-fit"
+                    className="text-[10px] text-black dark:text-white opacity-100 font-mono truncate cursor-pointer hover:text-blue-500 hover:bg-blue-500/10 px-1 rounded-sm transition-all flex items-center gap-1 w-fit"
                     title="Click to copy Barcode"
                   >
                     BC: {product.barcode}
