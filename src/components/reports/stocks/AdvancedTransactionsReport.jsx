@@ -51,16 +51,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataActions } from "@/components/general/DataActions";
+import { StockAdjustmentsPrintTemplate } from "@/components/Template/stocks/StockAdjustmentsPrintTemplate";
 
 import { signOut, useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
 
 const DEFAULT_COLUMNS = {
-  item_code: true,
+  barcode: true,
   item_name: true,
   sale_price: false,
   cost_price: true,
+  previous_stock: true,
   adjust_qty: true,
+  after_stock: true,
   type: true,
   date: true,
   category: false,
@@ -528,15 +531,17 @@ export default function AdvancedTransactionsReport() {
           {/* Table Area */}
           {isSetupComplete && (
             <div className="overflow-x-auto relative min-h-[400px]">
-              <Table ref={printRef}>
+              <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                   <TableRow className="border-border hover:bg-transparent">
                     {visibleColumns.date && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 pl-6">Date</TableHead>}
-                    {visibleColumns.item_code && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Item Code</TableHead>}
+                    {visibleColumns.barcode && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Barcode</TableHead>}
                     {visibleColumns.item_name && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Item Name</TableHead>}
                     {visibleColumns.category && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Category</TableHead>}
                     {visibleColumns.brand && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4">Brand</TableHead>}
+                    {visibleColumns.previous_stock && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-center">Prev Stock</TableHead>}
                     {visibleColumns.adjust_qty && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-center">Adjust Qty</TableHead>}
+                    {visibleColumns.after_stock && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-center">After Stock</TableHead>}
                     {visibleColumns.type && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-center">Type</TableHead>}
                     {visibleColumns.cost_price && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-right">Cost Price</TableHead>}
                     {visibleColumns.sale_price && <TableHead className="text-[12px] font-bold text-muted-foreground uppercase py-4 text-right">Sale Price</TableHead>}
@@ -556,11 +561,17 @@ export default function AdvancedTransactionsReport() {
                   ) : data.length > 0 ? (
                     data.map((item) => (
                       <TableRow key={item.id} className="border-border hover:bg-muted/30 transition-colors group">
-                        {visibleColumns.date && <TableCell className="pl-6 py-4 text-[13px] font-medium text-muted-foreground tabular-nums">{format(new Date(item.date), "yyyy-MM-dd HH:mm")}</TableCell>}
-                        {visibleColumns.item_code && <TableCell className="text-[13px] font-bold text-foreground">{item.item_code}</TableCell>}
+                        {visibleColumns.date && (
+                          <TableCell className="pl-6 py-4 text-[13px] font-medium text-muted-foreground tabular-nums leading-tight">
+                            <div>{format(new Date(item.date), "yyyy-MM-dd")}</div>
+                            <div className="text-[11px] text-muted-foreground/70">{format(new Date(item.date), "HH:mm")}</div>
+                          </TableCell>
+                        )}
+                        {visibleColumns.barcode && <TableCell className="text-[13px] font-bold text-foreground">{item.barcode}</TableCell>}
                         {visibleColumns.item_name && <TableCell className="text-[13px] font-semibold text-foreground group-hover:text-emerald-600 transition-colors">{item.item_name}</TableCell>}
                         {visibleColumns.category && <TableCell className="text-[13px] font-medium text-muted-foreground">{item.category || '-'}</TableCell>}
                         {visibleColumns.brand && <TableCell className="text-[13px] font-medium text-muted-foreground">{item.brand || '-'}</TableCell>}
+                        {visibleColumns.previous_stock && <TableCell className="text-center font-medium text-muted-foreground">{item.previous_stock !== null ? item.previous_stock : '-'}</TableCell>}
                         {visibleColumns.adjust_qty && (
                           <TableCell className="text-center">
                             <Badge variant="outline" className={cn(
@@ -573,6 +584,7 @@ export default function AdvancedTransactionsReport() {
                             </Badge>
                           </TableCell>
                         )}
+                        {visibleColumns.after_stock && <TableCell className="text-center font-bold text-foreground">{item.after_stock !== null ? item.after_stock : '-'}</TableCell>}
                         {visibleColumns.type && <TableCell className="text-center text-[12px] font-bold uppercase text-muted-foreground/60">{item.type}</TableCell>}
                         {visibleColumns.cost_price && <TableCell className="text-right font-bold text-muted-foreground">{formatCurrency(item.cost_price)}</TableCell>}
                         {visibleColumns.sale_price && <TableCell className="text-right font-bold text-foreground">{formatCurrency(item.sale_price)}</TableCell>}
@@ -594,6 +606,19 @@ export default function AdvancedTransactionsReport() {
             </div>
           )}
         </Card>
+
+        {/* Print Template */}
+        {isSetupComplete && (
+          <div style={{ display: "none" }}>
+            <StockAdjustmentsPrintTemplate
+              ref={printRef}
+              data={data}
+              dateRange={date}
+              stats={stats}
+              selectedColumns={visibleColumns}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
