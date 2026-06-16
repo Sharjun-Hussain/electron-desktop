@@ -156,9 +156,13 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
                   <span className="text-sm text-slate-600">Total Gross Sales</span>
                   <span className="text-sm font-bold text-slate-800">Rs {(stats.totalSales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200/60">
+                <div className="flex justify-between items-center mb-3">
                   <span className="text-sm text-slate-600">Total Refunds Processed</span>
                   <span className="text-sm font-bold text-rose-600">- Rs {(stats.totalRefund || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200/60">
+                  <span className="text-sm text-slate-600">Total Discounts</span>
+                  <span className="text-sm font-bold text-blue-600">- Rs {(stats.totalDiscount || stats.totalDiscounts || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 
                 <div className="flex justify-between items-center mb-5 gap-4">
