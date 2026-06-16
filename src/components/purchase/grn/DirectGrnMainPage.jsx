@@ -236,6 +236,9 @@ export default function DirectGRNPage() {
   const [multipleMatches, setMultipleMatches] = useState([]);
   const [isMultipleMatchesOpen, setIsMultipleMatchesOpen] = useState(false);
 
+  const [isConfirmSubmitOpen, setIsConfirmSubmitOpen] = useState(false);
+  const [submitData, setSubmitData] = useState(null);
+
   const [visibleColumns, setVisibleColumns] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("direct-grn-visible-columns");
@@ -637,7 +640,15 @@ export default function DirectGRNPage() {
     })(e);
   };
 
-  async function onSubmit(data) {
+  const onSubmit = (data) => {
+    setSubmitData(data);
+    setIsConfirmSubmitOpen(true);
+  };
+
+  async function processSubmit() {
+    if (!submitData) return;
+    const data = submitData;
+    setIsConfirmSubmitOpen(false);
     try {
       setIsSubmitting(true);
       const formData = new FormData();
@@ -1299,6 +1310,52 @@ export default function DirectGRNPage() {
             >
               <PackageCheck className="h-4 w-4 mr-2" />
               Confirm Logistics Now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Modal */}
+      <Dialog open={isConfirmSubmitOpen} onOpenChange={setIsConfirmSubmitOpen}>
+        <DialogContent className="sm:max-w-[425px] p-0 gap-0 overflow-hidden rounded-2xl border-border/50 shadow-2xl">
+          <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/5 p-6 border-b border-border/40 text-center flex flex-col items-center pt-8">
+            <div className="h-16 w-16 bg-blue-100 dark:bg-blue-500/20 rounded-full flex items-center justify-center mb-4 shadow-sm border border-blue-200 dark:border-blue-500/30">
+              <PackageCheck className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            </div>
+            <DialogHeader className="flex flex-col items-center">
+              <DialogTitle className="text-2xl font-black text-foreground tracking-tight">Finalize Receipt?</DialogTitle>
+              <DialogDescription className="text-sm font-medium text-muted-foreground mt-2 max-w-[90%] text-center leading-relaxed">
+                You are about to process a Direct GRN. 
+                <div className="my-3 flex justify-center">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 text-[12px] font-bold uppercase tracking-wider">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Irreversible Action
+                  </span>
+                </div>
+                This will immediately update inventory quantities and ledger balances. Please ensure all products and prices are strictly accurate before proceeding.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="px-6 py-5 bg-card flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 h-11 font-bold"
+              onClick={() => setIsConfirmSubmitOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              onClick={processSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Check className="h-4 w-4 mr-2" />
+              )}
+              Yes, Create GRN
             </Button>
           </div>
         </DialogContent>
