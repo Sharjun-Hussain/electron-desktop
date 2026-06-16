@@ -36,36 +36,48 @@ export const StockAdjustmentsPrintTemplate = React.forwardRef(({ data, dateRange
       {/* Table */}
       <table className="w-full text-sm text-left border-collapse">
         <thead>
-          <tr className="bg-slate-100 border-b border-slate-300">
-            {selectedColumns.date !== false && <th className="py-2 px-2 font-bold">Date</th>}
-            {selectedColumns.item_code !== false && <th className="py-2 px-2 font-bold">Item Code</th>}
-            {selectedColumns.item_name !== false && <th className="py-2 px-2 font-bold">Item Name</th>}
-            {selectedColumns.category !== false && <th className="py-2 px-2 font-bold">Category</th>}
-            {selectedColumns.brand !== false && <th className="py-2 px-2 font-bold">Brand</th>}
-            {selectedColumns.adjust_qty !== false && <th className="py-2 px-2 font-bold text-center">Adjust Qty</th>}
-            {selectedColumns.type !== false && <th className="py-2 px-2 font-bold text-center">Type</th>}
-            {selectedColumns.cost_price !== false && <th className="py-2 px-2 text-right font-bold">Cost Price</th>}
-            {selectedColumns.sale_price !== false && <th className="py-2 px-2 text-right font-bold">Sale Price</th>}
-            {selectedColumns.user !== false && <th className="py-2 px-2 font-bold text-right">User</th>}
-          </tr>
+            <tr className="bg-slate-100 border-b border-slate-300">
+              {selectedColumns.date !== false && <th className="py-2 px-2 font-bold">Date</th>}
+              {selectedColumns.item_name !== false && <th className="py-2 px-2 font-bold">Item Details</th>}
+              {selectedColumns.category !== false && <th className="py-2 px-2 font-bold">Category</th>}
+              {selectedColumns.brand !== false && <th className="py-2 px-2 font-bold">Brand</th>}
+              {selectedColumns.previous_stock !== false && <th className="py-2 px-2 font-bold text-center">Prev Stock</th>}
+              {selectedColumns.adjust_qty !== false && <th className="py-2 px-2 font-bold text-center">Adjust Qty</th>}
+              {selectedColumns.after_stock !== false && <th className="py-2 px-2 font-bold text-center">After Stock</th>}
+              {selectedColumns.type !== false && <th className="py-2 px-2 font-bold text-center">Type</th>}
+              {selectedColumns.cost_price !== false && <th className="py-2 px-2 text-right font-bold">Cost Price</th>}
+              {selectedColumns.sale_price !== false && <th className="py-2 px-2 text-right font-bold">Sale Price</th>}
+              {selectedColumns.user !== false && <th className="py-2 px-2 font-bold text-right">User</th>}
+            </tr>
         </thead>
         <tbody>
           {data.map((item, index) => {
             return (
             <tr key={item.id || index} className="border-b border-slate-200">
-              {selectedColumns.date !== false && <td className="py-2 px-2 whitespace-nowrap">{item.date ? format(new Date(item.date), "yyyy-MM-dd HH:mm") : "-"}</td>}
-              {selectedColumns.item_code !== false && <td className="py-2 px-2">{item.item_code || "-"}</td>}
-              {selectedColumns.item_name !== false && <td className="py-2 px-2 font-semibold">{item.item_name || "-"}</td>}
-              {selectedColumns.category !== false && <td className="py-2 px-2 text-xs text-slate-500">{item.category || "-"}</td>}
-              {selectedColumns.brand !== false && <td className="py-2 px-2 text-xs text-slate-500">{item.brand || "-"}</td>}
-              {selectedColumns.adjust_qty !== false && (
-                <td className="py-2 px-2 text-center font-bold">
-                  {item.type === 'addition' ? <span className="text-emerald-600">+{item.quantity}</span> : 
-                   item.type === 'subtraction' ? <span className="text-rose-600">-{item.quantity}</span> : 
-                   <span>{item.quantity}</span>}
-                </td>
-              )}
-              {selectedColumns.type !== false && <td className="py-2 px-2 text-center uppercase text-[10px] text-slate-500 font-bold">{item.type}</td>}
+                  {selectedColumns.date !== false && (
+                    <td className="py-2 px-2 whitespace-nowrap leading-tight">
+                      <div>{item.date ? format(new Date(item.date), "yyyy-MM-dd") : "-"}</div>
+                      <div className="text-[10px] text-slate-500">{item.date ? format(new Date(item.date), "HH:mm") : ""}</div>
+                    </td>
+                  )}
+                  {selectedColumns.item_name !== false && (
+                    <td className="py-2 px-2">
+                      <div className="font-semibold text-slate-800">{item.item_name || "-"}</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">{item.barcode || ""}</div>
+                    </td>
+                  )}
+                  {selectedColumns.category !== false && <td className="py-2 px-2 text-xs text-slate-500">{item.category || "-"}</td>}
+                  {selectedColumns.brand !== false && <td className="py-2 px-2 text-xs text-slate-500">{item.brand || "-"}</td>}
+                  {selectedColumns.previous_stock !== false && <td className="py-2 px-2 text-center text-orange-600 font-medium">{item.previous_stock !== null ? item.previous_stock : "-"}</td>}
+                  {selectedColumns.adjust_qty !== false && (
+                    <td className="py-2 px-2 text-center font-bold">
+                      {item.type === 'addition' ? <span className="text-emerald-600">+{item.quantity}</span> :
+                        item.type === 'subtraction' ? <span className="text-rose-600">-{item.quantity}</span> :
+                          <span className="text-blue-600">{item.quantity}</span>}
+                    </td>
+                  )}
+                  {selectedColumns.after_stock !== false && <td className="py-2 px-2 text-center font-medium">{item.after_stock !== null ? item.after_stock : "-"}</td>}
+                  {selectedColumns.type !== false && <td className="py-2 px-2 text-center uppercase text-[10px] text-slate-500 font-medium">{item.type}</td>}
               {selectedColumns.cost_price !== false && <td className="py-2 px-2 text-right">{(Number(item.cost_price) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>}
               {selectedColumns.sale_price !== false && <td className="py-2 px-2 text-right">{(Number(item.sale_price) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>}
               {selectedColumns.user !== false && <td className="py-2 px-2 text-right">{item.user || "-"}</td>}
