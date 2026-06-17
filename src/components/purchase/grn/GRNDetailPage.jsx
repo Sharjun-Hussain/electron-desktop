@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   User,
   CalendarIcon,
-  Building2
+  Building2,
+  Settings2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,14 @@ import { useReactToPrint } from "react-to-print";
 import { GRNPrintTemplate } from "@/components/Template/GRNPrintTemplate";
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // --- HELPER: Attachment Item ---
 const AttachmentItem = ({ file, onDelete, isDeleting }) => {
@@ -141,6 +150,29 @@ export default function GRNDetailPage() {
   const [deletingAttachmentId, setDeletingAttachmentId] = useState(null);
   const printRef = useRef();
   const fileInputRef = useRef();
+
+  const [columns, setColumns] = useState({
+    mrp: false,
+    wholesale: false,
+    selling: false,
+  });
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const saved = localStorage.getItem("grnDetailColumns");
+    if (saved) {
+      try {
+        setColumns(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("grnDetailColumns", JSON.stringify(columns));
+    }
+  }, [columns, isMounted]);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -412,7 +444,7 @@ export default function GRNDetailPage() {
 
       {/* Hidden GRN Print Template */}
       <div className="hidden">
-        <GRNPrintTemplate ref={printRef} data={grn} />
+        <GRNPrintTemplate ref={printRef} data={grn} columns={columns} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -444,13 +476,50 @@ export default function GRNDetailPage() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
+              {isMounted && (
+                <div className="flex justify-end p-2 border-b border-border/50 bg-muted/5 print:hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 shadow-sm">
+                        <Settings2 className="w-4 h-4 mr-2" />
+                        Columns
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuCheckboxItem
+                        checked={columns.mrp}
+                        onCheckedChange={(c) => setColumns(prev => ({ ...prev, mrp: c }))}
+                      >
+                        MRP Price
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem
+                        checked={columns.wholesale}
+                        onCheckedChange={(c) => setColumns(prev => ({ ...prev, wholesale: c }))}
+                      >
+                        Wholesale Price
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem
+                        checked={columns.selling}
+                        onCheckedChange={(c) => setColumns(prev => ({ ...prev, selling: c }))}
+                      >
+                        Selling Price
+                      </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
               <Table>
-                {/* Table Header Row (Unchanged styling except for standard padding/fonts) */}
+                {/* Table Header Row */}
                 <TableHeader className="bg-muted/30 border-b border-border">
                   <TableRow className="border-none hover:bg-transparent">
                     <TableHead className="pl-6 py-4 font-bold text-muted-foreground text-xs">Item Descriptor</TableHead>
                     <TableHead className="text-center py-4 font-bold text-muted-foreground text-xs">Receipt Qty</TableHead>
                     <TableHead className="text-right py-4 font-bold text-muted-foreground text-xs">Standard Cost</TableHead>
+                    {columns.mrp && <TableHead className="text-right py-4 font-bold text-muted-foreground text-xs">MRP Price</TableHead>}
+                    {columns.wholesale && <TableHead className="text-right py-4 font-bold text-muted-foreground text-xs">Wholesale Price</TableHead>}
+                    {columns.selling && <TableHead className="text-right py-4 font-bold text-muted-foreground text-xs">Selling Price</TableHead>}
                     <TableHead className="pr-6 py-4 text-right font-bold text-muted-foreground text-xs">Line Totals</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -485,6 +554,21 @@ export default function GRNDetailPage() {
                       <TableCell className="text-right">
                         <span className="text-sm font-semibold text-muted-foreground tabular-nums">LKR {parseFloat(item.unit_cost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                       </TableCell>
+                      {columns.mrp && (
+                        <TableCell className="text-right">
+                          <span className="text-sm font-semibold text-muted-foreground tabular-nums">LKR {parseFloat(item.mrp_price || item.variant?.mrpPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </TableCell>
+                      )}
+                      {columns.wholesale && (
+                        <TableCell className="text-right">
+                          <span className="text-sm font-semibold text-muted-foreground tabular-nums">LKR {parseFloat(item.wholesale_price || item.variant?.wholesalePrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </TableCell>
+                      )}
+                      {columns.selling && (
+                        <TableCell className="text-right">
+                          <span className="text-sm font-semibold text-muted-foreground tabular-nums">LKR {parseFloat(item.selling_price || item.retail_price || item.variant?.retailPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </TableCell>
+                      )}
                       <TableCell className="pr-6 text-right">
                         <span className="font-bold text-emerald-600 text-base tabular-nums">LKR {parseFloat(item.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                       </TableCell>

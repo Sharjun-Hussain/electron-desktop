@@ -2,7 +2,7 @@ import React from "react";
 import { format } from "date-fns";
 import { ReportLayout } from "./ReportLayout";
 
-export const GRNPrintTemplate = React.forwardRef(({ data }, ref) => {
+export const GRNPrintTemplate = React.forwardRef(({ data, columns = {} }, ref) => {
   if (!data) return null;
 
   const grandTotal = parseFloat(data.total_amount || 0);
@@ -68,6 +68,9 @@ export const GRNPrintTemplate = React.forwardRef(({ data }, ref) => {
                 <th className="text-center font-bold">Received</th>
                 <th className="text-center font-bold">Free</th>
                 <th className="text-right font-bold">Unit Cost</th>
+                {columns?.mrp && <th className="text-right font-bold">MRP Price</th>}
+                {columns?.wholesale && <th className="text-right font-bold">Wholesale Price</th>}
+                {columns?.selling && <th className="text-right font-bold">Selling Price</th>}
                 <th className="text-right font-bold">Subtotal</th>
               </tr>
             </thead>
@@ -111,6 +114,21 @@ export const GRNPrintTemplate = React.forwardRef(({ data }, ref) => {
                     <td className="text-right font-medium text-slate-700 tabular-nums">
                       LKR {parseFloat(item.unit_cost || 0).toFixed(2)}
                     </td>
+                    {columns?.mrp && (
+                      <td className="text-right font-medium text-slate-700 tabular-nums">
+                        LKR {parseFloat(item.mrp_price || item.variant?.mrpPrice || 0).toFixed(2)}
+                      </td>
+                    )}
+                    {columns?.wholesale && (
+                      <td className="text-right font-medium text-slate-700 tabular-nums">
+                        LKR {parseFloat(item.wholesale_price || item.variant?.wholesalePrice || 0).toFixed(2)}
+                      </td>
+                    )}
+                    {columns?.selling && (
+                      <td className="text-right font-medium text-slate-700 tabular-nums">
+                        LKR {parseFloat(item.selling_price || item.retail_price || item.variant?.retailPrice || 0).toFixed(2)}
+                      </td>
+                    )}
                     <td className="text-right font-bold text-slate-900 tabular-nums">
                       LKR {lineTotal.toFixed(2)}
                     </td>
