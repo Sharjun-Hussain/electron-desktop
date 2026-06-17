@@ -21,6 +21,7 @@ import {
   ChevronRight,
   History,
   Columns,
+  Barcode,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -368,10 +369,16 @@ const InventoryInsightsDashboard = () => {
                               </div>
                               <div>
                                 <h4 className="font-bold text-foreground text-sm leading-tight">{item.product?.name}</h4>
-                                <div className="flex items-center gap-2 mt-1">
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
                                     <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-mono font-bold border border-transparent dark:border-slate-700">
                                         {item.variant?.sku || item.product?.code}
                                     </span>
+                                    {(item.variant?.barcode || item.product?.barcode) && (
+                                        <span className="text-[10px] flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold border border-emerald-500/20">
+                                            <Barcode className="h-3 w-3" />
+                                            {item.variant?.barcode || item.product?.barcode}
+                                        </span>
+                                    )}
                                     <span className="text-[11px] text-slate-400 font-medium">
                                         {item.variant?.name || "Standard"}
                                     </span>

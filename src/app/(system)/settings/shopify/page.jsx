@@ -89,6 +89,40 @@ import {
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const DebouncedInput = ({ value, onChange, className, placeholder, icon: Icon, wrapperClassName }) => {
+  const [localVal, setLocalVal] = useState(value || "");
+  
+  useEffect(() => {
+    setLocalVal(value || "");
+  }, [value]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localVal !== value) {
+        onChange(localVal);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [localVal, value, onChange]);
+
+  return (
+    <div className={cn("relative flex-1", wrapperClassName)}>
+      {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />}
+      <Input
+        placeholder={placeholder}
+        className={className}
+        value={localVal}
+        onChange={(e) => setLocalVal(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            onChange(localVal);
+          }
+        }}
+      />
+    </div>
+  );
+};
+
 export default function ShopifySettingsPage() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -108,8 +142,6 @@ export default function ShopifySettingsPage() {
   // Pagination State for Local Inventory Sync
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
 
   // Filters
   const [localSearch, setLocalSearch] = useState("");
@@ -298,17 +330,16 @@ export default function ShopifySettingsPage() {
     }
   };
 
-  const fetchLocalProducts = async (page = currentPage, search = searchQuery) => {
+  const fetchLocalProducts = async () => {
     try {
       setProductsLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/shopify/products?page=${page}&limit=${pageSize}&sortField=${sortField}&sortOrder=${sortOrder}&search=${encodeURIComponent(search)}`, {
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/shopify/products?limit=all`;
+      const response = await fetch(url, {
         headers: { Authorization: `Bearer ${session?.accessToken}` }
       });
       const data = await response.json();
       if (data.status === "success") {
         setProducts(data.data.data);
-        setTotalItems(data.data.total);
-        setTotalPages(data.data.totalPages);
         setInventoryLoaded(true);
       }
     } catch (error) {
@@ -318,32 +349,15 @@ export default function ShopifySettingsPage() {
     }
   };
 
-  // Debounced search effect
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (activeTab === "inventory") {
-        setCurrentPage(1);
-        fetchLocalProducts(1, searchQuery);
-      }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    if (activeTab === "inventory") {
-      const paramsChanged = 
-        prevInventoryParams.current.page !== currentPage ||
-        prevInventoryParams.current.size !== pageSize ||
-        prevInventoryParams.current.field !== sortField ||
-        prevInventoryParams.current.order !== sortOrder;
-
-      if (paramsChanged || !inventoryLoaded) {
-        fetchLocalProducts(currentPage, searchQuery);
-        prevInventoryParams.current = { page: currentPage, size: pageSize, field: sortField, order: sortOrder };
-      }
+    if (activeTab === "inventory" && !inventoryLoaded) {
+      fetchLocalProducts();
     }
-  }, [currentPage, pageSize, activeTab, sortField, sortOrder]);
+  }, [activeTab, inventoryLoaded]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, pageSize, sortField, sortOrder]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -497,16 +511,6 @@ export default function ShopifySettingsPage() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (activeTab === "shopify-products") {
-        fetchShopifyProducts();
-        prevShopifyParams.current = { search: shopifySearch, status: shopifyStatus, vendor: shopifyVendor };
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [shopifySearch, shopifyStatus, shopifyVendor]); // Remove activeTab from here to prevent double fetch
-
-  useEffect(() => {
     if (activeTab === "shopify-products") {
        const paramsChanged = 
          prevShopifyParams.current.search !== shopifySearch ||
@@ -514,11 +518,16 @@ export default function ShopifySettingsPage() {
          prevShopifyParams.current.vendor !== shopifyVendor;
 
        if (paramsChanged || !shopifyProductsLoaded) {
+         if (paramsChanged) setShopifyCurrentPage(1);
          fetchShopifyProducts();
          prevShopifyParams.current = { search: shopifySearch, status: shopifyStatus, vendor: shopifyVendor };
        }
     }
-  }, [activeTab]);
+  }, [shopifySearch, shopifyStatus, shopifyVendor, activeTab, shopifyProductsLoaded]);
+
+  useEffect(() => {
+    setShopifyCurrentPage(1);
+  }, [shopifyLinkStatus]);
 
   const fetchShopifyOrders = async () => {
     if (!session?.accessToken) return;
@@ -719,8 +728,52 @@ export default function ShopifySettingsPage() {
   };
 
   const filteredProducts = useMemo(() => {
-    return products || [];
-  }, [products]);
+    let result = products || [];
+
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.name?.toLowerCase().includes(lowerQuery) ||
+        p.sku?.toLowerCase().includes(lowerQuery) ||
+        p.code?.toLowerCase().includes(lowerQuery) ||
+        p.barcode?.toLowerCase().includes(lowerQuery) ||
+        p.variants?.some(v =>
+          v.name?.toLowerCase().includes(lowerQuery) ||
+          v.sku?.toLowerCase().includes(lowerQuery) ||
+          v.barcode?.toLowerCase().includes(lowerQuery)
+        )
+      );
+    }
+
+    result = [...result].sort((a, b) => {
+      let aVal, bVal;
+      if (sortField === "stock") {
+        aVal = a.variants?.reduce((sum, v) => sum + (v.stocks?.reduce((s, st) => s + parseFloat(st.quantity || 0), 0) || 0), 0) || 0;
+        bVal = b.variants?.reduce((sum, v) => sum + (v.stocks?.reduce((s, st) => s + parseFloat(st.quantity || 0), 0) || 0), 0) || 0;
+      } else if (sortField === "sku") {
+        aVal = a.code || a.sku || "";
+        bVal = b.code || b.sku || "";
+      } else {
+        aVal = a.name || "";
+        bVal = b.name || "";
+      }
+
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
+      }
+
+      if (aVal < bVal) return sortOrder === "ASC" ? -1 : 1;
+      if (aVal > bVal) return sortOrder === "ASC" ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [products, searchQuery, sortField, sortOrder]);
+
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const allFilteredVariantIds = useMemo(() => {
     if (!filteredProducts) return [];
@@ -949,18 +1002,12 @@ export default function ShopifySettingsPage() {
             <Card id="sync-console" className="border-[#dfe3e8] dark:border-zinc-800 shadow-sm rounded-lg overflow-hidden bg-white dark:bg-zinc-900">
               <div className="p-4 border-b border-[#dfe3e8] dark:border-zinc-800 flex items-center justify-between gap-4 bg-white dark:bg-zinc-900">
                 <div className="relative flex-1 max-w-lg">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6d7175]" />
-                  <Input
+                  <DebouncedInput
+                    icon={Search}
                     placeholder="Filter products, variants or SKUs (Scan barcode)..."
                     className="pl-9 h-10 border-[#dfe3e8] dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm focus-visible:ring-[#008060] rounded-lg"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        setCurrentPage(1);
-                        fetchLocalProducts(1, searchQuery);
-                      }
-                    }}
+                    onChange={(val) => setSearchQuery(val)}
                   />
                 </div>
                 <Button
@@ -1021,9 +1068,9 @@ export default function ShopifySettingsPage() {
                   <tbody className="divide-y divide-[#dfe3e8] dark:divide-zinc-800 bg-white dark:bg-zinc-900">
                     {productsLoading ? (
                       <tr><td colSpan="5" className="p-12 text-center text-xs text-muted-foreground animate-pulse">Loading Shopify Inventory...</td></tr>
-                    ) : filteredProducts.length === 0 ? (
+                    ) : paginatedProducts.length === 0 ? (
                       <tr><td colSpan="5" className="p-12 text-center text-xs text-muted-foreground">No matching items found.</td></tr>
-                    ) : filteredProducts.map(product => (
+                    ) : paginatedProducts.map(product => (
                       <React.Fragment key={product.id}>
                         <tr
                           className={cn("transition-colors cursor-pointer group hover:bg-slate-50 dark:hover:bg-zinc-900/50", expandedProducts.includes(product.id) && "bg-slate-50 dark:bg-zinc-900/50")}
@@ -1265,12 +1312,12 @@ export default function ShopifySettingsPage() {
             {/* Filter Bar */}
             <div className="flex flex-col md:flex-row items-center gap-4 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-[#dfe3e8] dark:border-zinc-800 shadow-xs mb-6">
               <div className="relative flex-1 w-full md:max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
+                <DebouncedInput
+                  icon={Search}
                   placeholder="Search Shopify products..."
                   className="pl-9 h-10 border-[#dfe3e8] rounded-lg text-sm bg-white dark:bg-zinc-900 shadow-xs"
                   value={shopifySearch}
-                  onChange={(e) => setShopifySearch(e.target.value)}
+                  onChange={(val) => setShopifySearch(val)}
                 />
               </div>
 
@@ -1298,12 +1345,12 @@ export default function ShopifySettingsPage() {
               </Select>
 
               <div className="relative w-full md:w-[180px]">
-                <Store className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
+                <DebouncedInput
+                  icon={Store}
                   placeholder="Filter by Vendor..."
                   className="pl-9 h-10 border-[#dfe3e8] rounded-lg text-sm bg-white dark:bg-zinc-900 shadow-xs"
                   value={shopifyVendor}
-                  onChange={(e) => setShopifyVendor(e.target.value)}
+                  onChange={(val) => setShopifyVendor(val)}
                 />
               </div>
 
@@ -1495,11 +1542,7 @@ export default function ShopifySettingsPage() {
               <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-border/50 bg-gray-50/30 dark:bg-muted/10">
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground">
-                    Page {shopifyCurrentPage} of {Math.ceil(shopifyProducts.filter(p => {
-                      if (shopifyLinkStatus === 'linked') return !!p.local_match;
-                      if (shopifyLinkStatus === 'unlinked') return !p.local_match;
-                      return true;
-                    }).length / shopifyPageSize) || 1}
+                    Page {shopifyCurrentPage} of {shopifyTotalPages}
                   </p>
                   <Select
                     value={shopifyPageSize.toString()}
@@ -1544,29 +1587,20 @@ export default function ShopifySettingsPage() {
 
                   <div className="flex items-center gap-1 mx-1">
                     {Array.from({
-                      length: Math.min(5, Math.ceil(shopifyProducts.filter(p => {
-                        if (shopifyLinkStatus === 'linked') return !!p.local_match;
-                        if (shopifyLinkStatus === 'unlinked') return !p.local_match;
-                        return true;
-                      }).length / shopifyPageSize))
+                      length: Math.min(5, shopifyTotalPages)
                     }, (_, i) => {
                       let pageNum;
-                      const sTotalPages = Math.ceil(shopifyProducts.filter(p => {
-                        if (shopifyLinkStatus === 'linked') return !!p.local_match;
-                        if (shopifyLinkStatus === 'unlinked') return !p.local_match;
-                        return true;
-                      }).length / shopifyPageSize);
-                      if (sTotalPages <= 5) {
+                      if (shopifyTotalPages <= 5) {
                         pageNum = i + 1;
                       } else if (shopifyCurrentPage <= 3) {
                         pageNum = i + 1;
-                      } else if (shopifyCurrentPage >= sTotalPages - 2) {
-                        pageNum = sTotalPages - 4 + i;
+                      } else if (shopifyCurrentPage >= shopifyTotalPages - 2) {
+                        pageNum = shopifyTotalPages - 4 + i;
                       } else {
                         pageNum = shopifyCurrentPage - 2 + i;
                       }
 
-                      if (pageNum >= 1 && pageNum <= sTotalPages) {
+                      if (pageNum >= 1 && pageNum <= shopifyTotalPages) {
                         return (
                           <Button
                             key={pageNum}
@@ -1592,16 +1626,8 @@ export default function ShopifySettingsPage() {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
-                    onClick={() => setShopifyCurrentPage(prev => Math.min(Math.ceil(shopifyProducts.filter(p => {
-                      if (shopifyLinkStatus === 'linked') return !!p.local_match;
-                      if (shopifyLinkStatus === 'unlinked') return !p.local_match;
-                      return true;
-                    }).length / shopifyPageSize), prev + 1))}
-                    disabled={shopifyCurrentPage >= Math.ceil(shopifyProducts.filter(p => {
-                      if (shopifyLinkStatus === 'linked') return !!p.local_match;
-                      if (shopifyLinkStatus === 'unlinked') return !p.local_match;
-                      return true;
-                    }).length / shopifyPageSize)}
+                    onClick={() => setShopifyCurrentPage(prev => Math.min(shopifyTotalPages, prev + 1))}
+                    disabled={shopifyCurrentPage >= shopifyTotalPages}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -1609,39 +1635,10 @@ export default function ShopifySettingsPage() {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 border-gray-200 dark:border-border/50 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:bg-transparent"
-                    onClick={() => setShopifyCurrentPage(Math.ceil(shopifyProducts.filter(p => {
-                      if (shopifyLinkStatus === 'linked') return !!p.local_match;
-                      if (shopifyLinkStatus === 'unlinked') return !p.local_match;
-                      return true;
-                    }).length / shopifyPageSize))}
-                    disabled={shopifyCurrentPage >= Math.ceil(shopifyProducts.filter(p => {
-                      if (shopifyLinkStatus === 'linked') return !!p.local_match;
-                      if (shopifyLinkStatus === 'unlinked') return !p.local_match;
-                      return true;
-                    }).length / shopifyPageSize)}
+                    onClick={() => setShopifyCurrentPage(shopifyTotalPages)}
+                    disabled={shopifyCurrentPage >= shopifyTotalPages}
                   >
                     <ChevronsRight className="h-4 w-4" />
-                  </Button>
-
-                  <div className="h-6 w-px bg-gray-200 dark:bg-zinc-800 mx-2" />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3 text-[10px] font-bold border-[#008060]/20 text-[#008060] bg-emerald-50/50 hover:bg-emerald-50 rounded-lg"
-                    onClick={() => fetchShopifyProducts('', shopifyPagination.prev)}
-                    disabled={!shopifyPagination.prev || shopifyProductsLoading}
-                  >
-                    Prev Batch
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3 text-[10px] font-bold border-[#008060]/20 text-[#008060] bg-emerald-50/50 hover:bg-emerald-50 rounded-lg"
-                    onClick={() => fetchShopifyProducts('', shopifyPagination.next)}
-                    disabled={!shopifyPagination.next || shopifyProductsLoading}
-                  >
-                    Next Batch
                   </Button>
                 </div>
               </div>

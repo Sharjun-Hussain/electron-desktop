@@ -95,10 +95,10 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
     <div className="flex flex-col gap-6 font-sans">
       <div className="flex justify-between items-center px-1 pt-2">
           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-3 py-1 text-[11px] font-medium flex items-center gap-2">
-            <ShieldCheck className="size-3.5" /> Secure Session Audit
+            <ShieldCheck className="size-3.5" /> Shift Audit
           </Badge>
           <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 border-border hover:bg-muted text-sm font-medium rounded-lg h-9">
-            <Printer className="size-4" /> Print Audit
+            <Printer className="size-4" /> Print Report
           </Button>
       </div>
 
@@ -115,15 +115,15 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
               <div className="p-2 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/10">
                 <ClipboardList className="size-5" />
               </div>
-              <h2 className="text-2xl font-bold tracking-tight">Audit Statement</h2>
+              <h2 className="text-2xl font-bold tracking-tight">Shift Summary</h2>
             </div>
             <p className="text-xs font-medium text-muted-foreground flex items-center gap-2 pl-1">
-              <Activity className="size-3.5" /> Authorized Official Verification • Ledger Sync Enabled
+              <Activity className="size-3.5" /> Verified Shift Record
             </p>
             
             <div className="flex items-center gap-3 mt-6">
                <div className="bg-muted/50 px-3 py-2 rounded-lg border border-border">
-                  <span className="text-[10px] font-medium text-muted-foreground block mb-0.5">Voucher Reference</span>
+                  <span className="text-[10px] font-medium text-muted-foreground block mb-0.5">Shift ID</span>
                   <span className="text-sm font-mono font-bold tracking-tight">#{shift.id.substring(0,12).toUpperCase()}</span>
                </div>
                <Badge className={cn(
@@ -140,7 +140,7 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
                 <MapPin className="size-5 text-emerald-600" />
              </div>
              <p className="font-bold text-lg tracking-tight text-foreground leading-none">{shift.branch.name}</p>
-             <p className="text-xs text-emerald-600 font-medium mt-2">Operational Terminal Sector</p>
+             <p className="text-xs text-emerald-600 font-medium mt-2">Location</p>
           </div>
         </div>
 
@@ -148,7 +148,7 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
         <div className="grid grid-cols-1 gap-5 mb-8">
           <div className="bg-muted/30 border border-border rounded-xl p-6 shadow-none flex flex-col gap-4">
              <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-               <UserIcon className="size-4 text-indigo-500" /> Authorized Personnel
+               <UserIcon className="size-4 text-indigo-500" /> Cashier
              </span>
              <div className="flex items-center gap-4">
                 <div className="size-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-indigo-600/20">
@@ -163,22 +163,22 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
 
           <div className="bg-muted/30 border border-border rounded-xl p-6 shadow-none flex flex-col gap-4">
              <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-               <CalendarIcon className="size-4 text-emerald-500" /> Temporal Log
+               <CalendarIcon className="size-4 text-emerald-500" /> Shift Time
              </span>
              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-2.5">
                       <div className="size-2 rounded-full bg-emerald-500" />
-                      <span className="text-xs font-medium text-muted-foreground">Inception</span>
+                      <span className="text-xs font-medium text-muted-foreground">Opened At</span>
                    </div>
                    <span className="text-sm font-bold tabular-nums text-foreground">{formatDateTime(shift.opening_time)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-2.5">
                       <div className="size-2 rounded-full bg-muted-foreground/30" />
-                      <span className="text-xs font-medium text-muted-foreground">Termination</span>
+                      <span className="text-xs font-medium text-muted-foreground">Closed At</span>
                    </div>
-                   <span className="text-sm font-bold tabular-nums text-foreground">{shift.closing_time ? formatDateTime(shift.closing_time) : 'Active Stream'}</span>
+                   <span className="text-sm font-bold tabular-nums text-foreground">{shift.closing_time ? formatDateTime(shift.closing_time) : 'Currently Open'}</span>
                 </div>
              </div>
           </div>
@@ -188,7 +188,7 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
                 <Receipt className="size-16" />
              </div>
              <div className="flex justify-between items-start relative z-10">
-                <span className="text-[11px] font-medium opacity-70">Cleared Proceeds</span>
+                <span className="text-[11px] font-medium opacity-70">Total Sales</span>
                 <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500">
                    <TrendingUp className="size-5" />
                 </div>
@@ -198,7 +198,7 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
                    {formatCurrency(stats.totalSales)}
                 </h4>
                 <p className="text-[11px] opacity-60 font-medium mt-1.5 flex items-center gap-2">
-                   <Zap className="size-4 text-amber-500 fill-amber-500" /> Real-time Settlement Matrix
+                   <Zap className="size-4 text-amber-500 fill-amber-500" /> Live Sales Total
                 </p>
              </div>
           </div>
@@ -209,26 +209,30 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
            <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
-                   <Receipt className="size-4 text-indigo-500" /> Yield Analysis Ledger
+                   <Receipt className="size-4 text-indigo-500" /> Financial Breakdown
                 </h3>
-                <Badge variant="outline" className="text-[10px] font-medium border-border bg-muted/50 text-muted-foreground">{stats.transactionCount} Events</Badge>
+                <Badge variant="outline" className="text-[10px] font-medium border-border bg-muted/50 text-muted-foreground">{stats.transactionCount} Transactions</Badge>
               </div>
               <div className="space-y-4 text-foreground">
                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-muted-foreground">Gross Transaction Flow</span>
+                    <span className="text-sm font-medium text-muted-foreground">Gross Sales</span>
                     <span className="text-base font-bold tabular-nums">{formatCurrency(stats.totalSales + stats.totalDiscount)}</span>
                  </div>
                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-muted-foreground">Operational Incentives</span>
+                    <span className="text-sm font-medium text-muted-foreground">Total Discounts</span>
                     <span className="text-base font-bold tabular-nums text-rose-500">- {formatCurrency(stats.totalDiscount)}</span>
                  </div>
                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-muted-foreground">Fiscal Liability (Tax)</span>
+                    <span className="text-sm font-medium text-muted-foreground">Total Tax</span>
                     <span className="text-base font-bold tabular-nums">{formatCurrency(stats.totalTax)}</span>
                  </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">Expenses Added</span>
+                    <span className="text-base font-bold tabular-nums text-rose-500">- {formatCurrency(stats.totalExpense || 0)}</span>
+                 </div>
                  <div className="pt-5 mt-2 border-t border-border flex justify-between items-center">
-                    <span className="text-base font-bold text-foreground">Final Net Equity</span>
-                    <span className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600">{formatCurrency(stats.totalSales)}</span>
+                    <span className="text-base font-bold text-foreground">Net Shift Sales</span>
+                    <span className="text-2xl font-bold tabular-nums tracking-tight text-emerald-600">{formatCurrency(stats.totalSales - (stats.totalExpense || 0))}</span>
                  </div>
               </div>
            </div>
@@ -237,7 +241,7 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
            <div className="flex flex-col gap-5">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
-                   <CreditCard className="size-4 text-emerald-500" /> Liquidity Channels
+                   <CreditCard className="size-4 text-emerald-500" /> Payment Methods
                 </h3>
               </div>
               <div className="bg-muted/30 rounded-xl p-6 space-y-4 border border-border">
@@ -274,8 +278,8 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
                  <Scale className="size-5" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-foreground">Physical Reconciliation Matrix</h3>
-                <p className="text-[11px] text-muted-foreground font-medium mt-1">Verification of physical drawer against digital ledger projection</p>
+                <h3 className="text-xs font-bold text-foreground">Cash Drawer Reconciliation</h3>
+                <p className="text-[11px] text-muted-foreground font-medium mt-1">Comparing expected cash against the actual cash counted</p>
               </div>
            </div>
            
@@ -283,13 +287,13 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
               <div className="flex justify-between items-center px-1">
                  <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                       <Search className="size-3.5 text-indigo-500" /> Digital Ledger
+                       <Search className="size-3.5 text-indigo-500" /> Expected Cash
                     </span>
                     <span className="text-2xl font-bold tabular-nums text-foreground">{formatCurrency(shift.expected_cash || 0)}</span>
                  </div>
                  <div className="flex flex-col gap-1.5 text-right">
                     <span className="text-xs font-medium text-muted-foreground flex items-center gap-2 justify-end">
-                       <Fingerprint className="size-3.5 text-emerald-500" /> User Counter
+                       <Fingerprint className="size-3.5 text-emerald-500" /> Actual Cash
                     </span>
                     <span className="text-2xl font-bold tabular-nums text-foreground">{formatCurrency(shift.closing_cash || 0)}</span>
                  </div>
@@ -302,13 +306,13 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
                  <div className="flex justify-between items-center mb-4">
                     <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
                        {(shift.variance || 0) < 0 ? <TrendingDown className="size-4 text-rose-500" /> : <TrendingUp className="size-4 text-emerald-500" />} 
-                       Audit Divergence
+                       Difference
                     </span>
                     <Badge variant="outline" className={cn(
                        "text-[10px] font-bold border-none px-3 py-1 shadow-none",
                        (shift.variance || 0) === 0 ? "bg-emerald-500 text-white" : "bg-primary text-primary-foreground"
                     )}>
-                       {(shift.variance || 0) === 0 ? "SECURE" : "ANOMALY"}
+                       {(shift.variance || 0) === 0 ? "BALANCED" : "DISCREPANCY"}
                     </Badge>
                  </div>
                  <span className={cn(
@@ -323,10 +327,10 @@ const ShiftDetailReport = ({ shiftId, onClose }) => {
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col items-center gap-3 text-center">
            <p className="text-[10px] text-muted-foreground font-medium italic max-w-sm mx-auto">
-             This document is a confidential internal intelligence summary. Unauthorized duplication or distribution is prohibited.
+             This is an internal shift summary report. Confidential.
            </p>
            <div className="flex items-center gap-3 opacity-30 text-foreground font-mono scale-90">
-              <span className="text-xs font-medium">Shift Ref: {shift.id.substring(0,8).toUpperCase()}</span>
+              <span className="text-xs font-medium">Shift ID: {shift.id.substring(0,8).toUpperCase()}</span>
            </div>
         </div>
       </div>
@@ -452,25 +456,25 @@ export default function ShiftHistoryPage() {
 
     const stats = [
       {
-        label: "Expected Revenue",
+        label: "Expected Total",
         value: formatCurrency(totalSales),
         icon: BarChart3,
         gradient: "from-indigo-600 to-violet-500"
       },
       {
-        label: "Audited Sessions",
+        label: "Total Shifts",
         value: `${data.length} Shifts`,
         icon: ShieldCheck,
         gradient: "from-emerald-600 to-teal-500"
       },
       {
-        label: "Average Velocity",
+        label: "Avg Sales per Shift",
         value: formatCurrency(data.length > 0 ? totalSales / data.length : 0),
         icon: Zap,
         gradient: "from-amber-600 to-orange-500"
       },
       {
-        label: "Cumulative Variance",
+        label: "Total Difference",
         value: (totalVariance > 0 ? "+" : "") + formatCurrency(totalVariance),
         icon: Scale,
         gradient: totalVariance === 0 ? "from-blue-600 to-blue-400" : (totalVariance < 0 ? "from-rose-600 to-red-400" : "from-amber-600 to-yellow-400")
@@ -488,7 +492,7 @@ export default function ShiftHistoryPage() {
               <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider truncate">{card.label}</p>
               <h3 className={cn(
                 "text-2xl font-bold text-foreground tabular-nums truncate",
-                card.label === "Cumulative Variance" && totalVariance < 0 && "text-rose-600"
+                card.label === "Total Difference" && totalVariance < 0 && "text-rose-600"
               )}>
                 {card.value}
               </h3>
@@ -502,7 +506,7 @@ export default function ShiftHistoryPage() {
   const columns = [
     {
       accessorKey: "cashier",
-      header: "Session Identification",
+      header: "Cashier & Location",
       cell: ({ row }) => {
         const item = row.original;
         return (
@@ -528,7 +532,7 @@ export default function ShiftHistoryPage() {
     },
     {
       accessorKey: "opening_time",
-      header: "Temporal Scope",
+      header: "Shift Duration",
       cell: ({ row }) => {
         const item = row.original;
         return (
@@ -551,29 +555,29 @@ export default function ShiftHistoryPage() {
     },
     {
       accessorKey: "expected_cash",
-      header: () => <div className="text-right">Ledger Data</div>,
+      header: () => <div className="text-right">Expected Cash</div>,
       cell: ({ row }) => (
         <div className="text-right flex flex-col items-end">
           <span className="text-[13px] font-bold tabular-nums text-foreground">{formatCurrency(row.original.expected_cash || 0)}</span>
-          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Expected Recognition</span>
+          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">System Total</span>
         </div>
       )
     },
     {
       accessorKey: "closing_cash",
-      header: () => <div className="text-right">Physical Recon</div>,
+      header: () => <div className="text-right">Actual Cash</div>,
       cell: ({ row }) => (
         <div className="text-right flex flex-col items-end">
           <span className="text-[13px] font-bold tabular-nums text-foreground">
             {row.original.status === 'closed' ? formatCurrency(row.original.closing_cash || 0) : "-"}
           </span>
-          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Actual Verification</span>
+          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Counted in Drawer</span>
         </div>
       )
     },
     {
       accessorKey: "variance",
-      header: () => <div className="text-center">Audit Divergence</div>,
+      header: () => <div className="text-center">Difference</div>,
       cell: ({ row }) => {
         const item = row.original;
         if (item.status !== 'closed') return <div className="text-center text-[10px] font-bold text-muted-foreground opacity-30 tracking-widest uppercase">Ongoing</div>;
@@ -584,7 +588,7 @@ export default function ShiftHistoryPage() {
                "text-[10px] px-2.5 py-0.5 border shadow-none font-bold tracking-tight rounded-md uppercase",
                !isVariance ? "bg-emerald-50 text-emerald-600 border-emerald-100" : (item.variance < 0 ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-amber-50 text-amber-600 border-amber-100")
              )}>
-               {isVariance ? (item.variance > 0 ? "+" + formatCurrency(item.variance) : formatCurrency(item.variance)) : "STABLE"}
+               {isVariance ? (item.variance > 0 ? "+" + formatCurrency(item.variance) : formatCurrency(item.variance)) : "BALANCED"}
              </Badge>
           </div>
         );
@@ -592,7 +596,7 @@ export default function ShiftHistoryPage() {
     },
     {
       id: "actions",
-      header: () => <div className="text-right pr-4">Operations</div>,
+      header: () => <div className="text-right pr-4">Actions</div>,
       cell: ({ row }) => (
         <div className="flex justify-end pr-2">
           <Button 
@@ -620,9 +624,9 @@ export default function ShiftHistoryPage() {
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Shift History & Audit</h1>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">Shift History</h1>
               <p className="text-[11px] text-muted-foreground font-medium mt-0.5 flex items-center gap-2">
-                <Activity className="size-3.5 text-emerald-500/50" /> Professional verification of cashier sessions and cash reconciliation matrices.
+                <Activity className="size-3.5 text-emerald-500/50" /> View and manage past cashier shifts and cash drawer reports.
               </p>
             </div>
           </div>
@@ -665,11 +669,11 @@ export default function ShiftHistoryPage() {
                 <Command className="rounded-lg shadow-xl border border-border">
                   <CommandInput placeholder="Audit locations..." className="h-10 text-xs" />
                   <CommandList>
-                    <CommandEmpty className="text-xs p-4 text-muted-foreground text-center">No location discovered</CommandEmpty>
+                    <CommandEmpty className="text-xs p-4 text-muted-foreground text-center">No branches found</CommandEmpty>
                     <CommandGroup>
                       <CommandItem className="text-xs" onSelect={() => { setBranch("all"); setBranchOpen(false); }}>
                         <Check className={cn("mr-2 h-4 w-4 text-emerald-600", branch === "all" ? "opacity-100" : "opacity-0")} />
-                        Global Aggregated
+                        All Branches
                       </CommandItem>
                       {branches.map((b) => (
                         <CommandItem key={b.id} className="text-xs" onSelect={() => { setBranch(b.id); setBranchOpen(false); }}>
@@ -696,11 +700,11 @@ export default function ShiftHistoryPage() {
                 <Command className="rounded-lg shadow-xl border border-border">
                   <CommandInput placeholder="Staff identification..." className="h-10 text-xs" />
                   <CommandList>
-                    <CommandEmpty className="text-xs p-4 text-muted-foreground text-center">Unauthorized Identity</CommandEmpty>
+                    <CommandEmpty className="text-xs p-4 text-muted-foreground text-center">No cashiers found</CommandEmpty>
                     <CommandGroup>
                       <CommandItem className="text-xs" onSelect={() => { setUser("all"); setUserOpen(false); }}>
                         <Check className={cn("mr-2 h-4 w-4 text-emerald-600", user === "all" ? "opacity-100" : "opacity-0")} />
-                        Authorized Roster
+                        All Cashiers
                       </CommandItem>
                       {sellers.map((s) => (
                         <CommandItem key={s.id} className="text-xs" onSelect={() => { setUser(s.id); setUserOpen(false); }}>
@@ -720,12 +724,12 @@ export default function ShiftHistoryPage() {
       {/* Shift Detail Sheet */}
       <Sheet open={!!selectedShiftId} onOpenChange={(open) => !open && setSelectedShiftId(null)}>
         <SheetContent className="sm:max-w-xl w-full overflow-y-auto p-6 border-l border-border bg-card shadow-2xl">
-           <SheetHeader className="pb-6">
+            <SheetHeader className="pb-6">
               <SheetTitle className="text-xl font-bold flex items-center gap-3">
                  <div className="p-2 bg-emerald-500/10 rounded-lg">
                     <ClipboardList className="size-5 text-emerald-600" />
                  </div>
-                 Session Intelligence
+                 Shift Details
               </SheetTitle>
            </SheetHeader>
            <ShiftDetailReport 
