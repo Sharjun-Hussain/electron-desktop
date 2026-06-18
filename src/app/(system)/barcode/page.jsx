@@ -18,7 +18,8 @@ import {
   ScanLine,
   Ruler,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Settings2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { toast } from "sonner";
@@ -85,7 +94,38 @@ export default function BarcodePrintingPage() {
   const [selectedVariants, setSelectedVariants] = useState([]);
   const [expandedProducts, setExpandedProducts] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  // Column Toggle State
+  const [tableColumns, setTableColumns] = useState({
+      sku: true,
+      price: true,
+      sellerName: false,
+      sellerSku: false,
+      mrpPrice: false
+  });
+
+  // Initialize columns from localStorage
+  useEffect(() => {
+      if (typeof window !== 'undefined') {
+          const saved = localStorage.getItem('barcodeTableColumns');
+          if (saved) setTableColumns(JSON.parse(saved));
+      }
+  }, []);
+
+  const toggleColumn = (key) => {
+      setTableColumns(prev => {
+          const next = { ...prev, [key]: !prev[key] };
+          localStorage.setItem('barcodeTableColumns', JSON.stringify(next));
+          return next;
+      });
+  };
   const [zoomLevel, setZoomLevel] = useState([1]);
+
+  useEffect(() => {
+      const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
+      return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Print Configuration
   const [settings, setSettings] = useState({
@@ -141,7 +181,12 @@ export default function BarcodePrintingPage() {
       const result = await response.json();
 
       if (response.ok) {
-        setProducts(result.data.data || []);
+          const arr = result.data.data || [];
+          const precomputed = arr.map(p => ({
+              ...p,
+              searchText: `${p.name || ""} ${p.sku || ""} ${p.barcode || ""} ${p.variants?.map(v => `${v.name || ""} ${v.sku || ""} ${v.barcode || ""}`).join(" ") || ""}`.toLowerCase()
+          }));
+          setProducts(precomputed);
       } else {
         toast.error("Failed to fetch products");
       }
@@ -175,7 +220,10 @@ export default function BarcodePrintingPage() {
             sku: v.sku || p.sku,
             barcode: v.barcode || p.barcode,
             stock: v.stock_quantity || 0,
-            price: v.price || p.price
+            price: v.price || p.price || 0,
+            mrp_price: v.mrp_price || p.mrp_price || 0,
+            supplier: p.supplier,
+            supplier_code: p.supplier?.code || p.supplier_code
           });
         });
       } else {
@@ -188,7 +236,10 @@ export default function BarcodePrintingPage() {
           sku: p.sku,
           barcode: p.barcode,
           stock: 0,
-          price: p.price
+          price: p.price || 0,
+          mrp_price: p.mrp_price || 0,
+          supplier: p.supplier,
+          supplier_code: p.supplier?.code || p.supplier_code
         });
       }
     });
@@ -219,18 +270,12 @@ export default function BarcodePrintingPage() {
   };
 
   const filteredProducts = useMemo(() => {
-    if (!searchTerm) return products;
-    const term = searchTerm.toLowerCase();
+    if (!debouncedSearchTerm) return products;
+    const term = debouncedSearchTerm.toLowerCase();
     return products.filter(p => {
-        const productMatch = p.name.toLowerCase().includes(term) || (p.sku && p.sku.toLowerCase().includes(term));
-        const variantMatch = p.variants?.some(v => 
-            (v.name && v.name.toLowerCase().includes(term)) || 
-            (v.barcode && v.barcode.toLowerCase().includes(term)) ||
-            (v.sku && v.sku.toLowerCase().includes(term))
-        );
-        return productMatch || variantMatch;
+        return (p.searchText || "").includes(term);
     });
-  }, [products, searchTerm]);
+  }, [products, debouncedSearchTerm]);
 
   const toggleVariantSelection = (id) => {
     setSelectedVariants(prev => prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]);
@@ -306,6 +351,24 @@ export default function BarcodePrintingPage() {
                         <p className="text-[10px] text-muted-foreground font-semibold">Total to print</p>
                     </div>
                     <Separator orientation="vertical" className="h-8 hidden xl:block border-border/40" />
+                    
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="h-10 px-4 gap-2 rounded-md bg-background border-border/60 hover:bg-muted/50 font-semibold text-sm shadow-sm transition-all active:scale-95">
+                                <Settings2 className="h-4 w-4" /> Columns
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuCheckboxItem checked={tableColumns.sku} onCheckedChange={() => toggleColumn("sku")}>SKU</DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem checked={tableColumns.price} onCheckedChange={() => toggleColumn("price")}>Selling Price</DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem checked={tableColumns.mrpPrice} onCheckedChange={() => toggleColumn("mrpPrice")}>MRP Price</DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem checked={tableColumns.sellerName} onCheckedChange={() => toggleColumn("sellerName")}>Seller Name</DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem checked={tableColumns.sellerSku} onCheckedChange={() => toggleColumn("sellerSku")}>Seller SKU</DropdownMenuCheckboxItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
                     <Button 
                       onClick={handlePrint} 
                       disabled={itemsToPrint.length === 0} 
@@ -360,17 +423,27 @@ export default function BarcodePrintingPage() {
                                     <th className="px-2 py-4 w-8"></th>
                                     <th className="px-6 py-4">Product / Variant</th>
                                     <th className="px-6 py-4">Barcode</th>
+                                    {tableColumns.sku && <th className="px-6 py-4">SKU</th>}
                                     <th className="px-6 py-4 text-right">Stock</th>
-                                    <th className="px-6 py-4 text-right">Price</th>
+                                    {tableColumns.price && <th className="px-6 py-4 text-right">Selling Price</th>}
+                                    {tableColumns.mrpPrice && <th className="px-6 py-4 text-right">MRP Price</th>}
+                                    {tableColumns.sellerName && <th className="px-6 py-4">Seller Name</th>}
+                                    {tableColumns.sellerSku && <th className="px-6 py-4">Seller SKU</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/20">
                                 {filteredProducts.map((p) => {
-                                    const hasVariants = p.variants && p.variants.length > 0;
-                                    const variantIds = hasVariants ? p.variants.map(v => v.id) : [`p-${p.id}`];
+                                    const hasVariants = p.variants && p.variants.length > 1;
+                                    const variantIds = p.variants && p.variants.length > 0 ? p.variants.map(v => v.id) : [`p-${p.id}`];
                                     const isExpanded = expandedProducts.has(p.id);
                                     const isAllSelected = variantIds.every(id => selectedVariants.includes(id));
                                     const isSomeSelected = variantIds.some(id => selectedVariants.includes(id));
+                                    const defaultVariant = p.variants?.[0] || {};
+                                    const displayPrice = defaultVariant.price || p.price || 0;
+                                    const displayMrp = defaultVariant.mrp_price || p.mrp_price || 0;
+                                    const displaySku = defaultVariant.sku || p.sku;
+                                    const displayBarcode = defaultVariant.barcode || p.barcode;
+                                    const displayStock = defaultVariant.stock_quantity || p.stock || 0;
 
                                     return (
                                         <>
@@ -397,16 +470,38 @@ export default function BarcodePrintingPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 font-mono text-[11px] text-muted-foreground font-bold">
-                                                    {!hasVariants ? (p.barcode) : "---"}
+                                                    {!hasVariants ? (displayBarcode) : "---"}
                                                 </td>
+                                                {tableColumns.sku && (
+                                                    <td className="px-6 py-4 text-[11px] text-muted-foreground font-bold">
+                                                        {!hasVariants ? (displaySku) : "---"}
+                                                    </td>
+                                                )}
                                                 <td className="px-6 py-4 text-right">
                                                     {!hasVariants ? (
-                                                        <Badge variant="outline" className="bg-muted/50 border-border/60 text-foreground font-bold rounded-md px-2 py-0.5">{p.stock || 0}</Badge>
+                                                        <Badge variant="outline" className="bg-muted/50 border-border/60 text-foreground font-bold rounded-md px-2 py-0.5">{displayStock}</Badge>
                                                     ) : "---"}
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-bold text-foreground tabular-nums">
-                                                    {!hasVariants ? formatCurrency(p.price || 0) : "---"}
-                                                </td>
+                                                {tableColumns.price && (
+                                                    <td className="px-6 py-4 text-right font-bold text-foreground tabular-nums">
+                                                        {!hasVariants ? formatCurrency(displayPrice) : "---"}
+                                                    </td>
+                                                )}
+                                                {tableColumns.mrpPrice && (
+                                                    <td className="px-6 py-4 text-right font-bold text-foreground tabular-nums">
+                                                        {!hasVariants ? formatCurrency(displayMrp) : "---"}
+                                                    </td>
+                                                )}
+                                                {tableColumns.sellerName && (
+                                                    <td className="px-6 py-4 text-[11px] text-muted-foreground font-bold">
+                                                        {!hasVariants ? (p.supplier?.name || "N/A") : "---"}
+                                                    </td>
+                                                )}
+                                                {tableColumns.sellerSku && (
+                                                    <td className="px-6 py-4 text-[11px] text-muted-foreground font-bold">
+                                                        {!hasVariants ? (p.supplier_code || "N/A") : "---"}
+                                                    </td>
+                                                )}
                                             </tr>
 
                                             {/* Variant Rows */}
@@ -430,12 +525,30 @@ export default function BarcodePrintingPage() {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-3 font-mono text-[11px] text-muted-foreground font-bold">{v.barcode || p.barcode}</td>
+                                                        {tableColumns.sku && <td className="px-6 py-3 text-[11px] text-muted-foreground font-bold">{v.sku || p.sku}</td>}
                                                         <td className="px-6 py-3 text-right">
                                                             <span className="text-xs text-muted-foreground font-bold">{v.stock_quantity || 0}</span>
                                                         </td>
-                                                        <td className="px-6 py-3 text-right font-bold text-foreground tabular-nums">
-                                                            {formatCurrency(v.price || p.price || 0)}
-                                                        </td>
+                                                        {tableColumns.price && (
+                                                            <td className="px-6 py-3 text-right font-bold text-foreground tabular-nums">
+                                                                {formatCurrency(v.price || p.price || 0)}
+                                                            </td>
+                                                        )}
+                                                        {tableColumns.mrpPrice && (
+                                                            <td className="px-6 py-3 text-right font-bold text-foreground tabular-nums">
+                                                                {formatCurrency(v.mrp_price || p.mrp_price || 0)}
+                                                            </td>
+                                                        )}
+                                                        {tableColumns.sellerName && (
+                                                            <td className="px-6 py-3 text-[11px] text-muted-foreground font-bold">
+                                                                {p.supplier?.name || "N/A"}
+                                                            </td>
+                                                        )}
+                                                        {tableColumns.sellerSku && (
+                                                            <td className="px-6 py-3 text-[11px] text-muted-foreground font-bold">
+                                                                {p.supplier_code || "N/A"}
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 );
                                             })}
