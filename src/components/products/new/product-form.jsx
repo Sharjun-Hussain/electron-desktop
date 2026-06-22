@@ -99,6 +99,9 @@ import { useRouter } from "next/navigation";
 
 import { ProductFormSkeleton } from "@/app/skeletons/products/product-form-skeleton";
 import { ProductInsightSheet } from "../ProductInsightSheet";
+import { BrandSheet } from "@/components/brand/brand-sheet";
+import { MainCategorySheet } from "@/components/main-category/main-category-sheet";
+import { SubCategorySheet } from "@/components/sub-category/sub-category-sheet";
 
 import { toast } from "sonner";
 import { useFormRestore } from "@/hooks/use-form-restore";
@@ -203,6 +206,7 @@ const SearchableSelect = ({
   icon: Icon = CircleDot,
   tooltip = null,
   required = false,
+  action = null,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -212,21 +216,30 @@ const SearchableSelect = ({
       name={name}
       render={({ field }) => (
         <FormItem className="space-y-0.5">
-          {label && (
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <FormLabel className="text-sm font-semibold text-slate-900 dark:text-white">
-                {label}
-                {required && <span className="text-red-500 ml-1 font-bold">*</span>}
-              </FormLabel>
-              {tooltip && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="size-3 text-slate-400 cursor-help hover:text-emerald-500 transition-colors" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[200px] bg-slate-900 text-white border-none shadow-xl">
-                    <p className="font-medium leading-relaxed">{tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
+          {(label || action) && (
+            <div className="flex items-center justify-between mb-0.5">
+              <div className="flex items-center gap-1.5">
+                {label && (
+                  <FormLabel className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {label}
+                    {required && <span className="text-red-500 ml-1 font-bold">*</span>}
+                  </FormLabel>
+                )}
+                {tooltip && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="size-3 text-slate-400 cursor-help hover:text-emerald-500 transition-colors" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[200px] bg-slate-900 text-white border-none shadow-xl">
+                      <p className="font-medium leading-relaxed">{tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              {action && (
+                <div className="-my-1">
+                  {action}
+                </div>
               )}
             </div>
           )}
@@ -343,6 +356,11 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
   // --- DELETE CONFIRM STATE ---
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // --- SHEET STATES ---
+  const [showBrandSheet, setShowBrandSheet] = useState(false);
+  const [showMainCategorySheet, setShowMainCategorySheet] = useState(false);
+  const [showSubCategorySheet, setShowSubCategorySheet] = useState(false);
 
   // --- IMAGE DROPZONE STATE ---
   const [imageFiles, setImageFiles] = useState([]);
@@ -594,6 +612,18 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
             form.setValue("sku", `SKU-${randomSKU}`);
             
             setCodePrefix(orgPrefix);
+
+            // Auto-select Base Unit (Pcs/Piece)
+            if (data.units?.length > 0) {
+              const defaultUnit = data.units.find(u => {
+                const name = u.name.toLowerCase();
+                return name === 'pcs' || name === 'piece' || name === 'pieces';
+              });
+              if (defaultUnit) {
+                form.setValue("unit_id", defaultUnit.id);
+                form.clearErrors("unit_id");
+              }
+            }
           }
         }
       } catch (error) {
@@ -1158,6 +1188,19 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                       options={options.brands}
                       placeholder="Select Brand"
                       icon={Palette}
+                      action={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowBrandSheet(true)}
+                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                          title="Create new brand"
+                        >
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      }
                     />
                     {!(business?.business_type === 'Manufacturing' && form.watch("product_type") === 'Finished Good') && (
                       <SearchableSelect
@@ -1276,6 +1319,19 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                       options={options.mainCategories}
                       placeholder="Select Category"
                       icon={LayoutGrid}
+                      action={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowMainCategorySheet(true)}
+                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                          title="Create new main category"
+                        >
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      }
                     />
                     <SearchableSelect
                       form={form}
@@ -1289,6 +1345,20 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                       }
                       disabled={!selectedMainCategory}
                       icon={CircleDot}
+                      action={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowSubCategorySheet(true)}
+                          disabled={!selectedMainCategory}
+                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                          title="Create new sub category"
+                        >
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      }
                     />
                   </div>
 
@@ -1774,6 +1844,33 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
         isOpen={insightOpen}
         onClose={() => setInsightOpen(false)}
         insightData={insightData}
+      />
+      <BrandSheet
+        open={showBrandSheet}
+        onOpenChange={setShowBrandSheet}
+        session={session}
+        onSuccess={(newBrand) => {
+          setOptions((prev) => ({ ...prev, brands: [...prev.brands, newBrand] }));
+          form.setValue("brand_id", newBrand.id);
+        }}
+      />
+      <MainCategorySheet
+        open={showMainCategorySheet}
+        onOpenChange={setShowMainCategorySheet}
+        session={session}
+        onSuccess={(newMainCategory) => {
+          setOptions((prev) => ({ ...prev, mainCategories: [...prev.mainCategories, newMainCategory] }));
+          form.setValue("main_category_id", newMainCategory.id);
+        }}
+      />
+      <SubCategorySheet
+        open={showSubCategorySheet}
+        onOpenChange={setShowSubCategorySheet}
+        session={session}
+        onSuccess={(newSubCategory) => {
+          setOptions((prev) => ({ ...prev, subCategories: [...prev.subCategories, newSubCategory] }));
+          form.setValue("sub_category_id", newSubCategory.id);
+        }}
       />
     </div>
   );

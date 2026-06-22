@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import axios from "axios";
-import { TrendingUp, PieChart as PieIcon, Loader2 } from "lucide-react";
+import { TrendingUp, PieChart as PieIcon, Loader2, ChevronDown } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { cn } from "@/lib/utils";
 
@@ -27,12 +27,13 @@ export default function DashboardCharts() {
   const { formatCurrency } = useCurrency();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(7);
 
   useEffect(() => {
     const fetchCharts = async () => {
       if (!session?.accessToken) return;
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/dashboard/charts`, {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/dashboard/charts?days=${days}`, {
           headers: { Authorization: `Bearer ${session.accessToken}` }
         });
         if (res.data.status === "success") {
@@ -46,7 +47,7 @@ export default function DashboardCharts() {
     };
 
     fetchCharts();
-  }, [session]);
+  }, [session, days]);
 
   if (loading) {
     return (
@@ -67,7 +68,20 @@ export default function DashboardCharts() {
             </div>
             <div>
               <h3 className="text-sm font-bold text-foreground">Revenue Trend</h3>
-              <p className="text-[11px] text-muted-foreground font-medium">Last 7 days performance</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Last {days} days performance</p>
+            </div>
+          </div>
+          <div className="relative inline-flex items-center">
+            <select 
+              value={days} 
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="appearance-none text-xs font-medium bg-background border border-border rounded-lg pl-3 pr-8 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer text-foreground shadow-sm hover:bg-muted/50"
+            >
+              <option value={7}>Last 7 Days</option>
+              <option value={30}>Last 30 Days</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+              <ChevronDown className="h-3.5 w-3.5" />
             </div>
           </div>
         </div>
