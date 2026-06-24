@@ -51,9 +51,10 @@ const DEFAULT_SETTINGS = {
     paperType: "roll",
     labelWidth: 50,
     labelHeight: 30,
-    perRow: 1,
     marginTop: 10,
     marginLeft: 10,
+    marginRight: 0,
+    marginBottom: 0,
     gapX: 2,
     gapY: 2,
     qtyMode: "custom",
@@ -218,6 +219,8 @@ export function BarcodeSettings() {
 
                             <div className="grid grid-cols-2 gap-3 content-end">
                                 <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Top Mar (mm)</Label><Input type="number" value={settings.marginTop} onChange={(e) => updateSetting('marginTop', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
+                                <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Right Mar (mm)</Label><Input type="number" value={settings.marginRight ?? 0} onChange={(e) => updateSetting('marginRight', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
+                                <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Bottom Mar (mm)</Label><Input type="number" value={settings.marginBottom ?? 0} onChange={(e) => updateSetting('marginBottom', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
                                 <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Left Mar (mm)</Label><Input type="number" value={settings.marginLeft} onChange={(e) => updateSetting('marginLeft', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
                                 <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Gap X (mm)</Label><Input type="number" value={settings.gapX} onChange={(e) => updateSetting('gapX', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>
                                 <div className="space-y-1"><Label className="text-[9px] text-slate-500 font-bold uppercase">Gap Y (mm)</Label><Input type="number" value={settings.gapY} onChange={(e) => updateSetting('gapY', Number(e.target.value))} className="h-8 text-[11px] font-semibold" /></div>

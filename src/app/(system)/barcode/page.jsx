@@ -62,13 +62,15 @@ const PrintableSheet = ({ itemsToPrint, settings, refInstance }) => {
                 <div 
                     className="w-full"
                     style={{ 
-                        paddingTop: settings.paperType === 'roll' ? '0' : `${settings.marginTop}mm`, 
-                        paddingLeft: settings.paperType === 'roll' ? '0' : `${settings.marginLeft}mm`,
+                        paddingTop: `${settings.marginTop || 0}mm`,
+                        paddingRight: `${settings.marginRight || 0}mm`,
+                        paddingBottom: `${settings.marginBottom || 0}mm`,
+                        paddingLeft: `${settings.marginLeft || 0}mm`,
                         display: 'grid',
                         justifyContent: settings.paperType === 'roll' ? 'center' : 'start',
                         gridTemplateColumns: (settings.perRow === 'auto' 
                             ? `repeat(auto-fill, ${settings.labelWidth}mm)` 
-                            : `repeat(${settings.perRow}, ${settings.labelWidth}mm)`),
+                            : `repeat(${parseInt(settings.perRow) || 1}, ${settings.labelWidth}mm)`),
                         columnGap: `${settings.gapX}mm`,
                         rowGap: `${settings.gapY}mm`,
                     }}
@@ -133,7 +135,7 @@ export default function BarcodePrintingPage() {
     labelWidth: 50,
     labelHeight: 30,
     perRow: 1, // Default to 1 column
-    marginTop: 10, marginLeft: 10, gapX: 2, gapY: 2,
+    marginTop: 0, marginRight: 0, marginBottom: 0, marginLeft: 0, gapX: 2, gapY: 2,
     customQty: 1,
     barcodeFormat: "CODE128",
     // New Barcode Styling Props
@@ -711,10 +713,12 @@ export default function BarcodePrintingPage() {
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Top Margin (mm)</Label><Input type="number" value={settings.marginTop} onChange={(e) => updateSetting('marginTop', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
-                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Left Margin (mm)</Label><Input type="number" value={settings.marginLeft} onChange={(e) => updateSetting('marginLeft', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
-                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Horiz. Gap (mm)</Label><Input type="number" value={settings.gapX} onChange={(e) => updateSetting('gapX', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
-                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Vert. Gap (mm)</Label><Input type="number" value={settings.gapY} onChange={(e) => updateSetting('gapY', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
+                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Top Margin (mm)</Label><Input type="number" value={settings.marginTop ?? 0} onChange={(e) => updateSetting('marginTop', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
+                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Right Margin (mm)</Label><Input type="number" value={settings.marginRight ?? 0} onChange={(e) => updateSetting('marginRight', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
+                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Bottom Margin (mm)</Label><Input type="number" value={settings.marginBottom ?? 0} onChange={(e) => updateSetting('marginBottom', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
+                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Left Margin (mm)</Label><Input type="number" value={settings.marginLeft ?? 0} onChange={(e) => updateSetting('marginLeft', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
+                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Horiz. Gap (mm)</Label><Input type="number" value={settings.gapX ?? 0} onChange={(e) => updateSetting('gapX', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
+                                <div className="space-y-1.5"><Label className="text-[10px] text-muted-foreground/60 font-bold uppercase ml-1">Vert. Gap (mm)</Label><Input type="number" value={settings.gapY ?? 0} onChange={(e) => updateSetting('gapY', Number(e.target.value))} className="h-8 text-xs bg-muted/30 border-border/60 rounded-xl focus:ring-emerald-500/20 font-semibold"/></div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
