@@ -212,7 +212,7 @@ export default function MainCategoryPage() {
       setLoading(true);
       setError(null);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/main-categories`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/main-categories?size=1000`,
         {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         }

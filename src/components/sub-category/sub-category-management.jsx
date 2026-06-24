@@ -222,7 +222,7 @@ export default function SubCategoryPage() {
       setLoading(true);
       setError(null);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories?size=1000`,
         {
           headers: {
             Authorization: `Bearer ${session.accessToken}`,
