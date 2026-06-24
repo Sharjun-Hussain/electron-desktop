@@ -22,6 +22,34 @@ import { cn } from "@/lib/utils";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
 
+const CustomAreaTooltip = ({ active, payload, label, formatCurrency }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card/80 backdrop-blur-md border border-border/50 rounded-xl p-3 shadow-lg outline-none">
+        <p className="text-[11px] font-bold text-muted-foreground mb-1">{label}</p>
+        <p className="text-[13px] font-semibold text-emerald-600 dark:text-emerald-400">
+          Revenue : {formatCurrency(payload[0].value)}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomPieTooltip = ({ active, payload, formatCurrency }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card/80 backdrop-blur-md border border-border/50 rounded-xl p-3 shadow-lg outline-none flex items-center gap-2">
+        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: payload[0].payload.fill }} />
+        <p className="text-[12px] font-semibold text-foreground">
+          {payload[0].name} : <span className="font-bold">{formatCurrency(payload[0].value)}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function DashboardCharts() {
   const { data: session } = useSession();
   const { formatCurrency } = useCurrency();
@@ -110,15 +138,8 @@ export default function DashboardCharts() {
                 tickFormatter={(val) => formatCurrency(val, { compact: true })}
               />
               <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))", 
-                  borderColor: "hsl(var(--border))",
-                  borderRadius: "12px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)"
-                }}
-                formatter={(value) => [formatCurrency(value), "Revenue"]}
+                cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4' }}
+                content={<CustomAreaTooltip formatCurrency={formatCurrency} />}
               />
               <Area 
                 type="monotone" 
@@ -162,14 +183,8 @@ export default function DashboardCharts() {
                 ))}
               </Pie>
               <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))", 
-                  borderColor: "hsl(var(--border))",
-                  borderRadius: "12px",
-                  fontSize: "12px",
-                  fontWeight: "600"
-                }}
-                formatter={(value) => formatCurrency(value)}
+                cursor={{ fill: 'transparent' }}
+                content={<CustomPieTooltip formatCurrency={formatCurrency} />}
               />
               <Legend 
                 verticalAlign="bottom" 
