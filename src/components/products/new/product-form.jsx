@@ -267,13 +267,17 @@ const SearchableSelect = ({
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="w-[280px] p-0 rounded-md" align="start">
+            <PopoverContent 
+              className="w-[280px] p-0 rounded-md" 
+              align="start"
+              onWheel={(e) => e.stopPropagation()}
+            >
               <Command>
                 <CommandInput
                   placeholder={`Search ${label?.toLowerCase() || "options"}...`}
                   className="h-9"
                 />
-                <CommandList className="max-h-[300px]">
+                <CommandList className="max-h-[300px] overflow-y-auto">
                   <CommandEmpty className="py-6 text-sm text-center text-muted-foreground">
                     No results found.
                   </CommandEmpty>
@@ -292,7 +296,7 @@ const SearchableSelect = ({
                     </CommandItem>
                     {options.map((item) => (
                       <CommandItem
-                        value={item.id}
+                        value={item.name}
                         key={item.id}
                         className="cursor-pointer"
                         onSelect={() => {

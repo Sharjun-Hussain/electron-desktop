@@ -216,7 +216,7 @@ export default function BrandPage() {
       setLoading(true);
       setError(null);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands`, // Updated endpoint
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands?size=1000`, // Updated endpoint
         {
           headers: {
             Authorization: `Bearer ${session.accessToken}`,
