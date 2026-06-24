@@ -182,6 +182,16 @@ export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, st
                   <p className="text-[10px] font-medium text-slate-400 mt-1.5 text-right uppercase tracking-wider">
                     Includes Opening Float & Cash Refunds
                   </p>
+
+                  <div className="flex justify-between items-center gap-4 mt-4 pt-4 border-t border-slate-100">
+                    <span className="text-sm font-bold text-slate-800 leading-tight">Net Cash (Excl. Float)</span>
+                    <span className="text-xl font-black text-emerald-600 whitespace-nowrap shrink-0 text-right">
+                      Rs {(
+                        (stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)) 
+                        - (stats.totalOpeningBalance || 0) 
+                      ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
