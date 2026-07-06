@@ -1212,7 +1212,7 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                         </Button>
                       }
                     />
-                    {!(business?.business_type === 'Manufacturing' && form.watch("product_type") === 'Finished Good') && (
+                    {!(business?.business_type === 'Manufacturing' && form.watch("product_type") === 'Finished Good') && business?.business_type?.toLowerCase() !== 'restaurant' && (
                       <SearchableSelect
                         form={form}
                         name="supplier_id"
@@ -1294,7 +1294,7 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                     </div>
                   )}
 
-                  {!(business?.business_type === 'Manufacturing' && form.watch("product_type") === 'Finished Good') && (
+                  {!(business?.business_type === 'Manufacturing' && form.watch("product_type") === 'Finished Good') && business?.business_type?.toLowerCase() !== 'restaurant' && (
                     <FormField
                       control={form.control}
                       name="suppliers"
@@ -1396,50 +1396,54 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                         </Button>
                       }
                     />
-                    <SearchableSelect
-                      form={form}
-                      name="measurement_id"
-                      label="Measurement"
-                      options={options.measurements}
-                      placeholder="e.g. Kg"
-                      icon={Palette}
-                      tooltip="Used for items sold by weight or volume (e.g. Kg, Liter). Optional for simple pieces."
-                      action={
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowMeasurementDialog(true)}
-                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
-                          title="Create new measurement"
-                        >
-                          <Plus className="h-3 w-3" />
-                          New
-                        </Button>
-                      }
-                    />
-                    <SearchableSelect
-                      form={form}
-                      name="container_id"
-                      label="Container Type"
-                      options={options.containers}
-                      placeholder="e.g. Box"
-                      icon={Box}
-                      tooltip="The physical packaging of the item (e.g. Glass Bottle, Bag). Optional."
-                      action={
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowContainerDialog(true)}
-                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
-                          title="Create new container type"
-                        >
-                          <Plus className="h-3 w-3" />
-                          New
-                        </Button>
-                      }
-                    />
+                    {business?.business_type?.toLowerCase() !== 'restaurant' && (
+                      <>
+                        <SearchableSelect
+                          form={form}
+                          name="measurement_id"
+                          label="Measurement"
+                          options={options.measurements}
+                          placeholder="e.g. Kg"
+                          icon={Palette}
+                          tooltip="Used for items sold by weight or volume (e.g. Kg, Liter). Optional for simple pieces."
+                          action={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowMeasurementDialog(true)}
+                              className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                              title="Create new measurement"
+                            >
+                              <Plus className="h-3 w-3" />
+                              New
+                            </Button>
+                          }
+                        />
+                        <SearchableSelect
+                          form={form}
+                          name="container_id"
+                          label="Container Type"
+                          options={options.containers}
+                          placeholder="e.g. Box"
+                          icon={Box}
+                          tooltip="The physical packaging of the item (e.g. Glass Bottle, Bag). Optional."
+                          action={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowContainerDialog(true)}
+                              className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                              title="Create new container type"
+                            >
+                              <Plus className="h-3 w-3" />
+                              New
+                            </Button>
+                          }
+                        />
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1460,22 +1464,24 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                   </CardHeader>
                   <CardContent className="p-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <FormField
-                        name="cost_price"
-                        control={form.control}
-                        render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-sm font-semibold">Cost Price</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Coins className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input type="number" step="0.01" placeholder="0.00" className="pl-9 h-9" {...field} />
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
+                      {business?.business_type?.toLowerCase() !== 'restaurant' && (
+                        <FormField
+                          name="cost_price"
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0.5">
+                              <FormLabel className="text-sm font-semibold">Cost Price</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Coins className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                  <Input type="number" step="0.01" placeholder="0.00" className="pl-9 h-9" {...field} />
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                       <FormField
                         name="mrp_price"
                         control={form.control}
@@ -1508,22 +1514,24 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        name="wholesale_price"
-                        control={form.control}
-                        render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <FormLabel className="text-sm font-semibold">Wholesale Price</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Zap className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input type="number" step="0.01" placeholder="0.00" className="pl-9 h-9" {...field} />
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
+                      {business?.business_type?.toLowerCase() !== 'restaurant' && (
+                        <FormField
+                          name="wholesale_price"
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0.5">
+                              <FormLabel className="text-sm font-semibold">Wholesale Price</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Zap className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                  <Input type="number" step="0.01" placeholder="0.00" className="pl-9 h-9" {...field} />
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -1810,19 +1818,21 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                       />
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="is_variant"
-                    render={({ field }) => (
-                      <SettingsCard
-                        label="Has Variants"
-                        description="Size, Color, etc."
-                        icon={Palette}
-                        isActive={field.value}
-                        onToggle={field.onChange}
-                      />
-                    )}
-                  />
+                  {business?.business_type?.toLowerCase() !== 'restaurant' && (
+                    <FormField
+                      control={form.control}
+                      name="is_variant"
+                      render={({ field }) => (
+                        <SettingsCard
+                          label="Has Variants"
+                          description="Size, Color, etc."
+                          icon={Palette}
+                          isActive={field.value}
+                          onToggle={field.onChange}
+                        />
+                      )}
+                    />
+                  )}
                 </CardContent>
               </Card>
 
