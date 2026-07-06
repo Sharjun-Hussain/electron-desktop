@@ -102,6 +102,9 @@ import { ProductInsightSheet } from "../ProductInsightSheet";
 import { BrandSheet } from "@/components/brand/brand-sheet";
 import { MainCategorySheet } from "@/components/main-category/main-category-sheet";
 import { SubCategorySheet } from "@/components/sub-category/sub-category-sheet";
+import { UnitDialog } from "@/components/units/units-dialog";
+import { MeasurementUnitDialog } from "@/components/unit-measurement/unit-measurement-dialog";
+import { ContainerDialog } from "@/components/containers/container-dialog";
 
 import { toast } from "sonner";
 import { useFormRestore } from "@/hooks/use-form-restore";
@@ -365,6 +368,9 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
   const [showBrandSheet, setShowBrandSheet] = useState(false);
   const [showMainCategorySheet, setShowMainCategorySheet] = useState(false);
   const [showSubCategorySheet, setShowSubCategorySheet] = useState(false);
+  const [showUnitDialog, setShowUnitDialog] = useState(false);
+  const [showMeasurementDialog, setShowMeasurementDialog] = useState(false);
+  const [showContainerDialog, setShowContainerDialog] = useState(false);
 
   // --- IMAGE DROPZONE STATE ---
   const [imageFiles, setImageFiles] = useState([]);
@@ -1376,6 +1382,19 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                       icon={QrCode}
                       tooltip="How you count this product (e.g. Piece, Box). Required for all items."
                       required
+                      action={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowUnitDialog(true)}
+                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                          title="Create new base unit"
+                        >
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      }
                     />
                     <SearchableSelect
                       form={form}
@@ -1385,6 +1404,19 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                       placeholder="e.g. Kg"
                       icon={Palette}
                       tooltip="Used for items sold by weight or volume (e.g. Kg, Liter). Optional for simple pieces."
+                      action={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowMeasurementDialog(true)}
+                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                          title="Create new measurement"
+                        >
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      }
                     />
                     <SearchableSelect
                       form={form}
@@ -1394,6 +1426,19 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
                       placeholder="e.g. Box"
                       icon={Box}
                       tooltip="The physical packaging of the item (e.g. Glass Bottle, Bag). Optional."
+                      action={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowContainerDialog(true)}
+                          className="h-5 px-1.5 shrink-0 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-[10px] font-semibold flex items-center gap-1"
+                          title="Create new container type"
+                        >
+                          <Plus className="h-3 w-3" />
+                          New
+                        </Button>
+                      }
                     />
                   </div>
                 </CardContent>
@@ -1874,6 +1919,33 @@ export function ProductForm({ initialData = null, onSuccess = null, isModal = fa
         onSuccess={(newSubCategory) => {
           setOptions((prev) => ({ ...prev, subCategories: [...prev.subCategories, newSubCategory] }));
           form.setValue("sub_category_id", newSubCategory.id);
+        }}
+      />
+      <UnitDialog
+        open={showUnitDialog}
+        onOpenChange={setShowUnitDialog}
+        session={session}
+        onSuccess={(newUnit) => {
+          setOptions((prev) => ({ ...prev, units: [...prev.units, newUnit] }));
+          form.setValue("unit_id", newUnit.id);
+        }}
+      />
+      <MeasurementUnitDialog
+        open={showMeasurementDialog}
+        onOpenChange={setShowMeasurementDialog}
+        session={session}
+        onSuccess={(newMeasurement) => {
+          setOptions((prev) => ({ ...prev, measurements: [...prev.measurements, newMeasurement] }));
+          form.setValue("measurement_id", newMeasurement.id);
+        }}
+      />
+      <ContainerDialog
+        open={showContainerDialog}
+        onOpenChange={setShowContainerDialog}
+        session={session}
+        onSuccess={(newContainer) => {
+          setOptions((prev) => ({ ...prev, containers: [...prev.containers, newContainer] }));
+          form.setValue("container_id", newContainer.id);
         }}
       />
     </div>

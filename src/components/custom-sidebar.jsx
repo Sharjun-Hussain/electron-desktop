@@ -93,6 +93,7 @@ export function CustomSidebar() {
   const { business, general } = useAppSettings();
   const { t } = useTranslation();
   const isRestaurant = (business?.business_type || session?.user?.organization?.business_type || "").toLowerCase() === 'restaurant';
+  const isManufacturing = (business?.business_type || session?.user?.organization?.business_type || "").toLowerCase() === 'manufacturing';
 
   const sidebarMode = general?.interface?.sidebar || 'fixed';
   const isCollapsed = sidebarMode === 'collapsed';
@@ -144,7 +145,7 @@ export function CustomSidebar() {
         ],
       },
       // Manufacturing / Production Section
-      ...(business?.business_type === 'Manufacturing' ? [{
+      ...(isManufacturing ? [{
         title: "Production",
         url: "/production/orders",
         icon: Origami,

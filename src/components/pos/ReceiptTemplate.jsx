@@ -28,8 +28,8 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
   const paperWidthClass = paperWidth === "58mm" ? "w-[58mm]" : paperWidth === "80mm" ? "w-[80mm]" : "w-[210mm]";
 
   const fontConfig = {
-    family: "",
-    fontFamilyStyle: "Arial, Helvetica, sans-serif",
+    family: "font-mono",
+    fontFamilyStyle: "monospace",
     size: fontSize === "xsmall" ? "text-[10px]" :
       fontSize === "small" ? "text-[10px]" :
         fontSize === "large" ? "text-sm" :
@@ -48,7 +48,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
     <div
       ref={ref}
       className={cn(
-        "bg-white text-black p-4 print:p-0 mx-auto transition-all uppercase",
+        "bg-white text-black p-4 print:py-0 print:px-3 mx-auto transition-all uppercase",
         paperWidthClass,
         fontConfig.family,
         fontConfig.size
@@ -81,7 +81,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
         )}
       </div>
 
-      <div className="border-y border-dashed border-black py-2 my-2 space-y-0.5">
+      <div className="border-b border-dashed border-black pb-2 mb-2 space-y-0.5">
         {sale.source === 'ecommerce' && (
           <div className="text-center font-black border border-black py-0.5 text-[10px] my-1 uppercase">
             {t("pos.online_checkout") || "ONLINE CHECKOUT"}
@@ -127,10 +127,10 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
       <table className="w-full my-4 border-collapse">
         <thead>
           <tr className="border-b border-black font-bold">
-            <th className="text-left py-1 pr-1 w-1/2"># DESCRIPTION</th>
-            <th className="text-center py-1 px-1">QTY</th>
-            <th className="text-right py-1 px-1">PRICE</th>
-            <th className="text-right py-1 pl-1">AMOUNT</th>
+            <th className="text-left py-1 pr-1 whitespace-nowrap"># DESCRIPTION</th>
+            <th className="text-center py-1 px-1 whitespace-nowrap">QTY</th>
+            <th className="text-right py-1 px-1 whitespace-nowrap">PRICE</th>
+            <th className="text-right py-1 pl-1 whitespace-nowrap">AMOUNT</th>
           </tr>
         </thead>
         {sale.items?.map((item, idx) => {
@@ -297,7 +297,7 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
           </div>
         )}
         {showFooter && footerText && (
-          <div className="whitespace-pre-wrap leading-tight text-[10px] mb-2">{footerText}</div>
+          <div className="whitespace-pre-wrap leading-tight text-[10px] mb-4">{footerText}</div>
         )}
         <div className="leading-tight">
           <p className="text-[10px] whitespace-nowrap">ERP SYSTEM FROM INZEEDO</p>
