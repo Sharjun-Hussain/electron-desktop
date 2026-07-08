@@ -127,7 +127,7 @@ export default function ExpenseManagement() {
     }
   }, [status, session, fetchExpenses, fetchCategories]);
 
-  const handleEdit = (expense) => router.push(`/expenses/edit?id=${expense.id}`);
+  const handleEdit = (expense) => router.push(`/expenses/${expense.id}/edit`);
   const handleView = (expense) => router.push(`/expenses/${expense.id}`);
   const handleDeleteTrigger = (id) => setExpenseToDelete(id);
   
@@ -150,8 +150,9 @@ export default function ExpenseManagement() {
   const columns = useMemo(() => getExpenseColumns({ 
     onEdit: handleEdit, 
     onDelete: handleDeleteTrigger, 
-    onView: handleView 
-  }), [session?.accessToken]);
+    onView: handleView,
+    formatCurrency
+  }), [session?.accessToken, formatCurrency]);
 
   const handleClearFilters = () => {
     setFilters({

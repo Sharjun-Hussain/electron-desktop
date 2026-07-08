@@ -105,7 +105,36 @@ export const useHardware = () => {
       return false;
     }
     try {
-      await hardwareService.printHTML(selectedPrinter, html);
+      const fullHtml = `
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { 
+                margin: 0; 
+                padding: 0; 
+                font-family: monospace; 
+                color: black; 
+                background: white; 
+                text-transform: uppercase; 
+              }
+              /* Fallback basic grid layout if CDN is slow */
+              .flex { display: flex; }
+              .justify-between { justify-content: space-between; }
+              .text-center { text-align: center; }
+              .text-right { text-align: right; }
+              .text-left { text-align: left; }
+              .font-bold { font-weight: bold; }
+              .font-black { font-weight: 900; }
+              .w-full { width: 100%; }
+              table { width: 100%; border-collapse: collapse; }
+            </style>
+            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          </head>
+          <body>${html}</body>
+        </html>
+      `;
+      await hardwareService.printHTML(selectedPrinter, fullHtml);
       return true;
     } catch (err) {
       toast.error("Printing failed. Check printer connection.");

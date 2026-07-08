@@ -1049,6 +1049,7 @@ export default function ClassicPosPage() {
                           value={item.quantity}
                           onChange={(e) => handleUpdateItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
                           onFocus={(e) => e.target.select()}
+                          onWheel={(e) => e.target.blur()}
                           className="w-full bg-emerald-500/10 border-none text-center focus:ring-1 focus:ring-emerald-500 rounded p-1 outline-none font-bold"
                         />
                       </td>
@@ -1066,6 +1067,7 @@ export default function ClassicPosPage() {
                           value={item.discount_amt || 0}
                           onChange={(e) => handleUpdateItem(item.id, { discount_amt: parseFloat(e.target.value) || 0 })}
                           onFocus={(e) => e.target.select()}
+                          onWheel={(e) => e.target.blur()}
                           className="w-full bg-muted/30 border-none text-right focus:ring-1 focus:ring-emerald-500 rounded p-1 outline-none"
                         />
                       </td>
@@ -1078,6 +1080,7 @@ export default function ClassicPosPage() {
                             value={item.discount}
                             onChange={(e) => handleUpdateItem(item.id, { discount: parseFloat(e.target.value) || 0 })}
                             onFocus={(e) => e.target.select()}
+                            onWheel={(e) => e.target.blur()}
                             className="w-12 bg-rose-500/10 border-none text-right focus:ring-1 focus:ring-rose-500 rounded p-1 outline-none text-rose-500 font-bold"
                           />
                           <span className="text-xs">%</span>

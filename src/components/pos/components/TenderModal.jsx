@@ -49,7 +49,7 @@ const TenderModal = ({
   const [selectedMethod, setSelectedMethod] = useState("cash");
   const [cardChargePercent, setCardChargePercent] = useState(0);
   const inputRef = useRef(null);
-  
+
   const posTouchUI = useSettingsStore((state) => state.global?.posTouchUI || false);
   const receiptSettings = useSettingsStore((state) => state.receipt || {});
   
@@ -211,6 +211,7 @@ const TenderModal = ({
                         value={lastDiscount || ""}
                         onChange={(e) => setLastDiscount(parseFloat(e.target.value) || 0)}
                         onFocus={(e) => e.target.select()}
+                        onWheel={(e) => e.target.blur()}
                         className={cn(InputCls, "border-slate-300 ring-2 ring-slate-100 flex-1")}
                         placeholder="0.00"
                     />
@@ -276,6 +277,7 @@ const TenderModal = ({
                                 value={payments.cash || ""}
                                 onChange={(e) => handlePaymentChange("cash", e.target.value)}
                                 onFocus={(e) => e.target.select()}
+                                onWheel={(e) => e.target.blur()}
                                 className={cn(InputCls, "border-emerald-500 ring-2 ring-emerald-500/10")}
                                 placeholder="0.00"
                             />
@@ -299,6 +301,7 @@ const TenderModal = ({
                                 value={payments.card || ""}
                                 onChange={(e) => handlePaymentChange("card", e.target.value)}
                                 onFocus={(e) => e.target.select()}
+                                onWheel={(e) => e.target.blur()}
                                 className={cn(InputCls, "border-blue-500 ring-2 ring-blue-500/10")}
                                 placeholder="0.00"
                             />
@@ -310,6 +313,7 @@ const TenderModal = ({
                                     type="number" 
                                     value={cardChargePercent || ""} 
                                     onChange={(e) => setCardChargePercent(parseFloat(e.target.value) || 0)}
+                                    onWheel={(e) => e.target.blur()}
                                     className="h-8 w-14 text-xs font-bold bg-slate-50 border-slate-200"
                                 />
                             </div>
@@ -341,6 +345,7 @@ const TenderModal = ({
                                     value={payments[m.id] || ""}
                                     onChange={(e) => handlePaymentChange(m.id, e.target.value)}
                                     onFocus={(e) => e.target.select()}
+                                    onWheel={(e) => e.target.blur()}
                                     className={cn(InputCls, "border-amber-500 ring-2 ring-amber-500/10")}
                                     placeholder="0.00"
                                 />

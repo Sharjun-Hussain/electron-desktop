@@ -16,14 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat("en-LK", {
-    style: "currency",
-    currency: "LKR",
-  }).format(parseFloat(amount || 0));
-};
-
-export const getExpenseColumns = ({ onEdit, onDelete, onView }) => [
+export const getExpenseColumns = ({ onEdit, onDelete, onView, formatCurrency }) => [
   {
     accessorKey: "date",
     header: "Date",
@@ -57,7 +50,7 @@ export const getExpenseColumns = ({ onEdit, onDelete, onView }) => [
       const amount = parseFloat(row.getValue("amount"));
       return (
         <div className="flex flex-col items-start gap-0.5">
-          <div className="font-semibold text-red-600 text-[13px] tabular-nums">{formatCurrency(amount)}</div>
+          <div className="font-semibold text-red-600 text-[13px] tabular-nums">{formatCurrency ? formatCurrency(amount) : amount}</div>
           <div className="text-[9px] font-medium text-red-600/40 uppercase tracking-widest">Expenditure</div>
         </div>
       );

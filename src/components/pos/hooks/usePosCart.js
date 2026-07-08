@@ -9,9 +9,9 @@ function cartReducer(state, action) {
       const qtyToAdd = payloadQty !== undefined ? parseFloat(payloadQty) : 1;
       const price = action.payload.price || (state.isWholesale ? (product.wholesalePrice || 0) : (product.retailPrice || 0)) || 0;
 
-      // Items are now unique by (variantId + batchId)
+      // Items are now unique by (variantId + batchId) AND whether they've been saved to the database or not
       const itemKey = `${product.variantId || product.id}_${batchId || 'default'}`;
-      const existingIndex = state.cart.findIndex((i) => `${i.variantId}_${i.batchId || 'default'}` === itemKey);
+      const existingIndex = state.cart.findIndex((i) => `${i.variantId}_${i.batchId || 'default'}` === itemKey && !i.isSaved);
 
       if (existingIndex > -1) {
         const updated = [...state.cart];
@@ -70,18 +70,18 @@ function cartReducer(state, action) {
         }),
       };
     }
-    case "CLEAR_CART":
-      return { ...state, customer: null, distributor: null, cart: [], isWholesale: false };
     case "RESUME_SALE": {
-      const { cart, customer, distributor, isWholesale } = action.payload;
-      return { ...state, cart, customer, distributor, isWholesale: isWholesale || false };
+      const { cart, customer, distributor, isWholesale, activeTabId } = action.payload;
+      return { ...state, cart, customer, distributor, isWholesale: isWholesale || false, activeTabId: activeTabId || null };
     }
+    case "CLEAR_CART":
+      return { ...state, customer: null, distributor: null, cart: [], isWholesale: false, activeTabId: null };
     default:
       return state;
   }
 }
 
-const INITIAL_STATE = { cart: [], customer: null, distributor: null, isWholesale: false };
+const INITIAL_STATE = { cart: [], customer: null, distributor: null, isWholesale: false, activeTabId: null };
 
 // Lean hook — only cart + customer. ALL checkout inputs live in CheckoutPanel.
 export function usePosCart() {

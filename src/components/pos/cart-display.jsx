@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { X, Plus, Minus } from "lucide-react";
+import { useAppSettings } from "@/app/hooks/useAppSettings";
 
 export function CartDisplay({ cart, dispatch }) {
+  const { formatCurrency } = useAppSettings();
   const subtotal = cart.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
@@ -35,7 +37,7 @@ export function CartDisplay({ cart, dispatch }) {
                 <div className="flex-1">
                   <p className="font-semibold text-sm">{item.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    LKR {item.price.toFixed(2)}
+                    {formatCurrency(item.price)}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <Button
@@ -69,7 +71,7 @@ export function CartDisplay({ cart, dispatch }) {
                 </div>
                 <div className="text-right">
                   <p className="font-bold">
-                    LKR {(item.price * item.quantity).toFixed(2)}
+                    {formatCurrency(item.price * item.quantity)}
                   </p>
                   <Button
                     size="icon"
@@ -92,19 +94,19 @@ export function CartDisplay({ cart, dispatch }) {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>LKR {subtotal.toFixed(2)}</span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">
                 Tax ({(taxRate * 100).toFixed(0)}%)
               </span>
-              <span>LKR {taxAmount.toFixed(2)}</span>
+              <span>{formatCurrency(taxAmount)}</span>
             </div>
           </div>
           <Separator />
           <div className="flex justify-between font-bold text-lg">
             <span>Total</span>
-            <span>LKR {total.toFixed(2)}</span>
+            <span>{formatCurrency(total)}</span>
           </div>
           <Button className="w-full h-12 text-lg" disabled={cart.length === 0}>
             Process Payment
