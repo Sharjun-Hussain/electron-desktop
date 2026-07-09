@@ -24,6 +24,7 @@ import { Printer, Calendar, User, Hash, CreditCard, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { StatusBadge } from "../ui/status-badge";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
   if (!sale) return null;
@@ -36,6 +37,8 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
   const paid = parseFloat(sale.paid_amount || 0);
   const balance = paid > 0 ? paid - payable : 0;
   const { t } = useTranslation();
+  const { general } = useSettingsStore();
+  const currency = general?.localization?.currency || "LKR";
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -61,7 +64,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
               <div className="text-right">
                 <p className="text-[10px] font-bold text-muted-foreground mb-0.5">{t("pos.settlement_total")}</p>
                 <div className="flex items-baseline gap-1 justify-end">
-                  <span className="text-xs font-bold text-muted-foreground">LKR</span>
+                  <span className="text-xs font-bold text-muted-foreground">{currency}</span>
                   <span className="text-xl font-black text-foreground tabular-nums leading-none">
                     {payable.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
@@ -83,7 +86,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                   <p className="text-[12px] font-semibold text-orange-700/80 leading-relaxed">
                     {t("pos.transaction_returned_desc")}
                     <span className="text-orange-900 font-black ml-1.5 tabular-nums underline decoration-orange-500/30 underline-offset-4">
-                      LKR {Math.round(
+                      {currency} {Math.round(
                         (sale.returns || sale.sale_returns || []).reduce((sum, r) => sum + parseFloat(r.refund_amount || 0), 0)
                       ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
@@ -121,7 +124,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                             {t(`pos.${pmt.payment_method.toLowerCase()}`)}
                           </span>
                           <span className="text-xs font-black text-foreground">
-                            LKR {parseFloat(pmt.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {currency} {parseFloat(pmt.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                       ))
@@ -167,7 +170,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                         <TableCell className="py-3 px-6">
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-foreground leading-tight transition-colors">
+                              <span className="text-sm font-bold text-foreground leading-tight transition-colors whitespace-normal break-words max-w-[200px] sm:max-w-[250px] inline-block">
                                 {item.product?.name}
                               </span>
                               {(item.returned_quantity > 0 || item.quantity_returned > 0 || item.return_qty > 0) && (
@@ -214,15 +217,15 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
               <div className="space-y-3 pb-4 border-b border-emerald-500/20 relative z-10">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground/60 font-medium">{t("pos.shipment_total")}</span>
-                  <span className="font-bold text-foreground tabular-nums">LKR {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="font-bold text-foreground tabular-nums">{currency} {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground/60 font-medium">{t("pos.instant_reduction")}</span>
-                  <span className="font-bold text-red-500 tabular-nums">- LKR {discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="font-bold text-red-500 tabular-nums">- {currency} {discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-muted-foreground/60 font-medium">{t("pos.tax_assessment")}</span>
-                  <span className="font-bold text-foreground tabular-nums">LKR {tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="font-bold text-foreground tabular-nums">{currency} {tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
               </div>
 
@@ -230,14 +233,14 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                 <div className="space-y-0.5">
                   <h3 className="text-xs font-semibold text-emerald-600/60">{t("pos.net_payable")}</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-xs font-bold text-emerald-600/40">LKR</span>
+                    <span className="text-xs font-bold text-emerald-600/40">{currency}</span>
                     <span className="text-2xl font-black text-foreground tabular-nums">{payable.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
                 <div className="text-right space-y-1">
                   <h3 className="text-xs font-semibold text-emerald-600/60">{t("pos.liquid_receipt")}</h3>
                   <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30 text-sm font-black px-4 py-1 rounded-md shadow-sm">
-                    LKR {paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {currency} {paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Badge>
                 </div>
               </div>
@@ -246,7 +249,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                 <div className="pt-4 border-t border-emerald-500/20 flex justify-between items-center relative z-10">
                   <span className="text-xs font-semibold text-muted-foreground/60 leading-none">{t("pos.relocation_change")}</span>
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-emerald-600/40">LKR</span>
+                    <span className="text-xs font-bold text-emerald-600/40">{currency}</span>
                     <span className="text-base font-black text-emerald-600 tabular-nums">{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>

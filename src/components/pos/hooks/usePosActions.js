@@ -113,21 +113,26 @@ export function usePosActions({
 
   // ── Helpers — compute totals from cart + discount args (no stale state) ──
   const computeTotals = (cart, { generalDiscount = 0, generalDiscountAmt = 0, wholesaleDiscount = 0, isWholesale = false, adjustment = 0, taxConfig = {}, loyaltyConfig = {}, redeemedPoints = 0 }) => {
+    // Always coerce to numbers to prevent string concatenation bugs
     const adj = parseFloat(adjustment) || 0;
     const genDisc = parseFloat(generalDiscount) || 0;
     const genDiscAmt = parseFloat(generalDiscountAmt) || 0;
     const whlDisc = parseFloat(wholesaleDiscount) || 0;
     const subtotal = cart.reduce((a, i) => a + i.price * i.quantity, 0);
-    const itemDiscounts = cart.reduce((a, i) => a + i.price * i.quantity * (i.discount / 100), 0);
+    const itemDiscounts = cart.reduce((a, i) => a + (i.price * i.quantity * (i.discount / 100)) + (parseFloat(i.discount_amt) || 0), 0);
     const wholesaleDiscAmt = isWholesale ? subtotal * (whlDisc / 100) : 0;
+    
+    // Support both percentage and absolute discount
     const generalDiscAmtFinal = genDiscAmt > 0 ? genDiscAmt : (subtotal * (genDisc / 100));
 
+    // Loyalty Redemption Value
     const redemptionRate = parseFloat(loyaltyConfig?.redemption_rate) || 0;
     const redemptionValue = (parseFloat(redeemedPoints) || 0) * redemptionRate;
 
     const totalDiscount = itemDiscounts + wholesaleDiscAmt + generalDiscAmtFinal + redemptionValue;
     const grandTotal = subtotal - totalDiscount;
 
+    // Tax Calculation
     const enableTax = taxConfig.enableTax !== false && taxConfig.enableTax !== 'false';
     const taxRate = (enableTax && taxConfig.taxRate) ? parseFloat(taxConfig.taxRate) / 100 : 0;
     const taxAmount = grandTotal * taxRate;
@@ -163,7 +168,8 @@ export function usePosActions({
     dining_type,
     dining_table_id,
     waiter_id,
-    sale_id
+    sale_id,
+    sendToKitchen = true
   }) => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -173,6 +179,7 @@ export function usePosActions({
     try {
       const isWalkIn = !state.customer && !state.distributor;
       const isManufacturing = business?.business_type === 'manufacturing';
+      const isRestaurant = business?.business_type?.toLowerCase().includes('restaurant');
 
       if (isManufacturing && isWalkIn) {
         toast.error("Manufacturing organizations require a selected partner (Distributor/Customer) to complete transactions.");
@@ -209,13 +216,29 @@ export function usePosActions({
             throw new Error(`Item "${item.name}" has missing ID data. Please remove and re-add it.`);
           }
           const itemSubtotal = item.price * item.quantity;
-          const itemLineDiscount = itemSubtotal * (item.discount / 100);
-          const wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
+          let itemLineDiscount;
+          let wholesaleDiscAmt;
+
+          if (isRestaurant) {
+            const safeDiscountPct = parseFloat(item.discount) || 0;
+            const safeDiscountAmt = parseFloat(item.discount_amt) || 0;
+            itemLineDiscount = (itemSubtotal * (safeDiscountPct / 100)) + safeDiscountAmt;
+            const safeWholesaleDiscount = parseFloat(wholesaleDiscount) || 0;
+            wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (safeWholesaleDiscount / 100) : 0;
+          } else {
+            // Original code for retail/other POS types
+            itemLineDiscount = (itemSubtotal * (item.discount / 100)) + (parseFloat(item.discount_amt) || 0);
+            wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
+          }
+          
           const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
           const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
-          const generalDiscAmtFinal = genDiscAmtNum > 0
-            ? genDiscAmtNum * itemProportion
+          
+          const generalDiscAmtFinal = genDiscAmtNum > 0 
+            ? genDiscAmtNum * itemProportion 
             : itemSubtotal * (generalDiscount / 100);
+
+          const finalDiscountAmount = Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2));
 
           return {
             product_id: item.productId,
@@ -223,7 +246,8 @@ export function usePosActions({
             product_batch_id: item.batchId,
             quantity: item.quantity,
             unit_price: Number(parseFloat(item.price).toFixed(2)),
-            discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2)),
+            discount_amount: finalDiscountAmount,
+            manual_discount: Number(itemLineDiscount.toFixed(2)),
             cooking_notes: item.cooking_notes || null
           };
         }),
@@ -243,7 +267,8 @@ export function usePosActions({
         redeemed_points: loyaltyEnabled ? (parseInt(redeemedPoints) || 0) : 0,
         dining_type: dining_type || 'takeaway',
         dining_table_id: dining_table_id || null,
-        waiter_id: waiter_id || null
+        waiter_id: waiter_id || null,
+        send_to_kitchen: sendToKitchen
       };
 
       // --- OFFLINE-FIRST & FIFO LOGIC ---
@@ -289,13 +314,30 @@ export function usePosActions({
       console.log("[Debug] Submitting Sale Payload:", JSON.stringify(saleData, null, 2));
 
       let res, result;
-      if (sale_id) {
-        res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/${sale_id}/append`, {
+      const targetSaleId = sale_id || state.activeTabId;
+
+      if (targetSaleId) {
+        // We are checking out an ACTIVE TAB
+        const hasUnsavedItems = state.cart.some(item => !item.isSaved);
+        if (hasUnsavedItems) {
+          toast.error("You have unsaved items. Please click 'Send to Kitchen' first to append them to the tab before checking out.");
+          setIsProcessing(false);
+          return;
+        }
+
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/${targetSaleId}/settle`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` },
-          body: JSON.stringify({ items: saleData.items }),
+          body: JSON.stringify({
+            payments,
+            payment_method: saleData.payment_method,
+            paid_amount: saleData.paid_amount,
+            status: "completed",
+            shift_id: saleData.shift_id
+          }),
         });
       } else {
+        // Normal POST for a brand new sale
         res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` },
@@ -305,7 +347,7 @@ export function usePosActions({
       result = await res.json();
 
       if (result.status === "success") {
-        if (receiptSettings.autoPrint !== false && !sale_id) setPrintableSale(result.data);
+        if (receiptSettings.autoPrint !== false && !sale_id) setPrintableSale({ ...result.data, sendToKitchen });
         toast.success(sale_id ? "KOT orders sent to kitchen successfully!" : "Sale completed successfully");
         playBeep("success");
 
@@ -354,15 +396,21 @@ export function usePosActions({
     if (!session?.accessToken || !navigator.onLine) return;
     setIsLoadingSales(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/sales?status=${status}&size=50`,
-        { headers: { Authorization: `Bearer ${session.accessToken}` } }
-      );
+      let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sales?status=${status}&size=50`;
+      
+      if (status === "completed") {
+        // Automatically reset recent orders (completed sales) every day (using local timezone)
+        const today = new Date();
+        const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        url += `&start_date=${localDate}&end_date=${localDate}`;
+      }
+
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${session.accessToken}` } });
       const result = await res.json();
       if (result.status === "success") setSalesData(result.data.data || []);
     } catch { toast.error("Failed to fetch sales"); }
     finally { setIsLoadingSales(false); }
-  }, [session]);
+  }, [session?.accessToken]);
 
   // ── Delete Sale ───────────────────────────────────────────────────────────
   const deleteSale = useCallback(async (id) => {
@@ -376,7 +424,7 @@ export function usePosActions({
       if (result.status === "success") { toast.success("Sale deleted"); return true; }
     } catch { toast.error("Failed to delete sale"); }
     return false;
-  }, [session]);
+  }, [session?.accessToken]);
 
   const handleHoldSale = useCallback(async ({
     adjustment, selectedEmployeeIds, generalDiscount, generalDiscountAmt, wholesaleDiscount, activeShiftId, onSuccess,
@@ -389,6 +437,8 @@ export function usePosActions({
       generalDiscount, generalDiscountAmt, wholesaleDiscount, isWholesale: state.isWholesale, adjustment,
     });
 
+    const isRestaurant = business?.business_type?.toLowerCase().includes('restaurant');
+
     const saleData = {
       status: "draft",
       branch_id: selectedBranch?.id,
@@ -397,12 +447,26 @@ export function usePosActions({
       seller_ids: selectedEmployeeIds,
       items: state.cart.map((item) => {
         const itemSubtotal = item.price * item.quantity;
-        const itemLineDiscount = itemSubtotal * (item.discount / 100);
-        const wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
+        let itemLineDiscount;
+        let wholesaleDiscAmt;
+
+        if (isRestaurant) {
+          const safeDiscountPct = parseFloat(item.discount) || 0;
+          const safeDiscountAmt = parseFloat(item.discount_amt) || 0;
+          itemLineDiscount = (itemSubtotal * (safeDiscountPct / 100)) + safeDiscountAmt;
+          const safeWholesaleDiscount = parseFloat(wholesaleDiscount) || 0;
+          wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (safeWholesaleDiscount / 100) : 0;
+        } else {
+          // Original code for retail/other POS types
+          itemLineDiscount = (itemSubtotal * (item.discount / 100)) + (parseFloat(item.discount_amt) || 0);
+          wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
+        }
+        
         const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
         const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
-        const generalDiscAmtFinal = genDiscAmtNum > 0
-          ? genDiscAmtNum * itemProportion
+        
+        const generalDiscAmtFinal = genDiscAmtNum > 0 
+          ? genDiscAmtNum * itemProportion 
           : itemSubtotal * (generalDiscount / 100);
 
         return {
@@ -412,6 +476,7 @@ export function usePosActions({
           quantity: item.quantity,
           unit_price: Number(parseFloat(item.price).toFixed(2)),
           discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2)),
+          manual_discount: Number(itemLineDiscount.toFixed(2)),
           cooking_notes: item.cooking_notes || null
         };
       }),
@@ -439,19 +504,54 @@ export function usePosActions({
     if (!session?.accessToken) return toast.error("Please log in to hold the sale");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` },
-        body: JSON.stringify(saleData),
-      });
+      let res;
+      if (state.activeTabId) {
+        // We are updating an existing tab/KOT ticket
+        const newItems = saleData.items.filter((_, idx) => !state.cart[idx].isSaved);
+        
+        if (newItems.length === 0) {
+          toast.success("No new items to send to kitchen.");
+          dispatch({ type: "CLEAR_CART" });
+          if (onSuccess) onSuccess();
+          else await fetchSales("draft");
+          return;
+        }
+        
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/${state.activeTabId}/append`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` },
+          body: JSON.stringify({ items: newItems }),
+        });
+      } else {
+        // Creating a new draft/KOT ticket
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` },
+          body: JSON.stringify(saleData),
+        });
+      }
+      
       const result = await res.json();
 
       if (result.status === "success") {
         toast.success("Sale held successfully");
         playBeep("success");
+        
+        // Print KOT automatically when holding a sale in a restaurant
+        if (isRestaurant && result.data) {
+          setPrintableSale({ ...result.data, isKOT: true });
+        }
+
         dispatch({ type: "CLEAR_CART" });
-        await fetchSales("draft"); // Refresh the list
-        onSuccess?.();
+        
+        if (onSuccess) {
+          onSuccess();
+        } else if (isRestaurant) {
+          // Fallback if onSuccess is not provided
+          await fetchSales("draft"); 
+        } else {
+          await fetchSales("draft");
+        }
       } else {
         toast.error(result.message || "Failed to hold sale");
         playBeep("error");
@@ -465,6 +565,8 @@ export function usePosActions({
   // ── Resume Sale ───────────────────────────────────────────────────────────
   const resumeSale = useCallback((sale) => {
     if (!sale.items?.length) return toast.error("This sale has no items");
+
+    const isRestaurant = business?.business_type?.toLowerCase().includes('restaurant');
 
     const restoredCart = sale.items.map((item) => {
       // 1. Try matching by ID first (Standard)
@@ -489,11 +591,13 @@ export function usePosActions({
         return {
           id: `${v.id}_${Date.now()}_${Math.random()}`, // Unique cart item ID
           productId: v.productId, variantId: v.id,
-          barcode: v.barcode, name: v.fullName, size: v.variantName,
+          barcode: v.barcode, name: v.name, size: v.variantName,
           quantity: parseFloat(item.quantity) || 1,
           price: parseFloat(item.unit_price) || v.retailPrice,
-          discount: 0,
-          unit: v.unit || 'pc'
+          discount: parseFloat(item.discount_amount) || 0,
+          unit: v.unit || 'pc',
+          isSaved: isRestaurant, // Mark as saved so we don't re-send it to kitchen
+          cooking_status: item.cooking_status || 'pending'
         };
       }
       return null;
@@ -506,11 +610,25 @@ export function usePosActions({
     if (!restoredCart.length) return toast.error("Could not match any products from this sale");
 
     const restoredCustomer = customers.find((c) => c.id === sale.customer_id) || null;
-    dispatch({ type: "RESUME_SALE", payload: { cart: restoredCart, customer: restoredCustomer, isWholesale: false } });
-    deleteSale(sale.id);
+    
+    // For restaurants, keep the tab alive in DB. For retail, pull it out (delete it).
+    dispatch({ 
+      type: "RESUME_SALE", 
+      payload: { 
+        cart: restoredCart, 
+        customer: restoredCustomer, 
+        isWholesale: false, 
+        activeTabId: isRestaurant ? sale.id : null 
+      } 
+    });
+
+    if (!isRestaurant) {
+      deleteSale(sale.id);
+    }
+    
     setIsHoldListOpen(false);
-    toast.success(`Resumed sale ${sale.invoice_number}`);
-  }, [flattenedVariants, customers, dispatch, deleteSale, setIsHoldListOpen]);
+    toast.success(isRestaurant ? `Opened Tab ${sale.invoice_number}` : `Resumed sale ${sale.invoice_number}`);
+  }, [flattenedVariants, customers, dispatch, deleteSale, setIsHoldListOpen, business]);
 
   // ── Check Stock ───────────────────────────────────────────────────────────
   const fetchStock = useCallback(async (query) => {

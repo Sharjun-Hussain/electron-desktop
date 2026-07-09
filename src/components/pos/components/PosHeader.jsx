@@ -1,18 +1,18 @@
 "use client";
 
 import { memo, useState, useEffect, useRef } from "react";
-import { 
-  ArrowLeft, Sun, Moon, ShoppingCart, Store, Wallet, 
-  ChevronDown, Check, UserMinus, Gift, Plus, Network, LayoutGrid, Maximize2, Search, 
+import {
+  ArrowLeft, Sun, Moon, ShoppingCart, Store, Wallet,
+  ChevronDown, Check, UserMinus, Gift, Plus, Network, LayoutGrid, Maximize2, Search,
   Calculator, Maximize, Minimize, Trash2, Zap, UtensilsCrossed
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  Command, CommandEmpty, CommandGroup, CommandInput, 
-  CommandItem, CommandList 
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput,
+  CommandItem, CommandList
 } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -39,9 +39,9 @@ const Clock = memo(() => {
 Clock.displayName = "Clock";
 
 // ─── CustomerSelector ─────────────────────────────────────────────────────────
-const CustomerSelector = memo(({ 
-  customers, distributors, selectedCustomer, selectedDistributor, 
-  isWholesale, onSelectCustomer, onSelectDistributor, 
+const CustomerSelector = memo(({
+  customers, distributors, selectedCustomer, selectedDistributor,
+  isWholesale, onSelectCustomer, onSelectDistributor,
   onCustomerCreated, onDistributorCreated, isManufacturing,
   business, session, t
 }) => {
@@ -252,13 +252,13 @@ export const PosHeader = memo(({
       onForceReset?.();
     }
   };
-  
-  const filteredProducts = productSearch.trim().length > 1 
-    ? flattenedVariants.filter(v => 
-        v.name?.toLowerCase().includes(productSearch.toLowerCase()) || 
-        v.barcode?.toLowerCase().includes(productSearch.toLowerCase()) ||
-        v.sku?.toLowerCase().includes(productSearch.toLowerCase())
-      ).slice(0, 10)
+
+  const filteredProducts = productSearch.trim().length > 1
+    ? flattenedVariants.filter(v =>
+      v.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      v.barcode?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      v.sku?.toLowerCase().includes(productSearch.toLowerCase())
+    ).slice(0, 10)
     : [];
 
   useEffect(() => {
@@ -349,68 +349,68 @@ export const PosHeader = memo(({
 
         {/* Center: Search & Actions Unified */}
         <div className="flex-1 max-w-5xl flex items-center gap-2">
-            <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
-              <Input 
-                id="pos-global-search"
-                placeholder={isRestaurant ? "SEARCH FOOD ITEMS..." : "SCAN BARCODE OR TYPE..."}
-                className="pl-11 pr-14 h-11 w-full bg-slate-50/80 hover:bg-slate-100/50 focus:bg-white dark:bg-slate-950 dark:hover:bg-slate-900/50 dark:focus:bg-slate-950 border-slate-200 dark:border-border/40 rounded-xl text-sm font-medium focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-none"
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                onKeyDown={handleKeyDown}
-                autoFocus
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-40 group-focus-within:opacity-100 transition-opacity">
-                <kbd className="h-6 min-w-[28px] px-1.5 flex items-center justify-center bg-muted border border-border/60 rounded-md text-[9px] font-black text-muted-foreground shadow-sm uppercase">
-                  F1
-                </kbd>
-              </div>
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
+            <Input
+              id="pos-global-search"
+              placeholder={isRestaurant ? "SEARCH FOOD ITEMS..." : "SCAN BARCODE OR TYPE..."}
+              className="pl-11 pr-14 h-11 w-full bg-slate-50/80 hover:bg-slate-100/50 focus:bg-white dark:bg-slate-950 dark:hover:bg-slate-900/50 dark:focus:bg-slate-950 border-slate-200 dark:border-border/40 rounded-xl text-sm font-medium focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-none"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-40 group-focus-within:opacity-100 transition-opacity">
+              <kbd className="h-6 min-w-[28px] px-1.5 flex items-center justify-center bg-muted border border-border/60 rounded-md text-[9px] font-black text-muted-foreground shadow-sm uppercase">
+                F1
+              </kbd>
+            </div>
 
             {/* Search Results Dropdown */}
             {filteredProducts.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-950 border border-border/50 rounded-xl shadow-2xl z-[100] max-h-[400px] overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-1">
                   {filteredProducts.map((match, index) => (
-                      <button
-                        key={`${match.id}-${match.batchId || 'no-batch'}`}
-                        id={`search-item-${index}`}
-                        onClick={() => {
-                          onAddToCart(match);
-                          setProductSearch("");
-                        }}
-                        className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left group/item border mb-1 last:mb-0",
-                          index === selectedIndex 
-                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" 
-                            : "hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 border-transparent hover:border-emerald-500/20"
-                        )}
-                      >
-                        <div className="flex-1 min-w-0 pr-4">
-                          <p className={cn(
-                            "text-sm font-semibold truncate transition-colors",
-                            index === selectedIndex ? "text-emerald-700" : "text-foreground group-hover/item:text-emerald-600"
-                          )}>
-                            {match.name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 rounded uppercase">
-                              {match.barcode}
-                            </span>
-                            {match.size && (
-                              <span className="text-[10px] text-muted-foreground/60">• {match.size}</span>
-                            )}
-                          </div>
+                    <button
+                      key={`${match.id}-${match.batchId || 'no-batch'}`}
+                      id={`search-item-${index}`}
+                      onClick={() => {
+                        onAddToCart(match);
+                        setProductSearch("");
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left group/item border mb-1 last:mb-0",
+                        index === selectedIndex
+                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+                          : "hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 border-transparent hover:border-emerald-500/20"
+                      )}
+                    >
+                      <div className="flex-1 min-w-0 pr-4">
+                        <p className={cn(
+                          "text-sm font-semibold truncate transition-colors",
+                          index === selectedIndex ? "text-emerald-700" : "text-foreground group-hover/item:text-emerald-600"
+                        )}>
+                          {match.name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 rounded uppercase">
+                            {match.barcode}
+                          </span>
+                          {match.size && (
+                            <span className="text-[10px] text-muted-foreground/60">• {match.size}</span>
+                          )}
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-sm font-black text-emerald-600">
-                            {((isWholesale ? match.wholesalePrice : match.retailPrice) || 0).toFixed(2)}
-                          </p>
-                          <p className="text-[10px] font-bold text-muted-foreground/60 bg-muted/30 px-1.5 rounded-full inline-block mt-1">
-                            {match.stock || 0} in stock
-                          </p>
-                        </div>
-                      </button>
-                    ))}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-black text-emerald-600">
+                          {((isWholesale ? match.wholesalePrice : match.retailPrice) || 0).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] font-bold text-muted-foreground/60 bg-muted/30 px-1.5 rounded-full inline-block mt-1">
+                          {match.stock || 0} in stock
+                        </p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -439,8 +439,8 @@ export const PosHeader = memo(({
               onClick={handleThemeToggle}
               className={cn(
                 "h-9 w-9 flex items-center justify-center rounded-lg transition-all",
-                theme === "dark" 
-                  ? "bg-slate-800 text-amber-500 hover:bg-slate-700" 
+                theme === "dark"
+                  ? "bg-slate-800 text-amber-500 hover:bg-slate-700"
                   : "bg-white text-indigo-500 hover:bg-slate-50 shadow-sm border border-slate-100"
               )}
             >
@@ -470,8 +470,8 @@ export const PosHeader = memo(({
               onClick={onToggleProductList}
               className={cn(
                 "h-9 w-9 flex items-center justify-center rounded-lg transition-all border",
-                isProductListVisible 
-                  ? "bg-blue-500/10 text-blue-600 border-blue-500/20 shadow-inner" 
+                isProductListVisible
+                  ? "bg-blue-500/10 text-blue-600 border-blue-500/20 shadow-inner"
                   : "bg-white dark:bg-slate-900 text-slate-400 hover:text-blue-500 hover:bg-blue-50 border-transparent"
               )}
               title={isProductListVisible ? "Hide Products" : "Show Products"}
@@ -484,8 +484,8 @@ export const PosHeader = memo(({
               onClick={onToggleCalculator}
               className={cn(
                 "h-9 w-9 flex items-center justify-center rounded-lg transition-all border",
-                isCalculatorOpen 
-                  ? "bg-violet-500/10 text-violet-600 border-violet-500/20 shadow-inner" 
+                isCalculatorOpen
+                  ? "bg-violet-500/10 text-violet-600 border-violet-500/20 shadow-inner"
                   : "bg-white dark:bg-slate-900 text-slate-400 hover:text-violet-500 hover:bg-violet-50 border-transparent"
               )}
               title="Calculator"
@@ -498,8 +498,8 @@ export const PosHeader = memo(({
               onClick={onToggleFullscreen}
               className={cn(
                 "h-9 w-9 flex items-center justify-center rounded-lg transition-all border",
-                isFullscreen 
-                  ? "bg-rose-500/10 text-rose-600 border-rose-500/20 shadow-inner" 
+                isFullscreen
+                  ? "bg-rose-500/10 text-rose-600 border-rose-500/20 shadow-inner"
                   : "bg-white dark:bg-slate-900 text-slate-400 hover:text-rose-500 hover:bg-rose-50 border-transparent"
               )}
               title="Toggle Fullscreen"
@@ -514,8 +514,8 @@ export const PosHeader = memo(({
               onClick={onWholesaleToggle}
               className={cn(
                 "px-3 h-9 flex items-center gap-2 rounded-lg transition-all border font-semibold text-xs",
-                isWholesale 
-                  ? "bg-orange-500/10 text-orange-600 border-orange-500/20" 
+                isWholesale
+                  ? "bg-orange-500/10 text-orange-600 border-orange-500/20"
                   : "bg-white dark:bg-slate-900 text-slate-500 hover:text-orange-500 hover:bg-orange-50 border-transparent"
               )}
             >
@@ -537,13 +537,13 @@ export const PosHeader = memo(({
         {/* Right Side: Status & Shift */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-muted/40 border border-border/40">
-             <div className={cn(
-               "w-1.5 h-1.5 rounded-full",
-               isHardwareReady ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
-             )} />
-             <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground">
-               {isHardwareReady ? "HW Active" : "HW Offline"}
-             </span>
+            <div className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              isHardwareReady ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+            )} />
+            <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground">
+              {isHardwareReady ? "HW Active" : "HW Offline"}
+            </span>
           </div>
 
           {!isOnline && (
@@ -554,7 +554,7 @@ export const PosHeader = memo(({
           )}
           <Clock />
 
-          {branches?.length > 0 && (
+          {branches?.length > 1 && (
             <div className="flex items-center gap-2 max-w-[200px]">
               <Select value={selectedBranch?.id}
                 onValueChange={(id) => setSelectedBranch(branches.find((b) => b.id === id))}>

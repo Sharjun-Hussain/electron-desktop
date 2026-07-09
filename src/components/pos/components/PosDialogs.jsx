@@ -23,22 +23,15 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Archive, List, PackageSearch, Loader2,
   Trash2, RotateCcw, Printer, Search, Plus, Truck,
+  Package,
 } from "lucide-react";
 import clsx from "clsx";
 import { db } from "@/lib/indexedDB/db";
 import { useTranslation } from "@/hooks/useTranslation";
 import SalesReturnDialog from "../SalesReturnDialog";
 import SaleDetailSheet from "../SaleDetailSheet";
-import { CustomerSelector } from "./CustomerSelector";
 
 // ─── Reusable Sale Item HoverCard ────────────────────────────────────────────
 const SaleItemsHoverCard = memo(({ sale, accentClass }) => {
@@ -50,74 +43,74 @@ const SaleItemsHoverCard = memo(({ sale, accentClass }) => {
           <Badge variant="secondary" className={`w-fit text-[10px] h-5 px-1.5 mb-1 border-none group-hover/items:text-white transition-colors ${accentClass}`}>
             {sale.items?.length || 0} {t("pos.items")}
           </Badge>
-        <div className="max-w-[400px]">
-          <p className="text-[11px] text-muted-foreground truncate">
-            {sale.items?.map((item) => `${item.product?.name} (${parseFloat(item.quantity).toFixed(0)})`).join(", ")}
-          </p>
+          <div className="max-w-[400px]">
+            <p className="text-[11px] text-muted-foreground truncate">
+              {sale.items?.map((item) => `${item.product?.name} (${parseFloat(item.quantity).toFixed(0)})`).join(", ")}
+            </p>
+          </div>
         </div>
-      </div>
-    </HoverCardTrigger>
-    <HoverCardContent className="w-96 p-0 overflow-hidden border-border/50 shadow-2xl animate-in zoom-in-95 duration-200" side="right" align="start">
-      <div className="bg-muted/80 backdrop-blur-sm p-4 text-foreground border-b border-border/50">
-        <div className="flex justify-between items-center mb-1">
-          <h4 className="text-sm font-bold opacity-70">{t("pos.sale_items")}</h4>
-          <Badge>{sale.items?.length || 0} {t("pos.products")}</Badge>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-96 p-0 overflow-hidden border-border/50 shadow-2xl animate-in zoom-in-95 duration-200" side="right" align="start">
+        <div className="bg-muted/80 backdrop-blur-sm p-4 text-foreground border-b border-border/50">
+          <div className="flex justify-between items-center mb-1">
+            <h4 className="text-sm font-bold opacity-70">{t("pos.sale_items")}</h4>
+            <Badge>{sale.items?.length || 0} {t("pos.products")}</Badge>
+          </div>
+          <p className="text-[10px] opacity-50 font-mono">{sale.invoice_number}</p>
         </div>
-        <p className="text-[10px] opacity-50 font-mono">{sale.invoice_number}</p>
-      </div>
-      <div className="p-2 bg-card max-h-[400px] overflow-y-auto">
-        <Table>
-          <TableHeader className="bg-muted/30">
-            <TableRow className="hover:bg-transparent border-none">
-              <TableHead className="h-8 w-12" />
-              <TableHead className="h-8 text-[10px] font-bold text-muted-foreground">{t("pos.product_col")}</TableHead>
-              <TableHead className="h-8 text-[10px] font-bold text-muted-foreground text-center">{t("pos.qty_col")}</TableHead>
-              <TableHead className="h-8 text-[10px] font-bold text-muted-foreground text-right">{t("pos.price_col")}</TableHead>
-              <TableHead className="h-8 text-[10px] font-bold text-muted-foreground text-right">{t("pos.total_col")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sale.items?.map((item, idx) => (
-              <TableRow key={idx} className="border-border/30 hover:bg-muted/30 transition-colors group/item">
-                <TableCell className="py-2 px-2">
-                  <div className="h-10 w-10 rounded-md bg-background overflow-hidden border border-border/50 shrink-0">
-                    {item.product?.image ? (
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_API_BASE_URL.replace("/api/v1", "")}/${JSON.parse(item.product.image)[0]}`}
-                        alt={item.product?.name}
-                        className="h-full w-full object-cover grayscale group-hover/item:grayscale-0 transition-all duration-300"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center">
-                        <PackageSearch className="h-5 w-5 text-muted-foreground/40" />
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="py-2 text-xs font-medium text-foreground">
-                  <div className="flex flex-col">
-                    <span>{item.product?.name}</span>
-                    {item.variant?.name && <span className="text-[9px] text-muted-foreground">{item.variant.name}</span>}
-                  </div>
-                </TableCell>
-                <TableCell className="py-2 text-xs text-center text-muted-foreground">{parseFloat(item.quantity || 0).toFixed(0)}</TableCell>
-                <TableCell className="py-2 text-xs text-right text-muted-foreground">{parseFloat(item.unit_price || item.price || 0).toLocaleString()}</TableCell>
-                <TableCell className="py-2 text-xs text-right font-bold text-foreground">
-                  {(parseFloat(item.unit_price || item.price || 0) * parseFloat(item.quantity || 0)).toLocaleString()}
-                </TableCell>
+        <div className="p-2 bg-card max-h-[400px] overflow-y-auto">
+          <Table>
+            <TableHeader className="bg-muted/30">
+              <TableRow className="hover:bg-transparent border-none">
+                <TableHead className="h-8 w-12" />
+                <TableHead className="h-8 text-[10px] font-bold text-muted-foreground">{t("pos.product_col")}</TableHead>
+                <TableHead className="h-8 text-[10px] font-bold text-muted-foreground text-center">{t("pos.qty_col")}</TableHead>
+                <TableHead className="h-8 text-[10px] font-bold text-muted-foreground text-right">{t("pos.price_col")}</TableHead>
+                <TableHead className="h-8 text-[10px] font-bold text-muted-foreground text-right">{t("pos.total_col")}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="p-4 bg-muted/30 border-t border-border/30 flex justify-between items-center">
-        <span className="text-xs font-bold text-muted-foreground">{t("pos.payable_amount_col")}</span>
-        <span className="text-lg font-black text-emerald-500">
-          LKR {parseFloat(sale.payable_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-        </span>
-      </div>
-    </HoverCardContent>
-  </HoverCard>
+            </TableHeader>
+            <TableBody>
+              {sale.items?.map((item, idx) => (
+                <TableRow key={idx} className="border-border/30 hover:bg-muted/30 transition-colors group/item">
+                  <TableCell className="py-2 px-2">
+                    <div className="h-10 w-10 rounded-md bg-background overflow-hidden border border-border/50 shrink-0">
+                      {item.product?.image ? (
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_BASE_URL.replace("/api/v1", "")}/${JSON.parse(item.product.image)[0]}`}
+                          alt={item.product?.name}
+                          className="h-full w-full object-cover grayscale group-hover/item:grayscale-0 transition-all duration-300"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <PackageSearch className="h-5 w-5 text-muted-foreground/40" />
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 text-xs font-medium text-foreground">
+                    <div className="flex flex-col">
+                      <span>{item.product?.name}</span>
+                      {item.variant?.name && <span className="text-[9px] text-muted-foreground">{item.variant.name}</span>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 text-xs text-center text-muted-foreground">{parseFloat(item.quantity || 0).toFixed(0)}</TableCell>
+                  <TableCell className="py-2 text-xs text-right text-muted-foreground">{parseFloat(item.unit_price || item.price || 0).toLocaleString()}</TableCell>
+                  <TableCell className="py-2 text-xs text-right font-bold text-foreground">
+                    {(parseFloat(item.unit_price || item.price || 0) * parseFloat(item.quantity || 0)).toLocaleString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="p-4 bg-muted/30 border-t border-border/30 flex justify-between items-center">
+          <span className="text-xs font-bold text-muted-foreground">{t("pos.payable_amount_col")}</span>
+          <span className="text-lg font-black text-emerald-500">
+            LKR {parseFloat(sale.payable_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   );
 });
 SaleItemsHoverCard.displayName = "SaleItemsHoverCard";
@@ -143,79 +136,79 @@ export const HoldListDialog = memo(({ isOpen, onOpenChange, salesData, isLoading
             <DialogDescription className="text-[10px] font-bold opacity-60 leading-none">{t("pos.held_sales_desc")}</DialogDescription>
           </div>
         </DialogHeader>
-      <Separator />
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {isLoadingSales ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
-          </div>
-        ) : salesData.length > 0 ? (
-          <Table>
-            <TableHeader className="bg-muted/30 sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent border-none">
-                <TableHead className="w-[140px] px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.invoice_no_col")}</TableHead>
-                <TableHead className="w-[150px] px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.date_time_col")}</TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.customer_col")}</TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.terminal_col")}</TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.held_by_col")}</TableHead>
-                <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.items_col")}</TableHead>
-                <TableHead className="px-4 py-2 text-right font-bold text-[10px] text-foreground">{t("pos.total_col")}</TableHead>
-                <TableHead className="px-4 py-2 text-center font-bold text-[10px] text-foreground">{t("pos.actions_col")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {salesData.map((sale) => (
-                <TableRow key={sale.id} className="group hover:bg-emerald-500/5 transition-colors border-border/30">
-                  <TableCell className="px-4 py-2 font-mono font-bold text-[11px] text-emerald-500">{sale.invoice_number}</TableCell>
-                  <TableCell className="px-4 py-2 text-muted-foreground text-[10px]">{new Date(sale.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</TableCell>
-                  <TableCell className="px-4 py-2">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-[11px] text-foreground">{sale.customer?.name || t("pos.walk_in")}</span>
-                      <span className="text-[9px] text-muted-foreground leading-none">{sale.customer?.phone || t("pos.no_phone")}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-2">
-                    <Badge variant="outline" className="h-4 px-1 bg-slate-50 text-slate-600 border-slate-200 text-[9px] font-bold">
-                      {parseTerminal(sale.notes)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="px-4 py-2">
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      {sale.cashier?.name || (sale.sellers && sale.sellers[0]?.name) || t("pos.system")}
-                    </span>
-                  </TableCell>
-                  <TableCell className="px-4 py-2">
-                    <SaleItemsHoverCard sale={sale} accentClass="bg-emerald-500/10 text-emerald-500 group-hover/items:bg-emerald-600" />
-                  </TableCell>
-                  <TableCell className="px-4 py-2 text-right">
-                    <span className="font-bold text-[11px] text-foreground">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
-                  </TableCell>
-                  <TableCell className="px-4 py-2 text-center">
-                    <div className="flex justify-center gap-1.5">
-                      <Button size="sm" variant="ghost"
-                        className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => onDelete(sale.id)} title={t("pos.delete_draft")}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="sm" className="h-7 bg-emerald-600 hover:bg-emerald-700 font-bold px-3 text-[10px]"
-                        onClick={() => onResume(sale)}>
-                        {t("pos.resume")}
-                      </Button>
-                    </div>
-                  </TableCell>
+        <Separator />
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {isLoadingSales ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+            </div>
+          ) : salesData.length > 0 ? (
+            <Table>
+              <TableHeader className="bg-muted/30 sticky top-0 z-10">
+                <TableRow className="hover:bg-transparent border-none">
+                  <TableHead className="w-[140px] px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.invoice_no_col")}</TableHead>
+                  <TableHead className="w-[150px] px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.date_time_col")}</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.customer_col")}</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.terminal_col")}</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.held_by_col")}</TableHead>
+                  <TableHead className="px-4 py-2 font-bold text-[10px] text-foreground">{t("pos.items_col")}</TableHead>
+                  <TableHead className="px-4 py-2 text-right font-bold text-[10px] text-foreground">{t("pos.total_col")}</TableHead>
+                  <TableHead className="px-4 py-2 text-center font-bold text-[10px] text-foreground">{t("pos.actions_col")}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-            <Archive className="h-20 w-20 mb-4 opacity-10" />
-            <p className="text-xl font-medium">{t("pos.no_held_sales")}</p>
-          </div>
-        )}
-      </div>
-    </DialogContent>
-  </Dialog>
+              </TableHeader>
+              <TableBody>
+                {salesData.map((sale) => (
+                  <TableRow key={sale.id} className="group hover:bg-emerald-500/5 transition-colors border-border/30">
+                    <TableCell className="px-4 py-2 font-mono font-bold text-[11px] text-emerald-500">{sale.invoice_number}</TableCell>
+                    <TableCell className="px-4 py-2 text-muted-foreground text-[10px]">{new Date(sale.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</TableCell>
+                    <TableCell className="px-4 py-2">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[11px] text-foreground">{sale.customer?.name || t("pos.walk_in")}</span>
+                        <span className="text-[9px] text-muted-foreground leading-none">{sale.customer?.phone || t("pos.no_phone")}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <Badge variant="outline" className="h-4 px-1 bg-slate-50 text-slate-600 border-slate-200 text-[9px] font-bold">
+                        {parseTerminal(sale.notes)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        {sale.cashier?.name || (sale.sellers && sale.sellers[0]?.name) || t("pos.system")}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <SaleItemsHoverCard sale={sale} accentClass="bg-emerald-500/10 text-emerald-500 group-hover/items:bg-emerald-600" />
+                    </TableCell>
+                    <TableCell className="px-4 py-2 text-right">
+                      <span className="font-bold text-[11px] text-foreground">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
+                    </TableCell>
+                    <TableCell className="px-4 py-2 text-center">
+                      <div className="flex justify-center gap-1.5">
+                        <Button size="sm" variant="ghost"
+                          className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => onDelete(sale.id)} title={t("pos.delete_draft")}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="sm" className="h-7 bg-emerald-600 hover:bg-emerald-700 font-bold px-3 text-[10px]"
+                          onClick={() => onResume(sale)}>
+                          {t("pos.resume")}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+              <Archive className="h-20 w-20 mb-4 opacity-10" />
+              <p className="text-xl font-medium">{t("pos.no_held_sales")}</p>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 });
 HoldListDialog.displayName = "HoldListDialog";
@@ -244,7 +237,7 @@ export const SaleListDialog = memo(({
       try {
         const pending = await db.pendingSales.toArray();
         console.log(`[F7 List] Found ${pending.length} offline sales in DB:`, pending);
-        
+
         // Format them to look like regular sales for the UI
         const formatted = pending.map(s => {
           const data = s.saleData || {};
@@ -297,8 +290,8 @@ export const SaleListDialog = memo(({
     // Filter by Search Text
     if (filterState.search) {
       const q = filterState.search.toLowerCase();
-      result = result.filter(s => 
-        s.invoice_number?.toLowerCase().includes(q) || 
+      result = result.filter(s =>
+        s.invoice_number?.toLowerCase().includes(q) ||
         s.customer?.name?.toLowerCase().includes(q) ||
         s.customer?.phone?.toLowerCase().includes(q)
       );
@@ -392,156 +385,156 @@ export const SaleListDialog = memo(({
             </DialogDescription>
           </div>
         </DialogHeader>
-      <Separator />
-      <div className="p-2 px-4 bg-muted/20 border-b border-border/50 flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search invoice, customer..."
-            className="pl-9 h-10 text-sm bg-white dark:bg-slate-950 border-border/50 rounded-md"
-            value={filterState.search}
-            onChange={(e) => setFilterState(prev => ({ ...prev, search: e.target.value }))}
-          />
-        </div>
+        <Separator />
+        <div className="p-2 px-4 bg-muted/20 border-b border-border/50 flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search invoice, customer..."
+              className="pl-9 h-10 text-sm bg-white dark:bg-slate-950 border-border/50 rounded-md"
+              value={filterState.search}
+              onChange={(e) => setFilterState(prev => ({ ...prev, search: e.target.value }))}
+            />
+          </div>
 
-        <div className="flex items-center gap-0.5 bg-background/50 p-0.5 rounded-md border border-border/50">
-          {[
-            { id: "all", label: "All" },
-            { id: "today", label: "Today" },
-            { id: "yesterday", label: "Yesterday" },
-            { id: "7days", label: "7D" },
-          ].map((d) => (
-            <Button
-              key={d.id}
-              variant={filterState.date === d.id ? "secondary" : "ghost"}
-              size="sm"
-              className={clsx("h-8 px-3 text-xs font-bold uppercase transition-all", 
-                filterState.date === d.id ? "bg-emerald-500 text-white shadow-sm" : "text-muted-foreground")}
-              onClick={() => setFilterState(prev => ({ ...prev, date: d.id }))}
-            >
-              {d.label}
+          <div className="flex items-center gap-0.5 bg-background/50 p-0.5 rounded-md border border-border/50">
+            {[
+              { id: "all", label: "All" },
+              { id: "today", label: "Today" },
+              { id: "yesterday", label: "Yesterday" },
+              { id: "7days", label: "7D" },
+            ].map((d) => (
+              <Button
+                key={d.id}
+                variant={filterState.date === d.id ? "secondary" : "ghost"}
+                size="sm"
+                className={clsx("h-8 px-3 text-xs font-bold uppercase transition-all",
+                  filterState.date === d.id ? "bg-emerald-500 text-white shadow-sm" : "text-muted-foreground")}
+                onClick={() => setFilterState(prev => ({ ...prev, date: d.id }))}
+              >
+                {d.label}
+              </Button>
+            ))}
+          </div>
+
+          {filterState.isFilteredByProduct && (
+            <Button variant="outline" size="sm" className="h-8 text-xs font-bold border-emerald-500/50 text-emerald-600"
+              onClick={() => { setLocalSales(salesData); setFilterState(prev => ({ ...prev, isFilteredByProduct: false, date: "all", search: "" })); }}>
+              <RotateCcw className="h-4 w-4 mr-1" /> Clear
             </Button>
-          ))}
+          )}
         </div>
-
-        {filterState.isFilteredByProduct && (
-          <Button variant="outline" size="sm" className="h-8 text-xs font-bold border-emerald-500/50 text-emerald-600"
-            onClick={() => { setLocalSales(salesData); setFilterState(prev => ({ ...prev, isFilteredByProduct: false, date: "all", search: "" })); }}>
-            <RotateCcw className="h-4 w-4 mr-1" /> Clear
-          </Button>
-        )}
-      </div>
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {isLoadingSales ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
-          </div>
-        ) : filteredAndSortedSales.length > 0 ? (
-          <Table>
-            <TableHeader className="bg-muted/30 sticky top-0 z-10">
-              <TableRow className="hover:bg-transparent border-none">
-                <TableHead className="w-[160px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("invoice_number")}>
-                  {t("pos.invoice_no_col")} {filterState.sortKey === "invoice_number" && (filterState.sortDir === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="w-[180px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("created_at")}>
-                  {t("pos.date_time_col")} {filterState.sortKey === "created_at" && (filterState.sortDir === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="px-4 py-3 font-bold text-sm text-foreground">{t("pos.customer_col")}</TableHead>
-                <TableHead className="px-4 py-3 font-bold text-sm text-foreground text-center">{t("pos.items_col")}</TableHead>
-                <TableHead className="px-4 py-3 text-right font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("total")}>
-                  {t("pos.total_col")} {filterState.sortKey === "total" && (filterState.sortDir === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="px-4 py-3 text-center font-bold text-sm text-foreground">{t("pos.status_col")}</TableHead>
-                <TableHead className="px-4 py-3 text-right font-bold text-sm text-foreground">{t("pos.actions_col")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedSales.map((sale) => (
-                <TableRow key={sale.id} className="group hover:bg-emerald-50/30 transition-colors">
-                  <TableCell className="px-6 py-4 font-mono font-bold text-emerald-600 text-sm">{sale.invoice_number}</TableCell>
-                  <TableCell className="px-6 py-4 text-muted-foreground text-sm">{new Date(sale.created_at).toLocaleString()}</TableCell>
-                  <TableCell className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-foreground text-sm">{sale.customer?.name || t("pos.walk_in")}</span>
-                      <span className="text-xs text-muted-foreground">{sale.customer?.phone || t("pos.no_phone")}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-center">
-                    <SaleItemsHoverCard sale={sale} accentClass="bg-emerald-500/10 text-emerald-500 group-hover/items:bg-emerald-600 text-xs px-2 py-1" />
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-right">
-                    <span className="font-bold text-foreground text-base">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-center">
-                    {sale.isOffline ? (
-                      <Badge 
-                        variant="outline" 
-                        className={clsx(
-                          "px-3 py-1 border-none text-xs font-black animate-pulse cursor-help",
-                          sale.syncStatus === 'failed' ? "bg-red-500 text-white" : "bg-amber-500 text-white"
-                        )}
-                        title={sale.syncError ? `Sync Failed: ${sale.syncError}` : "Waiting for internet to sync..."}
-                      >
-                        {sale.syncStatus === 'failed' ? "ERROR" : "LOCAL"}
-                      </Badge>
-                    ) : sale.status === 'draft' ? (
-                      <Badge variant="outline" className="px-3 py-1 bg-amber-50 text-amber-700 border-amber-100 text-xs font-bold">
-                        HELD
-                      </Badge>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1">
-                        <Badge variant="outline" className="px-3 py-1 bg-green-50 text-green-700 border-green-100 text-xs font-bold uppercase">
-                          {sale.payment_status}
-                        </Badge>
-                        {sale.payment_method && (
-                          <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">
-                            {sale.payment_method}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-3">
-                      {sale.isOffline && (
-                        <Button size="sm" variant="ghost"
-                          className="h-10 w-10 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                          onClick={async () => {
-                            if (confirm("Delete this offline sale? It will not be synced to the cloud.")) {
-                              await db.pendingSales.delete(parseInt(sale.id.replace('pending-', '')));
-                              window.location.reload(); // Refresh to update list
-                            }
-                          }}
-                          title="Delete Offline Sale">
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost"
-                        className="h-10 w-10 p-0 text-muted-foreground hover:text-orange-600 hover:bg-orange-50"
-                        onClick={() => { setSelectedReturnSale(sale); setIsReturnDialogOpen(true); }}
-                        title={t("pos.sales_return")}>
-                        <RotateCcw className="h-5 w-5" />
-                      </Button>
-                      <Button size="sm" variant="ghost"
-                        className="h-10 w-10 p-0 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
-                        onClick={() => setPrintableSale(sale)} title={t("pos.reprint_invoice")}>
-                        <Printer className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {isLoadingSales ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+            </div>
+          ) : filteredAndSortedSales.length > 0 ? (
+            <Table>
+              <TableHeader className="bg-muted/30 sticky top-0 z-10">
+                <TableRow className="hover:bg-transparent border-none">
+                  <TableHead className="w-[160px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("invoice_number")}>
+                    {t("pos.invoice_no_col")} {filterState.sortKey === "invoice_number" && (filterState.sortDir === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="w-[180px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("created_at")}>
+                    {t("pos.date_time_col")} {filterState.sortKey === "created_at" && (filterState.sortDir === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="px-4 py-3 font-bold text-sm text-foreground">{t("pos.customer_col")}</TableHead>
+                  <TableHead className="px-4 py-3 font-bold text-sm text-foreground text-center">{t("pos.items_col")}</TableHead>
+                  <TableHead className="px-4 py-3 text-right font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("total")}>
+                    {t("pos.total_col")} {filterState.sortKey === "total" && (filterState.sortDir === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-center font-bold text-sm text-foreground">{t("pos.status_col")}</TableHead>
+                  <TableHead className="px-4 py-3 text-right font-bold text-sm text-foreground">{t("pos.actions_col")}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-            <List className="h-20 w-20 mb-4 opacity-10" />
-            <p className="text-xl font-medium">{t("pos.no_completed_sales")}</p>
-          </div>
-        )}
-      </div>
-    </DialogContent>
-  </Dialog>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedSales.map((sale) => (
+                  <TableRow key={sale.id} className="group hover:bg-emerald-50/30 transition-colors">
+                    <TableCell className="px-6 py-4 font-mono font-bold text-emerald-600 text-sm">{sale.invoice_number}</TableCell>
+                    <TableCell className="px-6 py-4 text-muted-foreground text-sm">{new Date(sale.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-foreground text-sm">{sale.customer?.name || t("pos.walk_in")}</span>
+                        <span className="text-xs text-muted-foreground">{sale.customer?.phone || t("pos.no_phone")}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-center">
+                      <SaleItemsHoverCard sale={sale} accentClass="bg-emerald-500/10 text-emerald-500 group-hover/items:bg-emerald-600 text-xs px-2 py-1" />
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-right">
+                      <span className="font-bold text-foreground text-base">LKR {parseFloat(sale.payable_amount).toFixed(2)}</span>
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-center">
+                      {sale.isOffline ? (
+                        <Badge
+                          variant="outline"
+                          className={clsx(
+                            "px-3 py-1 border-none text-xs font-black animate-pulse cursor-help",
+                            sale.syncStatus === 'failed' ? "bg-red-500 text-white" : "bg-amber-500 text-white"
+                          )}
+                          title={sale.syncError ? `Sync Failed: ${sale.syncError}` : "Waiting for internet to sync..."}
+                        >
+                          {sale.syncStatus === 'failed' ? "ERROR" : "LOCAL"}
+                        </Badge>
+                      ) : sale.status === 'draft' ? (
+                        <Badge variant="outline" className="px-3 py-1 bg-amber-50 text-amber-700 border-amber-100 text-xs font-bold">
+                          HELD
+                        </Badge>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge variant="outline" className="px-3 py-1 bg-green-50 text-green-700 border-green-100 text-xs font-bold uppercase">
+                            {sale.payment_status}
+                          </Badge>
+                          {sale.payment_method && (
+                            <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">
+                              {sale.payment_method}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-3">
+                        {sale.isOffline && (
+                          <Button size="sm" variant="ghost"
+                            className="h-10 w-10 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={async () => {
+                              if (confirm("Delete this offline sale? It will not be synced to the cloud.")) {
+                                await db.pendingSales.delete(parseInt(sale.id.replace('pending-', '')));
+                                window.location.reload(); // Refresh to update list
+                              }
+                            }}
+                            title="Delete Offline Sale">
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost"
+                          className="h-10 w-10 p-0 text-muted-foreground hover:text-orange-600 hover:bg-orange-50"
+                          onClick={() => { setSelectedReturnSale(sale); setIsReturnDialogOpen(true); }}
+                          title={t("pos.sales_return")}>
+                          <RotateCcw className="h-5 w-5" />
+                        </Button>
+                        <Button size="sm" variant="ghost"
+                          className="h-10 w-10 p-0 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50"
+                          onClick={() => setPrintableSale(sale)} title={t("pos.reprint_invoice")}>
+                          <Printer className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+              <List className="h-20 w-20 mb-4 opacity-10" />
+              <p className="text-xl font-medium">{t("pos.no_completed_sales")}</p>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 });
 SaleListDialog.displayName = "SaleListDialog";
@@ -558,7 +551,7 @@ export const StockCheckDialog = memo(({
       // Use productId if available, otherwise fallback to id (for simple products)
       const pId = item.productId || item.id;
       const baseName = item.name.includes(" - ") ? item.name.split(" - ")[0] : item.name;
-      
+
       if (!groups[pId]) {
         groups[pId] = {
           id: pId,
@@ -573,29 +566,29 @@ export const StockCheckDialog = memo(({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl w-[95vw] h-[85vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl rounded-3xl">
-        <DialogHeader className="p-8 pb-4 bg-linear-to-br from-orange-50 to-white dark:from-orange-950/20 dark:to-background">
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shadow-inner">
-              <PackageSearch className="h-8 w-8 text-orange-600" />
+      <DialogContent className="!max-w-none w-screen h-[100dvh] max-h-screen m-0 border-none rounded-none flex flex-col p-0 overflow-hidden !translate-y-[-50%] !translate-x-[-50%]">
+        <DialogHeader className="p-5 pb-4 border-b border-border/50 bg-muted/10">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-md bg-emerald-600/10 flex items-center justify-center border border-emerald-600/20">
+              <PackageSearch className="h-5 w-5 text-emerald-600" />
             </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-2xl font-medium text-foreground uppercase">
+            <div>
+              <DialogTitle className="text-lg font-bold text-foreground uppercase tracking-tight">
                 {t("pos.check_stock_title")}
               </DialogTitle>
-              <DialogDescription className="text-sm font-medium opacity-60">
+              <DialogDescription className="text-xs font-medium text-muted-foreground mt-0.5">
                 {t("pos.check_stock_desc")}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="px-6 py-2 border-y border-border/50 bg-muted/10">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-orange-500 transition-all duration-300" />
+        <div className="px-5 py-3 border-b border-border/50 bg-background flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={t("pos.search_placeholder")}
-              className="pl-10 h-8 text-xs bg-white dark:bg-slate-950 border-border/50 rounded-lg focus:ring-1 focus:ring-orange-500/20 shadow-none"
+              className="pl-9 h-10 text-sm font-medium bg-background border-border/60 rounded-md focus:ring-1 focus:ring-emerald-500/50 shadow-sm"
               autoFocus
               value={stockSearch}
               onChange={(e) => setStockSearch(e.target.value)}
@@ -603,88 +596,94 @@ export const StockCheckDialog = memo(({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pb-8 pt-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 bg-muted/5">
           {isLoadingStock ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="relative h-12 w-12">
-                <Loader2 className="h-12 w-12 animate-spin text-orange-600 absolute inset-0" />
-                <div className="h-12 w-12 animate-ping text-orange-600/20 absolute inset-0 rounded-full" />
-              </div>
-              <p className="text-xs font-medium text-muted-foreground animate-pulse uppercase">{t("common.loading")}</p>
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t("common.loading")}</p>
             </div>
           ) : groupedData.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {groupedData.map((product) => (
-                <div key={product.id} className="group/product bg-card rounded-3xl border border-border/60 overflow-hidden shadow-sm hover:shadow-md hover:border-orange-500/20 transition-all duration-500">
+                <div key={product.id} className="bg-card rounded-md border border-border shadow-xs overflow-hidden">
                   {/* Product Header */}
-                  <div className="px-6 py-4 border-b border-border/40 bg-muted/30 group-hover/product:bg-orange-500/5 transition-colors">
-                    <h3 className="text-lg font-medium text-foreground uppercase">{product.name}</h3>
+                  <div className="px-4 py-2 bg-slate-100 dark:bg-slate-900 border-b border-border flex items-center gap-2">
+                    <Package className="h-4 w-4 text-slate-500" />
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight">{product.name}</h3>
                   </div>
-                  
-                  {/* Variants List */}
-                  <div className="divide-y divide-border/30">
+
+                  {/* Variants List (Table-like structure) */}
+                  <div className="divide-y divide-border">
                     {product.variants.map((v) => {
                       const variantLabel = v.name.includes(" - ") ? v.name.split(" - ")[1] : "Standard";
                       const isDefault = variantLabel.toLowerCase() === "default" || variantLabel.toLowerCase() === "standard";
-                      
+
                       return (
-                        <div key={v.id} className="py-2.5 px-4 hover:bg-muted/30 transition-all duration-200 group/v">
-                          <div className="flex flex-wrap md:flex-nowrap items-center gap-4">
-                            {/* Variant Info */}
-                            <div className="flex flex-col min-w-[140px] shrink-0">
-                              <span className="text-xs font-medium text-foreground uppercase truncate" title={variantLabel}>
-                                {isDefault ? "Standard" : variantLabel}
-                              </span>
-                              <span className="text-[9px] font-medium text-muted-foreground font-mono">
-                                {v.barcode}
-                              </span>
-                            </div>
+                        <div key={v.id} className="flex flex-col md:flex-row md:items-center px-4 py-3 hover:bg-muted/30 transition-colors gap-4">
+                          {/* Variant & SKU */}
+                          <div className="flex flex-col min-w-[200px] shrink-0">
+                            <span className="text-sm font-bold text-foreground uppercase">
+                              {isDefault ? "Standard" : variantLabel}
+                            </span>
+                            <span className="text-[11px] font-mono font-medium text-slate-500 mt-0.5">
+                              {v.barcode || v.sku || "NO BARCODE"}
+                            </span>
+                          </div>
 
-                            <Separator orientation="vertical" className="h-8 hidden md:block opacity-30" />
+                          {/* Stock Levels */}
+                          <div className="flex-1 flex flex-wrap items-center gap-2">
+                            {v.stocks && v.stocks.length > 0 ? v.stocks.map((s, idx) => {
+                              const qty = parseFloat(s.quantity);
+                              const isLow = qty <= (v.low_stock_threshold || 5) && qty > 0;
+                              const isOut = qty <= 0;
 
-                            {/* Stock Levels - Scrollable horizontally if too many */}
-                            <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                              {v.stocks && v.stocks.length > 0 ? v.stocks.map((s, idx) => {
-                                const qty = parseFloat(s.quantity);
-                                const isLow = qty <= 5 && qty > 0;
-                                const isOut = qty <= 0;
-                                return (
-                                  <div key={idx} className={clsx(
-                                    "flex items-center gap-2 px-2 py-1 rounded-lg border shrink-0 min-w-[80px]",
-                                    !isOut && !isLow ? "bg-emerald-500/5 border-emerald-500/20"
-                                      : isLow ? "bg-amber-500/5 border-amber-500/20"
-                                        : "bg-rose-500/5 border-rose-500/20 opacity-60"
+                              return (
+                                <div key={idx} className={clsx(
+                                  "flex items-center border rounded-[4px] px-2 py-1 gap-2",
+                                  !isOut && !isLow ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
+                                    : isLow ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
+                                      : "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20"
+                                )}>
+                                  <span className={clsx(
+                                    "text-[10px] font-bold uppercase tracking-tight truncate max-w-[90px]",
+                                    !isOut && !isLow ? "text-emerald-700 dark:text-emerald-400"
+                                      : isLow ? "text-amber-700 dark:text-amber-400"
+                                        : "text-red-700 dark:text-red-400"
+                                  )} title={s.branch}>
+                                    {s.branch}
+                                  </span>
+                                  <div className={clsx("w-px h-3",
+                                    !isOut && !isLow ? "bg-emerald-200 dark:bg-emerald-500/30"
+                                      : isLow ? "bg-amber-200 dark:bg-amber-500/30"
+                                        : "bg-red-200 dark:bg-red-500/30"
+                                  )} />
+                                  <span className={clsx(
+                                    "text-xs font-black font-mono",
+                                    !isOut && !isLow ? "text-emerald-700 dark:text-emerald-400"
+                                      : isLow ? "text-amber-700 dark:text-amber-400"
+                                        : "text-red-700 dark:text-red-400"
                                   )}>
-                                    <span className="text-[8px] font-medium uppercase opacity-60 truncate max-w-[50px]" title={s.branch}>
-                                      {s.branch}
-                                    </span>
-                                    <span className={clsx(
-                                      "text-[11px] font-medium font-mono",
-                                      !isOut && !isLow ? "text-emerald-600"
-                                        : isLow ? "text-amber-600"
-                                          : "text-rose-600"
-                                    )}>
-                                      {(qty || 0).toFixed(0)}
-                                    </span>
-                                  </div>
-                                );
-                              }) : (
-                                <span className="text-[10px] italic text-muted-foreground/40">{t("pos.no_stock")}</span>
-                              )}
-                            </div>
+                                    {(qty || 0).toFixed(0)}
+                                  </span>
+                                </div>
+                              );
+                            }) : (
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{t("pos.no_stock_records")}</span>
+                            )}
+                          </div>
 
-                            <div className="flex items-center gap-3 shrink-0 ml-auto">
-                              <span className="text-[11px] font-medium text-emerald-600 font-mono hidden sm:block">
-                                LKR {(v.retailPrice || 0).toFixed(2)}
-                              </span>
-                              <Button 
-                                onClick={() => { onAddToCart(v); onOpenChange(false); }}
-                                size="sm"
-                                className="h-8 px-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-medium text-[10px] shadow-sm active:scale-95 transition-all"
-                              >
-                                <Plus className="h-3 w-3 mr-1" /> {t("pos.add")}
-                              </Button>
-                            </div>
+                          {/* Price & Action */}
+                          <div className="flex items-center justify-between md:justify-end gap-6 shrink-0 md:min-w-[200px]">
+                            <span className="text-sm font-black text-foreground font-mono">
+                              LKR {(v.retailPrice || 0).toFixed(2)}
+                            </span>
+                            <Button
+                              onClick={() => { onAddToCart(v); onOpenChange(false); }}
+                              size="sm"
+                              className="h-8 px-4 rounded-[4px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                            >
+                              <Plus className="h-3.5 w-3.5 mr-1.5" /> Add
+                            </Button>
                           </div>
                         </div>
                       );
@@ -787,24 +786,28 @@ export const VariantSelectorDialog = memo(({ isOpen, onOpenChange, product, onSe
   );
 });
 VariantSelectorDialog.displayName = "VariantSelectorDialog";
+import { CustomerSelector } from "./CustomerSelector";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ─── Payment Dialog ────────────────────────────────────────────────────────
-export const PaymentDialog = memo(({ 
-  isOpen, 
-  onOpenChange, 
-  netTotal, 
-  onConfirm, 
+export const PaymentDialog = memo(({
+  isOpen,
+  onOpenChange,
+  netTotal,
+  onConfirm,
   paymentMethods = ["cash", "card", "online", "qr"],
   allCustomers = [],
   selectedCustomer = null,
   onSelectCustomer,
   enableMultiplePayments = false,
   settings = {},
+  isRestaurant = false,
 }) => {
   const { t } = useTranslation();
   const [payments, setPayments] = useState([{ id: 1, method: "cash", amount: "" }]);
   const [lastDiscount, setLastDiscount] = useState(0);
   const [discountType, setDiscountType] = useState(settings?.defaultExtraDiscountType || "amount");
+  const [sendToKitchen, setSendToKitchen] = useState(true);
 
   const totalReceived = useMemo(() => {
     return payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
@@ -839,7 +842,7 @@ export const PaymentDialog = memo(({
     const validPayments = payments
       .map(p => ({ method: p.method, received: parseFloat(p.amount) || 0 }))
       .filter(p => p.received > 0);
-    
+
     if (validPayments.length === 0) {
       validPayments.push({ method: payments[0].method, received: netAmountToPay });
     }
@@ -849,14 +852,15 @@ export const PaymentDialog = memo(({
       generalDiscountAmt: discountType === "amount" ? lastDiscount : 0,
       generalDiscount: discountType === "percentage" ? lastDiscount : 0,
       received: totalReceived || netAmountToPay, // Keep for backward compatibility if needed by parent
-      balance
+      balance,
+      sendToKitchen
     });
   };
 
   const addPaymentMethod = () => {
     if (remaining > 0) {
       setPayments(prev => [
-        ...prev, 
+        ...prev,
         { id: Date.now(), method: paymentMethods.find(m => !prev.some(p => p.method === m)) || paymentMethods[0], amount: remaining.toString() }
       ]);
     }
@@ -891,9 +895,9 @@ export const PaymentDialog = memo(({
                 Select Customer (Default: Walk-in)
               </label>
               <div className="border border-border/40 rounded-xl overflow-hidden bg-muted/5 h-10 flex items-center">
-                <CustomerSelector 
-                  customers={allCustomers} 
-                  selectedCustomer={selectedCustomer} 
+                <CustomerSelector
+                  customers={allCustomers}
+                  selectedCustomer={selectedCustomer}
                   onSelect={onSelectCustomer}
                   isCompact={true}
                 />
@@ -972,8 +976,8 @@ export const PaymentDialog = memo(({
                       onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
                     />
                     {index === 0 && payments.length === 1 && (
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-2 text-[10px] font-bold text-violet-600 hover:bg-violet-500/5"
                         onClick={() => updatePayment(p.id, "amount", netTotal.toString())}
                       >
@@ -984,8 +988,8 @@ export const PaymentDialog = memo(({
                 </div>
 
                 {payments.length > 1 && (
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="h-12 w-12 p-0 text-rose-500 hover:bg-rose-50 rounded-xl mb-[1px]"
                     onClick={() => removePayment(p.id)}
                   >
@@ -996,8 +1000,8 @@ export const PaymentDialog = memo(({
             ))}
 
             {enableMultiplePayments && remaining > 0 && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full h-10 border-dashed border-border/60 text-xs font-bold text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/50 hover:bg-emerald-500/5 mt-2"
                 onClick={addPaymentMethod}
               >
@@ -1005,6 +1009,21 @@ export const PaymentDialog = memo(({
               </Button>
             )}
           </div>
+          
+          {isRestaurant && (
+            <div className="flex items-center gap-2 pt-2 pb-1">
+              <input 
+                type="checkbox" 
+                id="sendToKitchen" 
+                checked={sendToKitchen} 
+                onChange={(e) => setSendToKitchen(e.target.checked)} 
+                className="w-4 h-4 rounded border-border/40 text-violet-600 focus:ring-violet-500/20"
+              />
+              <label htmlFor="sendToKitchen" className="text-xs font-bold text-slate-700 cursor-pointer uppercase">
+                Send to Kitchen (Print Kitchen Slip)
+              </label>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="bg-muted/10 p-4 rounded-xl border border-border/30">

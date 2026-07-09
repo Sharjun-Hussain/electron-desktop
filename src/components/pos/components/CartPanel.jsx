@@ -81,8 +81,8 @@ export const CartItemCard = memo(
       <div className="group flex items-center gap-x-3 p-2 py-1.5 rounded-lg border-b border-border/30 transition-all duration-200 bg-card hover:bg-emerald-500/5 focus-within:bg-emerald-500/10">
         {/* Product Info */}
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm text-foreground truncate">{item.name}</p>
-          <p className="text-[10px] text-muted-foreground">
+          <p className="font-medium text-sm text-foreground break-words leading-tight">{item.name}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
             {item.barcode} {item.size && `• ${item.size}`}
             {isWeighted && (
               <span className="ml-2 text-emerald-600 font-medium bg-emerald-50 px-1 rounded">
@@ -128,6 +128,7 @@ export const CartItemCard = memo(
               step="0.001"
               value={item.quantity}
               onChange={(e) => handleQuantityChange(e.target.value)}
+              onWheel={(e) => e.target.blur()}
               data-cart-qty="true"
               className="h-8 w-full text-center text-[13px] font-medium bg-transparent border-transparent hover:border-border/30 focus:bg-white dark:focus:bg-slate-950 focus:border-emerald-500/50 transition-all rounded-md shadow-none p-0"
             />
@@ -149,6 +150,7 @@ export const CartItemCard = memo(
                 type="number"
                 value={item.discount}
                 onChange={(e) => handleDiscountChange(Number(e.target.value))}
+                onWheel={(e) => e.target.blur()}
                 className="h-8 w-full text-center text-[13px] p-0 bg-transparent border-transparent hover:border-border/30 focus:bg-white dark:focus:bg-slate-950 focus:border-emerald-500/50 transition-all rounded-md shadow-none pr-2.5"
               />
               <span className="absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/40 pointer-events-none group-focus-within/disc:text-muted-foreground">%</span>
@@ -170,6 +172,7 @@ export const CartItemCard = memo(
                 type="number"
                 value={item.discount_amt}
                 onChange={(e) => handleDiscountAmtChange(Number(e.target.value))}
+                onWheel={(e) => e.target.blur()}
                 className="h-8 w-full text-center text-[13px] p-0 bg-transparent border-transparent hover:border-border/30 focus:bg-white dark:focus:bg-slate-950 focus:border-emerald-500/50 transition-all rounded-md shadow-none"
                 placeholder="0"
               />

@@ -19,9 +19,12 @@ const UTILITY_ACTIONS = [
   { label: "Inventory", key: "inventory", icon: Package, color: "text-slate-500", bg: "bg-slate-500/10" },
 ];
 
-export const UtilitySidebar = memo(({ onAction, cartEmpty }) => {
+export const UtilitySidebar = memo(({ onAction, cartEmpty, isRestaurant }) => {
   return (
-    <aside className="fixed right-0 top-[57px] bottom-0 z-40 w-24 flex flex-col items-center py-2 bg-card/95 backdrop-blur-2xl border-l border-border/40 shadow-[-15px_0_40px_-20px_rgba(0,0,0,0.15)] overflow-y-auto custom-scrollbar">
+    <aside className={cn(
+      "fixed right-0 bottom-0 z-40 w-24 flex flex-col items-center py-2 bg-card/95 backdrop-blur-2xl border-l border-border/40 shadow-[-15px_0_40px_-20px_rgba(0,0,0,0.15)] overflow-y-auto custom-scrollbar",
+      isRestaurant ? "top-0" : "top-[65px]"
+    )}>
       <div className="flex-1 flex flex-col justify-center space-y-6 w-full px-2">
         <TooltipProvider delayDuration={0}>
           {UTILITY_ACTIONS.map((action) => {

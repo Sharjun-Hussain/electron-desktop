@@ -197,11 +197,24 @@ export default function PosPage() {
   // Update Customer Display when cart changes
   useEffect(() => {
     if (isHardwareReady && selectedDisplayPort) {
-      const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      if (subtotal > 0) {
-        updateDisplay("TOTAL AMOUNT:", `LKR ${subtotal.toFixed(2)}`);
+      if (state.cart.length > 0) {
+        const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        // Grab the last item in the cart array (most recently scanned)
+        const lastItem = state.cart[state.cart.length - 1];
+        
+        // Line 1: Item Name (Truncated to exactly 20 chars to prevent overflow)
+        const line1 = lastItem.name.substring(0, 20);
+        
+        // Line 2: Qty x Price on left, Total on right
+        const priceStr = `${lastItem.quantity}x${lastItem.price.toFixed(2)}`;
+        const totalStr = `T:${subtotal.toFixed(2)}`;
+        const spaceCount = Math.max(1, 20 - priceStr.length - totalStr.length);
+        const line2 = `${priceStr}${" ".repeat(spaceCount)}${totalStr}`;
+        
+        updateDisplay(line1, line2);
       } else {
-        updateDisplay("INZEEDO POS", "READY TO SERVE");
+        updateDisplay("WELCOME", "-- HAVE A NICE DAY AND THANK YOU --");
       }
     }
   }, [state.cart, isHardwareReady, selectedDisplayPort, updateDisplay]);
@@ -269,7 +282,7 @@ export default function PosPage() {
     if (isHardwareReady && selectedDisplayPort && change > 0) {
         updateDisplay("CHANGE DUE:", `LKR ${change.toFixed(2)}`);
         // Reset display after 5 seconds
-        setTimeout(() => updateDisplay("INZEEDO POS", "THANK YOU!"), 5000);
+        setTimeout(() => updateDisplay("WELCOME", "-- HAVE A NICE DAY AND THANK YOU --"), 5000);
     }
 
     rawHandlePayNow(finalizedArgs);
@@ -313,7 +326,7 @@ export default function PosPage() {
         const v = item.variants[0];
         handleAddToCart({
           variantId: v.id, productId: v.productId, barcode: v.barcode,
-          name: v.fullName, size: v.variantName, unit: v.unit,
+          name: v.name, size: v.variantName, unit: v.unit,
           retailPrice: v.retailPrice, mrpPrice: v.mrpPrice, wholesalePrice: v.wholesalePrice,
           batches: v.batches
         }, finalQuantity);
@@ -712,6 +725,7 @@ export default function PosPage() {
 
       <UtilitySidebar
         cartEmpty={state.cart.length === 0}
+        isRestaurant={isRestaurant}
         onAction={(key) => {
           if (key === 'hold' || key === 'holdSale') {
             handleHoldSale({
