@@ -83,9 +83,18 @@ export default function DashboardTableMonitor() {
 
   if (loading && areas.length === 0) {
     return (
-      <div className="w-full bg-card rounded-2xl border border-border p-8 flex flex-col items-center justify-center min-h-[250px]">
-        <RefreshCcw className="h-8 w-8 text-emerald-500 animate-spin mb-3" />
-        <p className="text-sm font-medium text-muted-foreground">Syncing restaurant floor maps...</p>
+      <div className="w-full bg-card border border-border rounded-2xl shadow-xs overflow-hidden animate-pulse">
+        {/* Header Skeleton */}
+        <div className="p-6 border-b border-border/60 bg-muted/20 h-[88px]"></div>
+        
+        {/* Grid Content Skeleton */}
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 h-[400px]">
+          <div className="lg:col-span-1 bg-muted/30 rounded-xl border border-border/50 h-full"></div>
+          <div className="lg:col-span-3 bg-muted/10 rounded-xl border border-border/50 h-full"></div>
+        </div>
+
+        {/* Footer Skeleton */}
+        <div className="p-4 bg-muted/20 border-t border-border/50 h-[64px]"></div>
       </div>
     );
   }
@@ -99,7 +108,7 @@ export default function DashboardTableMonitor() {
             <UtensilsCrossed className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-foreground tracking-tight">Dining Floor Manager & Table Setup</h3>
+            <h3 className="text-lg font-semibold text-foreground">Dining Floor Manager & Table Setup</h3>
             <p className="text-xs text-muted-foreground font-medium opacity-80 mt-0.5">Live monitor of restaurant table occupancy, seating, and bill settlements.</p>
           </div>
         </div>
@@ -115,7 +124,7 @@ export default function DashboardTableMonitor() {
             <RefreshCcw className={cn("h-3 w-3", isRefreshing && "animate-spin")} />
             <span>{isRefreshing ? "Syncing..." : "Sync Floor"}</span>
           </Button>
-          <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-bold text-[10px] uppercase px-2.5 py-1">
+          <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-medium text-[10px] px-2.5 py-1">
             Restaurant Live Overview
           </Badge>
         </div>
@@ -127,7 +136,7 @@ export default function DashboardTableMonitor() {
         {/* Left Side: Stats Column */}
         <div className="lg:col-span-1 bg-muted/30 rounded-xl p-5 border border-border/50 flex flex-col justify-between gap-4">
           <div>
-            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-3">Live Seating Metrics</h4>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-3">Live Seating Metrics</h4>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-xs font-bold text-muted-foreground mb-1">
@@ -144,39 +153,38 @@ export default function DashboardTableMonitor() {
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <div className="bg-card p-3 rounded-lg border border-border/40 text-center">
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Total Tables</p>
-                  <p className="text-xl font-extrabold text-foreground mt-0.5">{totalTables}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Total Tables</p>
+                  <p className="text-xl font-semibold text-foreground mt-0.5">{totalTables}</p>
                 </div>
                 <div className="bg-card p-3 rounded-lg border border-border/40 text-center">
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Seating Capacity</p>
-                  <p className="text-xl font-extrabold text-foreground mt-0.5">{totalSeats} Pax</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Seating Capacity</p>
+                  <p className="text-xl font-semibold text-foreground mt-0.5">{totalSeats} Pax</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Status color definitions */}
           <div className="border-t border-border/50 pt-4 space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold">
+            <div className="flex items-center justify-between text-xs font-medium">
               <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                 Vacant Seating
               </span>
-              <span className="font-mono text-foreground font-black">{vacantTables}</span>
+              <span className="font-mono text-foreground font-semibold">{vacantTables}</span>
             </div>
-            <div className="flex items-center justify-between text-xs font-semibold">
+            <div className="flex items-center justify-between text-xs font-medium">
               <span className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                <span className="w-2.5 h-2.5 bg-amber-500 rounded-full" />
+                <span className="w-2 h-2 bg-amber-500 rounded-full" />
                 Occupied / Dining
               </span>
-              <span className="font-mono text-foreground font-black">{occupiedTables}</span>
+              <span className="font-mono text-foreground font-semibold">{occupiedTables}</span>
             </div>
-            <div className="flex items-center justify-between text-xs font-semibold">
+            <div className="flex items-center justify-between text-xs font-medium">
               <span className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-                <span className="w-2.5 h-2.5 bg-rose-500 rounded-full" />
+                <span className="w-2 h-2 bg-rose-500 rounded-full" />
                 Settle / Billing
               </span>
-              <span className="font-mono text-foreground font-black">{settleTables}</span>
+              <span className="font-mono text-foreground font-semibold">{settleTables}</span>
             </div>
           </div>
         </div>
@@ -225,7 +233,7 @@ export default function DashboardTableMonitor() {
                   >
                     {/* Badge status */}
                     <span className={cn(
-                      "text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shrink-0",
+                      "text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0",
                       isSettle
                         ? "bg-rose-500/10 text-rose-600"
                         : isOccupied
@@ -237,8 +245,8 @@ export default function DashboardTableMonitor() {
 
                     {/* Table Details */}
                     <div className="flex flex-col items-center">
-                      <p className="text-xs font-black text-muted-foreground group-hover:text-foreground">TABLE</p>
-                      <p className="text-2xl font-black tracking-tight text-foreground">{table.table_number}</p>
+                      <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground">Table</p>
+                      <p className="text-2xl font-semibold text-foreground">{table.table_number}</p>
                     </div>
 
                     {/* Seats count */}
@@ -262,36 +270,36 @@ export default function DashboardTableMonitor() {
       </div>
 
       {/* Footer controls */}
-      <div className="p-4 bg-muted/20 border-t border-border/50 flex flex-wrap items-center justify-between gap-3 px-6">
-        <span className="text-[11px] text-muted-foreground font-semibold flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+      <div className="p-4 bg-muted/20 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 px-6">
+        <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 text-center sm:text-left">
+          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shrink-0" />
           Auto-refresh active • Click any table to open POS order linkage.
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/reports/sales/dining")}
-            className="text-[11px] h-8 font-black uppercase text-emerald-500 tracking-wide hover:text-indigo-700 hover:bg-indigo-50/50"
+            className="text-xs h-8 font-medium text-emerald-600 hover:text-indigo-700 hover:bg-indigo-50/50 w-full sm:w-auto"
           >
-            <Landmark className="h-3.5 w-3.5 mr-1" />
+            <Landmark className="h-3.5 w-3.5 mr-1 shrink-0" />
             Dining Reports
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/kitchen")}
-            className="text-[11px] h-8 font-black uppercase text-amber-600 hover:text-amber-700 hover:bg-amber-50/50"
+            className="text-xs h-8 font-medium text-amber-600 hover:text-amber-700 hover:bg-amber-50/50 w-full sm:w-auto"
           >
-            <ChefHat className="h-3.5 w-3.5 mr-1" />
+            <ChefHat className="h-3.5 w-3.5 mr-1 shrink-0" />
             Kitchen Monitor
           </Button>
           <Button
             size="sm"
             onClick={() => router.push("/dining")}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] h-8 font-black uppercase rounded-lg shadow-sm"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8 font-medium rounded-lg shadow-sm w-full sm:w-auto"
           >
-            <Shapes className="h-3.5 w-3.5 mr-1" />
+            <Shapes className="h-3.5 w-3.5 mr-1 shrink-0" />
             Edit Floor Plan
           </Button>
         </div>

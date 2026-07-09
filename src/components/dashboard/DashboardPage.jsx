@@ -17,7 +17,7 @@ import { LayoutDashboard, Zap, Activity, BarChart3 } from "lucide-react";
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const containerRef = useRef(null);
-  const { business } = useAppSettings();
+  const { business, pos } = useAppSettings();
   const isRestaurant = business?.business_type?.toLowerCase() === "restaurant";
 
   useGSAP(() => {
@@ -64,7 +64,7 @@ export default function Dashboard() {
             </div>
 
             {/* Restaurant Seating Monitor */}
-            {isRestaurant && (
+            {isRestaurant && pos?.showTableMonitor !== false && (
               <div id="dashboard-table-monitor" className="dashboard-item animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <DashboardTableMonitor />
               </div>

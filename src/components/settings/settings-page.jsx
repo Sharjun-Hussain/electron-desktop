@@ -18,7 +18,8 @@ import {
   Gift,
   Lock,
   History,
-  Barcode as BarcodeIcon
+  Barcode as BarcodeIcon,
+  LayoutDashboard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ import { BackupSettings } from "./backup-settings";
 import { SubscriptionDetails } from "./subscription-details";
 import { ReleaseNotes } from "./release-notes";
 import { BarcodeSettings } from "./barcode-settings";
+import { DashboardSettings } from "./dashboard-settings";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
 import { PERMISSIONS } from "@/lib/permissions";
@@ -45,6 +47,7 @@ import { usePermission } from "@/hooks/use-permission";
 const sidebarItems = [
   { id: "general", label: "General & Regional", icon: Settings2, desc: "App preferences & localization", permission: PERMISSIONS.SETTINGS_GENERAL },
   { id: "business", label: "Business Identity", icon: Store, desc: "Contact & address details", permission: PERMISSIONS.SETTINGS_BUSINESS },
+  { id: "dashboard", label: "Dashboard Setup", icon: LayoutDashboard, desc: "Widget & layout configuration", permission: PERMISSIONS.SETTINGS_GENERAL },
   { id: "pos", label: "POS Terminal Basis", icon: Monitor, desc: "Checkout & device settings", permission: PERMISSIONS.SETTINGS_POS },
   { id: "communication", label: "Communication Hub", icon: Mail, desc: "Email & SMS gateway setup", permission: PERMISSIONS.SETTINGS_COMMUNICATION },
   { id: "import", label: "Database Management", icon: Database, desc: "System backups & restoration nexus", permission: PERMISSIONS.SETTINGS_IMPORT },
@@ -182,6 +185,7 @@ export function SettingsPage() {
         <div className="flex-1 p-8 md:p-10 max-w-7xl w-full mx-auto pb-32">
           {activeTab === "general" && hasPermission(PERMISSIONS.SETTINGS_GENERAL) && <GeneralSettings />}
           {activeTab === "business" && hasPermission(PERMISSIONS.SETTINGS_BUSINESS) && <BusinessSettings />}
+          {activeTab === "dashboard" && hasPermission(PERMISSIONS.SETTINGS_GENERAL) && <DashboardSettings />}
           {activeTab === "pos" && hasPermission(PERMISSIONS.SETTINGS_POS) && <PosSettings />}
           {activeTab === "communication" && hasPermission(PERMISSIONS.SETTINGS_COMMUNICATION) && <CommunicationSettings />}
           {activeTab === "import" && hasPermission(PERMISSIONS.SETTINGS_IMPORT) && <DataImportSettings />}

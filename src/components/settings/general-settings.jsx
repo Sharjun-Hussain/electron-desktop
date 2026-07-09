@@ -65,6 +65,8 @@ const CURRENCIES = [
   { code: "INR", symbol: "₹", name: "Indian Rupee" },
   { code: "LKR", symbol: "Rs", name: "Sri Lankan Rupee" },
   { code: "JPY", symbol: "¥", name: "Japanese Yen" },
+  { code: "QAR", symbol: "QR", name: "Qatari Riyal" },
+  { code: "SAR", symbol: "SR", name: "Saudi Riyal" },
 ];
 
 import { usePermission } from "@/hooks/use-permission";

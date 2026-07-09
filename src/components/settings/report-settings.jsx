@@ -92,11 +92,12 @@ export function ReportSettings() {
   const handleUpdate = async () => {
     setIsSaving(true);
     try {
-      await updateModularSettings({
-        module_name: 'report',
-        settings: formData
-      });
-      toast.success("Report layout saved successfully");
+      const result = await updateModularSettings('report', formData);
+      if (result.success) {
+        toast.success("Report layout saved successfully");
+      } else {
+        toast.error("Failed to save report settings: " + (result.error || "Unknown error"));
+      }
     } catch (error) {
       toast.error("Failed to save report settings");
     } finally {
@@ -120,68 +121,99 @@ export function ReportSettings() {
           <CardContent className="p-0">
             <Tabs defaultValue="appearance" className="w-full">
               <TabsList className="w-full justify-start rounded-none border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 h-11 p-0 px-4">
-                <TabsTrigger value="appearance" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-xs font-bold uppercase tracking-wider">Appearance</TabsTrigger>
-                <TabsTrigger value="header" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-xs font-bold uppercase tracking-wider">Header & Identity</TabsTrigger>
-                <TabsTrigger value="table" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-xs font-bold uppercase tracking-wider">Table & Content</TabsTrigger>
-                <TabsTrigger value="footer" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-xs font-bold uppercase tracking-wider">Footer</TabsTrigger>
+                <TabsTrigger value="appearance" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-sm font-medium">Appearance</TabsTrigger>
+                {formData.product_sales_report_print_type !== 'thermal' && (
+                  <>
+                    <TabsTrigger value="header" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-sm font-medium">Header & Identity</TabsTrigger>
+                    <TabsTrigger value="table" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-sm font-medium">Table & Content</TabsTrigger>
+                    <TabsTrigger value="footer" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-emerald-500 rounded-none h-11 text-sm font-medium">Footer</TabsTrigger>
+                  </>
+                )}
               </TabsList>
 
               {/* --- APPEARANCE --- */}
               <TabsContent value="appearance" className="p-6 m-0 space-y-8 animate-in fade-in duration-300">
                 <section>
-                  <SectionHeader icon={Layout} title="Document Geometry" description="Configure page size and orientation for printed reports" />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-9">
+                  <SectionHeader icon={Layout} title="Print Layout Format" description="Select the primary output format for your reports" />
+                  <div className="ml-9">
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-500 uppercase">Page Size</Label>
-                      <Select value={formData.pageSize} onValueChange={(val) => setFormData(p => ({ ...p, pageSize: val }))}>
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue placeholder="Select Size" />
+                      <Label className="text-xs font-bold text-slate-500 uppercase">Sales By Product Format</Label>
+                      <Select value={formData.product_sales_report_print_type || "A4"} onValueChange={(val) => setFormData(p => ({ ...p, product_sales_report_print_type: val }))}>
+                        <SelectTrigger className="h-9 text-sm max-w-[300px]">
+                          <SelectValue placeholder="Select Layout" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="A4">A4 (Standard)</SelectItem>
-                          <SelectItem value="Letter">US Letter</SelectItem>
-                          <SelectItem value="A5">A5 (Compact)</SelectItem>
+                          <SelectItem value="A4">A4 (Standard Document)</SelectItem>
+                          <SelectItem value="thermal">Thermal (Receipt Printer)</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-500 uppercase">Orientation</Label>
-                      <Select value={formData.orientation} onValueChange={(val) => setFormData(p => ({ ...p, orientation: val }))}>
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue placeholder="Select Orientation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="portrait">Portrait (Vertical)</SelectItem>
-                          <SelectItem value="landscape">Landscape (Horizontal)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {formData.product_sales_report_print_type === 'thermal' && (
+                        <p className="text-[11px] text-amber-600 font-medium mt-2">
+                          Note: Thermal printing removes colors and fixes dimensions to 80mm width.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </section>
 
-                <section>
-                  <SectionHeader icon={Palette} title="Brand & Palette" description="Set your reports' core visual theme" />
-                  <div className="ml-9">
-                    <Label className="text-xs font-bold text-slate-500 uppercase mb-3 block">Theme Preset</Label>
-                    <div className="flex flex-wrap gap-3">
-                      {PRESET_THEMES.map((theme) => (
-                        <button
-                          key={theme.id}
-                          onClick={() => setFormData(p => ({ ...p, themeColor: theme.id, primaryColor: theme.primary }))}
-                          className={cn(
-                            "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
-                            formData.themeColor === theme.id
-                              ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-500"
-                              : "border-slate-200 dark:border-slate-800 hover:border-slate-300"
-                          )}
-                        >
-                          <div className={cn("w-3 h-3 rounded-full", theme.bg)} />
-                          <span className="text-[11px] font-bold">{theme.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </section>
+                {formData.product_sales_report_print_type !== 'thermal' && (
+                  <>
+                    <section>
+                      <SectionHeader icon={Layout} title="Document Geometry" description="Configure page size and orientation for printed reports" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-9">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-slate-500 uppercase">Page Size</Label>
+                          <Select value={formData.pageSize} onValueChange={(val) => setFormData(p => ({ ...p, pageSize: val }))}>
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select Size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="A4">A4 (Standard)</SelectItem>
+                              <SelectItem value="Letter">US Letter</SelectItem>
+                              <SelectItem value="A5">A5 (Compact)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-slate-500 uppercase">Orientation</Label>
+                          <Select value={formData.orientation} onValueChange={(val) => setFormData(p => ({ ...p, orientation: val }))}>
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select Orientation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="portrait">Portrait (Vertical)</SelectItem>
+                              <SelectItem value="landscape">Landscape (Horizontal)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section>
+                      <SectionHeader icon={Palette} title="Brand & Palette" description="Set your reports' core visual theme" />
+                      <div className="ml-9">
+                        <Label className="text-xs font-bold text-slate-500 uppercase mb-3 block">Theme Preset</Label>
+                        <div className="flex flex-wrap gap-3">
+                          {PRESET_THEMES.map((theme) => (
+                            <button
+                              key={theme.id}
+                              onClick={() => setFormData(p => ({ ...p, themeColor: theme.id, primaryColor: theme.primary }))}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
+                                formData.themeColor === theme.id
+                                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-500"
+                                  : "border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                              )}
+                            >
+                              <div className={cn("w-3 h-3 rounded-full", theme.bg)} />
+                              <span className="text-[11px] font-bold">{theme.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+                  </>
+                )}
               </TabsContent>
 
               {/* --- HEADER --- */}
@@ -369,66 +401,98 @@ export function ReportSettings() {
           </div>
           
           <Card className={cn(
-            "border-2 border-slate-200 dark:border-slate-800 shadow-2xl bg-white overflow-hidden flex flex-col p-6 text-slate-900 transition-all duration-500",
-            formData.orientation === 'landscape' ? "aspect-[1.41/1]" : "aspect-[1/1.41]"
+            "border-2 border-slate-200 dark:border-slate-800 shadow-2xl bg-white flex flex-col transition-all duration-500 overflow-hidden",
+            formData.product_sales_report_print_type === 'thermal' 
+              ? "w-[280px] mx-auto aspect-auto min-h-[400px] p-4 text-black font-mono rounded-none border-dashed" 
+              : `p-6 text-slate-900 ${formData.orientation === 'landscape' ? "aspect-[1.41/1]" : "aspect-[1/1.41]"}`
           )}>
-             {/* Header Preview */}
-             <div className="flex justify-between items-start border-b-2 pb-4 mb-4 transition-all duration-300" style={{ borderColor: formData.primaryColor }}>
-                <div>
-                   <div className="flex items-center gap-2 mb-1">
-                      {formData.showLogo && <div className="bg-slate-900 text-white flex items-center justify-center font-bold text-[8px] rounded" style={{ height: `${formData.logoHeight/2}px`, width: `${formData.logoHeight/2}px` }}>LOGO</div>}
-                      <h5 className="font-bold text-xs">BUSINESS NAME</h5>
+            {formData.product_sales_report_print_type === 'thermal' ? (
+               // Thermal Receipt Preview
+               <div className="flex-1 w-full text-[9px] uppercase tracking-tighter leading-tight font-bold">
+                 <div className="text-center space-y-1 mb-4">
+                   <h1 className="text-sm font-black">{formData.headerTitle || "BUSINESS NAME"}</h1>
+                   <div>
+                     {formData.showAddress && <p>123 Business Road, Colombo 03</p>}
+                     {formData.showContact && <p>TEL: +94 11 234 5678</p>}
                    </div>
-                   <h6 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{formData.headerTitle || "Business Report"}</h6>
-                   
-                   <div className="space-y-1.5 mt-2">
-                     <div className="space-y-0.5">
-                       {formData.showAddress && <p className="text-[8px] text-slate-400">123 Business Road, Colombo 03</p>}
-                       {formData.showContact && <p className="text-[8px] text-slate-400">+94 11 234 5678 | contact@business.com</p>}
-                     </div>
-                     
-                     {formData.showBranchDetails && (
-                       <div className="space-y-0.5 pt-1 border-t border-slate-100 max-w-[120px]">
-                         <p className="text-[8px] text-slate-500"><strong>Branch:</strong> Main Terminal</p>
-                         <p className="text-[8px] text-slate-400">456 Terminal Ave, City Center</p>
-                         <p className="text-[8px] text-slate-500"><strong>Manager:</strong> John Doe</p>
+                   <h2 className="mt-2 text-xs border-t border-black pt-1">CASHIER-OUT REPORT</h2>
+                 </div>
+                 
+                 <div className="border-y border-dashed border-black py-2 mb-2 space-y-0.5">
+                   <div className="flex justify-between"><span>Date:</span><span>01/05/26 14:30</span></div>
+                   {formData.showBranchDetails && <div className="flex justify-between mt-1 pt-1 border-t border-dotted border-black"><span>Branch:</span><span>Main Terminal</span></div>}
+                 </div>
+
+                 <div className="border-b border-black pb-2 mb-2">
+                   <h3 className="font-bold border-b border-black mb-1">A. Cash In/Out</h3>
+                   <div className="flex justify-between"><span>Beginning Balance</span><span>500.00</span></div>
+                   <div className="flex justify-between"><span>Total Cash Sales</span><span>1,200.00</span></div>
+                   <div className="flex justify-between text-black"><span>Cash Out</span><span>100.00</span></div>
+                 </div>
+
+                 <div className="mt-8 text-center border-t border-dashed border-black pt-2">
+                   <p className="text-[10px]">{formData.footerText || "*** END OF REPORT ***"}</p>
+                 </div>
+               </div>
+            ) : (
+               // A4 Document Preview
+               <>
+                 <div className="flex justify-between items-start border-b-2 pb-4 mb-4 transition-all duration-300" style={{ borderColor: formData.primaryColor }}>
+                    <div>
+                       <div className="flex items-center gap-2 mb-1">
+                          {formData.showLogo && <div className="bg-slate-900 text-white flex items-center justify-center font-bold text-[8px] rounded" style={{ height: `${formData.logoHeight/2}px`, width: `${formData.logoHeight/2}px` }}>LOGO</div>}
+                          <h5 className="font-bold text-xs">BUSINESS NAME</h5>
                        </div>
-                     )}
-                   </div>
-                </div>
-                <div className="text-right text-[8px] text-slate-400 space-y-0.5">
-                   {formData.showGeneratedDate && <p><strong>Date Generated:</strong> 01 May 2026, 14:30 PM</p>}
-                   {formData.showConfidentialTag && (
-                     <div className="inline-block mt-1 px-1.5 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-600 font-bold uppercase tracking-tighter text-[6px]">
-                       Confidential
-                     </div>
-                   )}
-                </div>
-             </div>
+                       <h6 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{formData.headerTitle || "Business Report"}</h6>
+                       
+                       <div className="space-y-1.5 mt-2">
+                         <div className="space-y-0.5">
+                           {formData.showAddress && <p className="text-[8px] text-slate-400">123 Business Road, Colombo 03</p>}
+                           {formData.showContact && <p className="text-[8px] text-slate-400">+94 11 234 5678 | contact@business.com</p>}
+                         </div>
+                         
+                         {formData.showBranchDetails && (
+                           <div className="space-y-0.5 pt-1 border-t border-slate-100 max-w-[120px]">
+                             <p className="text-[8px] text-slate-500"><strong>Branch:</strong> Main Terminal</p>
+                             <p className="text-[8px] text-slate-400">456 Terminal Ave, City Center</p>
+                             <p className="text-[8px] text-slate-500"><strong>Manager:</strong> John Doe</p>
+                           </div>
+                         )}
+                       </div>
+                    </div>
+                    <div className="text-right text-[8px] text-slate-400 space-y-0.5">
+                       {formData.showGeneratedDate && <p><strong>Date Generated:</strong> 01 May 2026, 14:30 PM</p>}
+                       {formData.showConfidentialTag && (
+                         <div className="inline-block mt-1 px-1.5 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-600 font-bold uppercase tracking-tighter text-[6px]">
+                           Confidential
+                         </div>
+                       )}
+                    </div>
+                 </div>
 
-             {/* Table Preview */}
-             <div className="flex-1 space-y-3">
-                <div className="h-4 w-1/3 bg-slate-100 rounded" />
-                <div className="border rounded overflow-hidden" style={{ borderColor: formData.showBorders ? "#e2e8f0" : "transparent" }}>
-                   <div className={cn("h-6 flex items-center px-2", formData.accentTableHead ? "text-white" : "bg-slate-100")} style={{ backgroundColor: formData.accentTableHead ? formData.primaryColor : undefined }}>
-                      <div className="h-2 w-16 bg-white/30 rounded mr-auto" />
-                      <div className="h-2 w-8 bg-white/30 rounded" />
-                   </div>
-                   {[1,2,3,4].map(i => (
-                     <div key={i} className={cn("h-8 border-b flex items-center px-2", formData.rowDensity === "compact" ? "h-6" : formData.rowDensity === "spacious" ? "h-10" : "h-8")} style={{ borderColor: formData.showBorders ? "#f1f5f9" : "transparent" }}>
-                        <div className="h-2 w-24 bg-slate-100 rounded mr-auto" />
-                        <div className="h-2 w-10 bg-slate-100 rounded" />
-                     </div>
-                   ))}
-                </div>
-             </div>
+                 <div className="flex-1 space-y-3">
+                    <div className="h-4 w-1/3 bg-slate-100 rounded" />
+                    <div className="border rounded overflow-hidden" style={{ borderColor: formData.showBorders ? "#e2e8f0" : "transparent" }}>
+                       <div className={cn("h-6 flex items-center px-2", formData.accentTableHead ? "text-white" : "bg-slate-100")} style={{ backgroundColor: formData.accentTableHead ? formData.primaryColor : undefined }}>
+                          <div className="h-2 w-16 bg-white/30 rounded mr-auto" />
+                          <div className="h-2 w-8 bg-white/30 rounded" />
+                       </div>
+                       {[1,2,3,4].map(i => (
+                         <div key={i} className={cn("h-8 border-b flex items-center px-2", formData.rowDensity === "compact" ? "h-6" : formData.rowDensity === "spacious" ? "h-10" : "h-8")} style={{ borderColor: formData.showBorders ? "#f1f5f9" : "transparent" }}>
+                            <div className="h-2 w-24 bg-slate-100 rounded mr-auto" />
+                            <div className="h-2 w-10 bg-slate-100 rounded" />
+                         </div>
+                       ))}
+                    </div>
+                 </div>
 
-             {/* Footer Preview */}
-             <div className="mt-auto pt-3 border-t border-slate-100 flex justify-between items-center text-[7px] text-slate-400 font-medium">
-                {formData.showPrintedBy && <span>By: Admin</span>}
-                <span className="flex-1 text-center px-4 line-clamp-1">{formData.footerText}</span>
-                {formData.showPageNumbers && <span>Page 1 of 1</span>}
-             </div>
+                 <div className="mt-auto pt-3 border-t border-slate-100 flex justify-between items-center text-[7px] text-slate-400 font-medium">
+                    {formData.showPrintedBy && <span>By: Admin</span>}
+                    <span className="flex-1 text-center px-4 line-clamp-1">{formData.footerText}</span>
+                    {formData.showPageNumbers && <span>Page 1 of 1</span>}
+                 </div>
+               </>
+            )}
           </Card>
 
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">

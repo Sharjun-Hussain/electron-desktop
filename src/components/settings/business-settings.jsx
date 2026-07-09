@@ -42,16 +42,62 @@ export function BusinessSettings() {
     }
   }, [response]);
 
+  const validateForm = () => {
+    const errors = [];
+
+    // Business Name — required, min 2 chars
+    const name = formData.businessName.trim();
+    if (!name) {
+      errors.push("Business name is required");
+    } else if (name.length < 2) {
+      errors.push("Business name must be at least 2 characters");
+    }
+
+    // Email — optional, but must be valid if provided
+    const email = formData.email.trim();
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) errors.push("Please enter a valid business email address");
+    }
+
+    // Phone — optional, but must match allowed characters if provided
+    const phone = formData.phone.trim();
+    if (phone) {
+      const phoneRegex = /^[\d+() -]+$/;
+      if (!phoneRegex.test(phone)) errors.push("Phone number contains invalid characters (use digits, +, -, spaces, or parentheses)");
+    }
+
+    // Website — optional, but must be a valid URL if provided
+    const website = formData.website.trim();
+    if (website) {
+      try {
+        new URL(website);
+      } catch {
+        errors.push("Please enter a valid website URL (e.g. https://example.com)");
+      }
+    }
+
+    return errors;
+  };
+
   const handleSave = async () => {
     if (!hasPermission(PERMISSIONS.SETTINGS_BUSINESS)) {
       toast.error("You do not have permission to modify business settings");
       return;
     }
+
+    // Run client-side validation first
+    const errors = validateForm();
+    if (errors.length > 0) {
+      errors.forEach(err => toast.error(err));
+      return;
+    }
+
     setIsSaving(true);
     const payload = {
-      name: formData.businessName, tax_id: formData.taxId,
-      business_type: formData.businessType, website: formData.website,
-      email: formData.email, phone: formData.phone, address: formData.address,
+      name: formData.businessName.trim(), tax_id: formData.taxId,
+      business_type: formData.businessType, website: formData.website.trim(),
+      email: formData.email.trim(), phone: formData.phone.trim(), address: formData.address,
       city: formData.city, state: formData.state, zip_code: formData.zipCode,
       shopify_enabled: formData.shopify_enabled, whatsapp_enabled: formData.whatsapp_enabled,
       textlk_enabled: formData.textlk_enabled

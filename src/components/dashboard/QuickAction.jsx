@@ -13,6 +13,9 @@ import {
   CreditCard,
   Settings,
   Banknote,
+  Smartphone,
+  ChefHat,
+  Map,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -86,11 +89,11 @@ const quickActions = [
     color: "orange",
   },
   {
-    id: "employee",
-    name: "Staff",
-    icon: Users,
-    description: "Manage Team",
-    href: "/employees",
+    id: "inventory-insights",
+    name: "Insights",
+    icon: Package,
+    description: "Stock Data",
+    href: "/inventory-insights",
     color: "cyan",
   },
   {
@@ -130,7 +133,15 @@ export default function QuickActions() {
   const isAccountingEnabled = business?.accounting_enabled !== false && business?.subscription_tier !== 'Essential';
   const hasFinanceAccess = hasPermission('finance:view') || hasPermission('finance:manage');
 
-  const visibleActions = quickActions.map(action => {
+  const isRestaurant = business?.business_type?.toLowerCase() === "restaurant";
+
+  let visibleActions = quickActions.filter(action => {
+    // Remove Offline Sync and Barcodes for Restaurant
+    if (isRestaurant && (action.id === "offline-sync" || action.id === "barcodes")) {
+      return false;
+    }
+    return true;
+  }).map(action => {
     if (action.id === "financial-reports") {
       if (isAccountingEnabled && hasFinanceAccess) {
         return action;
@@ -146,6 +157,39 @@ export default function QuickActions() {
     }
     return action;
   });
+
+  // Inject Restaurant Actions after POS
+  if (isRestaurant) {
+    const restaurantActions = [
+      {
+        id: "dining",
+        name: "Floor Plan",
+        icon: Map,
+        description: "Manage Tables",
+        href: "/dining",
+        color: "blue",
+      },
+      {
+        id: "waiter",
+        name: "Mobile Waiter",
+        icon: Smartphone,
+        description: "Take Orders",
+        href: "/waiter",
+        color: "emerald",
+      },
+      {
+        id: "kitchen",
+        name: "Kitchen KOT",
+        icon: ChefHat,
+        description: "Live Display",
+        href: "/kitchen",
+        color: "orange",
+      }
+    ];
+    // Find POS index
+    const posIndex = visibleActions.findIndex(a => a.id === 'pos');
+    visibleActions.splice(posIndex + 1, 0, ...restaurantActions);
+  }
 
   return (
     <div className="bg-background rounded-xl border border-border/60 shadow-sm p-6">

@@ -96,9 +96,16 @@ export function PosSettings() {
   } = useHardware();
   const [systemPrinters, setSystemPrinters] = useState([]);
   const [serialPorts, setSerialPorts] = useState([]);
-  const [hasFetchedHardware, setHasFetchedHardware] = useState(false);
 
-
+  // Fetch all hardware when QZ is ready
+  useEffect(() => {
+    if (isHardwareReady) {
+      // Printers
+      qz.printers.find().then(setSystemPrinters).catch(console.error);
+      // Serial Ports (Scales/Displays)
+      hardwareService.findSerialPorts().then(setSerialPorts).catch(console.error);
+    }
+  }, [isHardwareReady]);
 
   const isShiftEnabled =
     planFeatures.includes('shift_management') ||
@@ -136,17 +143,6 @@ export function PosSettings() {
     if (config) setActiveTab(config);
   }, [searchParams]);
 
-  // Fetch all hardware when QZ is ready
-  useEffect(() => {
-    if (isHardwareReady && activeTab === 'printer' && !hasFetchedHardware) {
-      // Printers (Filtered physical/active only)
-      hardwareService.findActivePrinters().then(setSystemPrinters).catch(console.error);
-      // Serial Ports (Scales/Displays)
-      hardwareService.findSerialPorts().then(setSerialPorts).catch(console.error);
-      setHasFetchedHardware(true);
-    }
-  }, [isHardwareReady, activeTab, hasFetchedHardware]);
-
   const handleTabChange = (value) => {
     setActiveTab(value);
     const params = new URLSearchParams(searchParams);
@@ -169,6 +165,7 @@ export function PosSettings() {
     autoPrint: true, openCashDrawer: true, autoFeed: true, silentPrint: false, enableMultiplePayments: false,
     enableExtraDiscount: true, defaultExtraDiscountType: "amount",
     posTableColumns: ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"],
+    showProductImage: true,
   });
 
   const [peripherals, setPeripherals] = useState({
@@ -505,6 +502,9 @@ export function PosSettings() {
                   <ToggleRow label="Line Item Discounts" desc="Allow manual adjustments to item prices" checked={formData.showDiscount} onCheckedChange={(c) => updateField('showDiscount', c)} />
                   <ToggleRow label="Fiscal Tax Breakdown" desc="Display tax structural details in cart" checked={formData.showTax} onCheckedChange={(c) => updateField('showTax', c)} />
                   <ToggleRow label="Enable Wholesale Mode" desc="Show wholesale toggle and pricing protocols in workstation" checked={formData.enableWholesale} onCheckedChange={(c) => updateField('enableWholesale', c)} />
+                  {business?.business_type === 'restaurant' && (
+                    <ToggleRow label="Show Product Images" desc="Display images in the restaurant POS grid" checked={formData.showProductImage ?? true} onCheckedChange={(c) => updateField('showProductImage', c)} />
+                  )}
                   <ToggleRow
                     label={
                       <div className="flex items-center gap-2">
@@ -901,7 +901,7 @@ export function PosSettings() {
                   <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-[10px] font-bold">2</div>
                   <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">Preparation & Setup Guide</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-3 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/50">
                     <div className="p-2 w-fit rounded-md bg-emerald-500/10 text-emerald-600 font-bold text-[10px] uppercase">Step 01</div>
@@ -934,80 +934,144 @@ export function PosSettings() {
                   </div>
                 </div>
               </div>
-          )}
+            )}
 
-          {/* STAGE 3: Device Configuration */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 px-1">
-              <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-[10px] font-bold">
-                {isHardwareReady ? "2" : "3"}
+            {/* STAGE 3: Device Configuration */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-[10px] font-bold">
+                  {isHardwareReady ? "2" : "3"}
+                </div>
+                <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">Device Configuration</h3>
               </div>
-              <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">Device Configuration</h3>
-            </div>
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-              <div className="xl:col-span-8 space-y-6">
-                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
-                  <CardContent className="p-6">
-                    <SectionHeader icon={Printer} title="Primary Receipt Printer" description="Select and calibrate your physical thermal printer for silent checkout" />
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <div className="xl:col-span-8 space-y-6">
+                  <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
+                    <CardContent className="p-6">
+                      <SectionHeader icon={Printer} title="Primary Receipt Printer" description="Select and calibrate your physical thermal printer for silent checkout" />
 
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Selected Device</Label>
-                          <Select
-                            value={selectedPrinter || ""}
-                            onValueChange={pickPrinter}
-                            disabled={!isHardwareReady}
-                          >
-                            <SelectTrigger className="h-10 bg-slate-50/50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 text-[13px] font-medium shadow-none">
-                              <SelectValue placeholder={isHardwareReady ? "Select a printer..." : "Waiting for service..."} />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60">
-                              {systemPrinters.length > 0 ? (
-                                systemPrinters.map(p => (
-                                  <SelectItem key={p} value={p} className="text-[13px] font-medium">{p}</SelectItem>
-                                ))
-                              ) : (
-                                <div className="p-4 text-center text-[12px] text-slate-500">No printers detected on this computer</div>
-                              )}
-                            </SelectContent>
-                          </Select>
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Selected Device</Label>
+                            <Select
+                              value={selectedPrinter || ""}
+                              onValueChange={pickPrinter}
+                              disabled={!isHardwareReady}
+                            >
+                              <SelectTrigger className="h-10 bg-slate-50/50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 text-[13px] font-medium shadow-none">
+                                <SelectValue placeholder={isHardwareReady ? "Select a printer..." : "Waiting for service..."} />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-60">
+                                {systemPrinters.length > 0 ? (
+                                  systemPrinters.map(p => (
+                                    <SelectItem key={p} value={p} className="text-[13px] font-medium">{p}</SelectItem>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-center text-[12px] text-slate-500">No printers detected on this computer</div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Device Identifier</Label>
+                            <div className="h-10 px-3 flex items-center bg-slate-50/50 dark:bg-slate-950/30 rounded-md border border-dashed border-slate-200 dark:border-slate-800">
+                              <span className="text-[13px] font-mono font-medium text-slate-900 dark:text-slate-100">
+                                {selectedPrinter || "UNBOUND"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Device Identifier</Label>
-                          <div className="h-10 px-3 flex items-center bg-slate-50/50 dark:bg-slate-950/30 rounded-md border border-dashed border-slate-200 dark:border-slate-800">
-                            <span className="text-[13px] font-mono font-medium text-slate-900 dark:text-slate-100">
-                              {selectedPrinter || "UNBOUND"}
-                            </span>
+                        <div className="pt-6 border-t border-slate-100 dark:border-slate-800/50">
+                          <SectionHeader icon={Settings2} title="Auto-Peripheral Actions" description="Configure automatic structural triggers for physical hardware" />
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
+                            <ToggleRow label="Auto-Print Settlement" desc="Trigger printer immediately after payment" checked={formData.autoPrint} onCheckedChange={(c) => updateField('autoPrint', c)} />
+                            <ToggleRow label="Kick Drawer Basis" desc="Trigger cash drawer RJ11 pulse on sale" checked={formData.openCashDrawer} onCheckedChange={(c) => updateField('openCashDrawer', c)} />
+                            <ToggleRow label="Auto-Advance Feed" desc="Perform paper feed after document cut" checked={formData.autoFeed} onCheckedChange={(c) => updateField('autoFeed', c)} />
+                            <ToggleRow label="Silent Receipt Basis" desc="Skip system print dialog (Experimental)" checked={formData.silentPrint} onCheckedChange={(c) => updateField('silentPrint', c)} />
                           </div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
 
-                      <div className="pt-6 border-t border-slate-100 dark:border-slate-800/50">
-                        <SectionHeader icon={Settings2} title="Auto-Peripheral Actions" description="Configure automatic structural triggers for physical hardware" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
-                          <ToggleRow label="Auto-Print Settlement" desc="Trigger printer immediately after payment" checked={formData.autoPrint} onCheckedChange={(c) => updateField('autoPrint', c)} />
-                          <ToggleRow label="Kick Drawer Basis" desc="Trigger cash drawer RJ11 pulse on sale" checked={formData.openCashDrawer} onCheckedChange={(c) => updateField('openCashDrawer', c)} />
-                          <ToggleRow label="Auto-Advance Feed" desc="Perform paper feed after document cut" checked={formData.autoFeed} onCheckedChange={(c) => updateField('autoFeed', c)} />
-                          <ToggleRow label="Silent Receipt Basis" desc="Skip system print dialog (Experimental)" checked={formData.silentPrint} onCheckedChange={(c) => updateField('silentPrint', c)} />
+                  <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
+                    <CardContent className="p-6">
+                      <SectionHeader icon={Fullscreen} title="Digital Weight Scale" description="Connect an RS232/USB scale to automatically read item weights" />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Scale COM Port</Label>
+                            <Select
+                              value={selectedScalePort || ""}
+                              onValueChange={pickScalePort}
+                              disabled={!isHardwareReady}
+                            >
+                              <SelectTrigger className="h-10 bg-slate-50/50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 text-[13px] font-medium shadow-none">
+                                <SelectValue placeholder="Select COM port..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {serialPorts.length > 0 ? serialPorts.map(port => (
+                                  <SelectItem key={port} value={port} className="text-[13px] font-medium">{port}</SelectItem>
+                                )) : (
+                                  <div className="p-4 text-center text-[12px] text-slate-500">No COM ports detected</div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-10 flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-[12px] font-medium shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
+                              onClick={startScaleListening}
+                              disabled={!selectedScalePort}
+                            >
+                              <Activity className="w-3.5 h-3.5 mr-2 text-emerald-600" />
+                              Start Listening
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-10 flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-[12px] font-medium shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
+                              onClick={stopScaleListening}
+                              disabled={!selectedScalePort}
+                            >
+                              <RotateCcw className="w-3.5 h-3.5 mr-2 text-red-500" />
+                              Stop
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 flex flex-col">
+                          <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Live Weight Reading</Label>
+                          <div className="flex-1 flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-inner min-h-[92px]">
+                            <span className={cn(
+                              "text-3xl font-mono font-medium transition-all",
+                              currentWeight > 0 ? "text-emerald-600 dark:text-emerald-500" : "text-slate-800 dark:text-slate-200"
+                            )}>
+                              {currentWeight.toFixed(3)}
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-500 mt-1 uppercase tracking-wider">Kilograms (KG)</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
-                  <CardContent className="p-6">
-                    <SectionHeader icon={Fullscreen} title="Digital Weight Scale" description="Connect an RS232/USB scale to automatically read item weights" />
+                  <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
+                    <CardContent className="p-6">
+                      <SectionHeader icon={LayoutGrid} title="Customer Pole Display" description="Synchronize real-time cart totals to a physical VFD display" />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Scale COM Port</Label>
+                          <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Display COM Port</Label>
                           <Select
-                            value={selectedScalePort || ""}
-                            onValueChange={pickScalePort}
+                            value={selectedDisplayPort || ""}
+                            onValueChange={pickDisplayPort}
                             disabled={!isHardwareReady}
                           >
                             <SelectTrigger className="h-10 bg-slate-50/50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 text-[13px] font-medium shadow-none">
@@ -1022,151 +1086,87 @@ export function PosSettings() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-end">
                           <Button
                             variant="outline"
-                            size="sm"
-                            className="h-10 flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-[12px] font-medium shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
-                            onClick={startScaleListening}
-                            disabled={!selectedScalePort}
+                            className="h-10 w-full border-dashed border-slate-200 dark:border-slate-800 text-[12px] font-medium hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all shadow-none disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
+                            onClick={async () => {
+                              toast.loading("Sending test message...");
+                              await updateDisplay("INZEEDO POS", "READY TO SERVE");
+                              toast.dismiss();
+                              toast.success("Message sent to pole display");
+                            }}
+                            disabled={!selectedDisplayPort}
                           >
-                            <Activity className="w-3.5 h-3.5 mr-2 text-emerald-600" />
-                            Start Listening
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-[12px] font-medium shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
-                            onClick={stopScaleListening}
-                            disabled={!selectedScalePort}
-                          >
-                            <RotateCcw className="w-3.5 h-3.5 mr-2 text-red-500" />
-                            Stop
+                            <Monitor className="w-3.5 h-3.5 mr-2 text-blue-600" />
+                            Test Welcome Message
                           </Button>
                         </div>
                       </div>
-
-                      <div className="space-y-1.5 flex flex-col">
-                        <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Live Weight Reading</Label>
-                        <div className="flex-1 flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-inner min-h-[92px]">
-                          <span className={cn(
-                            "text-3xl font-mono font-medium transition-all",
-                            currentWeight > 0 ? "text-emerald-600 dark:text-emerald-500" : "text-slate-800 dark:text-slate-200"
-                          )}>
-                            {currentWeight.toFixed(3)}
-                          </span>
-                          <span className="text-[10px] font-medium text-slate-500 mt-1 uppercase tracking-wider">Kilograms (KG)</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
-                  <CardContent className="p-6">
-                    <SectionHeader icon={LayoutGrid} title="Customer Pole Display" description="Synchronize real-time cart totals to a physical VFD display" />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-[12px] font-medium text-slate-600 dark:text-slate-400 px-1">Display COM Port</Label>
-                        <Select
-                          value={selectedDisplayPort || ""}
-                          onValueChange={pickDisplayPort}
-                          disabled={!isHardwareReady}
-                        >
-                          <SelectTrigger className="h-10 bg-slate-50/50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 text-[13px] font-medium shadow-none">
-                            <SelectValue placeholder="Select COM port..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {serialPorts.length > 0 ? serialPorts.map(port => (
-                              <SelectItem key={port} value={port} className="text-[13px] font-medium">{port}</SelectItem>
-                            )) : (
-                              <div className="p-4 text-center text-[12px] text-slate-500">No COM ports detected</div>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          variant="outline"
-                          className="h-10 w-full border-dashed border-slate-200 dark:border-slate-800 text-[12px] font-medium hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all shadow-none disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
-                          onClick={async () => {
-                            toast.loading("Sending test message...");
-                            await updateDisplay("INZEEDO POS", "READY TO SERVE");
-                            toast.dismiss();
-                            toast.success("Message sent to pole display");
-                          }}
-                          disabled={!selectedDisplayPort}
-                        >
-                          <Monitor className="w-3.5 h-3.5 mr-2 text-blue-600" />
-                          Test Welcome Message
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* STAGE 4: Hardware Diagnostics */}
-              <div className="xl:col-span-4 space-y-4">
-                <div className="flex items-center gap-2 mb-2 px-1">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-[10px] font-bold">
-                    {isHardwareReady ? "3" : "4"}
-                  </div>
-                  <h4 className="text-[12px] font-medium text-slate-600 dark:text-slate-400">Hardware Diagnostics</h4>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                <Button
-                  onClick={async () => {
-                    const html = printRef.current.innerHTML;
-                    toast.loading("Sending test print pulse...");
-                    const success = await printReceipt(html);
-                    if (success) toast.success("Test receipt printed successfully");
-                  }}
-                  disabled={!isHardwareReady || !selectedPrinter}
-                  variant="outline"
-                  className="w-full h-[52px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-between px-4 transition-all shadow-sm group disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Printer className="w-4 h-4 text-slate-500 group-hover:text-emerald-600 transition-colors" />
-                    <div className="text-left flex flex-col justify-center">
-                      <span className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-emerald-600 transition-colors">Print Test Page</span>
-                      <span className="block text-[11px] text-slate-500 font-medium mt-0.5">Verify alignment & contrast</span>
+                {/* STAGE 4: Hardware Diagnostics */}
+                <div className="xl:col-span-4 space-y-4">
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-[10px] font-bold">
+                      {isHardwareReady ? "3" : "4"}
                     </div>
+                    <h4 className="text-[12px] font-medium text-slate-600 dark:text-slate-400">Hardware Diagnostics</h4>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-emerald-600 transition-colors" />
-                </Button>
 
-                <Button
-                  onClick={async () => {
-                    toast.loading("Sending drawer kick signal...");
-                    await openDrawer();
-                    toast.success("Cash drawer signal verified");
-                  }}
-                  disabled={!isHardwareReady || !selectedPrinter}
-                  variant="outline"
-                  className="w-full h-[52px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-between px-4 transition-all shadow-sm group disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-4 h-4 text-slate-500 group-hover:text-amber-600 transition-colors" />
-                    <div className="text-left flex flex-col justify-center">
-                      <span className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-amber-600 transition-colors">Pulse Cash Drawer</span>
-                      <span className="block text-[11px] text-slate-500 font-medium mt-0.5">Test physical RJ11 trigger</span>
+                  <Button
+                    onClick={async () => {
+                      const html = printRef.current.innerHTML;
+                      toast.loading("Sending test print pulse...");
+                      const success = await printReceipt(html);
+                      if (success) toast.success("Test receipt printed successfully");
+                    }}
+                    disabled={!isHardwareReady || !selectedPrinter}
+                    variant="outline"
+                    className="w-full h-[52px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-between px-4 transition-all shadow-sm group disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Printer className="w-4 h-4 text-slate-500 group-hover:text-emerald-600 transition-colors" />
+                      <div className="text-left flex flex-col justify-center">
+                        <span className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-emerald-600 transition-colors">Print Test Page</span>
+                        <span className="block text-[11px] text-slate-500 font-medium mt-0.5">Verify alignment & contrast</span>
+                      </div>
                     </div>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-600 transition-colors" />
-                </Button>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-emerald-600 transition-colors" />
+                  </Button>
 
-                <div className="mt-4 p-5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 opacity-5"><ShieldCheck className="w-16 h-16 text-emerald-600" /></div>
-                  <h5 className="text-[12px] font-medium text-emerald-600 dark:text-emerald-500 mb-1.5">Security: Hardware Locked</h5>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                    Hardware signals are encrypted and transmitted locally. No data leaves your workstation during peripheral communication.
-                  </p>
+                  <Button
+                    onClick={async () => {
+                      toast.loading("Sending drawer kick signal...");
+                      await openDrawer();
+                      toast.success("Cash drawer signal verified");
+                    }}
+                    disabled={!isHardwareReady || !selectedPrinter}
+                    variant="outline"
+                    className="w-full h-[52px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 rounded-xl flex items-center justify-between px-4 transition-all shadow-sm group disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-4 h-4 text-slate-500 group-hover:text-amber-600 transition-colors" />
+                      <div className="text-left flex flex-col justify-center">
+                        <span className="block text-[13px] font-medium text-slate-700 dark:text-slate-300 group-hover:text-amber-600 transition-colors">Pulse Cash Drawer</span>
+                        <span className="block text-[11px] text-slate-500 font-medium mt-0.5">Test physical RJ11 trigger</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-600 transition-colors" />
+                  </Button>
+
+                  <div className="mt-4 p-5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 opacity-5"><ShieldCheck className="w-16 h-16 text-emerald-600" /></div>
+                    <h5 className="text-[12px] font-medium text-emerald-600 dark:text-emerald-500 mb-1.5">Security: Hardware Locked</h5>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                      Hardware signals are encrypted and transmitted locally. No data leaves your workstation during peripheral communication.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           </div>
         </TabsContent>
 

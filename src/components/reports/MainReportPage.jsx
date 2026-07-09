@@ -21,7 +21,7 @@ import {
   UtensilsCrossed
 } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { Gift } from "lucide-react";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
