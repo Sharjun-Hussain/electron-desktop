@@ -1,8 +1,8 @@
 {
   "name": "Inzeedo-pos",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "private": true,
-  "description": "Developed By : Inzeedo (PVT) Ltd. for Eminense Soft Solution (PVT) Ltd.",
+  "description": "Developed By : Inzeedo (PVT) Ltd",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
