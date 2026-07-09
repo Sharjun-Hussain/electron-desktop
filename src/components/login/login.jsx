@@ -3,7 +3,7 @@
 import React, { useState, memo, Suspense, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "@/components/auth/DesktopAuthProvider";
+import { desktopLogin } from "@/lib/desktop-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -208,11 +208,7 @@ function LoginForm() {
       });
 
       try {
-        const result = await signIn("credentials", {
-          redirect: false,
-          email: values.email,
-          password: values.password,
-        });
+        const result = await desktopLogin(values.email, values.password);
 
         if (result?.error) {
           toast.error("Invalid Credentials");
@@ -236,8 +232,7 @@ function LoginForm() {
 
           setTimeout(() => {
             const returnUrl = searchParams.get("redirect") || "/";
-            router.push(returnUrl);
-            router.refresh();
+            window.location.href = returnUrl;
           }, 600);
           return;
         }
