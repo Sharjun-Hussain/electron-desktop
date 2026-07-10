@@ -297,6 +297,8 @@ export default function DirectGRNPage() {
     name: "items",
   });
 
+  const loadedDraftIdRef = useRef(null);
+
   // Load Draft on Mount
   useEffect(() => {
     async function loadDraft() {
@@ -305,6 +307,9 @@ export default function DirectGRNPage() {
       const isLocalParam = searchParams.get("local") === "true";
 
       if (draftIdParam) {
+        if (loadedDraftIdRef.current === draftIdParam) return;
+        loadedDraftIdRef.current = draftIdParam;
+        
         setCurrentDraftId(draftIdParam);
         
         if (isLocalParam && typeof window !== "undefined") {
@@ -355,6 +360,9 @@ export default function DirectGRNPage() {
           console.error("Failed to fetch draft", e);
         }
       } else {
+        if (loadedDraftIdRef.current === 'new') return;
+        loadedDraftIdRef.current = 'new';
+        
         // Generate a new draft ID if none in URL
         setCurrentDraftId(crypto.randomUUID ? crypto.randomUUID() : Date.now().toString());
       }
