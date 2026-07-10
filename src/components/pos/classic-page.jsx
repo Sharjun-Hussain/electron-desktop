@@ -336,12 +336,19 @@ export default function ClassicPosPage() {
     }
   }, [printableSale, handleStandardPrint, posResponse]);
 
+  const isPrintingRef = useRef(false);
+
   useEffect(() => {
     if (printableSale) {
+      if (isPrintingRef.current) return;
+      isPrintingRef.current = true;
+
       const t = setTimeout(() => { if (printRef.current) handlePrint(); }, 500);
       return () => clearTimeout(t);
+    } else {
+      isPrintingRef.current = false;
     }
-  }, [printableSale, handlePrint]);
+  }, [printableSale]);
 
   // Auto-fetch hold sales on load
   useEffect(() => {

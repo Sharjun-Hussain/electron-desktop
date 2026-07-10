@@ -231,8 +231,16 @@ export default function RestaurantPosPage() {
     onAfterPrint: () => setPrintableSale(null),
   });
 
+  const handlePrintRef = useRef(handlePrint);
+  useEffect(() => { handlePrintRef.current = handlePrint; });
+
+  const isPrintingRef = useRef(false);
+
   useEffect(() => {
     if (printableSale) {
+      if (isPrintingRef.current) return;
+      isPrintingRef.current = true;
+
       // If hardware is ready, print SILENTLY and INSTANTLY
       if (isHardwareReady && printRef.current) {
         const printSilently = async () => {
@@ -241,7 +249,7 @@ export default function RestaurantPosPage() {
           if (success) {
             setPrintableSale(null); // Clear immediately so no preview shows
           } else {
-            handlePrint(); // Fallback to browser if silent failed
+            handlePrintRef.current(); // Fallback to browser if silent failed
           }
         };
         printSilently();
@@ -251,12 +259,14 @@ export default function RestaurantPosPage() {
       // If no hardware, use browser print with a small delay for rendering
       const t = setTimeout(() => {
         if (printRef.current) {
-          handlePrint();
+          handlePrintRef.current();
         }
       }, 500);
       return () => clearTimeout(t);
+    } else {
+      isPrintingRef.current = false;
     }
-  }, [printableSale, handlePrint, isHardwareReady, printReceipt]);
+  }, [printableSale, isHardwareReady, printReceipt]);
 
   const handlePayNow = useCallback((args) => {
     setPendingPaymentArgs(args);
