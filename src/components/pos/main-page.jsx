@@ -751,6 +751,7 @@ export default function PosPage() {
           else if (key === 'saleList') { setActiveDialog('saleList'); fetchSales("completed"); }
           else if (key === 'checkStock' || key === 'stock') { setActiveDialog('stock'); clearStockData(); setStockSearch(""); }
           else if (key === 'reports') router.push("/reports");
+          else if (key === 'salesByProduct') window.open("/reports/sales/product", "_blank");
           else if (key === 'purchase') router.push("/purchase/suppliers");
           else if (key === 'inventory') router.push("/products");
         }}

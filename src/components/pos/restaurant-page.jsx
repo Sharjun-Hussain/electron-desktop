@@ -474,6 +474,9 @@ export default function RestaurantPosPage() {
       case "reports":
         router.push("/reports");
         break;
+      case "salesByProduct":
+        window.open("/reports/sales/product", "_blank");
+        break;
       case "inventory":
         router.push("/products");
         break;
@@ -1215,6 +1218,11 @@ export default function RestaurantPosPage() {
                         netTotal,
                         taxAmount,
                         itemDiscounts,
+                        adjustment: 0,
+                        generalDiscount: 0,
+                        generalDiscountAmt: 0,
+                        wholesaleDiscount: 0,
+                        selectedEmployeeIds: [],
                         dining_type: activeDiningType,
                         dining_table_id: manualTableId || queryTableId,
                         waiter_id: null,

@@ -9,6 +9,19 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
   return (
     <div style={{ display: "none" }}>
       <div ref={ref}>
+        <style type="text/css" media="print">{`
+          @page { margin: 4mm; }
+          * {
+            font-family: monospace !important;
+            font-weight: 600 !important;
+            color: #000 !important;
+            -webkit-font-smoothing: none !important;
+            text-rendering: optimizeSpeed !important;
+          }
+          th, h1, h2, h3, .font-bold, .font-black {
+            font-weight: 900 !important;
+          }
+        `}</style>
         <ReportLayout 
           title="Sales by Product Report" 
           subtitle="Detailed performance tracking across inventory classifications"
@@ -51,21 +64,21 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                 {selectedColumns?.profit !== false && <th className="py-3 px-2 font-bold text-right">Profit</th>}
               </tr>
             </thead>
-            <tbody className="text-[11px]">
+            <tbody className="text-[12px] font-bold">
               {data.map((item, index) => (
                 <tr key={index} className="break-inside-avoid">
-                  {selectedColumns?.skuEntity !== false && <td className="font-medium">{item.name}</td>}
-                  {selectedColumns?.skuEntity !== false && <td className="text-slate-500">{item.sku}</td>}
-                  {selectedColumns?.batch !== false && <td className="text-slate-500">
+                  {selectedColumns?.skuEntity !== false && <td className="font-bold">{item.name}</td>}
+                  {selectedColumns?.skuEntity !== false && <td className="font-semibold">{item.sku}</td>}
+                  {selectedColumns?.batch !== false && <td className="font-semibold">
                     <div>{item.batch !== 'N/A' ? item.batch : '-'}</div>
                     {item.expiry !== 'N/A' && <div className="text-[9px]">{item.expiry}</div>}
                   </td>}
-                  {selectedColumns?.quantity !== false && <td className="text-right">{(item.sold || 0)}</td>}
-                  {selectedColumns?.cost !== false && <td className="text-right text-slate-600">{formatCurrency(item.cost_price || 0)}</td>}
-                  {selectedColumns?.mrp !== false && <td className="text-right text-slate-600">{formatCurrency(item.mrp_price || 0)}</td>}
-                  {selectedColumns?.wholesale !== false && <td className="text-right text-slate-600">{formatCurrency(item.wholesale_price || 0)}</td>}
-                  {selectedColumns?.sellingPrice !== false && <td className="text-right text-slate-600">{formatCurrency(item.selling_price || 0)}</td>}
-                  {selectedColumns?.revenue !== false && <td className="text-right font-medium">{formatCurrency(item.sales || 0)}</td>}
+                  {selectedColumns?.quantity !== false && <td className="text-right font-bold">{(item.sold || 0)}</td>}
+                  {selectedColumns?.cost !== false && <td className="text-right font-semibold">{formatCurrency(item.cost_price || 0)}</td>}
+                  {selectedColumns?.mrp !== false && <td className="text-right font-semibold">{formatCurrency(item.mrp_price || 0)}</td>}
+                  {selectedColumns?.wholesale !== false && <td className="text-right font-semibold">{formatCurrency(item.wholesale_price || 0)}</td>}
+                  {selectedColumns?.sellingPrice !== false && <td className="text-right font-semibold">{formatCurrency(item.selling_price || 0)}</td>}
+                  {selectedColumns?.revenue !== false && <td className="text-right font-bold">{formatCurrency(item.sales || 0)}</td>}
                   {selectedColumns?.profit !== false && <td className="text-right font-bold text-emerald-700">{formatCurrency(item.profit || 0)}</td>}
                 </tr>
               ))}

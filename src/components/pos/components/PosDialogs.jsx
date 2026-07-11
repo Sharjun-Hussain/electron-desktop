@@ -1020,7 +1020,7 @@ export const PaymentDialog = memo(({
                 className="w-4 h-4 rounded border-border/40 text-violet-600 focus:ring-violet-500/20"
               />
               <label htmlFor="sendToKitchen" className="text-xs font-bold text-slate-700 cursor-pointer uppercase">
-                Send to Kitchen (Print Kitchen Slip)
+                Print Kitchen Slip
               </label>
             </div>
           )}

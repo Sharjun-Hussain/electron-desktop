@@ -195,7 +195,7 @@ export function usePosActions({
 
       const totalPaid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
-      if (isWalkIn && Math.round(totalPaid * 100) < Math.round(netTotal * 100)) {
+      if (isWalkIn && totalPaid < netTotal - 0.01) {
         toast.error("Walk-in (Guest) customers must pay in full.");
         return;
       }
@@ -268,7 +268,7 @@ export function usePosActions({
         dining_type: dining_type || 'takeaway',
         dining_table_id: dining_table_id || null,
         waiter_id: waiter_id || null,
-        send_to_kitchen: sendToKitchen
+        send_to_kitchen: true // Always notify API; sendToKitchen only controls print
       };
 
       // --- OFFLINE-FIRST & FIFO LOGIC ---
