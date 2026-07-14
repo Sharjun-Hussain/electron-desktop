@@ -340,27 +340,42 @@ export const CheckoutPanel = memo(forwardRef(({
               )}
             </div>
 
-            <div className="relative group/pay">
+            <div className={clsx("relative group/pay", cart.length === 0 && "cursor-not-allowed")}>
               <Button
                 ref={payNowRef}
                 id="pos-pay-now-btn"
-                className="h-14 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl rounded-2xl transition-all active:scale-[0.98] shadow-xl shadow-emerald-500/10 uppercase tracking-widest"
-                onClick={() => handlePayNow({
-                  netTotal,
-                  adjustment,
-                  generalDiscount,
-                  wholesaleDiscount,
-                  selectedEmployeeIds,
-                  distributor_id: distributorId,
-                  payments,
-                  chequeDetails,
-                  onSuccess: resetCheckout,
-                })}
+                disabled={cart.length === 0}
+                className={clsx(
+                  "h-14 w-full font-black text-xl rounded-2xl transition-all uppercase tracking-widest",
+                  cart.length === 0 
+                    ? "bg-emerald-600/50 text-white/70 shadow-none pointer-events-none" 
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] shadow-xl shadow-emerald-500/10"
+                )}
+                onClick={(e) => {
+                  if (cart.length === 0) {
+                    e.preventDefault();
+                    return;
+                  }
+                  handlePayNow({
+                    netTotal,
+                    adjustment,
+                    generalDiscount,
+                    wholesaleDiscount,
+                    selectedEmployeeIds,
+                    distributor_id: distributorId,
+                    payments,
+                    chequeDetails,
+                    onSuccess: resetCheckout,
+                  });
+                }}
               >
                 Pay Now
               </Button>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <kbd className="h-7 min-w-[32px] px-2 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-lg border border-white/30 text-[10px] font-black text-white shadow-sm uppercase tracking-tighter">
+                <kbd className={clsx(
+                  "h-7 min-w-[32px] px-2 flex items-center justify-center backdrop-blur-md rounded-lg border text-[10px] font-black shadow-sm uppercase tracking-tighter",
+                  cart.length === 0 ? "bg-white/10 border-white/10 text-white/50" : "bg-white/20 border-white/30 text-white"
+                )}>
                   F12
                 </kbd>
               </div>

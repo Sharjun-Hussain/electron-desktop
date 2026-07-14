@@ -802,6 +802,7 @@ export const PaymentDialog = memo(({
   enableMultiplePayments = false,
   settings = {},
   isRestaurant = false,
+  entityLabel = "Customer",
 }) => {
   const { t } = useTranslation();
   const [payments, setPayments] = useState([{ id: 1, method: "cash", amount: "" }]);
@@ -892,13 +893,13 @@ export const PaymentDialog = memo(({
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
-                Select Customer (Default: Walk-in)
+                Select {entityLabel} (Default: Walk-in)
               </label>
               <div className="border border-border/40 rounded-xl overflow-hidden bg-muted/5 h-10 flex items-center">
                 <CustomerSelector
                   customers={allCustomers}
                   selectedCustomer={selectedCustomer}
-                  onSelect={onSelectCustomer}
+                  onSelectCustomer={onSelectCustomer}
                   isCompact={true}
                 />
               </div>
@@ -1058,3 +1059,58 @@ export const PaymentDialog = memo(({
   );
 });
 PaymentDialog.displayName = "PaymentDialog";
+
+// ─── Quantity Input Dialog ───────────────────────────────────────────────────
+export const QuantityInputDialog = memo(({ isOpen, onOpenChange, product, onConfirm }) => {
+  const [qty, setQty] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setQty("");
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const handleSubmit = (e) => {
+    e?.preventDefault();
+    const parsed = parseFloat(qty);
+    if (parsed > 0) {
+      onConfirm(parsed);
+      onOpenChange(false);
+    }
+  };
+
+  if (!product) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm p-6 bg-card border-border shadow-2xl rounded-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogHeader className="mb-4 text-center">
+          <DialogTitle className="text-xl font-black text-foreground">Enter Quantity</DialogTitle>
+          <DialogDescription className="text-sm text-emerald-600 mt-1">
+            {product.name} {product.size ? `- ${product.size}` : ''}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input 
+            ref={inputRef}
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min="0.001"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            placeholder="Qty"
+            className="h-16 text-center text-3xl font-black bg-muted/30 border-2 focus-visible:ring-emerald-500/50"
+          />
+          <div className="flex gap-2">
+            <Button type="button" variant="ghost" className="flex-1 h-12 font-bold" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold" disabled={!qty || parseFloat(qty) <= 0}>Add Item</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+});
+QuantityInputDialog.displayName = "QuantityInputDialog";

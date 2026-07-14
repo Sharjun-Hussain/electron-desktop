@@ -224,33 +224,35 @@ export const CartPanel = memo(({
 
       <div className="flex-1 p-4 pt-0 overflow-y-auto bg-background/60">
         {cart.length > 0 ? (
-          <div className="max-w-full mx-auto">
-            {/* Table Header */}
-            <div className="flex items-center gap-x-3 p-2 py-2 sticky top-0 bg-amber-500/10 backdrop-blur-sm z-20 border-b border-amber-500/20 mb-1 rounded-t-lg">
-              <div className="flex-1 text-[12px] font-bold text-amber-700 uppercase tracking-tight">Product</div>
-              <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">MRP</div>
-              <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Price</div>
-              <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Qty</div>
-              <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Disc %</div>
-              <div className="w-16 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Manual</div>
-              <div className="w-24 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Amount</div>
-              <div className="w-6" />
-            </div>
+          <div className="max-w-full mx-auto overflow-x-auto pb-4">
+            <div className="min-w-[550px]">
+              {/* Table Header */}
+              <div className="flex items-center gap-x-3 p-2 py-2 sticky top-0 bg-amber-500/10 backdrop-blur-sm z-20 border-b border-amber-500/20 mb-1 rounded-t-lg">
+                <div className="flex-1 text-[12px] font-bold text-amber-700 uppercase tracking-tight">Product</div>
+                <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">MRP</div>
+                <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Price</div>
+                <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Qty</div>
+                <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Disc %</div>
+                <div className="w-16 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Manual</div>
+                <div className="w-24 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Amount</div>
+                <div className="w-6" />
+              </div>
 
-            <div className="space-y-1">
-              {cart.map((item) => (
-                <CartItemCard
-                  key={item.id}
-                  item={item}
-                  dispatch={dispatch}
-                  onEnterPress={onEnterPress}
-                  isRestaurant={isRestaurant}
-                  ref={(el) => {
-                    if (el) cartItemRefs.current.set(item.id, el);
-                    else cartItemRefs.current.delete(item.id);
-                  }}
-                />
-              ))}
+              <div className="space-y-1">
+                {cart.map((item) => (
+                  <CartItemCard
+                    key={item.id}
+                    item={item}
+                    dispatch={dispatch}
+                    onEnterPress={onEnterPress}
+                    isRestaurant={isRestaurant}
+                    ref={(el) => {
+                      if (el) cartItemRefs.current.set(item.id, el);
+                      else cartItemRefs.current.delete(item.id);
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ) : (

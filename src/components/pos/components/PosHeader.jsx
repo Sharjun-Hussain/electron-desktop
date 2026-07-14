@@ -4,7 +4,8 @@ import { memo, useState, useEffect, useRef } from "react";
 import {
   ArrowLeft, Sun, Moon, ShoppingCart, Store, Wallet,
   ChevronDown, Check, UserMinus, Gift, Plus, Network, LayoutGrid, Maximize2, Search,
-  Calculator, Maximize, Minimize, Trash2, Zap, UtensilsCrossed
+  Calculator, Maximize, Minimize, Trash2, Zap, UtensilsCrossed,
+  FileText, Receipt
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -243,7 +244,9 @@ export const PosHeader = memo(({
   onAddToCart,
   onForceReset,
   isOnline = true,
-  isHardwareReady = false
+  isHardwareReady = false,
+  receiptSettings,
+  setReceiptSettings
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -531,6 +534,34 @@ export const PosHeader = memo(({
               <Trash2 className="h-3.5 w-3.5" />
               Clear
             </button>
+
+            {receiptSettings && setReceiptSettings && isManufacturing && (
+              <>
+                <div className="h-4 w-[1px] bg-border/40 mx-1 hidden md:block" />
+                <div className="hidden md:flex items-center bg-muted/30 p-1 rounded-xl border border-border/40 shrink-0">
+                  <Button
+                    variant={receiptSettings?.invoiceTemplate === 'a4_professional' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-7 px-3 text-[10px] rounded-lg font-bold tracking-wide transition-all shadow-none"
+                    onClick={() => setReceiptSettings({ ...receiptSettings, invoiceTemplate: 'a4_professional' })}
+                    title="A4 Document"
+                  >
+                    <FileText className="w-3 h-3 mr-1.5" />
+                    A4
+                  </Button>
+                  <Button
+                    variant={receiptSettings?.invoiceTemplate !== 'a4_professional' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-7 px-3 text-[10px] rounded-lg font-bold tracking-wide transition-all shadow-none"
+                    onClick={() => setReceiptSettings({ ...receiptSettings, invoiceTemplate: 'thermal' })}
+                    title="Thermal Slip"
+                  >
+                    <Receipt className="w-3 h-3 mr-1.5" />
+                    Thermal
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

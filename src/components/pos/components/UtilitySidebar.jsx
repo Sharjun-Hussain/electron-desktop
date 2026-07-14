@@ -1,10 +1,10 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   History, List, FileText, Search,
-  BarChart3, ShoppingCart, Package, Zap, TrendingUp
+  BarChart3, ShoppingCart, Package, Zap, TrendingUp, CreditCard
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,17 @@ const UTILITY_ACTIONS = [
   { label: "Inventory", key: "inventory", icon: Package, color: "text-slate-500", bg: "bg-slate-500/10" },
 ];
 
-export const UtilitySidebar = memo(({ onAction, cartEmpty, isRestaurant }) => {
+export const UtilitySidebar = memo(({ onAction, cartEmpty, isRestaurant, isManufacturing }) => {
+  const actions = useMemo(() => {
+    if (isManufacturing) {
+      return [
+        ...UTILITY_ACTIONS.filter(a => a.key !== 'openDrawer' && a.key !== 'checkStock' && a.key !== 'salesByProduct'),
+        { label: "Check Credit", key: "checkCredit", icon: CreditCard, color: "text-indigo-500", bg: "bg-indigo-500/10" }
+      ];
+    }
+    return UTILITY_ACTIONS;
+  }, [isManufacturing]);
+
   return (
     <aside className={cn(
       "fixed right-0 bottom-0 z-40 w-24 flex flex-col items-center py-2 bg-card/95 backdrop-blur-2xl border-l border-border/40 shadow-[-15px_0_40px_-20px_rgba(0,0,0,0.15)] overflow-y-auto custom-scrollbar",
@@ -28,7 +38,7 @@ export const UtilitySidebar = memo(({ onAction, cartEmpty, isRestaurant }) => {
     )}>
       <div className="flex-1 flex flex-col justify-center space-y-6 w-full px-2">
         <TooltipProvider delayDuration={0}>
-          {UTILITY_ACTIONS.map((action) => {
+          {actions.map((action) => {
             const Icon = action.icon;
 
             return (
@@ -49,8 +59,18 @@ export const UtilitySidebar = memo(({ onAction, cartEmpty, isRestaurant }) => {
                       <Icon size={24} className="min-w-8 min-h-8" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="left" className="font-bold bg-slate-900 text-white border-none shadow-xl">
-                    {action.label} {action.shortcut && `(${action.shortcut})`}
+                  <TooltipContent 
+                    side="left" 
+                    sideOffset={15}
+                    hideArrow
+                    className="font-semibold bg-slate-900/95 backdrop-blur-md text-white border border-white/10 shadow-2xl rounded-xl px-3.5 py-2 text-xs tracking-wide flex items-center gap-2"
+                  >
+                    <span>{action.label}</span>
+                    {action.shortcut && (
+                      <span className="opacity-50 text-[10px] font-mono tracking-tighter bg-white/10 px-1.5 py-0.5 rounded-md">
+                        {action.shortcut}
+                      </span>
+                    )}
                   </TooltipContent>
                 </Tooltip>
 
