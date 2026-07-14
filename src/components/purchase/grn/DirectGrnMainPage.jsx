@@ -76,6 +76,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ProductForm } from "@/components/products/new/product-form";
 import { AddSupplierSheet as CreateSupplierSheet } from "@/components/purchase/suppliers/AddSupplierSheet";
 import { useMemo, useRef } from "react";
 
@@ -233,6 +234,10 @@ export default function DirectGRNPage() {
   const [products, setProducts] = useState([]);
   const [newItemAdded, setNewItemAdded] = useState(false);
 
+  const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
+  const [prefillProductData, setPrefillProductData] = useState(null);
+  const [pendingItemIndex, setPendingItemIndex] = useState(null);
+
   const [barcodeInput, setBarcodeInput] = useState("");
   const [notFoundBarcode, setNotFoundBarcode] = useState(null);
   const [multipleMatches, setMultipleMatches] = useState([]);
@@ -282,7 +287,7 @@ export default function DirectGRNPage() {
           freeQty: 0,
           unitCost: 0,
           wholesalePrice: 0,
-          profitMargin: 30,
+          profitMargin: 0,
           mrpPrice: 0,
           sellingPrice: 0,
           batchNumber: "",
@@ -578,7 +583,7 @@ export default function DirectGRNPage() {
           freeQty: 0,
           unitCost: 0,
           wholesalePrice: 0,
-          profitMargin: 30,
+          profitMargin: 0,
           mrpPrice: 0,
           sellingPrice: 0,
           batchNumber: "",
@@ -598,6 +603,69 @@ export default function DirectGRNPage() {
     }
   }, [newItemAdded]);
 
+  const handleProductCreated = (newProduct) => {
+    const newVariant = newProduct.variants?.[0] || newProduct;
+    const cost = Number(newVariant.cost_price) || 0;
+    // New product: use saved selling price, or compute 30% margin as default
+    const defaultSelling = Number(newVariant.selling_price) || Number((cost / 0.70).toFixed(2));
+
+    const formattedProduct = {
+      ...newVariant,
+      id: newVariant.id || newProduct.id,
+      product_id: newProduct.id,
+      variant_id: newVariant.id !== newProduct.id ? newVariant.id : null,
+      name: newProduct.name || newVariant.name,
+      sku: newVariant.sku || newVariant.barcode || "",
+      cost_price: cost,
+      selling_price: defaultSelling,
+      wholesale_price: Number(newVariant.wholesale_price) || 0,
+      mrp_price: Number(newVariant.mrp_price) || defaultSelling,
+    };
+
+    // Add to the products list so it can be found by the select
+    setProducts(prev => [...prev, formattedProduct]);
+
+    // Auto-add to form items
+    const currentItems = form.getValues("items");
+    const pId = String(formattedProduct.product_id);
+    const vId = formattedProduct.variant_id ? String(formattedProduct.variant_id) : null;
+
+    if (currentItems.length > 0 && !currentItems[currentItems.length - 1].productId) {
+      const lastIdx = currentItems.length - 1;
+      form.setValue(`items.${lastIdx}.productId`, pId);
+      form.setValue(`items.${lastIdx}.productVariantId`, vId);
+      form.setValue(`items.${lastIdx}.name`, formattedProduct.name);
+      form.setValue(`items.${lastIdx}.sku`, formattedProduct.sku);
+      form.setValue(`items.${lastIdx}.unitCost`, cost);
+      form.setValue(`items.${lastIdx}.wholesalePrice`, formattedProduct.wholesale_price);
+      form.setValue(`items.${lastIdx}.mrpPrice`, formattedProduct.mrp_price);
+      form.setValue(`items.${lastIdx}.sellingPrice`, defaultSelling);
+      form.setValue(`items.${lastIdx}.profitMargin`, cost > 0 && defaultSelling > 0 ? Number((((defaultSelling - cost) / defaultSelling) * 100).toFixed(2)) : 30);
+    } else {
+      append({
+        productId: pId,
+        productVariantId: vId,
+        name: formattedProduct.name,
+        sku: formattedProduct.sku,
+        orderedQty: 0,
+        receivedQty: 1,
+        freeQty: 0,
+        unitCost: cost,
+        wholesalePrice: formattedProduct.wholesale_price,
+        profitMargin: cost > 0 && defaultSelling > 0 ? Number((((defaultSelling - cost) / defaultSelling) * 100).toFixed(2)) : 30,
+        mrpPrice: formattedProduct.mrp_price,
+        sellingPrice: defaultSelling,
+        batchNumber: "",
+        expiryDate: undefined,
+      });
+    }
+
+    setIsCreateProductOpen(false);
+    setPrefillProductData(null);
+    setPendingItemIndex(null);
+    setTimeout(() => document.getElementById("barcode-scanner-input")?.focus(), 100);
+  };
+
   const processBarcodeMatch = (product) => {
     const currentItems = form.getValues("items");
     const pId = String(product.id || product.product_id);
@@ -609,7 +677,13 @@ export default function DirectGRNPage() {
       form.setValue(`items.${existingIndex}.receivedQty`, qty + 1);
     } else {
       const cost = Number(product.cost_price) || 0;
-      const defaultSelling = Number(product.selling_price) || Number((cost / 0.70).toFixed(2));
+      // API returns selling price as 'price' for variants; fall back to selling_price for other shapes
+      const sellingPrice = Number(product.price || product.selling_price) || 0;
+      const mrpPrice = Number(product.mrp_price) || 0;
+      const wholesalePrice = Number(product.wholesale_price) || 0;
+      const profitMargin = cost > 0 && sellingPrice > 0
+        ? Number((((sellingPrice - cost) / sellingPrice) * 100).toFixed(2))
+        : 0;
 
       if (currentItems.length > 0 && !currentItems[currentItems.length - 1].productId) {
         const lastIdx = currentItems.length - 1;
@@ -618,10 +692,10 @@ export default function DirectGRNPage() {
         form.setValue(`items.${lastIdx}.name`, product.name);
         form.setValue(`items.${lastIdx}.sku`, product.sku || product.barcode || "");
         form.setValue(`items.${lastIdx}.unitCost`, cost);
-        form.setValue(`items.${lastIdx}.wholesalePrice`, Number(product.wholesale_price) || 0);
-        form.setValue(`items.${lastIdx}.profitMargin`, cost > 0 && defaultSelling > 0 ? Number((((defaultSelling - cost) / defaultSelling) * 100).toFixed(2)) : 30);
-        form.setValue(`items.${lastIdx}.mrpPrice`, Number(product.mrp_price) || defaultSelling);
-        form.setValue(`items.${lastIdx}.sellingPrice`, defaultSelling);
+        form.setValue(`items.${lastIdx}.wholesalePrice`, wholesalePrice);
+        form.setValue(`items.${lastIdx}.profitMargin`, profitMargin);
+        form.setValue(`items.${lastIdx}.mrpPrice`, mrpPrice);
+        form.setValue(`items.${lastIdx}.sellingPrice`, sellingPrice);
       } else {
         append({
           productId: pId,
@@ -632,10 +706,10 @@ export default function DirectGRNPage() {
           receivedQty: 1,
           freeQty: 0,
           unitCost: cost,
-          wholesalePrice: Number(product.wholesale_price) || 0,
-          profitMargin: cost > 0 && defaultSelling > 0 ? Number((((defaultSelling - cost) / defaultSelling) * 100).toFixed(2)) : 30,
-          mrpPrice: Number(product.mrp_price) || defaultSelling,
-          sellingPrice: defaultSelling,
+          wholesalePrice,
+          profitMargin,
+          mrpPrice,
+          sellingPrice,
           batchNumber: "",
           expiryDate: undefined,
         });
@@ -717,17 +791,23 @@ export default function DirectGRNPage() {
   const handleProductSelect = (index, variantId, product) => {
     if (!product) return;
     const cost = Number(product.cost_price) || 0;
-    const defaultSelling = Number(product.selling_price) || Number((cost / 0.70).toFixed(2));
+    // API returns selling price as 'price' for variants; fall back to selling_price for other shapes
+    const sellingPrice = Number(product.price || product.selling_price) || 0;
+    const mrpPrice = Number(product.mrp_price) || 0;
+    const wholesalePrice = Number(product.wholesale_price) || 0;
+    const profitMargin = cost > 0 && sellingPrice > 0
+      ? Number((((sellingPrice - cost) / sellingPrice) * 100).toFixed(2))
+      : 0;
 
     form.setValue(`items.${index}.productId`, product.product_id || product.id);
     form.setValue(`items.${index}.productVariantId`, product.variant_id || null);
     form.setValue(`items.${index}.name`, product.name);
     form.setValue(`items.${index}.sku`, product.sku || product.barcode || "");
     form.setValue(`items.${index}.unitCost`, cost);
-    form.setValue(`items.${index}.wholesalePrice`, Number(product.wholesale_price) || 0);
-    form.setValue(`items.${index}.profitMargin`, cost > 0 && defaultSelling > 0 ? Number((((defaultSelling - cost) / defaultSelling) * 100).toFixed(2)) : 30);
-    form.setValue(`items.${index}.mrpPrice`, Number(product.mrp_price) || defaultSelling);
-    form.setValue(`items.${index}.sellingPrice`, defaultSelling);
+    form.setValue(`items.${index}.wholesalePrice`, wholesalePrice);
+    form.setValue(`items.${index}.profitMargin`, profitMargin);
+    form.setValue(`items.${index}.mrpPrice`, mrpPrice);
+    form.setValue(`items.${index}.sellingPrice`, sellingPrice);
   };
 
   if (status === "loading" || isDataLoading) {
@@ -1447,22 +1527,59 @@ export default function DirectGRNPage() {
 
       <Dialog open={!!notFoundBarcode} onOpenChange={(open) => !open && setNotFoundBarcode(null)}>
         <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border-border/50 shadow-2xl">
-          <div className="px-6 pt-8 pb-6 bg-red-500/5">
+          <div className="bg-gradient-to-br from-rose-500/10 to-orange-500/5 p-6 border-b border-border/40 text-center flex flex-col items-center pt-8">
+            <div className="h-16 w-16 bg-rose-100 dark:bg-rose-500/20 rounded-full flex items-center justify-center mb-4 shadow-sm border border-rose-200 dark:border-rose-500/30">
+              <Barcode className="h-8 w-8 text-rose-600 dark:text-rose-400" />
+            </div>
             <DialogHeader className="flex flex-col items-center">
               <DialogTitle className="text-2xl font-black text-foreground tracking-tight">Product Not Found</DialogTitle>
               <DialogDescription className="text-sm font-medium text-muted-foreground mt-2 max-w-[85%] text-center leading-relaxed">
-                We couldn"t find any item matching the scanned barcode <strong className="text-foreground bg-muted px-1.5 py-0.5 rounded font-mono mx-1">{notFoundBarcode}</strong> in your inventory system.
+                We couldn&apos;t find any item matching the scanned barcode <strong className="text-foreground bg-muted px-1.5 py-0.5 rounded font-mono mx-1">{notFoundBarcode}</strong> in your inventory system.
               </DialogDescription>
             </DialogHeader>
           </div>
-          <div className="px-6 py-4 bg-muted/10 flex justify-end gap-3 border-t border-border/40">
+          <div className="px-6 py-5 bg-card flex items-center justify-center gap-3 flex-wrap">
             <Button
               variant="outline"
-              className="rounded-xl border-border/60 hover:bg-muted"
+              className="h-11 px-6 font-bold hover:bg-muted/50 transition-colors"
               onClick={() => setNotFoundBarcode(null)}
             >
-              Dismiss
+              Cancel Scan
             </Button>
+            <Button
+              className="h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md active:scale-95 transition-all flex items-center gap-2"
+              onClick={() => {
+                const code = notFoundBarcode;
+                setNotFoundBarcode(null);
+                setPrefillProductData({ barcode: code, sku: code });
+                setIsCreateProductOpen(true);
+                setPendingItemIndex(null);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Create Product Now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Product Modal */}
+      <Dialog open={isCreateProductOpen} onOpenChange={setIsCreateProductOpen}>
+        <DialogContent className="max-w-none sm:max-w-none w-[90vw] max-w-[1200px] h-[90vh] flex flex-col p-0 border-none rounded-xl shadow-2xl bg-background overflow-hidden">
+          <div className="px-6 py-4 bg-muted/30 border-b border-border/40 shrink-0">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">Create New Product</DialogTitle>
+              <DialogDescription className="text-xs">
+                Add a new product to your inventory and include it in this GRN.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <ProductForm
+              isModal={true}
+              onSuccess={handleProductCreated}
+              prefillData={prefillProductData}
+            />
           </div>
         </DialogContent>
       </Dialog>
