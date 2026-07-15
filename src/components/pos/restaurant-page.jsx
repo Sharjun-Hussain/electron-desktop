@@ -795,7 +795,17 @@ export default function RestaurantPosPage() {
           </div>
 
           {(() => {
-            const filteredSales = salesData?.filter(sale => activeOrderFilter === "all" || sale.dining_type === activeOrderFilter) || [];
+            const now = new Date();
+            const todayStr = now.toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
+            
+            const filteredSales = salesData?.filter(sale => {
+              // Only filter by today if we are viewing Recent Orders (completed sales)
+              if (activeSalesTab === "recent") {
+                const saleDateStr = new Date(sale.created_at).toLocaleDateString('en-CA');
+                if (saleDateStr !== todayStr) return false;
+              }
+              return activeOrderFilter === "all" || sale.dining_type === activeOrderFilter;
+            }) || [];
             const showArrows = filteredSales.length > 4 && !isLoadingSales;
 
             return (

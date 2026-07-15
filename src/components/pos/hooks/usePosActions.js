@@ -399,10 +399,8 @@ export function usePosActions({
       let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sales?status=${status}&size=50`;
       
       if (status === "completed") {
-        // Automatically reset recent orders (completed sales) every day (using local timezone)
-        const today = new Date();
-        const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-        url += `&start_date=${localDate}&end_date=${localDate}`;
+        // We fetch 50 recent completed sales and let the UI filter them.
+        // This ensures the All Sales modal has historical data to filter.
       }
 
       const res = await fetch(url, { headers: { Authorization: `Bearer ${session.accessToken}` } });
