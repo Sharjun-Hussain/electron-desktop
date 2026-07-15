@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle, Wallet, Calculator, LogOut, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAppSettings } from "@/app/hooks/useAppSettings";
 
 export const ShiftManagerDialog = ({
   isOpen,
@@ -21,6 +22,9 @@ export const ShiftManagerDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const { t } = useTranslation();
+  const { localization } = useAppSettings();
+
+  const currencySymbol = localization?.currency || "LKR";
 
   const isOpening = !activeShift;
 
@@ -125,7 +129,7 @@ export const ShiftManagerDialog = ({
           <div className="w-full flex flex-col gap-4">
             <div className="flex items-center gap-3 w-full">
               <div className="relative flex-1 group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground/40 group-focus-within:text-emerald-500 transition-colors">LKR</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground/40 group-focus-within:text-emerald-500 transition-colors">{currencySymbol}</span>
                 <Input
                   autoFocus
                   type="number"
