@@ -106,6 +106,18 @@ export function DashboardSettings() {
                 onCheckedChange={(c) => updateField('showWidgetRevenue', c)} 
               />
               <ToggleRow 
+                label="Today Sales" 
+                desc="Display the total number of transactions processed today" 
+                checked={formData.showWidgetTodaySales ?? true} 
+                onCheckedChange={(c) => updateField('showWidgetTodaySales', c)} 
+              />
+              <ToggleRow 
+                label="Today Shifts" 
+                desc="Display the total number of cash drawer shifts opened today" 
+                checked={formData.showWidgetTodayShifts ?? true} 
+                onCheckedChange={(c) => updateField('showWidgetTodayShifts', c)} 
+              />
+              <ToggleRow 
                 label="Pending Invoices" 
                 desc="Display number of active unpaid invoices" 
                 checked={formData.showWidgetInvoices ?? true} 

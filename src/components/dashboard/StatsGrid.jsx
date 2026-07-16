@@ -92,6 +92,30 @@ export default function StatsGrid() {
       url: "/sales"
     },
     {
+      name: "Today Sales",
+      settingKey: "showWidgetTodaySales",
+      value: data?.todaySales?.value || 0,
+      isCurrency: false,
+      change: "Transactions",
+      trend: "stable",
+      icon: TrendingUp,
+      gradient: "from-cyan-500 to-blue-400",
+      comparisonLabel: "Completed Today",
+      url: "/sales"
+    },
+    {
+      name: "Today Shifts",
+      settingKey: "showWidgetTodayShifts",
+      value: data?.todayShifts?.value || 0,
+      isCurrency: false,
+      change: "Shifts",
+      trend: "stable",
+      icon: Users,
+      gradient: "from-violet-500 to-purple-400",
+      comparisonLabel: "Opened Today",
+      url: "/reports"
+    },
+    {
       name: "Pending Invoices",
       settingKey: "showWidgetInvoices",
       value: data?.pendingInvoices?.value || 0,
