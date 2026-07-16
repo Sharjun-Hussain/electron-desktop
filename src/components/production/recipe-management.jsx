@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -94,7 +94,7 @@ export default function RecipeManagement() {
     }
   };
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       accessorKey: "name",
       header: "Recipe Name",
@@ -171,7 +171,7 @@ export default function RecipeManagement() {
         </DropdownMenu>
       ),
     },
-  ];
+  ], [formatCurrency, router]);
 
   return (
     <div className="animate-in fade-in duration-700">
