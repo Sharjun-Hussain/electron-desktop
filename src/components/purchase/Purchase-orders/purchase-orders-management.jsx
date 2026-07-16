@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "@/lib/date-utils";
 import { useState, useEffect, useCallback, useMemo, Activity } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useRouter } from "next/navigation";
@@ -271,10 +272,10 @@ export default function PurchaseOrderPage() {
       "PO Number": o.po_number,
       Supplier: o.supplier?.name || "N/A",
       "Order Date": o.order_date
-        ? new Date(o.order_date).toLocaleDateString()
+        ? format(new Date(o.order_date), 'MM/dd/yyyy')
         : "N/A",
       "Exp Delivery": o.expected_delivery_date
-        ? new Date(o.expected_delivery_date).toLocaleDateString()
+        ? format(new Date(o.expected_delivery_date), 'MM/dd/yyyy')
         : "N/A",
       "Total Amount": o.total_amount,
       Status: o.status?.toUpperCase(),
