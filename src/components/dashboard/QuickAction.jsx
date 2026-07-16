@@ -16,6 +16,7 @@ import {
   Smartphone,
   ChefHat,
   Map,
+  Box,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,14 @@ const quickActions = [
     description: "Manage Stock",
     href: "/products",
     color: "emerald",
+  },
+  {
+    id: "stock-management",
+    name: "Stock Mgmt",
+    icon: Box,
+    description: "Adjust Stock",
+    href: "/inventory/stock",
+    color: "cyan",
   },
   {
     id: "reports",
