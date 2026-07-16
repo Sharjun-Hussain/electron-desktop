@@ -24,7 +24,8 @@ export function BusinessSettings() {
   const [formData, setFormData] = useState({
     businessName: '', taxId: '', businessType: 'retail',
     website: '', email: '', phone: '', address: '', city: '', state: '', zipCode: '',
-    shopify_enabled: false, whatsapp_enabled: false, textlk_enabled: false
+    shopify_enabled: false, whatsapp_enabled: false, textlk_enabled: false,
+    logo_deleted: false
   });
 
   useEffect(() => {
@@ -36,7 +37,7 @@ export function BusinessSettings() {
         email: org.email || '', phone: org.phone || '', address: org.address || '',
         city: org.city || '', state: org.state || '', zipCode: org.zip_code || '',
         shopify_enabled: !!org.shopify_enabled, whatsapp_enabled: !!org.whatsapp_enabled,
-        textlk_enabled: !!org.textlk_enabled
+        textlk_enabled: !!org.textlk_enabled, logo_deleted: false
       });
       if (org.logo) setLogoPreview(`${process.env.NEXT_PUBLIC_API_BASE_URL.replace('/api/v1', '')}/${org.logo}`);
     }
@@ -102,6 +103,9 @@ export function BusinessSettings() {
       shopify_enabled: formData.shopify_enabled, whatsapp_enabled: formData.whatsapp_enabled,
       textlk_enabled: formData.textlk_enabled
     };
+    if (formData.logo_deleted) {
+      payload.logo = null;
+    }
     const result = await updateBusinessSettings(payload);
     if (logoFile) {
       const logoResult = await uploadLogo(logoFile);
@@ -118,8 +122,18 @@ export function BusinessSettings() {
       if (file.size > 2 * 1024 * 1024) return toast.error("Asset size exceeds 2MB structural limit");
       setLogoFile(file);
       setLogoPreview(URL.createObjectURL(file));
+      updateField('logo_deleted', false);
       toast.info("Brand asset updated. Save to persist.");
     }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    updateField('logo_deleted', true);
+    // Reset file input
+    const fileInput = document.getElementById('logo-upload');
+    if (fileInput) fileInput.value = '';
   };
 
   const inputCls = "h-10 rounded-md border-slate-200 dark:border-slate-800 focus-visible:ring-emerald-500 font-medium";
@@ -154,7 +168,14 @@ export function BusinessSettings() {
             <div className="flex flex-col items-center gap-3 w-full lg:w-[200px] shrink-0">
               <div className="relative w-full aspect-square border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/20 dark:bg-slate-950/40 overflow-hidden group">
                 {logoPreview ? (
-                  <img src={logoPreview} alt="Brand Asset" className="absolute inset-0 w-full h-full object-contain p-4 group-hover:scale-[1.02] transition-transform" />
+                  <>
+                    <img src={logoPreview} alt="Brand Asset" className="absolute inset-0 w-full h-full object-contain p-4 group-hover:scale-[1.02] transition-transform" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button variant="destructive" size="sm" onClick={handleRemoveLogo} className="h-8 text-xs font-semibold">
+                        Remove
+                      </Button>
+                    </div>
+                  </>
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <Upload className="w-6 h-6 text-slate-300 dark:text-slate-600 mb-3" />
