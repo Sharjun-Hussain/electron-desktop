@@ -16,7 +16,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { DataActions } from "@/components/general/DataActions";
 import { Plus, Search, Filter, RotateCcw, Landmark, Wallet, TrendingDown, TrendingUp, History, Pencil, ArrowLeftRight, X, Check, ChevronsUpDown, Loader2, Calendar as CalendarIcon, FolderDown, HelpCircle, FileDown, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { StatusBadge } from "@/components/ui/status-badge";

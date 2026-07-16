@@ -39,7 +39,8 @@ import {
   ResponsiveContainer, 
   Cell 
 } from 'recharts';
-import { format, startOfMonth } from "date-fns";
+import { startOfMonth } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

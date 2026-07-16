@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Landmark, Check } from "lucide-react";
 import { useFormRestore } from "@/hooks/use-form-restore";
 

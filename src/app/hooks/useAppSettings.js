@@ -1,6 +1,6 @@
 import { useSettings } from "./swr/useSettings";
 import { useMemo } from "react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 export function useAppSettings() {
     const { useGlobalSettings, useModularSettings } = useSettings();

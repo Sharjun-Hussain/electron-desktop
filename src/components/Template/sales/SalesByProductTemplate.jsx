@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { ReportLayout } from "../ReportLayout";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 

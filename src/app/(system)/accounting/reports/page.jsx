@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Landmark, TrendingUp, BarChart3, PieChart, Wallet, ArrowUpRight, Printer, RotateCcw, Activity, ShieldCheck, Zap, Loader2, Building2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useAppSettings } from '@/app/hooks/useAppSettings';

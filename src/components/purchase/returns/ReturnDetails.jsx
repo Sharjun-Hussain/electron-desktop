@@ -40,7 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 

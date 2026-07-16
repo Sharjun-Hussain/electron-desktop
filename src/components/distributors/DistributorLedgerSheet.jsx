@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { toast } from "sonner";
 import {
   ReceiptText, Wallet, Loader2,

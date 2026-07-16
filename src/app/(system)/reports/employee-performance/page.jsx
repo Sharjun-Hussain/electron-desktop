@@ -19,7 +19,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import { format, startOfMonth } from "date-fns";
+import { startOfMonth } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { exportToCSV, exportToExcel } from "@/lib/exportUtils";
 import { DataActions } from "@/components/general/DataActions";
 

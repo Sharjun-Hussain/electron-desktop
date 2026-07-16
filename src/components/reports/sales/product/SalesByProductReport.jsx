@@ -1,17 +1,7 @@
 "use client";
 
-import {
-  format,
-  startOfMonth,
-  startOfDay,
-  endOfDay,
-  startOfWeek,
-  endOfWeek,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-  subYears,
-} from "date-fns";
+import { startOfMonth, startOfDay, endOfDay, startOfWeek, endOfWeek, endOfMonth, startOfYear, endOfYear, subYears } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   BarChart3,
   CalendarDays,

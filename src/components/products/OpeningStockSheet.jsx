@@ -14,7 +14,7 @@ import {
   Package,
   CalendarIcon
 } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   Popover,
   PopoverContent,

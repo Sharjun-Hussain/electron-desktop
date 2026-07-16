@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 export const getExpenseColumns = ({ onEdit, onDelete, onView, formatCurrency }) => [
   {

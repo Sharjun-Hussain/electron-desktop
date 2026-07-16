@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-import { format, subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "sonner";

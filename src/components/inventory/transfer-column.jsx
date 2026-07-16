@@ -4,7 +4,7 @@ import { Calendar, ChevronRight, User, FileText, ArrowRight, ArrowUpDown, Clock 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { StatusBadge } from "../ui/status-badge";
 
 export const getTransferColumns = ({ onOpenDetails }) => [

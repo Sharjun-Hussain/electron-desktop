@@ -1,4 +1,5 @@
 import React from 'react';
+import { format } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock, Trash2, ShoppingBag, Loader2 } from "lucide-react";
@@ -44,7 +45,7 @@ export const HeldSalesPanel = ({ sales, isLoading, onResume, onDelete, t }) => {
                     <span className="text-xs font-medium text-foreground">#{sessionCode}</span>
                     <span className="text-[11px] text-muted-foreground truncate">{sale.customer_name || "Guest Checkout"}</span>
                   </div>
-                  <span className="text-[9px] text-muted-foreground/60">{date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-[9px] text-muted-foreground/60">{format(date, 'hh:mm a')}</span>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">

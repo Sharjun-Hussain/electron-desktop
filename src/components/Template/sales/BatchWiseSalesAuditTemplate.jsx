@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 export const BatchWiseSalesAuditTemplate = React.forwardRef(({ data, dateRange, stats, formatCurrency }, ref) => {
   return (

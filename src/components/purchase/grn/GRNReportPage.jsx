@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { useRouter } from "next/navigation";
 import {
   Search,

@@ -24,7 +24,8 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   PieChart,
   Pie,

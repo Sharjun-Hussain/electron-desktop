@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { toast } from "sonner";
 import {
   Loader2,

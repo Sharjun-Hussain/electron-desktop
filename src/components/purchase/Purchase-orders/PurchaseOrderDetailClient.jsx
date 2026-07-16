@@ -73,7 +73,7 @@ import { useReactToPrint } from "react-to-print";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { PurchaseOrderTemplate } from "@/components/Template/PurchaseOrderTemplate";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 // --- 1. API HELPERS ---
 

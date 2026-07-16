@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 
 export const CardReconcilePrintTemplate = React.forwardRef(({ data, filters, stats }, ref) => {

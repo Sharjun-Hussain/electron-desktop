@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   Table,
   TableBody,

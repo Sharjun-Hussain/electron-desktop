@@ -44,7 +44,8 @@ import Calculator from "./components/Calculator";
 import { CustomerSelector } from "./components/CustomerSelector";
 import BatchSelectorDialog from "./components/BatchSelectorDialog";
 import TenderModal from "./components/TenderModal";
-import { format, isValid } from "date-fns";
+import { isValid } from "date-fns";
+import { format } from "@/lib/date-utils";
 import clsx from "clsx";
 import { cn } from "@/lib/utils";
 

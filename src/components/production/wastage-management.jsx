@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   User
 } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 import { ResourceManagementLayout } from "@/components/general/resource-management-layout";
 import { Badge } from "@/components/ui/badge";

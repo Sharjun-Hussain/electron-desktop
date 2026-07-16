@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 

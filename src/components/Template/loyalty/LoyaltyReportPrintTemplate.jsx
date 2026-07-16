@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 export const LoyaltyReportPrintTemplate = React.forwardRef(({ transactions, topCustomers, summary, dateRange, formatDateTime }, ref) => {
   return (

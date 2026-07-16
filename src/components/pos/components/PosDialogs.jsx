@@ -1,4 +1,5 @@
 "use client";
+import { format } from "@/lib/date-utils";
 
 import { memo, useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -160,7 +161,7 @@ export const HoldListDialog = memo(({ isOpen, onOpenChange, salesData, isLoading
                 {salesData.map((sale) => (
                   <TableRow key={sale.id} className="group hover:bg-emerald-500/5 transition-colors border-border/30">
                     <TableCell className="px-4 py-2 font-mono font-bold text-[11px] text-emerald-500">{sale.invoice_number}</TableCell>
-                    <TableCell className="px-4 py-2 text-muted-foreground text-[10px]">{new Date(sale.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</TableCell>
+                    <TableCell className="px-4 py-2 text-muted-foreground text-[10px]">{format(new Date(sale.created_at), 'MMM dd, yyyy hh:mm a')}</TableCell>
                     <TableCell className="px-4 py-2">
                       <div className="flex flex-col">
                         <span className="font-bold text-[11px] text-foreground">{sale.customer?.name || t("pos.walk_in")}</span>
@@ -452,7 +453,7 @@ export const SaleListDialog = memo(({
                 {filteredAndSortedSales.map((sale) => (
                   <TableRow key={sale.id} className="group hover:bg-emerald-50/30 transition-colors">
                     <TableCell className="px-6 py-4 font-mono font-bold text-emerald-600 text-sm">{sale.invoice_number}</TableCell>
-                    <TableCell className="px-6 py-4 text-muted-foreground text-sm">{new Date(sale.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="px-6 py-4 text-muted-foreground text-sm">{format(new Date(sale.created_at), 'MMM dd, yyyy hh:mm a')}</TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-foreground text-sm">{sale.customer?.name || t("pos.walk_in")}</span>

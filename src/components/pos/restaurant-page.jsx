@@ -28,6 +28,12 @@ import { InvoiceA4Template } from "./InvoiceA4Template";
 import { ShiftManagerDialog } from "./components/ShiftManagerDialog";
 import BatchSelectorDialog from "./components/BatchSelectorDialog";
 import Calculator from "./components/Calculator";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "@/lib/date-utils";
 import { TableSelectionDialog } from "./components/TableSelectionDialog";
 import { UtilitySidebar } from "./components/UtilitySidebar";
 
@@ -804,12 +810,12 @@ export default function RestaurantPosPage() {
 
           {(() => {
             const now = new Date();
-            const todayStr = now.toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
+            const todayStr = format(now, 'yyyy-MM-dd'); // 'YYYY-MM-DD'
             
             const filteredSales = salesData?.filter(sale => {
               // Only filter by today if we are viewing Recent Orders (completed sales)
               if (activeSalesTab === "recent") {
-                const saleDateStr = new Date(sale.created_at).toLocaleDateString('en-CA');
+                const saleDateStr = format(new Date(sale.created_at), 'yyyy-MM-dd');
                 if (saleDateStr !== todayStr) return false;
               }
               return activeOrderFilter === "all" || sale.dining_type === activeOrderFilter;
@@ -878,7 +884,7 @@ export default function RestaurantPosPage() {
                           )}
                           <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-100 dark:border-slate-800">
                             <span className="text-gray-400 text-[11px]">
-                              {new Date(sale.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              {format(new Date(sale.created_at), 'hh:mm a')}
                             </span>
                             <span className="text-[11px] px-2 py-0.5 rounded-md font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600">
                               {formatCurrency(sale.payable_amount || sale.net_total || 0)}
@@ -1059,7 +1065,7 @@ export default function RestaurantPosPage() {
               {querySaleId ? `Order #${querySaleId}` : "New Order"}
             </h2>
             <span className="text-xs text-gray-500 dark:text-slate-400">
-              {new Date().toLocaleString([], { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              {format(new Date(), 'MMM dd, yyyy, hh:mm a')}
             </span>
           </div>
 

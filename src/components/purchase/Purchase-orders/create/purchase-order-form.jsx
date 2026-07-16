@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";

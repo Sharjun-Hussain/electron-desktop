@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 export default function ProductionOrderManagement() {
   const { data: session } = useSession();

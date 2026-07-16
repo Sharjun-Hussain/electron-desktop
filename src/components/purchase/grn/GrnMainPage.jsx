@@ -6,7 +6,7 @@ import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { toast } from "sonner";
 import {
   ArrowLeft,

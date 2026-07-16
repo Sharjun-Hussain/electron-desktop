@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useSettings } from "@/app/hooks/swr/useSettings";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { Input } from "@/components/ui/input";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { cn } from "@/lib/utils";

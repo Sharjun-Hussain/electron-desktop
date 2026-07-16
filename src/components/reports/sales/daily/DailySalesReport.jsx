@@ -3,19 +3,8 @@
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
-import {
-  format,
-  subDays,
-  subYears,
-  startOfDay,
-  endOfDay,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-} from "date-fns";
+import { subDays, subYears, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   Printer,
   FileText,

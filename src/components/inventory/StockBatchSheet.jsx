@@ -21,7 +21,7 @@ import {
   AlertCircle,
   Loader2
 } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 
 export const StockBatchSheet = ({ isOpen, onClose, stock }) => {

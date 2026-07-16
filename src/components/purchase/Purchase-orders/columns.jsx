@@ -30,7 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 // Helper for Currency

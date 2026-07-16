@@ -18,6 +18,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { AddCustomerForm, AddDistributorForm } from "./CustomerForms";
+import { format } from "@/lib/date-utils";
 
 // ─── Clock ────────────────────────────────────────────────────────────────
 const Clock = memo(() => {
@@ -29,10 +30,10 @@ const Clock = memo(() => {
   return (
     <div id="pos-clock" className="hidden md:flex flex-col items-end text-right">
       <p className="text-[11px] font-medium text-foreground leading-tight">
-        {currentDateTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+        {format(currentDateTime, "EEE, MMM d")}
       </p>
       <p className="text-[10px] font-medium text-muted-foreground font-mono leading-none">
-        {currentDateTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+        {format(currentDateTime, "hh:mm:ss a")}
       </p>
     </div>
   );

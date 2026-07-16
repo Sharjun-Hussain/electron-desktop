@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { QRCodeSVG } from "qrcode.react";
 import Barcode from "react-barcode";

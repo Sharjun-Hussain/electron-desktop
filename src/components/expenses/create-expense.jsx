@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Upload, X, Receipt, Wallet, Banknote, CreditCard as CardIcon, Landmark, Info, Plus, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useFormRestore } from "@/hooks/use-form-restore";

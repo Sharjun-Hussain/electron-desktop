@@ -3,7 +3,8 @@
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { format, subDays, startOfMonth } from "date-fns";
+import { subDays, startOfMonth } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   Printer,
   Download,

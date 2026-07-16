@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useSession } from '@/components/auth/DesktopAuthProvider';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
     Plus, Save, RotateCcw, BookOpen, AlertCircle,
     CheckCircle2, Trash2, Check, ChevronsUpDown, Calendar as CalendarIcon

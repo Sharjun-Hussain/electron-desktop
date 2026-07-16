@@ -23,7 +23,7 @@ import {
   TrendingUp,
   AlertCircle
 } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { Separator } from "@/components/ui/separator";
 
 export const ProductInsightSheet = ({ isOpen, onClose, insightData }) => {

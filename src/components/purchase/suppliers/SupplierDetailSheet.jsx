@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import {
   Table,

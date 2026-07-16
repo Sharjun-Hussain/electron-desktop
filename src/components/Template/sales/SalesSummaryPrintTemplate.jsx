@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { ReportLayout } from "../ReportLayout";
 
 export const SalesSummaryPrintTemplate = React.forwardRef(({ data, dateRange, stats, formatDateTime, selectedColumns = {} }, ref) => {

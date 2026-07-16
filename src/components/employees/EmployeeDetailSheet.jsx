@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { Card } from "@/components/ui/card";
 
 const EmployeeDetailSheet = ({ isOpen, onOpenChange, employee, onEdit }) => {

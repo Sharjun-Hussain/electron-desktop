@@ -2,7 +2,8 @@
 
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   Printer,
   Download,

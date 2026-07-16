@@ -3,7 +3,8 @@
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   RefreshCw,
   Filter,

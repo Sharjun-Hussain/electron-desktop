@@ -8,7 +8,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Package, Tag, ChevronRight } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { format, isValid } from "date-fns";
+import { isValid } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 const BatchSelectorDialog = ({ isOpen, onOpenChange, batches, onSelect, productName }) => {

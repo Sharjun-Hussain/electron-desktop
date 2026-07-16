@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash, Eye, CheckCircle, XCircle } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 export const getChequeColumns = ({ onUpdateStatus, onDelete, onView }) => [
   {

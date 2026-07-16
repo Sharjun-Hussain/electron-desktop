@@ -34,7 +34,8 @@ import {
   ResponsiveContainer, 
   Legend 
 } from 'recharts';
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

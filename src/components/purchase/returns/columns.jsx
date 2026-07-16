@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/ui/status-badge";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 
 // Helper for Currency
 const formatCurrency = (amount) => {

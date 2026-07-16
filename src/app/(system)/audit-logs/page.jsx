@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Calendar as CalendarIcon, Download, Eye, Filter, Activity, RotateCcw, FileDown } from 'lucide-react';
 import { ResourceManagementLayout } from "@/components/general/resource-management-layout";
-import { format } from 'date-fns';
+import { format } from "@/lib/date-utils";
 import { toast } from 'sonner';
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";

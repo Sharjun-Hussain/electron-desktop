@@ -29,7 +29,7 @@ import {
     FileText,
     History
 } from "lucide-react";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { toast } from "sonner";
 import { StatusBadge } from "../ui/status-badge";
 import { Card } from "../ui/card";

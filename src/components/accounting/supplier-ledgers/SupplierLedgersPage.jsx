@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-import { format } from "date-fns";
+import { format } from "@/lib/date-utils";
 import { 
   Table, 
   TableBody, 

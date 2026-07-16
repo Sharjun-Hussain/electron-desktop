@@ -62,7 +62,8 @@ import {
   Calendar as CalendarIcon,
   HelpCircle,
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/date-utils";
 import {
   Popover,
   PopoverContent,

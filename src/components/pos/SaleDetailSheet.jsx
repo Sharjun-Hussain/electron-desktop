@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { format } from "@/lib/date-utils";
 import {
   Sheet,
   SheetContent,
@@ -55,7 +56,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                 </SheetTitle>
               </div>
               <SheetDescription className="text-sm font-medium text-muted-foreground mt-1">
-                {t("pos.transaction_processed_on")} {new Date(sale.created_at).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}
+                {t("pos.transaction_processed_on")} {format(new Date(sale.created_at), 'MMMM dd, yyyy hh:mm a')}
               </SheetDescription>
             </div>
 
