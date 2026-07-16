@@ -464,7 +464,7 @@ export function PosSettings() {
                         );
                       })}
                     </div>
-                    <div className="mt-4 p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+                    <div className="mt-4 p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 space-y-2">
                       <ToggleRow
                         label="Enable Touch UI Mode"
                         desc="Activates on-screen numpads for keyboard-less devices"
@@ -474,6 +474,14 @@ export function PosSettings() {
                           toast.success(c ? "Touch UI enabled globally" : "Touch UI disabled");
                         }}
                       />
+                      {(business?.business_type || '').toLowerCase() === 'restaurant' && (
+                        <ToggleRow
+                          label="Show Recent Orders Section"
+                          desc="Display the Recent Orders tab in the POS interface"
+                          checked={formData.showRecentOrders ?? true}
+                          onCheckedChange={(c) => updateField('showRecentOrders', c)}
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -502,7 +510,7 @@ export function PosSettings() {
                   <ToggleRow label="Line Item Discounts" desc="Allow manual adjustments to item prices" checked={formData.showDiscount} onCheckedChange={(c) => updateField('showDiscount', c)} />
                   <ToggleRow label="Fiscal Tax Breakdown" desc="Display tax structural details in cart" checked={formData.showTax} onCheckedChange={(c) => updateField('showTax', c)} />
                   <ToggleRow label="Enable Wholesale Mode" desc="Show wholesale toggle and pricing protocols in workstation" checked={formData.enableWholesale} onCheckedChange={(c) => updateField('enableWholesale', c)} />
-                  {business?.business_type === 'restaurant' && (
+                  {(business?.business_type || '').toLowerCase() === 'restaurant' && (
                     <ToggleRow label="Show Product Images" desc="Display images in the restaurant POS grid" checked={formData.showProductImage ?? true} onCheckedChange={(c) => updateField('showProductImage', c)} />
                   )}
                   <ToggleRow

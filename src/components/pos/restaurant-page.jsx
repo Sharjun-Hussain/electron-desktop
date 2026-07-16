@@ -139,6 +139,12 @@ export default function RestaurantPosPage() {
   }, [isManufacturing, flattenedVariants, state.isWholesale, dispatch]);
 
   useEffect(() => {
+    if (posResponse?.data?.showRecentOrders === false && activeSalesTab === "recent") {
+      setActiveSalesTab("hold");
+    }
+  }, [posResponse?.data?.showRecentOrders, activeSalesTab]);
+
+  useEffect(() => {
     if (posResponse?.data?.enableWholesale && flattenedVariants.length > 0 && !state.isWholesale && state.cart.length === 0 && !state.customer) {
       dispatch({ type: "TOGGLE_WHOLESALE", payload: { isWholesale: true, flatVariants: flattenedVariants, isManufacturing } });
     }
@@ -759,14 +765,16 @@ export default function RestaurantPosPage() {
             
             {/* Sales Tabs */}
             <div className="flex items-center gap-6">
-              <button
-                onClick={() => { setActiveSalesTab("recent"); fetchSales("completed"); }}
-                className={`text-xl font-bold transition-all pb-1 border-b-[3px] ${
-                  activeSalesTab === "recent" ? "text-gray-900 dark:text-slate-100 border-[#4c51f7]" : "text-gray-400 dark:text-slate-600 border-transparent hover:text-gray-600 dark:hover:text-slate-400"
-                }`}
-              >
-                Recent Orders
-              </button>
+              {posResponse?.data?.showRecentOrders !== false && (
+                <button
+                  onClick={() => { setActiveSalesTab("recent"); fetchSales("completed"); }}
+                  className={`text-xl font-bold transition-all pb-1 border-b-[3px] ${
+                    activeSalesTab === "recent" ? "text-gray-900 dark:text-slate-100 border-[#4c51f7]" : "text-gray-400 dark:text-slate-600 border-transparent hover:text-gray-600 dark:hover:text-slate-400"
+                  }`}
+                >
+                  Recent Orders
+                </button>
+              )}
               <button
                 onClick={() => { setActiveSalesTab("hold"); fetchSales("draft"); }}
                 className={`text-xl font-bold transition-all pb-1 border-b-[3px] ${
