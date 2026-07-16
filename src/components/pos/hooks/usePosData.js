@@ -146,12 +146,14 @@ export function usePosData() {
         const prodData = results[0].value;
         const rawProductList = prodData.data || [];
 
-        // For manufacturing businesses, only Finished Goods are sold at POS
+        // For manufacturing/restaurant businesses, Raw Materials are not sold directly at POS
         const businessType = (session?.user?.organization?.business_type || "").toLowerCase();
-        const isManufacturing = businessType === "manufacturing";
+        const isManufacturing = businessType === "manufacturing" || businessType === "manufacturer";
+        const isRestaurant = businessType === "restaurant";
         
-        // Relaxed Filter: Show all products unless explicitly excluded
-        const filteredList = rawProductList;
+        const filteredList = (isManufacturing || isRestaurant)
+          ? rawProductList.filter(p => p.product_type !== 'Raw Material')
+          : rawProductList;
 
         processedProducts = filteredList.map((p) => {
           const variants = (p.variants || []).map((v) => {

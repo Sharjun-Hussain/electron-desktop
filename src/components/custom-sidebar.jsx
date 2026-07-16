@@ -145,17 +145,17 @@ export function CustomSidebar() {
         ],
       },
       // Manufacturing / Production Section
-      ...(isManufacturing ? [{
+      ...(isManufacturing || isRestaurant ? [{
         title: "Production",
         url: "/production/orders",
         icon: Origami,
         requiredPermission: PERMISSIONS.PRODUCTION_VIEW,
         items: [
           { title: "Recipes (BOM)", url: "/production/recipes", icon: FileText, requiredPermission: PERMISSIONS.PRODUCTION_VIEW },
-          { title: "Production Orders", url: "/production/orders", icon: ClipboardList, requiredPermission: PERMISSIONS.PRODUCTION_VIEW },
+          ...(isManufacturing ? [{ title: "Production Orders", url: "/production/orders", icon: ClipboardList, requiredPermission: PERMISSIONS.PRODUCTION_VIEW }] : []),
           { title: "Raw Materials", url: "/production/raw-materials", icon: Boxes, requiredPermission: PERMISSIONS.PRODUCTION_VIEW },
-          { title: "Distributor Management", url: "/distributors", icon: Network, requiredPermission: PERMISSIONS.CUSTOMER_VIEW },
-          { title: "Wastage Log", url: "/production/wastage", icon: Trash2, requiredPermission: PERMISSIONS.PRODUCTION_VIEW },
+          ...(isManufacturing ? [{ title: "Distributor Management", url: "/distributors", icon: Network, requiredPermission: PERMISSIONS.CUSTOMER_VIEW }] : []),
+          ...(isManufacturing ? [{ title: "Wastage Log", url: "/production/wastage", icon: Trash2, requiredPermission: PERMISSIONS.PRODUCTION_VIEW }] : []),
         ]
       }] : []),
       {
