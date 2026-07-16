@@ -108,6 +108,43 @@ const CURRENCIES = [
 import { usePermission } from "@/hooks/use-permission";
 import { PERMISSIONS } from "@/lib/permissions";
 
+const LiveTime = ({ tz, showSeconds = false }) => {
+  const [time, setTime] = useState("");
+  useEffect(() => {
+    let formatter;
+    try {
+      formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: 'numeric',
+        minute: 'numeric',
+        ...(showSeconds ? { second: 'numeric' } : {}),
+        hour12: true
+      });
+    } catch (e) {
+      return;
+    }
+    const update = () => setTime(formatter.format(new Date()));
+    update();
+    const interval = setInterval(update, showSeconds ? 1000 : 60000);
+    return () => clearInterval(interval);
+  }, [tz, showSeconds]);
+  return <>{time}</>;
+};
+
+const TimezoneOffset = ({ tz }) => {
+  const offset = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        timeZoneName: 'shortOffset'
+      }).format(new Date()).split(', ')[1] || 'GMT';
+    } catch (e) {
+      return "GMT";
+    }
+  }, [tz]);
+  return <>{offset}</>;
+};
+
 export function GeneralSettings() {
   const { hasPermission } = usePermission();
   const { useModularSettings, updateModularSettings, useGlobalSettings } =
@@ -131,40 +168,9 @@ export function GeneralSettings() {
     searchParams.get("config") || "localization",
   );
   const [searchTerm, setSearchTerm] = useState("");
+  const [isTimezoneOpen, setIsTimezoneOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isCreatingLedger, setIsCreatingLedger] = useState(false);
-
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimeForZone = useCallback((tz, date) => {
-    try {
-      return new Intl.DateTimeFormat('en-US', {
-        timeZone: tz,
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        hour12: true
-      }).format(date);
-    } catch (e) {
-      return "";
-    }
-  }, []);
-
-  const formatOffsetForZone = useCallback((tz, date) => {
-    try {
-      return new Intl.DateTimeFormat('en-US', {
-        timeZone: tz,
-        timeZoneName: 'shortOffset'
-      }).format(date).split(', ')[1] || 'GMT';
-    } catch (e) {
-      return "";
-    }
-  }, []);
 
   useEffect(() => {
     const config = searchParams.get("config");
@@ -343,8 +349,11 @@ export function GeneralSettings() {
   };
 
   const filteredTimezones = useMemo(() => {
+    let term = searchTerm.toLowerCase().replace(/\s/g, '');
+    if (term.includes('srilanka')) term = 'colombo';
+    
     return TIMEZONES.filter((tz) =>
-      tz.toLowerCase().includes(searchTerm.toLowerCase()),
+      tz.toLowerCase().replace(/_/g, '').includes(term),
     );
   }, [searchTerm]);
 
@@ -483,7 +492,7 @@ export function GeneralSettings() {
                   <Label className="text-[11px] font-medium   text-slate-400">
                     {t("settings.timezone")}
                   </Label>
-                  <Dialog>
+                  <Dialog open={isTimezoneOpen} onOpenChange={setIsTimezoneOpen}>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -492,7 +501,7 @@ export function GeneralSettings() {
                         <div className="flex items-center gap-2 truncate">
                           <span className="truncate">{settings.localization.timeZone}</span>
                           <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded font-bold tabular-nums whitespace-nowrap">
-                            {formatTimeForZone(settings.localization.timeZone, currentTime)}
+                            <LiveTime tz={settings.localization.timeZone} showSeconds={true} />
                           </span>
                         </div>
                         <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -527,7 +536,10 @@ export function GeneralSettings() {
                                   ? "bg-emerald-50/50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" 
                                   : "hover:border-slate-100 dark:hover:border-slate-800"
                               )}
-                              onClick={() => updateSetting("localization", "timeZone", tz)}
+                              onClick={() => {
+                                updateSetting("localization", "timeZone", tz);
+                                setIsTimezoneOpen(false);
+                              }}
                             >
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
@@ -535,13 +547,13 @@ export function GeneralSettings() {
                                     {tz.replace(/_/g, ' ')}
                                   </span>
                                   <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
-                                    ({formatOffsetForZone(tz, currentTime)})
+                                    (<TimezoneOffset tz={tz} />)
                                   </span>
                                 </div>
                                 {settings.localization.timeZone === tz && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />}
                               </div>
                               <div className={cn("text-xs font-medium tabular-nums tracking-tight", settings.localization.timeZone === tz ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-slate-500 dark:text-slate-400")}>
-                                {formatTimeForZone(tz, currentTime)}
+                                <LiveTime tz={tz} showSeconds={false} />
                               </div>
                             </div>
                           ))}
