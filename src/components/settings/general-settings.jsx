@@ -80,31 +80,19 @@ import {
 } from "@/components/ui/dialog";
 
 // --- CONSTANTS: Time Zones & Currencies ---
-const TIMEZONES = [
-  "Etc/UTC",
-  "Pacific/Midway",
-  "Pacific/Honolulu",
-  "America/Anchorage",
-  "America/Los_Angeles",
-  "America/Denver",
-  "America/Chicago",
-  "America/New_York",
-  "America/Sao_Paulo",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Europe/Moscow",
-  "Africa/Cairo",
-  "Africa/Johannesburg",
-  "Asia/Dubai",
-  "Asia/Karachi",
-  "Asia/Kolkata",
-  "Asia/Bangkok",
-  "Asia/Shanghai",
-  "Asia/Tokyo",
-  "Australia/Sydney",
-  "Pacific/Auckland",
+const DEFAULT_TIMEZONES = [
+  "Etc/UTC", "Pacific/Midway", "Pacific/Honolulu", "America/Anchorage",
+  "America/Los_Angeles", "America/Denver", "America/Chicago", "America/New_York",
+  "America/Sao_Paulo", "Europe/London", "Europe/Paris", "Europe/Berlin",
+  "Europe/Moscow", "Africa/Cairo", "Africa/Johannesburg", "Asia/Dubai",
+  "Asia/Riyadh", "Asia/Amman", "Asia/Beirut", "Asia/Damascus", "Asia/Baghdad", "Asia/Qatar",
+  "Asia/Karachi", "Asia/Kolkata", "Asia/Bangkok", "Asia/Shanghai",
+  "Asia/Tokyo", "Australia/Sydney", "Pacific/Auckland"
 ];
+
+const TIMEZONES = typeof Intl !== 'undefined' && Intl.supportedValuesOf 
+  ? Intl.supportedValuesOf('timeZone') 
+  : DEFAULT_TIMEZONES;
 
 const CURRENCIES = [
   { code: "USD", symbol: "$", name: "US Dollar" },
@@ -145,6 +133,38 @@ export function GeneralSettings() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isCreatingLedger, setIsCreatingLedger] = useState(false);
+
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTimeForZone = useCallback((tz, date) => {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true
+      }).format(date);
+    } catch (e) {
+      return "";
+    }
+  }, []);
+
+  const formatOffsetForZone = useCallback((tz, date) => {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        timeZoneName: 'shortOffset'
+      }).format(date).split(', ')[1] || 'GMT';
+    } catch (e) {
+      return "";
+    }
+  }, []);
 
   useEffect(() => {
     const config = searchParams.get("config");
@@ -467,10 +487,15 @@ export function GeneralSettings() {
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between h-10 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90 hover:bg-slate-50 transition-all shadow-none"
+                        className="w-full justify-between h-10 px-3 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-md font-medium text-sm text-foreground/90 hover:bg-slate-50 transition-all shadow-none flex items-center"
                       >
-                        {settings.localization.timeZone}
-                        <Search className="w-4 h-4 text-slate-400" />
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="truncate">{settings.localization.timeZone}</span>
+                          <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded font-bold tabular-nums whitespace-nowrap">
+                            {formatTimeForZone(settings.localization.timeZone, currentTime)}
+                          </span>
+                        </div>
+                        <Search className="w-4 h-4 text-slate-400 shrink-0" />
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl p-0 overflow-hidden max-w-md">
@@ -492,23 +517,32 @@ export function GeneralSettings() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
                         </div>
-                        <ScrollArea className="h-[280px] mt-4 rounded-lg border border-slate-100 dark:border-slate-800 p-2">
+                        <ScrollArea className="h-[320px] mt-4 rounded-lg border border-slate-100 dark:border-slate-800 p-2">
                           {filteredTimezones.map((tz) => (
                             <div
                               key={tz}
                               className={cn(
-                                "p-2.5 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer text-xs font-medium rounded-md text-slate-500 transition-all flex justify-between items-center",
-                                settings.localization.timeZone === tz &&
-                                  "text-emerald-600 dark:text-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/10",
+                                "p-3 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer rounded-md transition-all flex flex-col gap-1.5 border border-transparent",
+                                settings.localization.timeZone === tz 
+                                  ? "bg-emerald-50/50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" 
+                                  : "hover:border-slate-100 dark:hover:border-slate-800"
                               )}
-                              onClick={() =>
-                                updateSetting("localization", "timeZone", tz)
-                              }
+                              onClick={() => updateSetting("localization", "timeZone", tz)}
                             >
-                              {tz}
-                              {settings.localization.timeZone === tz && (
-                                <Check className="w-3.5 h-3.5" />
-                              )}
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <span className={cn("text-sm font-semibold", settings.localization.timeZone === tz ? "text-emerald-700 dark:text-emerald-400" : "text-slate-700 dark:text-slate-200")}>
+                                    {tz.replace(/_/g, ' ')}
+                                  </span>
+                                  <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+                                    ({formatOffsetForZone(tz, currentTime)})
+                                  </span>
+                                </div>
+                                {settings.localization.timeZone === tz && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />}
+                              </div>
+                              <div className={cn("text-xs font-medium tabular-nums tracking-tight", settings.localization.timeZone === tz ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-slate-500 dark:text-slate-400")}>
+                                {formatTimeForZone(tz, currentTime)}
+                              </div>
                             </div>
                           ))}
                         </ScrollArea>
