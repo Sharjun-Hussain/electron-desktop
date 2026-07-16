@@ -19,6 +19,7 @@ import axios from "axios";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/app/hooks/swr/useSettings";
 
 // Helper for Number Animation
 const AnimatedNumber = ({ value, isCurrency, formatCurrency, formatNumber, compact = true }) => {
@@ -49,6 +50,9 @@ const AnimatedNumber = ({ value, isCurrency, formatCurrency, formatNumber, compa
 export default function StatsGrid() {
   const { data: session } = useSession();
   const { formatCurrency, formatNumber } = useCurrency();
+  const { useModularSettings } = useSettings();
+  const { data: posSettings } = useModularSettings("pos");
+  const settings = posSettings?.data || {};
   const router = useRouter();
   const containerRef = useRef(null);
   const [data, setData] = useState(null);
@@ -77,6 +81,7 @@ export default function StatsGrid() {
   const stats = [
     {
       name: "Today Revenue",
+      settingKey: "showWidgetRevenue",
       value: data?.todayRevenue?.value || 0,
       isCurrency: true,
       change: data?.todayRevenue?.change || "0%",
@@ -88,6 +93,7 @@ export default function StatsGrid() {
     },
     {
       name: "Pending Invoices",
+      settingKey: "showWidgetInvoices",
       value: data?.pendingInvoices?.value || 0,
       isCurrency: false,
       change: data?.pendingInvoices?.change || "0%",
@@ -99,6 +105,7 @@ export default function StatsGrid() {
     },
     {
       name: "Low Stock Items",
+      settingKey: "showWidgetLowStock",
       value: data?.lowStockCount?.value || 0,
       isCurrency: false,
       change: data?.lowStockCount?.change || "0%",
@@ -110,6 +117,7 @@ export default function StatsGrid() {
     },
     {
       name: "Expiring Soon",
+      settingKey: "showWidgetExpiring",
       value: data?.expiringCount?.value || 0,
       isCurrency: false,
       change: data?.expiringCount?.change || "Alerts",
@@ -121,6 +129,7 @@ export default function StatsGrid() {
     },
     {
       name: "New Customers",
+      settingKey: "showWidgetNewCustomers",
       value: data?.newCustomers?.value || 0,
       isCurrency: false,
       change: data?.newCustomers?.change || "0%",
@@ -130,7 +139,7 @@ export default function StatsGrid() {
       comparisonLabel: "Growth",
       url: "/customers"
     },
-  ];
+  ].filter(stat => settings[stat.settingKey] ?? true);
 
   return (
     <div ref={containerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

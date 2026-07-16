@@ -97,13 +97,39 @@ export function DashboardSettings() {
               </div>
             )}
             
-            {/* Future settings can go here */}
-            {!isRestaurant && (
-              <div className="p-8 text-center text-slate-500 text-sm border border-dashed rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                <Monitor className="w-8 h-8 mx-auto mb-3 text-slate-300 dark:text-slate-700" />
-                <p>No dashboard specific settings available for your current business type yet.</p>
-              </div>
-            )}
+            <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 space-y-2">
+              <h4 className="text-[13px] font-bold text-slate-800 dark:text-slate-200 mb-2 px-1">KPI Widget Visibility</h4>
+              <ToggleRow 
+                label="Today Revenue" 
+                desc="Display daily revenue and performance vs daily average" 
+                checked={formData.showWidgetRevenue ?? true} 
+                onCheckedChange={(c) => updateField('showWidgetRevenue', c)} 
+              />
+              <ToggleRow 
+                label="Pending Invoices" 
+                desc="Display number of active unpaid invoices" 
+                checked={formData.showWidgetInvoices ?? true} 
+                onCheckedChange={(c) => updateField('showWidgetInvoices', c)} 
+              />
+              <ToggleRow 
+                label="Low Stock Items" 
+                desc="Display warning for items nearing depletion" 
+                checked={formData.showWidgetLowStock ?? true} 
+                onCheckedChange={(c) => updateField('showWidgetLowStock', c)} 
+              />
+              <ToggleRow 
+                label="Expiring Soon" 
+                desc="Display alerts for batches approaching expiration dates" 
+                checked={formData.showWidgetExpiring ?? true} 
+                onCheckedChange={(c) => updateField('showWidgetExpiring', c)} 
+              />
+              <ToggleRow 
+                label="New Customers" 
+                desc="Display customer growth metrics" 
+                checked={formData.showWidgetNewCustomers ?? true} 
+                onCheckedChange={(c) => updateField('showWidgetNewCustomers', c)} 
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -111,7 +137,7 @@ export function DashboardSettings() {
       <div className="flex justify-end pt-4">
         <Button 
           onClick={handleSave} 
-          disabled={isSaving || !isRestaurant} 
+          disabled={isSaving} 
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-10 px-8 text-sm rounded-lg shadow-sm"
         >
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
