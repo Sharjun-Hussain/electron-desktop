@@ -102,10 +102,10 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
             {sale.is_wholesale ? t("pos.wholesale_label") : t("pos.retail_label")} {t("pos.sale").toUpperCase()}
           </div>
         )}
-        {showCustomer && sale.customer && (
+        {showCustomer && (sale.customer || sale.distributor) && (
           <div className="flex justify-between">
-            <span>{t("pos.customer_label")}:</span>
-            <span>{sale.customer.name}</span>
+            <span>{sale.distributor ? (t("pos.distributor_label") || "DISTRIBUTOR") : t("pos.customer_label")}:</span>
+            <span>{(sale.customer || sale.distributor).name}</span>
           </div>
         )}
         {showUser && sale.sellers && sale.sellers.length > 0 && (
