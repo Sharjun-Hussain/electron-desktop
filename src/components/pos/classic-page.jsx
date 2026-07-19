@@ -616,7 +616,14 @@ export default function ClassicPosPage() {
           break;
         case "F6":
           e.preventDefault();
-          // Qty shortcut
+          if (state.cart.length > 0) {
+            const index = selectedCartIndex > -1 ? selectedCartIndex : 0;
+            const input = document.getElementById(`qty-input-${index}`);
+            if (input) {
+              input.focus();
+              input.select();
+            }
+          }
           break;
         case "F7":
           e.preventDefault();
@@ -1053,6 +1060,7 @@ export default function ClassicPosPage() {
                     {(receiptSettings?.posTableColumns || ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "expire"]).includes("quantity") && (
                       <td className="border-b border-r border-border/30 p-1 text-center font-bold text-emerald-600 dark:text-emerald-400 text-base">
                         <input
+                          id={`qty-input-${idx}`}
                           type="number"
                           value={item.quantity}
                           onChange={(e) => handleUpdateItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
@@ -1137,7 +1145,13 @@ export default function ClassicPosPage() {
           <div className="h-[130px] bg-card/30 border-t border-border/50 p-2 shrink-0">
             <div className="grid grid-cols-7 gap-1.5 h-full">
               <ActionButton shortcut="(F3)" label="Hold" icon={History} onClick={() => handleHoldSale({ onSuccess: () => { dispatch({ type: "CLEAR_CART" }); fetchSales("draft"); } })} />
-              <ActionButton shortcut="(F6)" label="Qty" icon={Plus} />
+              <ActionButton shortcut="(F6)" label="Qty" icon={Plus} onClick={() => {
+                if (state.cart.length > 0) {
+                  const index = selectedCartIndex > -1 ? selectedCartIndex : 0;
+                  const input = document.getElementById(`qty-input-${index}`);
+                  if (input) { input.focus(); input.select(); }
+                }
+              }} />
               <ActionButton shortcut="(F7)" label="Invoices" icon={FileText} onClick={() => { setIsSaleListOpen(true); fetchSales("completed"); }} />
               <ActionButton shortcut="(F9)" label="Drawer" icon={Settings} />
               <ActionButton shortcut="(F10)" label="Re-Print" icon={Printer} onClick={() => fetchSales("completed").then(() => setIsSaleListOpen(true))} />
