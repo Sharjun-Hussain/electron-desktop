@@ -1171,8 +1171,8 @@ export default function ClassicPosPage() {
             {/* Net Bill - Most Important */}
             <div className="bg-emerald-600 dark:bg-emerald-700 text-white p-4 rounded-xl shadow-lg mb-2 border border-emerald-500/20">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold opacity-80">Net Payable</span>
-                <span className="text-xs font-bold bg-black/20 px-2 py-0.5 rounded">LKR</span>
+                <span className="text-base font-bold opacity-80">Net Payable</span>
+                <span className="text-base font-bold bg-black/20 px-2 py-0.5 rounded">LKR</span>
               </div>
               <div className="text-5xl font-black text-right tracking-tighter drop-shadow-md">
                 {netBill.toFixed(2)}
@@ -1182,13 +1182,13 @@ export default function ClassicPosPage() {
             {/* Compact Summary Grid */}
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-background border border-border/40 p-3 rounded-xl shadow-sm">
-                <label className="text-xs font-bold text-muted-foreground block mb-2">Total Qty</label>
+                <label className="text-sm font-bold text-muted-foreground block mb-2">Total Qty</label>
                 <div className="text-2xl font-black text-right text-foreground">
                   {totals.totalQty}
                 </div>
               </div>
               <div className="bg-background border border-border/40 p-3 rounded-xl shadow-sm">
-                <label className="text-xs font-bold text-muted-foreground block mb-2">Gross Total</label>
+                <label className="text-sm font-bold text-muted-foreground block mb-2">Gross Total</label>
                 <div className="text-2xl font-black text-right text-foreground">
                   {totals.subtotal.toFixed(2)}
                 </div>
@@ -1197,13 +1197,13 @@ export default function ClassicPosPage() {
 
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-background border border-border/40 p-3 rounded-xl shadow-sm">
-                <label className="text-xs font-bold text-muted-foreground block mb-2">Saving</label>
+                <label className="text-sm font-bold text-muted-foreground block mb-2">Saving</label>
                 <div className="text-2xl font-black text-right text-blue-500 dark:text-blue-400">
                   0.00
                 </div>
               </div>
               <div className="bg-background border border-border/40 p-3 rounded-xl shadow-sm">
-                <label className="text-xs font-bold text-muted-foreground block mb-2">Discount</label>
+                <label className="text-sm font-bold text-muted-foreground block mb-2">Discount</label>
                 <div className="text-2xl font-black text-right text-yellow-600 dark:text-yellow-500">
                   {totals.totalItemDiscount.toFixed(2)}
                 </div>
