@@ -104,13 +104,13 @@ export default function ManufacturerPosPage() {
         setCurrentEntityBalance(0);
         return;
       }
-      
+
       try {
         setIsLoadingBalance(true);
-        const endpoint = activeEntityMode === 'customer' 
+        const endpoint = activeEntityMode === 'customer'
           ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/customers/${entity.id}/ledger`
           : `${process.env.NEXT_PUBLIC_API_BASE_URL}/distributors/${entity.id}/ledger`;
-          
+
         const res = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${session?.accessToken}` }
         });
@@ -118,7 +118,7 @@ export default function ManufacturerPosPage() {
         if (result.status === "success") {
           setCurrentEntityBalance(result.data.current_balance || 0);
         }
-        
+
         // Fetch sales to count unpaid invoices
         const salesRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/sales?${activeEntityMode}_id=${entity.id}`,
@@ -136,7 +136,7 @@ export default function ManufacturerPosPage() {
         setIsLoadingBalance(false);
       }
     };
-    
+
     if (session?.accessToken) {
       fetchBalance();
     }
@@ -758,18 +758,18 @@ export default function ManufacturerPosPage() {
                 {/* Entity Selection Switcher */}
                 <div className="bg-card rounded-2xl border border-border/40 shadow-sm flex p-1.5">
                   <div className="flex w-full bg-muted/30 p-1 rounded-xl">
-                    <Button 
-                      variant={activeEntityMode === 'customer' ? 'default' : 'ghost'} 
-                      size="sm" 
+                    <Button
+                      variant={activeEntityMode === 'customer' ? 'default' : 'ghost'}
+                      size="sm"
                       className="flex-1 h-10 text-xs rounded-lg font-semibold tracking-wide"
                       onClick={() => setActiveEntityMode('customer')}
                     >
                       <User className="w-4 h-4 mr-2 opacity-80" />
                       Customer
                     </Button>
-                    <Button 
-                      variant={activeEntityMode === 'distributor' ? 'default' : 'ghost'} 
-                      size="sm" 
+                    <Button
+                      variant={activeEntityMode === 'distributor' ? 'default' : 'ghost'}
+                      size="sm"
                       className="flex-1 h-10 text-xs rounded-lg font-semibold tracking-wide"
                       onClick={() => setActiveEntityMode('distributor')}
                     >
@@ -801,51 +801,51 @@ export default function ManufacturerPosPage() {
 
                   {/* Credit Overview - Customer */}
                   {(activeEntityMode === 'customer' && state.customer) && (
-                     <div className="flex flex-col gap-2 shrink-0">
-                       <div className="bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 rounded-xl p-4 border border-emerald-500/20">
-                          <div className="flex justify-between items-center text-emerald-900 dark:text-emerald-200">
-                             <span className="font-semibold text-sm opacity-80 capitalize">Credit Limit</span>
-                             <span className="font-black text-sm bg-emerald-500/90 text-white px-2.5 py-1 rounded-md animate-pulse shadow-sm">{state.customer.credit_limit > 0 ? `LKR ${Number(state.customer.credit_limit).toFixed(2)}` : 'No Limit'}</span>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <div className="bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 rounded-xl p-4 border border-emerald-500/20">
+                        <div className="flex justify-between items-center text-emerald-900 dark:text-emerald-200">
+                          <span className="font-semibold text-sm opacity-80 capitalize">Credit Limit</span>
+                          <span className="font-black text-sm bg-emerald-500/90 text-white px-2.5 py-1 rounded-md animate-pulse shadow-sm">{state.customer.credit_limit > 0 ? `LKR ${Number(state.customer.credit_limit).toFixed(2)}` : 'No Limit'}</span>
+                        </div>
+                      </div>
+                      <div className={cn("rounded-xl p-4 border", currentEntityBalance > 0 ? "bg-rose-500/10 border-rose-500/20 text-rose-900 dark:text-rose-200" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-200")}>
+                        <div className="flex justify-between items-center">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-sm opacity-80 capitalize">Due Amount</span>
+                            {unpaidInvoices > 0 && <span className="text-[11px] font-semibold opacity-70 mt-0.5">{unpaidInvoices} Unpaid Invoice{unpaidInvoices > 1 ? 's' : ''}</span>}
                           </div>
-                       </div>
-                       <div className={cn("rounded-xl p-4 border", currentEntityBalance > 0 ? "bg-rose-500/10 border-rose-500/20 text-rose-900 dark:text-rose-200" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-200")}>
-                          <div className="flex justify-between items-center">
-                             <div className="flex flex-col">
-                               <span className="font-semibold text-sm opacity-80 capitalize">Due Amount</span>
-                               {unpaidInvoices > 0 && <span className="text-[11px] font-semibold opacity-70 mt-0.5">{unpaidInvoices} Unpaid Invoice{unpaidInvoices > 1 ? 's' : ''}</span>}
-                             </div>
-                             <span className={cn("font-black text-sm px-2.5 py-1 rounded-md shadow-sm animate-pulse", currentEntityBalance > 0 ? "bg-rose-500/90 text-white" : "bg-emerald-500/90 text-white")}>{isLoadingBalance ? '...' : `LKR ${Number(currentEntityBalance).toFixed(2)}`}</span>
-                          </div>
-                       </div>
-                     </div>
+                          <span className={cn("font-black text-sm px-2.5 py-1 rounded-md shadow-sm animate-pulse", currentEntityBalance > 0 ? "bg-rose-500/90 text-white" : "bg-emerald-500/90 text-white")}>{isLoadingBalance ? '...' : `LKR ${Number(currentEntityBalance).toFixed(2)}`}</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Credit Overview - Distributor */}
                   {(activeEntityMode === 'distributor' && state.distributor) && (
-                     <div className="flex flex-col gap-2 shrink-0">
-                       <div className="bg-gradient-to-r from-amber-500/10 to-amber-500/5 rounded-xl p-4 border border-amber-500/20">
-                          <div className="flex justify-between items-center text-amber-900 dark:text-amber-200">
-                             <span className="font-semibold text-sm opacity-80 capitalize">Credit Limit</span>
-                             <span className="font-black text-sm bg-amber-500/90 text-white px-2.5 py-1 rounded-md animate-pulse shadow-sm">{state.distributor.credit_limit > 0 ? `LKR ${Number(state.distributor.credit_limit).toFixed(2)}` : 'Unlimited'}</span>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <div className="bg-gradient-to-r from-amber-500/10 to-amber-500/5 rounded-xl p-4 border border-amber-500/20">
+                        <div className="flex justify-between items-center text-amber-900 dark:text-amber-200">
+                          <span className="font-semibold text-sm opacity-80 capitalize">Credit Limit</span>
+                          <span className="font-black text-sm bg-amber-500/90 text-white px-2.5 py-1 rounded-md animate-pulse shadow-sm">{state.distributor.credit_limit > 0 ? `LKR ${Number(state.distributor.credit_limit).toFixed(2)}` : 'Unlimited'}</span>
+                        </div>
+                      </div>
+                      <div className={cn("rounded-xl p-4 border", currentEntityBalance > 0 ? "bg-rose-500/10 border-rose-500/20 text-rose-900 dark:text-rose-200" : "bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200")}>
+                        <div className="flex justify-between items-center">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-sm opacity-80 capitalize">Due Amount</span>
+                            {unpaidInvoices > 0 && <span className="text-[11px] font-semibold opacity-70 mt-0.5">{unpaidInvoices} Unpaid Invoice{unpaidInvoices > 1 ? 's' : ''}</span>}
                           </div>
-                       </div>
-                       <div className={cn("rounded-xl p-4 border", currentEntityBalance > 0 ? "bg-rose-500/10 border-rose-500/20 text-rose-900 dark:text-rose-200" : "bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200")}>
-                          <div className="flex justify-between items-center">
-                             <div className="flex flex-col">
-                               <span className="font-semibold text-sm opacity-80 capitalize">Due Amount</span>
-                               {unpaidInvoices > 0 && <span className="text-[11px] font-semibold opacity-70 mt-0.5">{unpaidInvoices} Unpaid Invoice{unpaidInvoices > 1 ? 's' : ''}</span>}
-                             </div>
-                             <span className={cn("font-black text-sm px-2.5 py-1 rounded-md shadow-sm animate-pulse", currentEntityBalance > 0 ? "bg-rose-500/90 text-white" : "bg-amber-500/90 text-white")}>{isLoadingBalance ? '...' : `LKR ${Number(currentEntityBalance).toFixed(2)}`}</span>
-                          </div>
-                       </div>
-                     </div>
+                          <span className={cn("font-black text-sm px-2.5 py-1 rounded-md shadow-sm animate-pulse", currentEntityBalance > 0 ? "bg-rose-500/90 text-white" : "bg-amber-500/90 text-white")}>{isLoadingBalance ? '...' : `LKR ${Number(currentEntityBalance).toFixed(2)}`}</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Empty Space Filler */}
                   <div className="flex-1 rounded-xl border border-border/40 border-dashed opacity-50 flex items-center justify-center">
                     <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-40">
-                      {((activeEntityMode === 'customer' && !state.customer) || (activeEntityMode === 'distributor' && !state.distributor)) 
-                        ? `No ${activeEntityMode} Selected` 
+                      {((activeEntityMode === 'customer' && !state.customer) || (activeEntityMode === 'distributor' && !state.distributor))
+                        ? `No ${activeEntityMode} Selected`
                         : "Ready for Checkout"}
                     </span>
                   </div>

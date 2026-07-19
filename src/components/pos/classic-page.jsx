@@ -637,7 +637,7 @@ export default function ClassicPosPage() {
           break;
         case "F11":
           e.preventDefault();
-          toast.info("Refund mode activated");
+          fetchSales("completed").then(() => setIsSaleListOpen(true));
           break;
         case "F12":
           e.preventDefault();
@@ -1141,7 +1141,7 @@ export default function ClassicPosPage() {
               <ActionButton shortcut="(F7)" label="Invoices" icon={FileText} onClick={() => { setIsSaleListOpen(true); fetchSales("completed"); }} />
               <ActionButton shortcut="(F9)" label="Drawer" icon={Settings} />
               <ActionButton shortcut="(F10)" label="Re-Print" icon={Printer} onClick={() => fetchSales("completed").then(() => setIsSaleListOpen(true))} />
-              <ActionButton shortcut="(F11)" label="Refund" icon={RotateCcw} />
+              <ActionButton shortcut="(F11)" label="Return" icon={RotateCcw} onClick={() => { setIsSaleListOpen(true); fetchSales("completed"); }} />
               <ActionButton shortcut="(F12)" label="PAYMENT" icon={CalcIcon} color="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20" onClick={() => { if (state.cart.length > 0) setIsTenderModalOpen(true); }} />
             </div>
           </div>

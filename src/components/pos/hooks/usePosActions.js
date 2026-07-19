@@ -36,7 +36,7 @@ export function usePosActions({
 
   const syncPendingSales = useCallback(async () => {
     if (!navigator.onLine || !session?.accessToken || isSyncing) return;
-    
+
     // Check if we are in a cooling-off period due to previous rate limits
     if (syncCoolOffUntil && Date.now() < syncCoolOffUntil) {
       console.log(`Sync is cooling off until ${new Date(syncCoolOffUntil).toLocaleTimeString()}`);
@@ -47,7 +47,7 @@ export function usePosActions({
     const pending = await db.pendingSales
       .where('status').equals('pending')
       .toArray();
-      
+
     if (pending.length === 0) return;
 
     setIsSyncing(true);
@@ -61,11 +61,11 @@ export function usePosActions({
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` },
           body: JSON.stringify(sale.saleData),
         });
-        
+
         if (res.status === 429) {
           const retryAfter = parseInt(res.headers.get('Retry-After')) || 60;
           setSyncCoolOffUntil(Date.now() + (retryAfter * 1000));
-          break; 
+          break;
         }
 
         const result = await res.json();
@@ -81,7 +81,7 @@ export function usePosActions({
             // You might want to move this to a 'failed_sales' table for review
             await db.pendingSales.update(sale.id, { status: 'failed', error: result.message });
           }
-          continue; 
+          continue;
         }
       } catch (err) {
         console.error("Network error during sync:", err);
@@ -99,12 +99,12 @@ export function usePosActions({
   useEffect(() => {
     const interval = setInterval(syncPendingSales, 30000);
     window.addEventListener('online', syncPendingSales);
-    
+
     // Also trigger immediately if we have pending sales and just came online
     if (navigator.onLine) {
       syncPendingSales();
     }
-    
+
     return () => {
       clearInterval(interval);
       window.removeEventListener('online', syncPendingSales);
@@ -121,7 +121,7 @@ export function usePosActions({
     const subtotal = cart.reduce((a, i) => a + i.price * i.quantity, 0);
     const itemDiscounts = cart.reduce((a, i) => a + (i.price * i.quantity * (i.discount / 100)) + (parseFloat(i.discount_amt) || 0), 0);
     const wholesaleDiscAmt = isWholesale ? subtotal * (whlDisc / 100) : 0;
-    
+
     // Support both percentage and absolute discount
     const generalDiscAmtFinal = genDiscAmt > 0 ? genDiscAmt : (subtotal * (genDisc / 100));
 
@@ -230,12 +230,12 @@ export function usePosActions({
             itemLineDiscount = (itemSubtotal * (item.discount / 100)) + (parseFloat(item.discount_amt) || 0);
             wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
           }
-          
+
           const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
           const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
-          
-          const generalDiscAmtFinal = genDiscAmtNum > 0 
-            ? genDiscAmtNum * itemProportion 
+
+          const generalDiscAmtFinal = genDiscAmtNum > 0
+            ? genDiscAmtNum * itemProportion
             : itemSubtotal * (generalDiscount / 100);
 
           const finalDiscountAmount = Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2));
@@ -397,7 +397,7 @@ export function usePosActions({
     setIsLoadingSales(true);
     try {
       let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sales?status=${status}&size=50`;
-      
+
       if (status === "completed") {
         // We fetch 50 recent completed sales and let the UI filter them.
         // This ensures the All Sales modal has historical data to filter.
@@ -459,12 +459,12 @@ export function usePosActions({
           itemLineDiscount = (itemSubtotal * (item.discount / 100)) + (parseFloat(item.discount_amt) || 0);
           wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
         }
-        
+
         const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
         const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
-        
-        const generalDiscAmtFinal = genDiscAmtNum > 0 
-          ? genDiscAmtNum * itemProportion 
+
+        const generalDiscAmtFinal = genDiscAmtNum > 0
+          ? genDiscAmtNum * itemProportion
           : itemSubtotal * (generalDiscount / 100);
 
         return {
@@ -506,7 +506,7 @@ export function usePosActions({
       if (state.activeTabId) {
         // We are updating an existing tab/KOT ticket
         const newItems = saleData.items.filter((_, idx) => !state.cart[idx].isSaved);
-        
+
         if (newItems.length === 0) {
           toast.success("No new items to send to kitchen.");
           dispatch({ type: "CLEAR_CART" });
@@ -514,7 +514,7 @@ export function usePosActions({
           else await fetchSales("draft");
           return;
         }
-        
+
         res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/${state.activeTabId}/append`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}` },
@@ -528,25 +528,25 @@ export function usePosActions({
           body: JSON.stringify(saleData),
         });
       }
-      
+
       const result = await res.json();
 
       if (result.status === "success") {
         toast.success("Sale held successfully");
         playBeep("success");
-        
+
         // Print KOT automatically when holding a sale in a restaurant
         if (isRestaurant && result.data) {
           setPrintableSale({ ...result.data, isKOT: true });
         }
 
         dispatch({ type: "CLEAR_CART" });
-        
+
         if (onSuccess) {
           onSuccess();
         } else if (isRestaurant) {
           // Fallback if onSuccess is not provided
-          await fetchSales("draft"); 
+          await fetchSales("draft");
         } else {
           await fetchSales("draft");
         }
@@ -608,22 +608,22 @@ export function usePosActions({
     if (!restoredCart.length) return toast.error("Could not match any products from this sale");
 
     const restoredCustomer = customers.find((c) => c.id === sale.customer_id) || null;
-    
+
     // For restaurants, keep the tab alive in DB. For retail, pull it out (delete it).
-    dispatch({ 
-      type: "RESUME_SALE", 
-      payload: { 
-        cart: restoredCart, 
-        customer: restoredCustomer, 
-        isWholesale: false, 
-        activeTabId: isRestaurant ? sale.id : null 
-      } 
+    dispatch({
+      type: "RESUME_SALE",
+      payload: {
+        cart: restoredCart,
+        customer: restoredCustomer,
+        isWholesale: false,
+        activeTabId: isRestaurant ? sale.id : null
+      }
     });
 
     if (!isRestaurant) {
       deleteSale(sale.id);
     }
-    
+
     setIsHoldListOpen(false);
     toast.success(isRestaurant ? `Opened Tab ${sale.invoice_number}` : `Resumed sale ${sale.invoice_number}`);
   }, [flattenedVariants, customers, dispatch, deleteSale, setIsHoldListOpen, business]);

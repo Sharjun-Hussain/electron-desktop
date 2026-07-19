@@ -189,9 +189,9 @@ export default function PosPage() {
     flattenedVariants, customers, setIsHoldListOpen: (open) => setActiveDialog(open ? 'holdList' : null),
   });
 
-  const { 
+  const {
     isReady: isHardwareReady, selectedScalePort, selectedDisplayPort, currentWeight,
-    openDrawer, printReceipt, updateDisplay, startScaleListening, stopScaleListening 
+    openDrawer, printReceipt, updateDisplay, startScaleListening, stopScaleListening
   } = useHardware();
 
   // Update Customer Display when cart changes
@@ -199,19 +199,19 @@ export default function PosPage() {
     if (isHardwareReady && selectedDisplayPort) {
       if (state.cart.length > 0) {
         const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        
+
         // Grab the last item in the cart array (most recently scanned)
         const lastItem = state.cart[state.cart.length - 1];
-        
+
         // Line 1: Item Name (Truncated to exactly 20 chars to prevent overflow)
         const line1 = lastItem.name.substring(0, 20);
-        
+
         // Line 2: Qty x Price on left, Total on right
         const priceStr = `${lastItem.quantity}x${lastItem.price.toFixed(2)}`;
         const totalStr = `T:${subtotal.toFixed(2)}`;
         const spaceCount = Math.max(1, 20 - priceStr.length - totalStr.length);
         const line2 = `${priceStr}${" ".repeat(spaceCount)}${totalStr}`;
-        
+
         updateDisplay(line1, line2);
       } else {
         updateDisplay("WELCOME", "-- HAVE A NICE DAY AND THANK YOU --");
@@ -251,9 +251,9 @@ export default function PosPage() {
       }
 
       // If no hardware, use browser print with a small delay for rendering
-      const t = setTimeout(() => { 
+      const t = setTimeout(() => {
         if (printRef.current) {
-          handlePrintRef.current(); 
+          handlePrintRef.current();
         }
       }, 500);
       return () => clearTimeout(t);
@@ -269,7 +269,7 @@ export default function PosPage() {
 
   const confirmFinalPayment = useCallback(async (paymentData) => {
     if (!pendingPaymentArgs) return;
-    
+
     // Auto-open cash drawer if hardware is ready
     if (isHardwareReady) {
       openDrawer();
@@ -278,7 +278,7 @@ export default function PosPage() {
     // Merge modal data with original checkout args
     const finalizedArgs = {
       ...pendingPaymentArgs,
-      payments: paymentData.payments 
+      payments: paymentData.payments
         ? paymentData.payments.map(p => ({ payment_method: p.method, amount: p.received }))
         : [{ payment_method: paymentData.method, amount: paymentData.received }],
       paid_amount: paymentData.received,
@@ -290,9 +290,9 @@ export default function PosPage() {
     // Show change on customer display if applicable
     const change = paymentData.received - (pendingPaymentArgs?.netTotal || 0);
     if (isHardwareReady && selectedDisplayPort && change > 0) {
-        updateDisplay("CHANGE DUE:", `LKR ${change.toFixed(2)}`);
-        // Reset display after 5 seconds
-        setTimeout(() => updateDisplay("WELCOME", "-- HAVE A NICE DAY AND THANK YOU --"), 5000);
+      updateDisplay("CHANGE DUE:", `LKR ${change.toFixed(2)}`);
+      // Reset display after 5 seconds
+      setTimeout(() => updateDisplay("WELCOME", "-- HAVE A NICE DAY AND THANK YOU --"), 5000);
     }
 
     rawHandlePayNow(finalizedArgs);
@@ -785,18 +785,18 @@ export default function PosPage() {
       <SaleDetailWrapper isOpen={activeDialog === 'detail'} onOpenChange={(open) => setActiveDialog(open ? 'detail' : null)}
         sale={selectedSaleDetail} onReprint={setPrintableSale} />
 
-        <PaymentDialog
-          isOpen={activeDialog === 'payment'}
-          onOpenChange={(open) => setActiveDialog(open ? 'payment' : null)}
-          netTotal={pendingPaymentArgs?.netTotal || 0}
-          onConfirm={confirmFinalPayment}
-          paymentMethods={posResponse?.data?.activePaymentMethods || ["cash"]}
-          allCustomers={customers}
-          selectedCustomer={state.customer}
-          onSelectCustomer={(c) => dispatch({ type: 'SET_CUSTOMER', payload: c })}
-          enableMultiplePayments={posResponse?.data?.enableMultiplePayments}
-          settings={posResponse?.data}
-        />
+      <PaymentDialog
+        isOpen={activeDialog === 'payment'}
+        onOpenChange={(open) => setActiveDialog(open ? 'payment' : null)}
+        netTotal={pendingPaymentArgs?.netTotal || 0}
+        onConfirm={confirmFinalPayment}
+        paymentMethods={posResponse?.data?.activePaymentMethods || ["cash"]}
+        allCustomers={customers}
+        selectedCustomer={state.customer}
+        onSelectCustomer={(c) => dispatch({ type: 'SET_CUSTOMER', payload: c })}
+        enableMultiplePayments={posResponse?.data?.enableMultiplePayments}
+        settings={posResponse?.data}
+      />
 
       <ShiftManagerDialog
         isOpen={isShiftManagerOpen || activeDialog === 'shift'} onClose={() => { setIsShiftManagerOpen(false); setActiveDialog(null); }}
