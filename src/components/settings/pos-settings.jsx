@@ -14,7 +14,7 @@ import {
   Fingerprint, Type, Layout, AlignLeft, AlignCenter, RotateCcw, Image as ImageIcon,
   Usb, Scan, Activity, Zap, Info, ShieldCheck, Monitor,
   Fullscreen, Package, Lock, ArrowUpCircle, LayoutGrid,
-  ChevronRight
+  ChevronRight, Upload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermission } from "@/hooks/use-permission";
@@ -69,7 +69,7 @@ import { hardwareService } from "@/lib/qz-service";
 
 export function PosSettings() {
   const { hasPermission } = usePermission();
-  const { useModularSettings, updateModularSettings, useBusinessSettings } = useSettings();
+  const { useModularSettings, updateModularSettings, useBusinessSettings, uploadMedia } = useSettings();
   const { data: response, isLoading } = useModularSettings('pos');
   const { data: businessResponse } = useBusinessSettings();
   const business = businessResponse?.data;
@@ -144,6 +144,45 @@ export function PosSettings() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+
+  const handleMediaUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Filter by size
+    const validFiles = files.filter(f => f.size <= 5 * 1024 * 1024);
+    if (validFiles.length < files.length) {
+      toast.warning(`${files.length - validFiles.length} files skipped (exceeds 5MB limit)`);
+    }
+
+    if (validFiles.length === 0) return;
+
+    setIsUploadingMedia(true);
+    let currentUrls = formData.cd_media_urls ? formData.cd_media_urls.split('\n').map(u=>u.trim()).filter(Boolean) : [];
+    
+    let uploadedCount = 0;
+    // We upload them one by one
+    for (let file of validFiles) {
+       const result = await uploadMedia(file);
+       if (result.success) {
+          const fullUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL.replace('/api/v1', '')}/${result.url}`;
+          currentUrls.push(fullUrl);
+          uploadedCount++;
+       } else {
+          toast.error(`Failed to upload ${file.name}: ${result.error}`);
+       }
+    }
+    
+    if (uploadedCount > 0) {
+      setFormData(prev => ({ ...prev, cd_media_urls: currentUrls.join('\n') }));
+      toast.success(`${uploadedCount} media files uploaded`);
+    }
+    
+    setIsUploadingMedia(false);
+    e.target.value = '';
+  };
+
   const [formData, setFormData] = useState({
     enableSound: true, beepStyle: "digital", masterVolume: 60, beepPitch: 440, beepDuration: 0.1, beepWaveform: "sine",
     showReceiptPreview: true,
@@ -160,7 +199,19 @@ export function PosSettings() {
     enableExtraDiscount: true, defaultExtraDiscountType: "amount",
     posTableColumns: ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"],
     showProductImage: true,
+    cd_show_qr: true,
+    cd_show_time: true,
+    cd_show_business: true,
+    cd_show_checkout: true,
+    cd_media_urls: "",
   });
+
+  const cdMediaArray = formData.cd_media_urls ? formData.cd_media_urls.split('\n').map(u => u.trim()).filter(Boolean) : [];
+
+  const handleRemoveMedia = (indexToRemove) => {
+    const newArray = cdMediaArray.filter((_, idx) => idx !== indexToRemove);
+    setFormData(prev => ({ ...prev, cd_media_urls: newArray.join('\n') }));
+  };
 
   const [peripherals, setPeripherals] = useState({
     receiptPrinter: { status: 'disconnected', name: null },
@@ -316,6 +367,7 @@ export function PosSettings() {
               { id: "invoice", label: "Invoice Layout", icon: FileText, restricted: tier === 'Essential' },
               { id: "printer", label: "Hardware Control", icon: Printer },
               { id: "payments", label: "Payment Protocol", icon: CreditCard, restricted: tier === 'Essential' },
+              { id: "display", label: "Customer Display", icon: Monitor },
             ].map(tab => (
               <TabsTrigger
                 key={tab.id}
@@ -1292,6 +1344,72 @@ export function PosSettings() {
               </div>
             </>
           )}
+        </TabsContent>
+
+        {/* TAB 5: CUSTOMER DISPLAY */}
+        <TabsContent value="display" className="mt-0 outline-none animate-in fade-in-0 duration-300">
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-md overflow-hidden">
+            <CardContent className="p-6">
+              <SectionHeader icon={Monitor} title="Customer Facing Display" description="Customize exactly what the customer sees on the secondary display" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Display Layout</h4>
+                  <ToggleRow label="Show Checkout Panel" desc="Display the live cart and itemized receipt" checked={formData.cd_show_checkout ?? true} onCheckedChange={(c) => updateField('cd_show_checkout', c)} />
+                  <ToggleRow label="Show Payment QR" desc="Show the dynamic QR code during payment" checked={formData.cd_show_qr ?? true} onCheckedChange={(c) => updateField('cd_show_qr', c)} />
+                  <ToggleRow label="Show Date & Time" desc="Display the live digital clock" checked={formData.cd_show_time ?? true} onCheckedChange={(c) => updateField('cd_show_time', c)} />
+                  <ToggleRow label="Show Business Name" desc="Display your brand header on the display" checked={formData.cd_show_business ?? true} onCheckedChange={(c) => updateField('cd_show_business', c)} />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Custom Media (Promos)</h4>
+                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                      {cdMediaArray.length} Items Configured
+                    </span>
+                  </div>
+
+                  <div className="space-y-4 pt-1">
+                    {/* Image Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {cdMediaArray.map((url, idx) => (
+                        <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shadow-sm">
+                           <img src={url} alt={`Promo ${idx+1}`} className="w-full h-full object-cover" />
+                           <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-[2px]">
+                             <Button onClick={() => handleRemoveMedia(idx)} variant="destructive" size="sm" className="h-7 text-[10px] px-3 max-w-[80%] font-bold shadow-xl scale-90 group-hover:scale-100 transition-transform">
+                               Remove
+                             </Button>
+                           </div>
+                        </div>
+                      ))}
+
+                      {/* Upload Button Block */}
+                      <label htmlFor="media-upload-desktop" className={cn(
+                        "relative aspect-video rounded-xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 group shadow-sm bg-slate-50/50 dark:bg-slate-900/20",
+                        isUploadingMedia && "opacity-50 pointer-events-none"
+                      )}>
+                        <input type="file" id="media-upload-desktop" className="hidden" accept="image/*,video/*" multiple onChange={handleMediaUpload} disabled={isUploadingMedia} />
+                        {isUploadingMedia ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+                        ) : (
+                          <div className="size-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm border border-emerald-200 dark:border-emerald-500/30">
+                             <Upload className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                        )}
+                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                           {isUploadingMedia ? "Uploading..." : "Upload Media"}
+                        </span>
+                      </label>
+                    </div>
+                    
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                      Files supported: JPEG, PNG, WEBP, MP4. (Max 5MB each). Adding custom media overrides the default placeholder promos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
