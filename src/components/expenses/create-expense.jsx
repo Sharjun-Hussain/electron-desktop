@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "@/lib/date-utils";
 import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Upload, X, Receipt, Wallet, Banknote, CreditCard as CardIcon, Landmark, Info, Plus, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useFormRestore } from "@/hooks/use-form-restore";
 import { Button } from "@/components/ui/button";
 import { AVAILABLE_PAYMENTS } from "@/lib/constants";
@@ -54,7 +55,8 @@ const formSchema = z.object({
 export default function CreateExpense() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { formatCurrency, currencySymbol, pos } = useCurrency();
+  const { formatCurrency, localization, pos } = useAppSettings();
+  const currencySymbol = localization?.currency || "LKR";
   const activeMethods = pos?.activePaymentMethods || ["cash", "card"];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
