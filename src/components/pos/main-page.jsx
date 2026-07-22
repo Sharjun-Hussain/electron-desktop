@@ -16,6 +16,7 @@ import { useShift } from "@/app/hooks/swr/useShift";
 
 import { Button } from "@/components/ui/button";
 import { MonitorX } from "lucide-react";
+import { toast } from "sonner";
 
 import { usePosData } from "./hooks/usePosData";
 import { usePosCart } from "./hooks/usePosCart";
@@ -35,6 +36,7 @@ import BatchSelectorDialog from "./components/BatchSelectorDialog";
 import Calculator from "./components/Calculator";
 import { PosHeader } from "./components/PosHeader";
 import { UtilitySidebar } from "./components/UtilitySidebar";
+import { SalesReturnModal } from "./components/SalesReturnModal";
 import { db } from "@/lib/indexedDB/db";
 import { useLiveQuery } from "dexie-react-hooks";
 
@@ -102,6 +104,7 @@ export default function PosPage() {
   const [availableBatches, setAvailableBatches] = useState([]);
   const [itemPendingBatch, setItemPendingBatch] = useState(null);
   const [pendingPaymentArgs, setPendingPaymentArgs] = useState(null);
+  const [isSalesReturnModalOpen, setIsSalesReturnModalOpen] = useState(false);
   const [isProductListVisible, setIsProductListVisible] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
@@ -235,8 +238,35 @@ export default function PosPage() {
       if (isPrintingRef.current) return;
       isPrintingRef.current = true;
 
+      // Handle A4 generation from backend if it's a saved sale
+      if (receiptSettings?.invoiceTemplate === 'a4_professional' && printableSale.id && printableSale.status !== 'preview') {
+          const fetchA4Pdf = async () => {
+            try {
+              toast.loading("Generating PDF...", { id: "pdf-gen" });
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/invoice/${printableSale.id}/pdf`, {
+                headers: { Authorization: `Bearer ${session?.accessToken}` }
+              });
+              
+              if (!res.ok) throw new Error("Failed to generate PDF");
+              
+              const blob = await res.blob();
+              const url = window.URL.createObjectURL(blob);
+              window.open(url, "_blank");
+              toast.success("PDF opened in new tab", { id: "pdf-gen" });
+            } catch (error) {
+              console.error(error);
+              toast.error("Error generating PDF, falling back to local print", { id: "pdf-gen" });
+              if (printRef.current) handlePrintRef.current();
+            } finally {
+              setPrintableSale(null);
+            }
+          };
+          fetchA4Pdf();
+          return;
+      }
+
       // If hardware is ready, print SILENTLY and INSTANTLY
-      if (isHardwareReady && printRef.current) {
+      if (isHardwareReady && printRef.current && receiptSettings?.invoiceTemplate !== 'a4_professional') {
         const printSilently = async () => {
           const html = printRef.current.innerHTML;
           const success = await printReceipt(html);
@@ -250,7 +280,7 @@ export default function PosPage() {
         return;
       }
 
-      // If no hardware, use browser print with a small delay for rendering
+      // If no hardware or is preview, use browser print with a small delay for rendering
       const t = setTimeout(() => {
         if (printRef.current) {
           handlePrintRef.current();
@@ -260,7 +290,7 @@ export default function PosPage() {
     } else {
       isPrintingRef.current = false;
     }
-  }, [printableSale, isHardwareReady, printReceipt]);
+  }, [printableSale, isHardwareReady, printReceipt, receiptSettings, session]);
 
   const handlePayNow = useCallback((args) => {
     setPendingPaymentArgs(args);
@@ -750,6 +780,7 @@ export default function PosPage() {
           } else if (key === 'holdList') { setActiveDialog('holdList'); fetchSales("draft"); }
           else if (key === 'saleList') { setActiveDialog('saleList'); fetchSales("completed"); }
           else if (key === 'checkStock' || key === 'stock') { setActiveDialog('stock'); clearStockData(); setStockSearch(""); }
+          else if (key === 'salesReturn') { setIsSalesReturnModalOpen(true); }
           else if (key === 'reports') router.push("/reports");
           else if (key === 'salesByProduct') window.open("/reports/sales/product", "_blank");
           else if (key === 'purchase') router.push("/purchase/suppliers");
@@ -781,6 +812,13 @@ export default function PosPage() {
 
       <ReturnDialogWrapper isOpen={activeDialog === 'return'} onOpenChange={(open) => setActiveDialog(open ? 'return' : 'saleList')}
         sale={selectedReturnSale} onSuccess={() => fetchSales("completed")} />
+
+      <SalesReturnModal 
+        isOpen={isSalesReturnModalOpen} 
+        onOpenChange={setIsSalesReturnModalOpen} 
+        flattenedVariants={flattenedVariants}
+        allProducts={allProducts}
+      />
 
       <SaleDetailWrapper isOpen={activeDialog === 'detail'} onOpenChange={(open) => setActiveDialog(open ? 'detail' : null)}
         sale={selectedSaleDetail} onReprint={setPrintableSale} />

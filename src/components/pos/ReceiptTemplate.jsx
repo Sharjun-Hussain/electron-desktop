@@ -158,12 +158,6 @@ export const ReceiptTemplate = forwardRef(({ sale, settings, business, branch, t
                   {(item.product_variant?.name || item.variant_name) ? (
                     <span className="ml-1">#{item.product_variant?.name || item.variant_name}</span>
                   ) : null}
-                  {/* Line 2: SKU / Barcode */}
-                  {(item.product?.code || item.product_variant?.sku) && (
-                    <div className="pl-4">
-                      {item.product?.code || item.product_variant?.sku}
-                    </div>
-                  )}
                 </td>
               </tr>
 

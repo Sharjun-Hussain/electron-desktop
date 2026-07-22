@@ -4,18 +4,19 @@ import { memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   History, List, FileText, Search,
-  BarChart3, ShoppingCart, Package, Zap, TrendingUp, CreditCard
+  BarChart3, ShoppingCart, Package, Zap, TrendingUp, CreditCard, Printer, RotateCcw
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const UTILITY_ACTIONS = [
+  { label: "Sales Return", key: "salesReturn", icon: RotateCcw, color: "text-red-500", bg: "bg-red-500/10", shortcut: "F8" },
   { label: "Hold Sale", key: "hold", icon: ShoppingCart, color: "text-amber-500", bg: "bg-amber-500/10", shortcut: "F3" },
   { label: "Hold List", key: "holdList", icon: List, color: "text-blue-500", bg: "bg-blue-500/10", shortcut: "F4" },
   { label: "Sale List", key: "saleList", icon: FileText, color: "text-emerald-500", bg: "bg-emerald-500/10", shortcut: "F7" },
   { label: "Check Stock", key: "checkStock", icon: Search, color: "text-purple-500", bg: "bg-purple-500/10", shortcut: "F9" },
   { label: "Open Drawer", key: "openDrawer", icon: Zap, color: "text-orange-500", bg: "bg-orange-500/10", shortcut: "F11" },
-  { label: "Sales by Product", key: "salesByProduct", icon: TrendingUp, color: "text-indigo-500", bg: "bg-indigo-500/10" },
+  { label: "Print Z-Read", key: "printZRead", icon: Printer, color: "text-indigo-500", bg: "bg-indigo-500/10" },
   { label: "Reports", key: "reports", icon: BarChart3, color: "text-rose-500", bg: "bg-rose-500/10" },
   { label: "Inventory", key: "inventory", icon: Package, color: "text-slate-500", bg: "bg-slate-500/10" },
 ];
@@ -24,7 +25,7 @@ export const UtilitySidebar = memo(({ onAction, cartEmpty, isRestaurant, isManuf
   const actions = useMemo(() => {
     if (isManufacturing) {
       return [
-        ...UTILITY_ACTIONS.filter(a => a.key !== 'openDrawer' && a.key !== 'checkStock' && a.key !== 'salesByProduct'),
+        ...UTILITY_ACTIONS.filter(a => a.key !== 'openDrawer' && a.key !== 'checkStock' && a.key !== 'printZRead'),
         { label: "Check Credit", key: "checkCredit", icon: CreditCard, color: "text-indigo-500", bg: "bg-indigo-500/10" }
       ];
     }

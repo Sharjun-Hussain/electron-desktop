@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useAppSettings } from "@/app/hooks/useAppSettings";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { subDays, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfDay, endOfDay } from "date-fns";
@@ -48,6 +49,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
+
 import { toast } from "sonner";
 import { exportToCSV } from "@/lib/exportUtils";
 import SaleDetailSheet from "@/components/pos/SaleDetailSheet";
@@ -56,6 +58,7 @@ import { StatusBadge } from "../ui/status-badge";
 import { ResourceManagementLayout } from "@/components/general/resource-management-layout";
 import { Badge } from "@/components/ui/badge";
 import { ReceiptTemplate } from "../pos/ReceiptTemplate";
+import { InvoiceA4Template } from "../pos/InvoiceA4Template";
 import { SalesHistorySkeleton } from "./SalesHistorySkeleton";
 
 // --- MEMOIZED STATS COMPONENT ---
@@ -81,10 +84,18 @@ StatsSection.displayName = "StatsSection";
 
 export default function SalesHistory() {
   const { data: session } = useSession();
-  const { formatCurrency, business, pos: posSettings, generateDocNumber } = useAppSettings();
+  const { formatCurrency, business, generateDocNumber, pos } = useAppSettings();
+  const { receipt: receiptSettings, business: localBusiness, setReceiptSettings } = useSettingsStore();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Sync settings when loaded
+  useEffect(() => {
+    if (pos && Object.keys(pos).length > 0) {
+      setReceiptSettings(pos);
+    }
+  }, [pos, setReceiptSettings]);
 
   // --- STATE ---
   const [data, setData] = useState([]);
@@ -256,12 +267,22 @@ export default function SalesHistory() {
   }, [searchParams, data, session]);
 
   // --- HANDLERS ---
-  const handleViewDetails = (sale) => {
-    router.push(pathname + '?' + createQueryString('saleId', sale.id), { scroll: false });
+  const handleViewDetails = async (sale) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/${sale.id}`, {
+        headers: { Authorization: `Bearer ${session?.accessToken}` }
+      });
+      const rs = await res.json();
+      if (rs.status === 'success') {
+        setSelectedSale(rs.data);
+        setIsDetailOpen(true);
+      }
+    } catch (e) {
+      console.error("Failed to fetch sale details", e);
+    }
   };
 
   const handleCloseDetails = (open) => {
-    if (!open) router.push(pathname, { scroll: false });
     setIsDetailOpen(open);
   };
 
@@ -279,17 +300,66 @@ export default function SalesHistory() {
     onAfterPrint: () => setPrintableSale(null),
   });
 
+  const handlePrintRef = useRef(handlePrint);
+  useEffect(() => { handlePrintRef.current = handlePrint; });
+
+  const isPrintingRef = useRef(false);
+
   useEffect(() => {
     if (printableSale) {
-      const t = setTimeout(() => {
-        if (printRef.current) handlePrint();
-      }, 100);
-      return () => clearTimeout(t);
-    }
-  }, [printableSale, handlePrint]);
+      if (isPrintingRef.current) return;
+      isPrintingRef.current = true;
 
-  const handleReprint = (sale) => {
-    setPrintableSale(sale);
+      // Handle A4 generation from backend if it's a saved sale
+      if (receiptSettings?.invoiceTemplate === 'a4_professional' && printableSale.id && printableSale.status !== 'preview') {
+          const fetchA4Pdf = async () => {
+            try {
+              toast.loading("Generating PDF...", { id: "pdf-gen" });
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/invoice/${printableSale.id}/pdf`, {
+                headers: { Authorization: `Bearer ${session?.accessToken}` }
+              });
+              
+              if (!res.ok) throw new Error("Failed to generate PDF");
+              
+              const blob = await res.blob();
+              const url = window.URL.createObjectURL(blob);
+              window.open(url, "_blank");
+              toast.success("PDF opened in new tab", { id: "pdf-gen" });
+            } catch (error) {
+              console.error(error);
+              toast.error("Error generating PDF, falling back to local print", { id: "pdf-gen" });
+              if (printRef.current) handlePrintRef.current();
+            } finally {
+              setPrintableSale(null);
+            }
+          };
+          fetchA4Pdf();
+          return;
+      }
+
+      const t = setTimeout(() => {
+        if (printRef.current) handlePrintRef.current();
+      }, 500); // wait briefly for rendering
+      return () => clearTimeout(t);
+    } else {
+      isPrintingRef.current = false;
+    }
+  }, [printableSale, receiptSettings, session]);
+
+  const handleReprint = async (sale) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales/${sale.id}`, {
+        headers: { Authorization: `Bearer ${session?.accessToken}` }
+      });
+      const rs = await res.json();
+      if (rs.status === 'success') {
+        setPrintableSale(rs.data);
+      } else {
+        setPrintableSale(sale);
+      }
+    } catch (e) {
+      setPrintableSale(sale);
+    }
   };
 
   const exportData = useMemo(() => {
@@ -361,12 +431,12 @@ export default function SalesHistory() {
         <div className="flex flex-col">
           <button
             onClick={() => handleViewDetails(row.original)}
-            className="text-left text-sm text-emerald-600 hover:text-emerald-700 hover:underline decoration-emerald-500/30 underline-offset-4"
+            className="text-left  text-sm text-emerald-600 hover:text-emerald-700 hover:underline decoration-emerald-500/30 underline-offset-4"
           >
             {row.getValue("invoice_number")}
           </button>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            <span className="text-[10px] text-muted-foreground uppercase">{row.original.branch?.name || 'Main Hub'}</span>
+            <span className="text-[10px] text-muted-foreground uppercase ">{row.original.branch?.name || 'Main Hub'}</span>
             {/* <span className="text-[10px] opacity-20">•</span> */}
             {/* <span className="text-[9px] font-black text-emerald-600/50 tabular-nums tracking-tighter">REF: {generateDocNumber('sale', row.original.id)}</span> */}
             {row.original.source === 'ecommerce' && (
@@ -402,7 +472,7 @@ export default function SalesHistory() {
       accessorKey: "customer.name",
       header: "Customer",
       cell: ({ row }) => (
-        <span className="text-foreground text-sm">
+        <span className=" text-foreground text-sm">
           {row.original.customer?.name || "Walk-in Customer"}
         </span>
       )
@@ -426,7 +496,7 @@ export default function SalesHistory() {
       accessorKey: "payable_amount",
       header: () => <div className="text-right">Total</div>,
       cell: ({ row }) => (
-        <div className="text-right text-foreground tabular-nums">
+        <div className="text-right  text-foreground tabular-nums">
           {formatCurrency(row.getValue("payable_amount"))}
         </div>
       )
@@ -816,15 +886,28 @@ export default function SalesHistory() {
       />
 
       {/* Hidden Reprint Template */}
-      <div className="hidden">
-        <ReceiptTemplate
-          ref={printRef}
-          sale={printableSale}
-          business={business}
-          settings={posSettings}
-          branch={printableSale?.branch}
-          terminalName={printableSale?.terminal_name || "REPRINT"}
-        />
+      <div style={{ position: "absolute", left: "-9999px", top: 0, opacity: 0, pointerEvents: "none", direction: "ltr", textAlign: "left" }}>
+        <div className="block print:block" style={{ direction: "ltr", textAlign: "left" }}>
+          {receiptSettings?.invoiceTemplate === 'a4_professional' ? (
+            <InvoiceA4Template 
+              ref={printRef} 
+              sale={printableSale} 
+              settings={receiptSettings} 
+              business={localBusiness} 
+              branch={printableSale?.branch} 
+              terminalName={printableSale?.terminal_name || "REPRINT"} 
+            />
+          ) : (
+            <ReceiptTemplate
+              ref={printRef}
+              sale={printableSale}
+              business={localBusiness}
+              settings={receiptSettings}
+              branch={printableSale?.branch}
+              terminalName={printableSale?.terminal_name || "REPRINT"}
+            />
+          )}
+        </div>
       </div>
     </>
   );
