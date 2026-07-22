@@ -29,6 +29,7 @@ import {
   LayoutGrid
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AVAILABLE_PAYMENTS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,8 @@ import { Card } from "@/components/ui/card";
 export default function DiningTableMapPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { formatCurrency } = useAppSettings();
+  const { formatCurrency, pos } = useAppSettings();
+  const activeMethods = pos?.activePaymentMethods || ["cash", "card"];
   const { t } = useTranslation();
 
   // Floor layout states
@@ -648,19 +650,19 @@ export default function DiningTableMapPage() {
             <div className="flex flex-col gap-1.5">
               <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Payment Method</Label>
               <div className="grid grid-cols-3 gap-2">
-                {["cash", "card", "bank_transfer"].map((method) => (
+                {AVAILABLE_PAYMENTS.filter(p => activeMethods.includes(p.id)).map((payment) => (
                   <button
-                    key={method}
+                    key={payment.id}
                     type="button"
-                    onClick={() => setPaymentMethod(method)}
+                    onClick={() => setPaymentMethod(payment.id)}
                     className={cn(
                       "px-3 py-2 rounded-md border font-bold text-[9px] uppercase text-center transition-all active:scale-[0.98]",
-                      paymentMethod === method
+                      paymentMethod === payment.id
                         ? "bg-emerald-600 text-white border-emerald-500 shadow-sm"
                         : "bg-muted/20 text-muted-foreground border-border hover:bg-muted/80 hover:text-foreground"
                     )}
                   >
-                    {method.replace('_', ' ')}
+                    {payment.id.replace('_', ' ')}
                   </button>
                 ))}
               </div>

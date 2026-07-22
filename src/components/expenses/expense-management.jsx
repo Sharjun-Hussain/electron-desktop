@@ -26,6 +26,8 @@ import { usePermission } from "@/hooks/use-permission";
 import { MODULES } from "@/lib/permissions";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { ResourceManagementLayout } from "@/components/general/resource-management-layout";
+import { AVAILABLE_PAYMENTS } from "@/lib/constants";
+
 import { Button } from "@/components/ui/button";
 import { 
   Popover, 
@@ -64,7 +66,8 @@ export default function ExpenseManagement() {
   const router = useRouter();
   const { canCreate, canUpdate, canDelete } = usePermission();
   const { EXPENSE } = MODULES;
-  const { formatCurrency } = useAppSettings();
+  const { formatCurrency, pos } = useAppSettings();
+  const activeMethods = pos?.activePaymentMethods || ["cash", "card"];
 
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -341,9 +344,14 @@ export default function ExpenseManagement() {
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-border shadow-lg">
                 <SelectItem value="all" className="text-[13px]">All Methods</SelectItem>
-                <SelectItem value="Cash" className="text-[13px] text-emerald-600">Cash</SelectItem>
-                <SelectItem value="Bank Transfer" className="text-[13px] text-blue-600">Bank Transfer</SelectItem>
-                <SelectItem value="Credit Card" className="text-[13px] text-orange-600">Credit Card</SelectItem>
+                {AVAILABLE_PAYMENTS.filter(p => activeMethods.includes(p.id)).map(p => (
+                  <SelectItem key={p.id} value={p.id} className="text-[13px]">
+                    <div className="flex items-center gap-2">
+                      <p.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>{p.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -12,6 +12,8 @@ import { ArrowLeft, Loader2, Save, Calendar as CalendarIcon, Upload, X, Receipt,
 import { useCurrency } from "@/hooks/useCurrency";
 import { useFormRestore } from "@/hooks/use-form-restore";
 import { Button } from "@/components/ui/button";
+import { AVAILABLE_PAYMENTS } from "@/lib/constants";
+
 import {
   Form,
   FormControl,
@@ -52,7 +54,9 @@ const formSchema = z.object({
 export default function CreateExpense() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { formatCurrency, currencySymbol } = useCurrency();
+  const { formatCurrency, currencySymbol, pos } = useCurrency();
+  const activeMethods = pos?.activePaymentMethods || ["cash", "card"];
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
@@ -360,30 +364,14 @@ export default function CreateExpense() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="rounded-md shadow-lg">
-                              <SelectItem value="cash">
-                                <div className="flex items-center gap-2">
-                                  <Banknote className="h-3.5 w-3.5 text-emerald-500" />
-                                  <span>Cash</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="bank">
-                                <div className="flex items-center gap-2">
-                                  <Landmark className="h-3.5 w-3.5 text-blue-500" />
-                                  <span>Bank Transfer</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="card">
-                                <div className="flex items-center gap-2">
-                                  <CardIcon className="h-3.5 w-3.5 text-purple-500" />
-                                  <span>Card Terminal</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="cheque">
-                                <div className="flex items-center gap-2">
-                                  <Receipt className="h-3.5 w-3.5 text-amber-500" />
-                                  <span>Cheque</span>
-                                </div>
-                              </SelectItem>
+                              {AVAILABLE_PAYMENTS.filter(p => activeMethods.includes(p.id)).map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  <div className="flex items-center gap-2">
+                                    <p.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span>{p.label}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>

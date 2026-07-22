@@ -34,14 +34,8 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-const AVAILABLE_PAYMENTS = [
-  { id: "cash", label: "Cash", icon: Banknote, desc: "Physical currency" },
-  { id: "card", label: "Card Terminal", icon: CreditCard, desc: "Credit/Debit transactions" },
-  { id: "online", label: "Online Transfer", icon: CreditCard, desc: "Bank transfer basis" },
-  { id: "qr", label: "QR Payment", icon: QrCode, desc: "Scan to pay" },
-  { id: "wallet", label: "Digital Wallet", icon: Smartphone, desc: "Apple Pay / Google Pay" },
-  { id: "cheque", label: "Cheque Basis", icon: ScrollText, desc: "Physical cheque settlement" },
-];
+import { AVAILABLE_PAYMENTS } from "@/lib/constants";
+
 
 const SectionHeader = ({ icon: Icon, title, description }) => (
   <div className="flex items-center gap-3 mb-5">

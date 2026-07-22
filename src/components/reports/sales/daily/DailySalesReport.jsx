@@ -509,7 +509,10 @@ export default function DailySalesSummaryPage() {
         card: "bg-blue-500",
         credit: "bg-amber-500",
         cheque: "bg-purple-500",
-        bank: "bg-teal-500",
+        bank: "bg-slate-400",
+        online: "bg-teal-500",
+        qr: "bg-indigo-500",
+        wallet: "bg-pink-500",
       };
       return colors[method.toLowerCase()] || "bg-slate-400";
     };

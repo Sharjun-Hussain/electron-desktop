@@ -110,8 +110,16 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                     <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.Card || stats.paymentAmounts?.card || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr className="border-b border-slate-100">
-                    <td className="py-3 text-slate-600">Bank Transfer</td>
-                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.['Bank Transfer'] || stats.paymentAmounts?.bank_transfer || stats.paymentAmounts?.Bank || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="py-3 text-slate-600">Online Transfer</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.['Online Transfer'] || stats.paymentAmounts?.online || stats.paymentAmounts?.bank_transfer || stats.paymentAmounts?.Bank || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 text-slate-600">QR Payment</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.['QR Payment'] || stats.paymentAmounts?.qr || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                  <tr className="border-b border-slate-100">
+                    <td className="py-3 text-slate-600">Digital Wallet</td>
+                    <td className="py-3 text-right font-semibold text-slate-800">Rs {(stats.paymentAmounts?.['Digital Wallet'] || stats.paymentAmounts?.wallet || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr className="border-b border-slate-100">
                     <td className="py-3 text-slate-600">Cheque Payment</td>

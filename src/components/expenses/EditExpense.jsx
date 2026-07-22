@@ -22,6 +22,7 @@ import {
   Landmark
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AVAILABLE_PAYMENTS } from "@/lib/constants";
 import {
   Form,
   FormControl,
@@ -69,10 +70,11 @@ const formSchema = z.object({
 export default function EditExpense({ id }) {
   const router = useRouter();
   const { data: session } = useSession();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [categories, setCategories] = useState([]);
   const [initialData, setInitialData] = useState(null);
+  const { formatCurrency, pos } = useAppSettings();
+  const activeMethods = pos?.activePaymentMethods || ["cash", "card"];
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -317,30 +319,14 @@ export default function EditExpense({ id }) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="rounded-md shadow-lg">
-                            <SelectItem value="cash">
-                              <div className="flex items-center gap-2">
-                                <Banknote className="h-3.5 w-3.5 text-emerald-500" />
-                                <span>Cash</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="bank_transfer">
-                              <div className="flex items-center gap-2">
-                                <Landmark className="h-3.5 w-3.5 text-blue-500" />
-                                <span>Bank Transfer</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="cheque">
-                              <div className="flex items-center gap-2">
-                                <Receipt className="h-3.5 w-3.5 text-amber-500" />
-                                <span>Cheque</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="credit_card">
-                              <div className="flex items-center gap-2">
-                                <CardIcon className="h-3.5 w-3.5 text-purple-500" />
-                                <span>Credit Card</span>
-                              </div>
-                            </SelectItem>
+                            {AVAILABLE_PAYMENTS.filter(p => activeMethods.includes(p.id)).map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                <div className="flex items-center gap-2">
+                                  <p.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span>{p.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
