@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSettings } from "@/app/hooks/swr/useSettings";
 import { toast } from "sonner";
-import { Save, Upload, Loader2, Store, Globe, Phone, Mail, MapPin, Building2, Fingerprint } from "lucide-react";
+import { Save, Upload, Loader2, Store, Globe, Phone, Mail, MapPin, Building2, Fingerprint, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -68,13 +68,16 @@ export function BusinessSettings() {
       if (!phoneRegex.test(phone)) errors.push("Phone number contains invalid characters (use digits, +, -, spaces, or parentheses)");
     }
 
-    // Website — optional, but must be a valid URL if provided
     const website = formData.website.trim();
     if (website) {
+      let urlToTest = website;
+      if (!/^https?:\/\//i.test(urlToTest)) {
+        urlToTest = 'https://' + urlToTest;
+      }
       try {
-        new URL(website);
+        new URL(urlToTest);
       } catch {
-        errors.push("Please enter a valid website URL (e.g. https://example.com)");
+        errors.push("Please enter a valid website URL (e.g. www.example.com)");
       }
     }
 
@@ -95,9 +98,14 @@ export function BusinessSettings() {
     }
 
     setIsSaving(true);
+    let finalWebsite = formData.website.trim();
+    if (finalWebsite && !/^https?:\/\//i.test(finalWebsite)) {
+      finalWebsite = 'https://' + finalWebsite;
+    }
+
     const payload = {
       name: formData.businessName.trim(), tax_id: formData.taxId,
-      business_type: formData.businessType, website: formData.website.trim(),
+      business_type: formData.businessType, website: finalWebsite,
       email: formData.email.trim(), phone: formData.phone.trim(), address: formData.address,
       city: formData.city, state: formData.state, zip_code: formData.zipCode,
       shopify_enabled: formData.shopify_enabled, whatsapp_enabled: formData.whatsapp_enabled,
@@ -226,7 +234,16 @@ export function BusinessSettings() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-50 dark:border-slate-800/50">
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Business Email</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-sm font-medium">Business Email</Label>
+                    <div className="group relative flex items-center">
+                      <Info className="w-3.5 h-3.5 text-slate-400 cursor-help hover:text-emerald-500 transition-colors" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-max max-w-[200px] whitespace-normal opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[10px] sm:text-xs px-2.5 py-1.5 rounded-md pointer-events-none z-50 shadow-md transform scale-95 group-hover:scale-100 duration-150">
+                        Used for invoices and public docs. This does NOT change your login credentials.
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                      </div>
+                    </div>
+                  </div>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-300 dark:text-slate-600 font-medium" />
                     <Input type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} placeholder="contact@organization.com" className={cn(inputCls, "pl-10")} />
