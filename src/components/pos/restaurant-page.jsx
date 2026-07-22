@@ -23,7 +23,7 @@ import {
   ReturnDialogWrapper, SaleDetailWrapper, VariantSelectorDialog, PaymentDialog
 } from "./components/PosDialogs";
 import { ReceiptTemplate } from "./ReceiptTemplate";
-import { RestaurantReceiptTemplate } from "./RestaurantReceiptTemplate";
+import { CustomerReceiptTemplate, KitchenSlipTemplate } from "./RestaurantReceiptTemplate";
 import { InvoiceA4Template } from "./InvoiceA4Template";
 import { ShiftManagerDialog } from "./components/ShiftManagerDialog";
 import BatchSelectorDialog from "./components/BatchSelectorDialog";
@@ -97,7 +97,8 @@ export default function RestaurantPosPage() {
   const [selectedProductForVariants, setSelectedProductForVariants] = useState(null);
   const [selectedReturnSale, setSelectedReturnSale] = useState(null);
   const [selectedSaleDetail, setSelectedSaleDetail] = useState(null);
-  const [printableSale, setPrintableSale] = useState(null);
+  const [printableSale, setPrintableSale] = useState(null);     // → customer receipt (then kitchen)
+  const [kitchenOnlySale, setKitchenOnlySale] = useState(null); // → kitchen slip ONLY (Send to Kitchen)
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [stockSearch, setStockSearch] = useState("");
   const [terminalName, setTerminalName] = useState("");
@@ -204,6 +205,7 @@ export default function RestaurantPosPage() {
     fetchStock, clearStockData, salesData, isLoadingSales, stockData, isLoadingStock, syncPendingSales, searchSales
   } = usePosActions({
     state, dispatch, selectedBranch, setPrintableSale,
+    setKitchenOnlySale,   // ← Send to Kitchen uses this to print kitchen slip only
     flattenedVariants, customers, setIsHoldListOpen: (open) => setActiveDialog(open ? 'holdList' : null),
   });
 
@@ -237,10 +239,44 @@ export default function RestaurantPosPage() {
     }
   }, [state.cart, isHardwareReady, selectedDisplayPort, updateDisplay]);
 
+  const kitchenPrintRef = useRef(null);
+  // Use a ref to always read the latest printableSale inside callbacks (avoids stale closure)
+  const printableSaleRef = useRef(printableSale);
+  useEffect(() => { printableSaleRef.current = printableSale; }, [printableSale]);
+
+  const kitchenOnlySaleRef = useRef(kitchenOnlySale);
+  useEffect(() => { kitchenOnlySaleRef.current = kitchenOnlySale; }, [kitchenOnlySale]);
+
+  const handleKitchenPrint = useReactToPrint({
+    contentRef: kitchenPrintRef,
+    documentTitle: `KitchenSlip_${printableSale?.invoice_number || kitchenOnlySale?.invoice_number || "Draft"}`,
+    onAfterPrint: () => {
+      // Clear whichever state triggered this kitchen print
+      if (kitchenOnlySaleRef.current) setKitchenOnlySale(null);
+      else setPrintableSale(null);
+    },
+  });
+
+  const handleKitchenPrintRef = useRef(handleKitchenPrint);
+  useEffect(() => { handleKitchenPrintRef.current = handleKitchenPrint; });
+
+  // needsKitchenPrint: print kitchen slip for any checkout where sendToKitchen isn't explicitly false
+  const needsKitchenPrint = (sale) =>
+    sale &&
+    sale.sendToKitchen !== false;
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `Receipt_${printableSale?.invoice_number || "Draft"}`,
-    onAfterPrint: () => setPrintableSale(null),
+    onAfterPrint: () => {
+      // After the customer receipt is done, fire the kitchen slip if needed
+      const sale = printableSaleRef.current;
+      if (needsKitchenPrint(sale) && kitchenPrintRef.current) {
+        setTimeout(() => handleKitchenPrintRef.current?.(), 300);
+      } else {
+        setPrintableSale(null);
+      }
+    },
   });
 
   const handlePrintRef = useRef(handlePrint);
@@ -253,22 +289,37 @@ export default function RestaurantPosPage() {
       if (isPrintingRef.current) return;
       isPrintingRef.current = true;
 
-      // If hardware is ready, print SILENTLY and INSTANTLY
+      const needsKitchen = needsKitchenPrint(printableSale);
+
+      // ── Hardware (silent) path ──────────────────────────────────────────
       if (isHardwareReady && printRef.current) {
         const printSilently = async () => {
-          const html = printRef.current.innerHTML;
-          const success = await printReceipt(html);
-          if (success) {
-            setPrintableSale(null); // Clear immediately so no preview shows
+          // 1. Print customer receipt silently
+          const customerHtml = printRef.current?.innerHTML;
+          const customerOk = customerHtml
+            ? await printReceipt(customerHtml)
+            : false;
+
+          // 2. Print kitchen slip silently (if needed)
+          if (needsKitchen && kitchenPrintRef.current) {
+            const kitchenHtml = kitchenPrintRef.current.innerHTML;
+            await printReceipt(kitchenHtml);
+          }
+
+          if (customerOk) {
+            setPrintableSale(null);
           } else {
-            handlePrintRef.current(); // Fallback to browser if silent failed
+            // Fallback: browser print for customer receipt
+            handlePrintRef.current();
+            // Kitchen slip handled inside handlePrint.onAfterPrint
           }
         };
         printSilently();
         return;
       }
 
-      // If no hardware, use browser print with a small delay for rendering
+      // ── Browser print path ──────────────────────────────────────────────
+      // Always print customer receipt first; kitchen slip fires in onAfterPrint
       const t = setTimeout(() => {
         if (printRef.current) {
           handlePrintRef.current();
@@ -279,6 +330,38 @@ export default function RestaurantPosPage() {
       isPrintingRef.current = false;
     }
   }, [printableSale, isHardwareReady, printReceipt]);
+
+  // ── Kitchen-only print trigger (Send to Kitchen – no customer receipt) ────
+  const isKitchenPrintingRef = useRef(false);
+  useEffect(() => {
+    if (!kitchenOnlySale) {
+      isKitchenPrintingRef.current = false;
+      return;
+    }
+    if (isKitchenPrintingRef.current) return;
+    isKitchenPrintingRef.current = true;
+
+    // Hardware (silent) path
+    if (isHardwareReady && kitchenPrintRef.current) {
+      (async () => {
+        const kitchenHtml = kitchenPrintRef.current?.innerHTML;
+        if (kitchenHtml) {
+          await printReceipt(kitchenHtml);
+          await cutPaper();
+        }
+        setKitchenOnlySale(null);
+      })();
+      return;
+    }
+
+    // Browser print path
+    const t = setTimeout(() => {
+      if (kitchenPrintRef.current) {
+        handleKitchenPrintRef.current?.();
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [kitchenOnlySale, isHardwareReady, printReceipt]);
 
   const handlePayNow = useCallback((args) => {
     setPendingPaymentArgs(args);
@@ -486,8 +569,12 @@ export default function RestaurantPosPage() {
       case "reports":
         router.push("/reports");
         break;
-      case "salesByProduct":
-        window.open("/reports/sales/product", "_blank");
+      case "printZRead":
+        if (activeShift) {
+          window.open(`/reports/sales/product?shift_id=${activeShift.id}&view=generated&auto_print=true`, "_blank");
+        } else {
+          toast.error("You must have an active shift to print the Z-Read.");
+        }
         break;
       case "inventory":
         router.push("/products");
@@ -866,15 +953,20 @@ export default function RestaurantPosPage() {
                             <span className={`font-bold text-[13px] px-2 py-0.5 rounded-lg flex items-center gap-1.5 ${dColor}`}>
                               <span>{dIcon}</span>{dLabel}
                             </span>
-                            {sale.table_number && (
+                            {(sale.table_number || sale.table?.table_number) && (
                               <span className="text-[11px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 font-bold border border-indigo-100">
-                                Table {sale.table_number}
+                                Table {sale.table_number || sale.table?.table_number}
                               </span>
                             )}
                           </div>
                           
-                          <div className="text-[11px] font-mono text-gray-400 dark:text-slate-500 mb-1 truncate">
-                            {sale.invoice_number || sale.id}
+                          <div className="text-[11px] font-mono text-gray-400 dark:text-slate-500 mb-1 flex items-center justify-between gap-2">
+                            <span className="truncate">{sale.invoice_number || sale.id}</span>
+                            {sale.items && (
+                              <span className="shrink-0 text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 font-medium">
+                                {sale.items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)} items
+                              </span>
+                            )}
                           </div>
                           
                           {sale.customer_name && sale.customer_name.toLowerCase() !== "guest" && (
@@ -986,7 +1078,7 @@ export default function RestaurantPosPage() {
             ];
 
             const getCategoryColor = (category) => {
-              if (!category || category === "Menu") return "bg-white";
+              if (!category || category === "Menu") return "bg-white dark:bg-slate-900";
               let hash = 0;
               for (let i = 0; i < category.length; i++) {
                 hash = category.charCodeAt(i) + ((hash << 5) - hash);
@@ -1323,14 +1415,31 @@ export default function RestaurantPosPage() {
         activeShift={activeShift} openShift={openShift} closeShift={closeShift} branchId={selectedBranch?.id}
       />
 
-      <div style={{ position: "absolute", left: "-9999px", top: 0, opacity: 0, pointerEvents: "none" }}>
-        <div>
-          {receiptSettings?.invoiceTemplate === 'a4_professional' ? (
-            <InvoiceA4Template ref={printRef} sale={printableSale} settings={receiptSettings} business={localBusiness} branch={selectedBranch} terminalName={terminalName} />
-          ) : (
-            <RestaurantReceiptTemplate ref={printRef} sale={printableSale} settings={receiptSettings} business={localBusiness} branch={selectedBranch} terminalName={terminalName} />
-          )}
-        </div>
+      {/* ══ CUSTOMER RECEIPT hidden container ══ */}
+      <div style={{ display: "none" }}>
+        {receiptSettings?.invoiceTemplate === 'a4_professional' ? (
+          <InvoiceA4Template ref={printRef} sale={printableSale} settings={receiptSettings} business={localBusiness} branch={selectedBranch} terminalName={terminalName} />
+        ) : (
+          <CustomerReceiptTemplate ref={printRef} sale={printableSale} settings={receiptSettings} business={localBusiness} branch={selectedBranch} terminalName={terminalName} />
+        )}
+      </div>
+
+      {/* ══ KITCHEN SLIP hidden container ══
+           Two separate data sources feed the SAME kitchen template:
+           • kitchenOnlySale → from "Send to Kitchen" (prints kitchen slip only)
+           • printableSale   → from checkout (prints after customer receipt fires)
+           Priority: kitchenOnlySale wins; falls back to printableSale if eligible. */}
+      {/* Kitchen slip: rendered for kitchenOnlySale (Send to Kitchen) OR printableSale (Checkout) */}
+      <div style={{ display: "none" }}>
+        {(() => {
+          const sale = kitchenOnlySale ||
+            (printableSale && printableSale.sendToKitchen !== false
+              ? printableSale
+              : null);
+          return sale ? (
+            <KitchenSlipTemplate ref={kitchenPrintRef} sale={sale} settings={receiptSettings} business={localBusiness} />
+          ) : null;
+        })()}
       </div>
 
     </div>
