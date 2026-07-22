@@ -44,6 +44,7 @@ import Calculator from "./components/Calculator";
 import { CustomerSelector } from "./components/CustomerSelector";
 import BatchSelectorDialog from "./components/BatchSelectorDialog";
 import TenderModal from "./components/TenderModal";
+import { SalesReturnModal } from "./components/SalesReturnModal";
 import { isValid } from "date-fns";
 import { format } from "@/lib/date-utils";
 import clsx from "clsx";
@@ -150,6 +151,7 @@ export default function ClassicPosPage() {
   const [isBatchSelectorOpen, setIsBatchSelectorOpen] = useState(false);
   const [availableBatches, setAvailableBatches] = useState([]);
   const [itemPendingBatch, setItemPendingBatch] = useState(null);
+  const [isSalesReturnModalOpen, setIsSalesReturnModalOpen] = useState(false);
   const [lastSaleInfo, setLastSaleInfo] = useState({ bill: 0, paid: 0, balance: 0, timestamp: null });
 
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -644,7 +646,7 @@ export default function ClassicPosPage() {
           break;
         case "F11":
           e.preventDefault();
-          fetchSales("completed").then(() => setIsSaleListOpen(true));
+          setIsSalesReturnModalOpen(true);
           break;
         case "F12":
           e.preventDefault();
@@ -1155,7 +1157,7 @@ export default function ClassicPosPage() {
               <ActionButton shortcut="(F7)" label="Invoices" icon={FileText} onClick={() => { setIsSaleListOpen(true); fetchSales("completed"); }} />
               <ActionButton shortcut="(F9)" label="Drawer" icon={Settings} />
               <ActionButton shortcut="(F10)" label="Stock" icon={PackageSearch} onClick={() => setIsStockModalOpen(true)} />
-              <ActionButton shortcut="(F11)" label="Return" icon={RotateCcw} onClick={() => { setIsSaleListOpen(true); fetchSales("completed"); }} />
+              <ActionButton shortcut="(F11)" label="Return" icon={RotateCcw} onClick={() => setIsSalesReturnModalOpen(true)} />
               <ActionButton shortcut="(F12)" label="PAYMENT" icon={CalcIcon} color="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20" onClick={() => { if (state.cart.length > 0) setIsTenderModalOpen(true); }} />
             </div>
           </div>
@@ -1320,6 +1322,14 @@ export default function ClassicPosPage() {
           <ReceiptTemplate ref={printRef} sale={printableSale} settings={receiptSettings} business={localBusiness} branch={selectedBranch} terminalName={terminalName} />
         )}
       </div>
+      
+      <SalesReturnModal 
+        isOpen={isSalesReturnModalOpen} 
+        onOpenChange={setIsSalesReturnModalOpen} 
+        flattenedVariants={flattenedVariants}
+        allProducts={allProducts}
+      />
+
       <BatchSelectorDialog
         isOpen={isBatchSelectorOpen}
         onOpenChange={setIsBatchSelectorOpen}
