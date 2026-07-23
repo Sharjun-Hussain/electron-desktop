@@ -42,14 +42,6 @@ const quickActions = [
     color: "indigo",
   },
   {
-    id: "offline-sync",
-    name: "Offline Sync",
-    icon: WifiOff,
-    description: "Monitor Queue",
-    href: "/sales/offline",
-    color: "indigo",
-  },
-  {
     id: "inventory",
     name: "Inventory",
     icon: Package,
@@ -59,7 +51,7 @@ const quickActions = [
   },
   {
     id: "stock-management",
-    name: "Stock Mgmt",
+    name: "Stock Level",
     icon: Box,
     description: "Adjust Stock",
     href: "/inventory/stock",
@@ -67,7 +59,7 @@ const quickActions = [
   },
   {
     id: "reports",
-    name: "Analytics",
+    name: "Reports",
     icon: BarChart3,
     description: "View Insights",
     href: "/reports",
@@ -75,7 +67,7 @@ const quickActions = [
   },
   {
     id: "financial-reports",
-    name: "Financials",
+    name: "Financial Report",
     icon: PieChart,
     description: "Profit & Loss",
     href: "/accounting/reports",
@@ -91,15 +83,15 @@ const quickActions = [
   },
   {
     id: "grn",
-    name: "GRN",
+    name: "Direct GRN",
     icon: FileText,
     description: "Receive Stock",
-    href: "/purchase/grn",
+    href: "/purchase/grn/direct",
     color: "orange",
   },
   {
     id: "inventory-insights",
-    name: "Insights",
+    name: "Full Stock Data",
     icon: Package,
     description: "Stock Data",
     href: "/inventory-insights",
@@ -201,18 +193,17 @@ export default function QuickActions() {
   }
 
   return (
-    <div className="bg-background rounded-xl border border-border/60 shadow-sm p-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {visibleActions.map((action) => (
-          <Link
-            key={action.id}
-            id={`quick-${action.id}`}
-            href={action.href}
-            className={cn(
-              "group relative flex flex-col items-center justify-center p-5 rounded-xl border border-border/60 bg-muted/20 hover:bg-background transition-all duration-150 hover:shadow-md hover:-translate-y-1",
-              colorVariants[action.color].split(' ').filter(c => c.startsWith('hover:')).join(' ')
-            )}
-          >
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {visibleActions.map((action) => (
+        <Link
+          key={action.id}
+          id={`quick-${action.id}`}
+          href={action.href}
+          className={cn(
+            "group relative flex flex-col items-center justify-center p-5 rounded-xl border border-border/40 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-all duration-150 hover:shadow-md shadow-xs hover:-translate-y-1",
+            colorVariants[action.color].split(' ').filter(c => c.startsWith('hover:')).join(' ')
+          )}
+        >
             <div
               className={cn(
                 "action-icon mb-4 p-3 rounded-lg border shadow-sm transition-transform duration-150 group-hover:scale-110",
@@ -242,6 +233,5 @@ export default function QuickActions() {
           </Link>
         ))}
       </div>
-    </div>
   );
 }
