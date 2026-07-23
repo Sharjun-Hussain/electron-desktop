@@ -78,6 +78,9 @@ export default function StatsGrid() {
     fetchStats();
   }, [session]);
 
+  const todayObj = new Date();
+  const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+
   const stats = [
     {
       name: "Today Revenue",
@@ -89,7 +92,7 @@ export default function StatsGrid() {
       icon: DollarSign,
       gradient: "from-emerald-500 to-teal-400",
       comparisonLabel: "vs Daily Avg",
-      url: "/sales"
+      url: `/sales?from=${todayStr}&to=${todayStr}`
     },
     {
       name: "Today Sales",
@@ -101,7 +104,7 @@ export default function StatsGrid() {
       icon: TrendingUp,
       gradient: "from-cyan-500 to-blue-400",
       comparisonLabel: "Completed Today",
-      url: "/sales"
+      url: `/sales?from=${todayStr}&to=${todayStr}`
     },
     {
       name: "Today Shifts",
@@ -203,24 +206,6 @@ export default function StatsGrid() {
                 compact={true}
               />
             </h3>
-            {stat.change && (
-                <div className="flex items-center gap-2 mt-1.5 min-w-0">
-                    <span className={cn(
-                        "text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0",
-                        stat.trend === "up" 
-                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 border border-emerald-500/10" 
-                            : stat.trend === "stable"
-                            ? "bg-slate-50 text-slate-500 dark:bg-slate-500/10 border border-slate-500/10"
-                            : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 border border-rose-500/10"
-                    )}>
-                        {stat.trend === "up" ? <TrendingUp className="w-3 h-3" /> : stat.trend === "stable" ? null : <TrendingDown className="w-3 h-3" />}
-                        {stat.change}
-                    </span>
-                    <span className="text-[10px] font-medium text-muted-foreground/60 truncate">
-                        {stat.comparisonLabel}
-                    </span>
-                </div>
-            )}
           </div>
         </div>
       ))}

@@ -109,17 +109,17 @@ export default function SalesHistory() {
 
   // The 'date' state drives the API fetch
   const [date, setDate] = useState({
-    from: startOfMonth(new Date()),
-    to: new Date(),
+    from: searchParams.get('from') ? new Date(searchParams.get('from')) : startOfMonth(new Date()),
+    to: searchParams.get('to') ? new Date(searchParams.get('to')) : new Date(),
   });
 
   // The 'internalDate' is local to the Calendar UI to avoid jumping to loaders
   const [internalDate, setInternalDate] = useState({
-    from: startOfMonth(new Date()),
-    to: new Date(),
+    from: searchParams.get('from') ? new Date(searchParams.get('from')) : startOfMonth(new Date()),
+    to: searchParams.get('to') ? new Date(searchParams.get('to')) : new Date(),
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || "");
   const [selectedSale, setSelectedSale] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedReturnSale, setSelectedReturnSale] = useState(null);
@@ -132,11 +132,49 @@ export default function SalesHistory() {
   const [brands, setBrands] = useState([]);
   const [products, setProducts] = useState([]);
 
-  const [selectedSupplier, setSelectedSupplier] = useState("all");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedSubCategory, setSelectedSubCategory] = useState("all");
-  const [selectedBrand, setSelectedBrand] = useState("all");
-  const [selectedProduct, setSelectedProduct] = useState("all");
+  const [selectedSupplier, setSelectedSupplier] = useState(searchParams.get('supplier') || "all");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || "all");
+  const [selectedSubCategory, setSelectedSubCategory] = useState(searchParams.get('subCategory') || "all");
+  const [selectedBrand, setSelectedBrand] = useState(searchParams.get('brand') || "all");
+  const [selectedProduct, setSelectedProduct] = useState(searchParams.get('product') || "all");
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    let changed = false;
+
+    const setOrDelete = (key, val, defaultVal) => {
+        if (val !== defaultVal && val) {
+            if (params.get(key) !== val) {
+                params.set(key, val);
+                changed = true;
+            }
+        } else {
+            if (params.has(key)) {
+                params.delete(key);
+                changed = true;
+            }
+        }
+    };
+
+    setOrDelete('supplier', selectedSupplier, "all");
+    setOrDelete('category', selectedCategory, "all");
+    setOrDelete('subCategory', selectedSubCategory, "all");
+    setOrDelete('brand', selectedBrand, "all");
+    setOrDelete('product', selectedProduct, "all");
+    setOrDelete('search', searchQuery, "");
+
+    if (date?.from && date?.to) {
+        setOrDelete('from', format(date.from, 'yyyy-MM-dd'), "");
+        setOrDelete('to', format(date.to, 'yyyy-MM-dd'), "");
+    } else {
+        setOrDelete('from', "", "");
+        setOrDelete('to', "", "");
+    }
+
+    if (changed) {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [selectedSupplier, selectedCategory, selectedSubCategory, selectedBrand, selectedProduct, searchQuery, date, pathname, router, searchParams]);
 
   const fetchMetadata = useCallback(async () => {
     if (!session?.accessToken) return;
