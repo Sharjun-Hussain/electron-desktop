@@ -920,6 +920,7 @@ export const PaymentDialog = memo(({
                       value={lastDiscount || ""}
                       onChange={(e) => setLastDiscount(parseFloat(e.target.value) || 0)}
                       onFocus={(e) => e.target.select()}
+                      onWheel={(e) => e.target.blur()}
                       className="w-full h-10 px-3 rounded-xl border border-border/40 bg-muted/20 text-sm font-bold placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-emerald-500/50"
                       placeholder="0.00"
                     />
@@ -974,6 +975,7 @@ export const PaymentDialog = memo(({
                       value={p.amount}
                       onChange={(e) => updatePayment(p.id, "amount", e.target.value)}
                       autoFocus={index === 0}
+                      onWheel={(e) => e.target.blur()}
                       className="h-12 text-xl font-bold bg-muted/20 border-border/40 rounded-xl focus:ring-1 focus:ring-violet-500/20"
                       onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
                     />
@@ -1098,6 +1100,7 @@ export const QuantityInputDialog = memo(({ isOpen, onOpenChange, product, onConf
             ref={inputRef}
             type="number"
             inputMode="decimal"
+            onWheel={(e) => e.target.blur()}
             step="any"
             min="0.001"
             value={qty}
