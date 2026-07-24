@@ -294,7 +294,9 @@ export const SaleListDialog = memo(({
       result = result.filter(s =>
         s.invoice_number?.toLowerCase().includes(q) ||
         s.customer?.name?.toLowerCase().includes(q) ||
-        s.customer?.phone?.toLowerCase().includes(q)
+        s.customer?.phone?.toLowerCase().includes(q) ||
+        s.distributor?.name?.toLowerCase().includes(q) ||
+        s.distributor?.phone?.toLowerCase().includes(q)
       );
     }
 
@@ -456,8 +458,8 @@ export const SaleListDialog = memo(({
                     <TableCell className="px-6 py-4 text-muted-foreground text-sm">{format(new Date(sale.created_at), 'MMM dd, yyyy hh:mm a')}</TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-foreground text-sm">{sale.customer?.name || t("pos.walk_in")}</span>
-                        <span className="text-xs text-muted-foreground">{sale.customer?.phone || t("pos.no_phone")}</span>
+                        <span className="font-bold text-foreground text-sm">{sale.customer?.name || sale.distributor?.name || t("pos.walk_in")}</span>
+                        <span className="text-xs text-muted-foreground">{sale.customer?.phone || sale.distributor?.phone || t("pos.no_phone")}</span>
                       </div>
                     </TableCell>
                     <TableCell className="px-6 py-4 text-center">
@@ -484,6 +486,11 @@ export const SaleListDialog = memo(({
                         </Badge>
                       ) : (
                         <div className="flex flex-col items-center gap-1">
+                          {sale.returns?.length > 0 && (
+                            <Badge variant="outline" className="px-3 py-1 bg-orange-50 text-orange-700 border-orange-100 text-xs font-bold">
+                              RETURNED
+                            </Badge>
+                          )}
                           <Badge variant="outline" className="px-3 py-1 bg-green-50 text-green-700 border-green-100 text-xs font-bold uppercase">
                             {sale.payment_status}
                           </Badge>
