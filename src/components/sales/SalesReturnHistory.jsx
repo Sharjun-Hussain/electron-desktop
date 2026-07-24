@@ -205,7 +205,7 @@ export default function SalesReturnHistoryPage() {
       "Return #": item.return_number,
       Date: item.return_date,
       "Invoice #": item.sale?.invoice_number || "N/A",
-      Customer: item.customer?.name || "Walk-in",
+      Customer: item.customer?.name || item.distributor?.name || "Walk-in",
       "Return Value": item.total_amount,
       "Refund Amount": item.refund_amount,
       Status: item.status?.toUpperCase(),
@@ -263,7 +263,7 @@ export default function SalesReturnHistoryPage() {
       header: "Client Account",
       cell: ({ row }) => (
         <span className="font-bold text-foreground text-sm">
-          {row.original.customer?.name || "Walk-in Customer"}
+          {row.original.customer?.name || row.original.distributor?.name || "Walk-in Customer"}
         </span>
       )
     },
@@ -466,8 +466,8 @@ export default function SalesReturnHistoryPage() {
                     <User className="h-3 w-3" /> Client Account
                   </Label>
                   <div className="bg-muted/30 p-3 rounded-lg border border-border/40">
-                    <p className="text-sm font-bold">{selectedReturn?.customer?.name || "Walk-in Customer"}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold mt-1">{selectedReturn?.customer?.phone || "No contact info"}</p>
+                    <p className="text-sm font-bold">{selectedReturn?.customer?.name || selectedReturn?.distributor?.name || "Walk-in Customer"}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold mt-1">{selectedReturn?.customer?.phone || selectedReturn?.distributor?.phone || "No contact info"}</p>
                   </div>
                 </div>
 

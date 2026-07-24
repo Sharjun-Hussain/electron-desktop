@@ -405,7 +405,7 @@ export default function SalesHistory() {
     return data.map((s) => ({
       Invoice: s.invoice_number,
       Date: format(new Date(s.created_at), "yyyy-MM-dd HH:mm:ss"),
-      Customer: s.customer?.name || "Walk-in Customer",
+      Customer: s.customer?.name || s.distributor?.name || "Walk-in Customer",
       Branch: s.branch?.name || "Main Hub",
       Method: s.payment_method,
       Total: s.payable_amount,
@@ -511,7 +511,7 @@ export default function SalesHistory() {
       header: "Customer",
       cell: ({ row }) => (
         <span className=" text-foreground text-sm">
-          {row.original.customer?.name || "Walk-in Customer"}
+          {row.original.customer?.name || row.original.distributor?.name || "Walk-in Customer"}
         </span>
       )
     },

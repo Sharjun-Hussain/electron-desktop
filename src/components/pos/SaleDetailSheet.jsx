@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { format } from "@/lib/date-utils";
 import {
   Sheet,
@@ -40,6 +41,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
   const { t } = useTranslation();
   const { general } = useSettingsStore();
   const currency = general?.localization?.currency || "LKR";
+  const router = useRouter();
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -78,7 +80,15 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
         <ScrollArea className="flex-1 bg-card min-h-0">
           <div className="p-6 space-y-8">
             {((sale.returns?.length > 0) || (sale.sale_returns?.length > 0) || (sale.return_status && sale.return_status !== 'none')) && (
-              <div className="bg-orange-500/5 border border-orange-500/20 p-5 rounded-xl flex items-start gap-4 shadow-sm">
+              <div 
+                onClick={() => {
+                  if (sale.returns?.length > 0) router.push(`/sales/returns?returnId=${sale.returns[0].id}`);
+                  else if (sale.sale_returns?.length > 0) router.push(`/sales/returns?returnId=${sale.sale_returns[0].id}`);
+                  else router.push(`/sales/returns`);
+                }}
+                className="bg-orange-500/5 border border-orange-500/20 p-5 rounded-xl flex items-start gap-4 shadow-sm cursor-pointer hover:bg-orange-500/10 transition-colors"
+                title="Click to view returns"
+              >
                 <div className="h-10 w-10 bg-orange-500/10 rounded-lg flex items-center justify-center text-orange-600 shrink-0 border border-orange-500/20">
                   <RotateCcw size={20} />
                 </div>
@@ -104,11 +114,11 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                   <h4 className="text-xs font-semibold text-muted-foreground/60">{t("pos.customer_profile")}</h4>
                 </div>
                 <div className="space-y-1 ml-1">
-                  <p className="text-sm font-bold text-foreground">{sale.customer?.name || t("pos.walk_in_customer")}</p>
+                  <p className="text-sm font-bold text-foreground">{sale.customer?.name || sale.distributor?.name || t("pos.walk_in_customer")}</p>
                   <p className="text-xs text-muted-foreground/80 font-medium flex items-center gap-2">
-                    {sale.customer?.phone || t("pos.no_contact")}
+                    {sale.customer?.phone || sale.distributor?.phone || t("pos.no_contact")}
                   </p>
-                  {sale.customer?.email && <p className="text-xs text-muted-foreground/80 font-medium">{sale.customer.email}</p>}
+                  {(sale.customer?.email || sale.distributor?.email) && <p className="text-xs text-muted-foreground/80 font-medium">{sale.customer?.email || sale.distributor?.email}</p>}
                 </div>
               </div>
 
