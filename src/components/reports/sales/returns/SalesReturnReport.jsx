@@ -83,7 +83,7 @@ const getColumns = (formatCurrency, formatDateTime) => [
     cell: ({ row }) => (
       <div className="flex flex-col">
         <span className="text-sm font-semibold text-foreground">
-          {row.original.customer?.name || "Physical Walk-in"}
+          {row.original.customer?.name || row.original.distributor?.name || "Physical Walk-in"}
         </span>
         <span className="text-xs font-medium text-muted-foreground italic">
           Identified Client
@@ -244,7 +244,7 @@ export default function SalesReturnReport() {
       "Return No": item.return_number,
       Date: formatDateTime(item.return_date),
       "Original Invoice": item.sale?.invoice_number || "N/A",
-      Customer: item.customer?.name || "Walk-in",
+      Customer: item.customer?.name || item.distributor?.name || "Walk-in",
       "Total Value": item.total_amount,
       "Refund Amount": item.refund_amount,
       Method: item.refund_method,
@@ -259,6 +259,7 @@ export default function SalesReturnReport() {
       result = result.filter(item => 
         item.return_number?.toLowerCase().includes(searchQuery.toLowerCase()) || 
         item.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.distributor?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.sale?.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }

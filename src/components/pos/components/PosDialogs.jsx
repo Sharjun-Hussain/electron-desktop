@@ -164,8 +164,8 @@ export const HoldListDialog = memo(({ isOpen, onOpenChange, salesData, isLoading
                     <TableCell className="px-4 py-2 text-muted-foreground text-[10px]">{format(new Date(sale.created_at), 'MMM dd, yyyy hh:mm a')}</TableCell>
                     <TableCell className="px-4 py-2">
                       <div className="flex flex-col">
-                        <span className="font-bold text-[11px] text-foreground">{sale.customer?.name || t("pos.walk_in")}</span>
-                        <span className="text-[9px] text-muted-foreground leading-none">{sale.customer?.phone || t("pos.no_phone")}</span>
+                        <span className="font-bold text-[11px] text-foreground">{sale.customer?.name || sale.distributor?.name || t("pos.walk_in")}</span>
+                        <span className="text-[9px] text-muted-foreground leading-none">{sale.customer?.phone || sale.distributor?.phone || t("pos.no_phone")}</span>
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-2">

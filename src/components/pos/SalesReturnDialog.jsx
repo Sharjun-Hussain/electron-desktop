@@ -158,7 +158,7 @@ export default function SalesReturnDialog({ open, onOpenChange, sale, onSuccess 
             {t("pos.process_sales_return")}
           </DialogTitle>
           <DialogDescription>
-            {t("pos.original_invoice")}: <span className="font-mono font-bold text-foreground">{sale.invoice_number}</span> | {t("pos.customer")}: {sale.customer?.name || t("pos.walk_in")}
+            {t("pos.original_invoice")}: <span className="font-mono font-bold text-foreground">{sale.invoice_number}</span> | {t("pos.customer")}: {sale.customer?.name || sale.distributor?.name || t("pos.walk_in")}
           </DialogDescription>
         </DialogHeader>
 

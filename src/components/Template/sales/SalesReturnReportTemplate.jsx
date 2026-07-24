@@ -68,7 +68,7 @@ export const SalesReturnReportTemplate = forwardRef(({ data, stats, dateRange, f
               <td className="py-4 font-bold text-sm tracking-tighter uppercase">{item.return_number}</td>
               <td className="py-4 text-sm text-slate-600 font-medium">{formatDate(item.return_date)}</td>
               <td className="py-4 font-bold text-sm text-slate-400">{item.sale?.invoice_number || "N/A"}</td>
-              <td className="py-4 font-bold text-sm">{item.customer?.name || "Walk-in"}</td>
+              <td className="py-4 font-bold text-sm">{item.customer?.name || item.distributor?.name || "Walk-in"}</td>
               <td className="py-4 text-right">
                 <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-slate-100 rounded">
                   {item.refund_method || "CASH"}
