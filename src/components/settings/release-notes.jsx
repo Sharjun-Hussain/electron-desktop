@@ -19,7 +19,7 @@ export function ReleaseNotes() {
   const releases = [
     {
       version: "1.1.2",
-      date: "May 10, 2026",
+      date: "June 27, 2026",
       title: "UI Standardisation & Insights Refinement",
       type: "Patch",
       changes: [
@@ -107,17 +107,24 @@ export function ReleaseNotes() {
   ];
 
   return (
-    <div className="space-y-8 max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Software Evolution</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tracking the progress of Inzeedo POS </p>
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden p-6 sm:p-8">
+        
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 sm:p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl shadow-sm">
+              <Rocket className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-none">Software Evolution</h3>
+              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">Tracking the progress of Inzeedo POS</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
+            <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">Current v1.1.2</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
-          <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Current v1.1.2</span>
-        </div>
-      </div>
 
       <div className="space-y-6">
         {releases.map((release, idx) => (
@@ -151,7 +158,7 @@ export function ReleaseNotes() {
                     <div className="p-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                       <group.icon className="w-3.5 h-3.5" />
                     </div>
-                    <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{group.category}</h4>
+                    <h4 className="text-[11px] font-black text-slate-500 dark:text-slate-400">{group.category}</h4>
                   </div>
                   <ul className="space-y-2.5 ml-1">
                     {group.items.map((item, iIdx) => (
@@ -179,6 +186,7 @@ export function ReleaseNotes() {
           </div>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+      </div>
       </div>
     </div>
   );
