@@ -15,7 +15,7 @@ export const translations = {
     },
     sidebar: {
       dashboard: "Dashboard",
-      inventory: "Inventory",
+      inventory: "Items",
       sales: "Sales",
       purchases: "Purchases",
       finance: "Finance",

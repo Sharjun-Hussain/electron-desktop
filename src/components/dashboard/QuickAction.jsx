@@ -43,7 +43,7 @@ const quickActions = [
   },
   {
     id: "inventory",
-    name: "Inventory",
+    name: "Items",
     icon: Package,
     description: "Manage Stock",
     href: "/products",
