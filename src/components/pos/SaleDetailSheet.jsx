@@ -45,7 +45,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-2xl flex flex-col h-full p-0 overflow-hidden border-l border-border/50">
+      <SheetContent className="sm:max-w-2xl flex flex-col h-full p-0 overflow-hidden border-l border-border/50 [&>button]:hidden">
         <SheetHeader className="px-8 py-6 border-b border-border bg-background shrink-0">
           <div className="flex justify-between items-start">
             <div className="flex gap-4">
