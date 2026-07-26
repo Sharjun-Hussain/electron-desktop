@@ -403,9 +403,7 @@ export function CustomSidebar() {
         )}
       >
         <div className="mb-8 flex shrink-0">
-          <div className="size-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
-            <Sparkles className="size-6 text-emerald-600 dark:text-emerald-400" />
-          </div>
+          <img src="/logo.png" alt="App Logo" className="size-10 rounded-xl object-contain bg-white dark:bg-slate-900 border border-border/50 p-1 shadow-sm" />
         </div>
 
         <nav className="flex-1 w-full  flex flex-col gap-1 overflow-y-auto thin-scrollbar items-center">
@@ -637,9 +635,13 @@ export function CustomSidebar() {
 
           {/* Business Name Branding */}
           <div className="mt-auto pt-6 border-t border-border flex items-center gap-3">
-            <div className="size-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
-              <Sparkles className="size-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
+            {business?.logo ? (
+              <img src={getImageUrl(business.logo)} alt={user.organizationName} className="size-8 rounded-lg object-contain bg-white dark:bg-slate-900 border border-border/50 p-0.5 shrink-0 shadow-sm" />
+            ) : (
+              <div className="size-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
+                <Sparkles className="size-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            )}
             <div className="flex flex-col min-w-0">
               <span className="text-[11px] font-bold text-foreground truncate">{user.organizationName}</span>
               <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-tighter">{user.branchName}</span>
