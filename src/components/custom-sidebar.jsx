@@ -172,7 +172,6 @@ export function CustomSidebar() {
           ] : []),
           { title: t("sidebar.sales_history"), url: "/sales", icon: History, requiredPermission: PERMISSIONS.SALE_VIEW, moduleKey: "pos_billing" },
           { title: t("sidebar.sales_return_history"), url: "/sales/returns", icon: RotateCcw, requiredPermission: PERMISSIONS.SALE_VIEW, moduleKey: "pos_billing" },
-          { title: t("sidebar.sales_return_report"), url: "/reports/sales/returns", icon: FileText, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "pos_billing" },
           { title: t("sidebar.customers"), url: "/customers", icon: Users, requiredPermission: PERMISSIONS.CUSTOMER_VIEW, moduleKey: "pos_billing" },
         ],
       },
