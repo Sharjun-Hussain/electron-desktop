@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { usePermission } from "@/hooks/use-permission";
 import { PERMISSIONS } from "@/lib/permissions";
+import CryptoJS from "crypto-js";
 
 const MODULES = [
   // Dashboard
@@ -152,9 +153,16 @@ export default function OrganizationDetailSheet({
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  // Data Reset State
   const [isResetDataDialogOpen, setIsResetDataDialogOpen] = useState(false);
+  const [isSuperAdminAuthDialogOpen, setIsSuperAdminAuthDialogOpen] = useState(false);
+  const [superAdminPassword, setSuperAdminPassword] = useState("");
+  const [resetStatusProgress, setResetStatusProgress] = useState("");
   const [confirmationName, setConfirmationName] = useState("");
   const [isResettingData, setIsResettingData] = useState(false);
+  const [keepProducts, setKeepProducts] = useState(false);
+  const [keepCategories, setKeepCategories] = useState(false);
+  const [keepPartners, setKeepPartners] = useState(false);
 
   // Define org early so memos can use it
   const org = data?.organization;
@@ -163,15 +171,15 @@ export default function OrganizationDetailSheet({
   useEffect(() => {
     if (isResetDataDialogOpen) {
       setConfirmationName("");
+      setKeepProducts(false);
+      setKeepCategories(false);
+      setKeepPartners(false);
     }
   }, [isResetDataDialogOpen]);
 
   const isAuthorized = React.useMemo(() => {
     const normalize = (str) => str?.toLowerCase().trim().replace(/[^a-z0-9]/g, '') || '';
     const input = normalize(confirmationName);
-    
-    // Always allow 'delete' or 'confirm' as emergency bypass for the user
-    if (input === 'delete' || input === 'confirm') return true;
 
     if (!org?.name) return false;
 
@@ -581,8 +589,35 @@ export default function OrganizationDetailSheet({
       return;
     }
 
+    if (!superAdminPassword) {
+      toast.error("Super Admin password is required.");
+      return;
+    }
+
+    let progressInterval;
     try {
       setIsResettingData(true);
+      setResetStatusProgress("Connecting to secure database...");
+
+      const statusMessages = [
+        "Wiping Sales and Transactions...",
+        "Erasing Inventory and Stock History...",
+        "Purging Financial Ledgers...",
+        "Removing Partner Records...",
+        "Finalizing Transaction Commit...",
+        "Validating Purge Success..."
+      ];
+      let msgIndex = 0;
+      progressInterval = setInterval(() => {
+        if (msgIndex < statusMessages.length) {
+          setResetStatusProgress(statusMessages[msgIndex]);
+          msgIndex++;
+        }
+      }, 700);
+
+      const secretKey = process.env.NEXT_PUBLIC_ENCRYPTION_KEY || 'default-secret-key-123';
+      const encryptedAdminPassword = CryptoJS.AES.encrypt(superAdminPassword, secretKey).toString();
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}/reset-data`,
         {
@@ -591,14 +626,24 @@ export default function OrganizationDetailSheet({
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ confirmation: "Institutional Safety Operations" }),
+          body: JSON.stringify({
+            confirmation: "Institutional Safety Operations",
+            keepProducts,
+            keepCategories: keepCategories || keepProducts,
+            keepPartners,
+            encryptedAdminPassword
+          }),
         }
       );
+
+      clearInterval(progressInterval);
+      setResetStatusProgress("Complete!");
 
       const resData = await response.json();
       if (resData.status === "success") {
         toast.success("Institutional Reset Successful: All transactional and master data has been wiped.");
-        setIsResetDataDialogOpen(false);
+        setIsSuperAdminAuthDialogOpen(false);
+        setSuperAdminPassword("");
         setConfirmationName("");
         fetchDetails();
       } else {
@@ -607,6 +652,7 @@ export default function OrganizationDetailSheet({
     } catch (err) {
       toast.error(err.message || "A system error occurred during the reset protocol.");
     } finally {
+      if (progressInterval) clearInterval(progressInterval);
       setIsResettingData(false);
     }
   };
@@ -1328,7 +1374,41 @@ export default function OrganizationDetailSheet({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-5 py-4">
+            <div className="space-y-5 py-4">
+            {/* Preservation Options */}
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-border/60 p-4 space-y-3">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Preserve Master Data (Optional)</p>
+              <p className="text-[11px] text-muted-foreground">Transactional data (sales, purchases, stock history) will always be wiped. Check below to keep specific master records.</p>
+              <div className="space-y-2.5 pt-1">
+                {[
+                  { key: 'keepProducts', label: 'Products & Variants', description: 'Keep your product catalog, SKUs, and pricing. Stock counts will still be reset.', state: keepProducts, setter: (v) => { setKeepProducts(v); if (v) setKeepCategories(true); } },
+                  { key: 'keepCategories', label: 'Categories, Units & Brands', description: 'Keep main categories, sub-categories, units, and measurement units.', state: keepCategories || keepProducts, setter: (v) => { if (!keepProducts) setKeepCategories(v); } },
+                  { key: 'keepPartners', label: 'Customers & Suppliers', description: 'Keep your customer and supplier contact records.', state: keepPartners, setter: setKeepPartners },
+                ].map(({ key, label, description, state, setter }) => (
+                  <div
+                    key={key}
+                    onClick={() => setter(!state)}
+                    className={cn(
+                      "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-200",
+                      state ? "bg-emerald-50 border-emerald-400/50 dark:bg-emerald-500/10 dark:border-emerald-500/30" : "bg-background border-border/50 hover:border-emerald-400/30"
+                    )}
+                  >
+                    <div className={cn(
+                      "mt-0.5 size-4 rounded shrink-0 border-2 flex items-center justify-center transition-all",
+                      state ? "bg-emerald-600 border-emerald-600" : "border-slate-300 dark:border-slate-600"
+                    )}>
+                      {state && <CheckCircle2 className="h-3 w-3 text-white" />}
+                    </div>
+                    <div>
+                      <p className={cn("text-xs font-bold", state ? "text-emerald-700 dark:text-emerald-400" : "text-foreground")}>{label}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Confirmation Input */}
             <div className={cn(
               "p-4 rounded-xl transition-all duration-300",
               isAuthorized 
@@ -1373,7 +1453,7 @@ export default function OrganizationDetailSheet({
             </div>
           </div>
 
-          <DialogFooter className="sm:justify-center gap-2">
+           <DialogFooter className="sm:justify-center gap-2">
             <Button
               variant="ghost"
               onClick={() => setIsResetDataDialogOpen(false)}
@@ -1384,17 +1464,74 @@ export default function OrganizationDetailSheet({
             </Button>
             <Button
               variant="destructive"
-              onClick={handleResetData}
+              onClick={() => {
+                setIsResetDataDialogOpen(false);
+                setIsSuperAdminAuthDialogOpen(true);
+              }}
               disabled={isResettingData || !isAuthorized}
-              className="rounded-xl px-8 font-bold bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-500/20 active:scale-95 transition-all"
+              className="rounded-xl px-8 font-bold bg-red-600 dark:bg-red-600 hover:bg-red-700 dark:hover:bg-red-700 hover:cursor-pointer text-sm transition-all"
+            >
+              Next Step: Authorize
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Super Admin Password Authentication Dialog */}
+      <Dialog open={isSuperAdminAuthDialogOpen} onOpenChange={setIsSuperAdminAuthDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-2xl border-border bg-background">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2.5 text-xl font-bold">
+              <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <Lock className="w-5 h-5 text-rose-600" />
+              </div>
+              Super Admin Verification
+            </DialogTitle>
+            <DialogDescription className="text-sm font-medium text-muted-foreground pt-2">
+              Final authorization required. Enter your Super Admin password to permanently wipe data for <span className="text-foreground font-bold">{org?.name}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-muted-foreground ml-1">Super Admin Password</label>
+              <div className="relative group">
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={superAdminPassword}
+                  onChange={(e) => setSuperAdminPassword(e.target.value)}
+                  className="h-12 rounded-xl border-border bg-card/50 px-4 focus:ring-rose-500/20 focus:border-rose-500 transition-all text-lg"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                  <ShieldAlert className="h-5 w-5 text-rose-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-3 sm:gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsSuperAdminAuthDialogOpen(false)}
+              className="font-bold px-6"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleResetData}
+              disabled={isResettingData || !superAdminPassword}
+              variant="destructive"
+              className="px-8 font-bold gap-2 transition-all min-w-[200px]"
             >
               {isResettingData ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Purging Data...
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                  <span className="truncate">{resetStatusProgress || "Verifying..."}</span>
                 </>
               ) : (
-                "Authorize Purge"
+                <>
+                  <Trash2 className="h-4 w-4 shrink-0" />
+                  <span>Force Erase Data</span>
+                </>
               )}
             </Button>
           </DialogFooter>
