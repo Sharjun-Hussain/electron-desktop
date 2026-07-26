@@ -41,7 +41,7 @@ export function SubscriptionDetails() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* Plan Overview Card */}
       <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform">
