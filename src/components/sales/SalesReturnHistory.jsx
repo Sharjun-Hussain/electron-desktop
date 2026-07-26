@@ -224,7 +224,7 @@ export default function SalesReturnHistoryPage() {
   const columns = [
     {
       accessorKey: "return_number",
-      header: "Return Identity",
+      header: "Return #",
       cell: ({ row }) => (
         <span className="font-bold text-sm text-orange-600">
           {row.getValue("return_number")}
@@ -241,17 +241,21 @@ export default function SalesReturnHistoryPage() {
       accessorKey: "return_date",
       header: "Date",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-3.5 w-3.5 opacity-50" />
-          <span className="text-xs font-bold font-mono">
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-foreground">
             {format(new Date(row.getValue("return_date")), 'MMM dd, yyyy')}
           </span>
+          <div className="flex items-center mt-0.5 text-foreground/80">
+            <span className="text-sm font-semibold tracking-wide">
+              {format(new Date(row.getValue("return_date")), 'hh:mm a')}
+            </span>
+          </div>
         </div>
       )
     },
     {
       accessorKey: "sale.invoice_number",
-      header: "Invoice Reference",
+      header: "Invoice #",
       cell: ({ row }) => (
         <span className="font-bold text-muted-foreground text-xs">
           {row.original.sale?.invoice_number || "N/A"}
@@ -260,7 +264,7 @@ export default function SalesReturnHistoryPage() {
     },
     {
       accessorKey: "customer.name",
-      header: "Client Account",
+      header: "Customer",
       cell: ({ row }) => (
         <span className="font-bold text-foreground text-sm">
           {row.original.customer?.name || row.original.distributor?.name || "Walk-in Customer"}
@@ -269,7 +273,7 @@ export default function SalesReturnHistoryPage() {
     },
     {
       accessorKey: "total_amount",
-      header: () => <div className="text-right">Value</div>,
+      header: () => <div className="text-right">Amount</div>,
       cell: ({ row }) => (
         <div className="text-right font-bold text-muted-foreground/60 tabular-nums text-sm">
           {formatCurrency(row.getValue("total_amount"))}
@@ -278,7 +282,7 @@ export default function SalesReturnHistoryPage() {
     },
     {
       accessorKey: "refund_amount",
-      header: () => <div className="text-right">Refund</div>,
+      header: () => <div className="text-right">Refund Amount</div>,
       cell: ({ row }) => (
         <div className="text-right font-black text-emerald-600 tabular-nums text-sm">
           {formatCurrency(row.getValue("refund_amount"))}
@@ -296,7 +300,7 @@ export default function SalesReturnHistoryPage() {
     },
     {
       id: "actions",
-      header: () => <div className="text-right">Operations</div>,
+      header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <Button

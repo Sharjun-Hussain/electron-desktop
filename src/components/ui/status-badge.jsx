@@ -144,7 +144,7 @@ export function StatusBadge({ value, className, label, showIcon = true }) {
     <Badge 
       variant="outline"
       className={cn(
-        "flex w-fit items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold uppercase tracking-wider shadow-none transition-colors duration-300", 
+        "flex w-fit items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold tracking-tight shadow-none transition-colors duration-300", 
         config.bg, 
         config.text, 
         className
