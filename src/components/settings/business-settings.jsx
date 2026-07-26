@@ -150,153 +150,158 @@ export function BusinessSettings() {
   const updateField = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
   const SectionHeader = ({ icon: Icon, title, description }) => (
-    <div className="flex flex-col mb-5">
-      <div className="flex items-center gap-2">
-        <div className="p-1.5 rounded-md bg-emerald-500/10">
-          <Icon className="w-4 h-4 text-emerald-600" />
+    <div className="mb-6">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2 sm:p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl shadow-sm">
+          <Icon className="w-5 h-5 text-emerald-600" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-none">{title}</h3>
+        <div>
+          <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-none tracking-tight">{title}</h3>
+          <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">{description}</p>
+        </div>
       </div>
-      {description && <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 ml-9 leading-none">{description}</p>}
     </div>
   );
 
   if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-slate-200" /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* Brand & Core Identity */}
-      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-xl overflow-hidden">
-        <CardContent className="p-6">
-          <SectionHeader icon={Building2} title="Structural Branding" description="Manage formal organizational identity and assets" />
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden p-6 sm:p-8">
+        <SectionHeader icon={Building2} title="Structural Branding" description="Manage formal organizational identity and assets" />
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Logo Uploader */}
-            <div className="flex flex-col items-center gap-3 w-full lg:w-[200px] shrink-0">
-              <div className="relative w-full aspect-square border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/20 dark:bg-slate-950/40 overflow-hidden group">
-                {logoPreview ? (
-                  <>
-                    <img src={logoPreview} alt="Brand Asset" className="absolute inset-0 w-full h-full object-contain p-4 group-hover:scale-[1.02] transition-transform" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button variant="destructive" size="sm" onClick={handleRemoveLogo} className="h-8 text-xs font-semibold">
-                        Remove
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <Upload className="w-6 h-6 text-slate-300 dark:text-slate-600 mb-3" />
+        <div className="flex flex-col lg:flex-row gap-8 mt-6">
+          {/* Logo Uploader */}
+          <div className="flex flex-col items-center gap-3 w-full lg:w-[200px] shrink-0">
+            <div className="relative w-full aspect-square border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/20 dark:bg-slate-950/40 overflow-hidden group hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+              {logoPreview ? (
+                <>
+                  <img src={logoPreview} alt="Brand Asset" className="absolute inset-0 w-full h-full object-contain p-4 group-hover:scale-[1.02] transition-transform" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button variant="destructive" size="sm" onClick={handleRemoveLogo} className="h-8 text-xs font-semibold shadow-md">
+                      Remove
+                    </Button>
                   </div>
-                )}
-              </div>
-              <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoChange} />
-              <Button asChild variant="outline" size="sm" className="h-8 text-xs font-semibold w-full">
-                <label htmlFor="logo-upload" className="cursor-pointer">
-                  {logoPreview ? "Change Logo" : "Upload Logo"}
-                </label>
-              </Button>
+                </>
+              ) : (
+                <div 
+                  className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer pointer-events-auto"
+                  onClick={() => document.getElementById('logo-upload').click()}
+                >
+                  <Upload className="w-6 h-6 text-slate-300 dark:text-slate-600 mb-3 group-hover:text-emerald-500 transition-colors" />
+                  <span className="text-[11px] font-semibold text-slate-400">Click to upload</span>
+                </div>
+              )}
             </div>
+            <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoChange} />
+            <Button asChild variant="outline" size="sm" className="h-9 text-xs font-bold w-full transition-all border-slate-200 dark:border-slate-700 shadow-sm">
+              <label htmlFor="logo-upload" className="cursor-pointer">
+                {logoPreview ? "Change Logo" : "Upload Logo"}
+              </label>
+            </Button>
+          </div>
 
-            {/* Form Fields */}
-            <div className="flex-1 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Business Name <span className="text-red-500">*</span></Label>
-                  <Input value={formData.businessName} onChange={(e) => updateField('businessName', e.target.value)} placeholder="Enter formal entity title" className={inputCls} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Tax / Fiscal Identifier</Label>
-                  <Input value={formData.taxId} onChange={(e) => updateField('taxId', e.target.value)} placeholder="Registration ID / Basis" className={inputCls} />
+          {/* Form Fields */}
+          <div className="flex-1 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Business Name <span className="text-red-500">*</span></Label>
+                <Input value={formData.businessName} onChange={(e) => updateField('businessName', e.target.value)} placeholder="Enter formal entity title" className={inputCls} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Tax / Fiscal Identifier</Label>
+                <Input value={formData.taxId} onChange={(e) => updateField('taxId', e.target.value)} placeholder="Registration ID / Basis" className={inputCls} />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Commercial Environment</Label>
+                <Select value={formData.businessType} onValueChange={(v) => updateField('businessType', v)}>
+                  <SelectTrigger className={selectTriggerCls}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+                    {["Retail Solution", "Restaurant Nexus", "Clinical Cafe", "Healthcare Store", "Grocery Logic", "Electronics Lab", "Garment Protocol", "General Environment"].map(t => (
+                      <SelectItem key={t} value={t.toLowerCase().replace(/\s+/g, '_').split('/')[0].trim()} className="text-xs font-semibold">{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Institutional Website</Label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                  <Input value={formData.website} onChange={(e) => updateField('website', e.target.value)} placeholder="https://organization.basis" className={cn(inputCls, "pl-10")} />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Commercial Environment</Label>
-                  <Select value={formData.businessType} onValueChange={(v) => updateField('businessType', v)}>
-                    <SelectTrigger className={selectTriggerCls}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
-                      {["Retail Solution", "Restaurant Nexus", "Clinical Cafe", "Healthcare Store", "Grocery Logic", "Electronics Lab", "Garment Protocol", "General Environment"].map(t => (
-                        <SelectItem key={t} value={t.toLowerCase().replace(/\s+/g, '_').split('/')[0].trim()} className="text-xs font-medium">{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Institutional Website</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-300 dark:text-slate-600 font-medium" />
-                    <Input value={formData.website} onChange={(e) => updateField('website', e.target.value)} placeholder="https://organization.basis" className={cn(inputCls, "pl-10")} />
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-50 dark:border-slate-800/50">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <Label className="text-sm font-medium">Business Email</Label>
-                    <div className="group relative flex items-center">
-                      <Info className="w-3.5 h-3.5 text-slate-400 cursor-help hover:text-emerald-500 transition-colors" />
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-max max-w-[200px] whitespace-normal opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[10px] sm:text-xs px-2.5 py-1.5 rounded-md pointer-events-none z-50 shadow-md transform scale-95 group-hover:scale-100 duration-150">
-                        Used for invoices and public docs. This does NOT change your login credentials.
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-                      </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Business Email</Label>
+                  <div className="group relative flex items-center">
+                    <Info className="w-3.5 h-3.5 text-emerald-500/70 cursor-help hover:text-emerald-600 transition-colors" />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-max max-w-[200px] whitespace-normal opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-medium px-3 py-2 rounded border border-slate-700 pointer-events-none z-50 shadow-xl transform scale-95 group-hover:scale-100 duration-150">
+                      Used for invoices and public docs. This does NOT change your login credentials.
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900 dark:border-t-slate-800"></div>
                     </div>
                   </div>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-300 dark:text-slate-600 font-medium" />
-                    <Input type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} placeholder="contact@organization.com" className={cn(inputCls, "pl-10")} />
-                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Contact Phone</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-300 dark:text-slate-600 font-medium" />
-                    <Input type="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="+1 (Business Phone)" className={cn(inputCls, "pl-10")} />
-                  </div>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                  <Input type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} placeholder="contact@organization.com" className={cn(inputCls, "pl-10")} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Contact Phone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                  <Input type="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="+1 (Business Phone)" className={cn(inputCls, "pl-10")} />
                 </div>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Primary Address Registry */}
-      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-none rounded-xl overflow-hidden">
-        <CardContent className="p-6">
-          <SectionHeader icon={MapPin} title="Organization Details" description="Structural location data for document generation" />
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Headquarters Address</Label>
-              <Input placeholder="Enter registered site address" value={formData.address} onChange={(e) => updateField('address', e.target.value)} className={inputCls} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { key: 'city', placeholder: 'e.g. Colombo', label: 'City' },
-                { key: 'state', placeholder: 'Administrative State', label: 'State' },
-                { key: 'zipCode', placeholder: 'Postal Basis (ZIP)', label: 'Zip Code' },
-              ].map(f => (
-                <div key={f.key} className="space-y-1.5">
-                  <Label className="text-sm font-medium">{f.label || f.placeholder}</Label>
-                  <Input placeholder={f.placeholder} value={formData[f.key]} onChange={(e) => updateField(f.key, e.target.value)} className={inputCls} />
-                </div>
-              ))}
-            </div>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden p-6 sm:p-8">
+        <SectionHeader icon={MapPin} title="Organization Details" description="Structural location data for document generation" />
+        
+        <div className="space-y-5 mt-6">
+          <div className="space-y-2">
+            <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">Headquarters Address</Label>
+            <Input placeholder="Enter registered site address" value={formData.address} onChange={(e) => updateField('address', e.target.value)} className={inputCls} />
           </div>
-        </CardContent>
-      </Card>
-
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              { key: 'city', placeholder: 'e.g. Colombo', label: 'City' },
+              { key: 'state', placeholder: 'Administrative State', label: 'State' },
+              { key: 'zipCode', placeholder: 'Postal Basis (ZIP)', label: 'Zip Code' },
+            ].map(f => (
+              <div key={f.key} className="space-y-2">
+                <Label className="text-[13px] font-bold text-slate-700 dark:text-slate-300">{f.label}</Label>
+                <Input placeholder={f.placeholder} value={formData[f.key]} onChange={(e) => updateField(f.key, e.target.value)} className={inputCls} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Footer Actions */}
-      <div className="flex justify-end gap-3 pt-2">
+      <div className="flex justify-end pt-2 pb-8">
         <Button 
           onClick={handleSave} 
           disabled={isSaving} 
-          className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm gap-2 active:scale-95 transition-all"
+          className="h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[13px] rounded-lg shadow-sm transition-all shadow-emerald-500/20 active:scale-95"
         >
-          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Save Identity
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+          Save Changes
         </Button>
       </div>
     </div>
