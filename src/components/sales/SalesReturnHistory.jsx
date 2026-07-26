@@ -22,6 +22,7 @@ import {
   User,
   Hash,
   X,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -433,93 +434,126 @@ export default function SalesReturnHistoryPage() {
       />
 
       <Sheet open={isDetailOpen} onOpenChange={handleCloseDetails}>
-        <SheetContent className="sm:max-w-xl flex flex-col h-full p-0 overflow-hidden border-l">
+        <SheetContent className="sm:max-w-2xl flex flex-col h-full p-0 overflow-hidden border-l border-border/50 [&>button]:hidden">
           <SheetHeader className="px-8 py-6 border-b border-border bg-background shrink-0">
             <div className="flex justify-between items-start">
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="p-2 bg-orange-100 dark:bg-orange-500/20 rounded-md">
-                    <RotateCcw className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <SheetTitle className="text-xl font-bold text-foreground">
+              <div className="flex gap-4">
+                <div className="p-3 bg-orange-100 dark:bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0 h-14 w-14">
+                  <RotateCcw className="h-7 w-7 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div className="flex flex-col justify-center">
+                  <SheetTitle className="text-2xl font-bold text-foreground">
                     {selectedReturn?.return_number}
                   </SheetTitle>
+                  <SheetDescription className="text-base font-medium text-muted-foreground mt-1 flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4" />
+                    Processed on {selectedReturn && formatDate(selectedReturn.return_date)}
+                  </SheetDescription>
                 </div>
-                <SheetDescription className="text-sm font-medium text-muted-foreground mt-1">
-                  Initiated on {selectedReturn && formatDate(selectedReturn.return_date)}
-                </SheetDescription>
               </div>
 
-              <div className="flex flex-col items-end gap-3">
-                <StatusBadge value={selectedReturn?.status} />
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Refund Value</p>
-                  <span className="text-xl font-black text-foreground tabular-nums leading-none">
-                    {selectedReturn && formatCurrency(selectedReturn.refund_amount)}
-                  </span>
-                </div>
+              <div className="flex flex-col items-end gap-3 justify-center h-14">
+                <StatusBadge value={selectedReturn?.status} className="text-sm px-3 py-1" />
               </div>
             </div>
           </SheetHeader>
 
-          <ScrollArea className="flex-1 bg-card">
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <User className="h-3 w-3" /> Client Account
-                  </Label>
-                  <div className="bg-muted/30 p-3 rounded-lg border border-border/40">
-                    <p className="text-sm font-bold">{selectedReturn?.customer?.name || selectedReturn?.distributor?.name || "Walk-in Customer"}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold mt-1">{selectedReturn?.customer?.phone || selectedReturn?.distributor?.phone || "No contact info"}</p>
+          <ScrollArea className="flex-1 bg-muted/20 min-h-0">
+            <div className="p-8 space-y-10">
+              
+              {/* --- Info Grid --- */}
+              <div className="grid grid-cols-2 gap-8">
+                {/* Customer Profile */}
+                <div className="bg-background rounded-2xl p-6 border border-border/50 shadow-sm space-y-5">
+                  <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+                    <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
+                      <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Customer Profile</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-xl font-bold text-foreground">{selectedReturn?.customer?.name || selectedReturn?.distributor?.name || "Walk-in Customer"}</p>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-base text-muted-foreground font-medium flex items-center gap-2">
+                         {selectedReturn?.customer?.phone || selectedReturn?.distributor?.phone || "No contact info"}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <Hash className="h-3 w-3" /> References
-                  </Label>
-                  <div className="bg-muted/30 p-3 rounded-lg border border-border/40">
-                    <p className="text-xs font-bold text-orange-600">{selectedReturn?.sale?.invoice_number || 'N/A'}</p>
-                    <Badge variant="outline" className="text-[10px] font-bold mt-2 uppercase px-2 py-0 border-orange-100 bg-orange-50 text-orange-700 dark:border-orange-500/20 dark:bg-orange-500/10 dark:text-orange-400">
-                      {selectedReturn?.refund_method || 'CASH'}
-                    </Badge>
+                {/* Return Routing */}
+                <div className="bg-background rounded-2xl p-6 border border-border/50 shadow-sm space-y-5">
+                  <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg">
+                      <CreditCard className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Return Routing</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-500/5 px-4 py-3 rounded-xl border border-orange-100 dark:border-orange-500/10">
+                       <span className="text-sm font-bold text-orange-800 dark:text-orange-400 uppercase">
+                         {selectedReturn?.refund_method || 'CASH'}
+                       </span>
+                       <span className="text-base font-bold text-foreground tabular-nums">
+                         {formatCurrency(selectedReturn?.refund_amount)}
+                       </span>
+                    </div>
+                    <div className="pt-2">
+                      <span className="text-sm text-muted-foreground font-medium flex items-center gap-2">
+                        <span className="text-muted-foreground/60">Invoice Ref:</span>
+                        {(selectedReturn?.sale?.id || selectedReturn?.sale_id) ? (
+                          <span 
+                            onClick={() => router.push(`/sales?saleId=${selectedReturn?.sale?.id || selectedReturn?.sale_id}`)}
+                            className="text-foreground font-semibold hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer transition-colors"
+                          >
+                            {selectedReturn?.sale?.invoice_number || 'View Invoice'}
+                          </span>
+                        ) : (
+                          <span className="text-foreground font-semibold">{selectedReturn?.sale?.invoice_number || 'N/A'}</span>
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Reconciled Items</Label>
-                  <span className="text-[10px] font-black text-orange-600 uppercase tracking-tighter">
+              {/* --- Items Table --- */}
+              <div className="bg-background rounded-2xl border border-border/50 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-border/50 bg-muted/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">
+                      <Hash className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <h4 className="text-base font-bold text-foreground">Return Manifest</h4>
+                  </div>
+                  <Badge variant="outline" className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30 text-sm font-bold px-3 py-1 rounded-full">
                     {selectedReturn?.items?.length || 0} Products
-                  </span>
+                  </Badge>
                 </div>
-
-                <div className="rounded-xl border shadow-sm overflow-hidden bg-background">
+                <div className="w-full">
                   <Table>
-                    <TableHeader className="bg-muted/50">
-                      <TableRow>
-                        <TableHead className="py-3 text-[10px] font-bold uppercase px-4">Product</TableHead>
-                        <TableHead className="py-3 text-[10px] font-bold uppercase text-center w-16">Qty</TableHead>
-                        <TableHead className="py-3 text-[10px] font-bold uppercase text-right px-4">Total</TableHead>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground">Product</TableHead>
+                        <TableHead className="py-4 text-sm font-semibold text-muted-foreground text-center w-24">Return Qty</TableHead>
+                        <TableHead className="py-4 px-6 text-sm font-semibold text-muted-foreground text-right w-36">Total</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {selectedReturn?.items?.map((item, idx) => (
-                        <TableRow key={idx} className="hover:bg-muted/20">
-                          <TableCell className="py-3 px-4">
-                            <span className="text-xs font-bold leading-tight">
+                        <TableRow key={idx} className="border-border/40 hover:bg-muted/30 transition-colors">
+                          <TableCell className="py-4 px-6">
+                            <span className="text-base font-bold text-foreground leading-tight">
                               {item.product?.name}
                             </span>
                           </TableCell>
-                          <TableCell className="py-3 text-center">
-                            <span className="text-xs font-black tabular-nums">
+                          <TableCell className="py-4 text-center">
+                            <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-muted text-foreground text-base font-bold">
                               {parseFloat(item.quantity).toFixed(0)}
                             </span>
                           </TableCell>
-                          <TableCell className="py-3 text-right px-4">
-                            <span className="text-xs font-black tabular-nums">
+                          <TableCell className="py-4 text-right px-6">
+                            <span className="text-base font-bold text-foreground tabular-nums">
                               {formatCurrency(item.total_amount)}
                             </span>
                           </TableCell>
@@ -530,12 +564,31 @@ export default function SalesReturnHistoryPage() {
                 </div>
               </div>
 
+              {/* --- Financial Summary --- */}
+              <div className="bg-emerald-950 dark:bg-emerald-950 rounded-2xl p-8 space-y-6 shadow-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform duration-700 group-hover:scale-[1.2] group-hover:rotate-12 group-hover:opacity-20">
+                  <RotateCcw className="w-48 h-48 text-emerald-400" />
+                </div>
+                <div className="space-y-4 pb-6 border-b border-emerald-800/50 relative z-10 w-full sm:w-2/3 ml-auto">
+                  <div className="flex justify-between items-center text-emerald-100">
+                    <span className="text-sm font-medium">Return Value</span>
+                    <span className="text-base font-semibold tabular-nums">{selectedReturn && formatCurrency(selectedReturn.total_amount)}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center relative z-10 w-full sm:w-2/3 ml-auto">
+                  <span className="text-emerald-100 font-bold uppercase tracking-widest text-sm">Total Refunded</span>
+                  <span className="text-4xl font-black text-white tabular-nums tracking-tight">
+                    {selectedReturn && formatCurrency(selectedReturn.refund_amount)}
+                  </span>
+                </div>
+              </div>
+
               {selectedReturn?.notes && (
                 <div className="bg-muted/30 rounded-xl p-4 border border-dashed">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-2">
-                    <FileText className="h-3 w-3" /> Return Notes
-                  </Label>
-                  <p className="text-xs text-muted-foreground font-medium leading-relaxed italic border-l-2 border-orange-200 pl-3">
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-2">
+                    <FileText className="h-4 w-4" /> Return Notes
+                  </p>
+                  <p className="text-sm text-muted-foreground font-medium leading-relaxed italic border-l-2 border-orange-200 pl-3">
                     {selectedReturn.notes}
                   </p>
                 </div>
@@ -543,20 +596,20 @@ export default function SalesReturnHistoryPage() {
             </div>
           </ScrollArea>
 
-          <div className="p-6 bg-card border-t flex gap-3 shrink-0">
-            <Button
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-10 rounded-xl font-bold gap-2 text-xs"
-              onClick={() => window.print()}
-            >
-              <Printer className="h-4 w-4" />
-              Print Receipt
-            </Button>
+          <div className="p-6 bg-background border-t flex gap-4 shrink-0 justify-end">
             <Button
               variant="outline"
-              className="h-10 px-4 rounded-xl border-border/40 hover:bg-muted transition-all"
+              className="h-12 px-8 rounded-xl border-border/40 hover:bg-muted transition-all font-bold"
               onClick={() => handleCloseDetails(false)}
             >
-              <X className="h-4 w-4" />
+              Close Details
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white h-12 px-8 rounded-xl font-bold gap-2 text-sm shadow-sm"
+              onClick={() => window.print()}
+            >
+              <Printer className="h-5 w-5" />
+              Print Receipt
             </Button>
           </div>
         </SheetContent>

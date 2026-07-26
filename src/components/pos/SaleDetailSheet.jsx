@@ -90,7 +90,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                   <h4 className="text-base font-bold text-orange-800 dark:text-orange-400 uppercase tracking-tight mb-1">{t("pos.return_history")}</h4>
                   <p className="text-sm font-medium text-orange-700/80 dark:text-orange-300/80 leading-relaxed">
                     {t("pos.transaction_returned_desc")}
-                    <span className="text-orange-900 dark:text-orange-200 font-bold ml-2 bg-orange-200/50 dark:bg-orange-500/30 px-2 py-0.5 rounded-md">
+                    <span className="text-orange-900 dark:text-orange-200 font-bold ml-2 bg-orange-200/50 dark:bg-orange-500/30 px-2 py-0.5 rounded-md whitespace-nowrap inline-block">
                       {currency} {Math.round(
                         (sale.returns || sale.sale_returns || []).reduce((sum, r) => sum + parseFloat(r.refund_amount || 0), 0)
                       ).toLocaleString(undefined, { minimumFractionDigits: 2 })}

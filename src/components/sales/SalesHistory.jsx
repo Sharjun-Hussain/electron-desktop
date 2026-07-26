@@ -237,7 +237,7 @@ export default function SalesHistory() {
         sub_category_id: selectedSubCategory,
         brand_id: selectedBrand,
         product_id: selectedProduct,
-        status: 'completed'
+        status: 'completed,returned'
       });
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sales?${queryParams}`, {
