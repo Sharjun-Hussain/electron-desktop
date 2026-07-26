@@ -469,12 +469,14 @@ export default function SalesHistory() {
         <div className="flex flex-col">
           <button
             onClick={() => handleViewDetails(row.original)}
-            className="text-left  text-sm text-emerald-600 hover:text-emerald-700 hover:underline decoration-emerald-500/30 underline-offset-4"
+            className="text-left text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:underline decoration-emerald-500 underline-offset-4 cursor-pointer transition-colors"
           >
             {row.getValue("invoice_number")}
           </button>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            <span className="text-[10px] text-muted-foreground uppercase ">{row.original.branch?.name || 'Main Hub'}</span>
+            {(business?.branches?.length > 1) && (
+              <span className="text-[10px] text-muted-foreground uppercase ">{row.original.branch?.name || 'Main Hub'}</span>
+            )}
             {/* <span className="text-[10px] opacity-20">•</span> */}
             {/* <span className="text-[9px] font-black text-emerald-600/50 tabular-nums tracking-tighter">REF: {generateDocNumber('sale', row.original.id)}</span> */}
             {row.original.source === 'ecommerce' && (
@@ -497,9 +499,8 @@ export default function SalesHistory() {
           <span className="text-sm font-medium text-foreground">
             {format(new Date(row.getValue("created_at")), 'MMM dd, yyyy')}
           </span>
-          <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
-            <Clock className="h-3 w-3 opacity-50" />
-            <span className="text-xs">
+          <div className="flex items-center mt-0.5 text-foreground/80">
+            <span className="text-sm font-semibold tracking-wide">
               {format(new Date(row.getValue("created_at")), 'hh:mm a')}
             </span>
           </div>
@@ -523,11 +524,20 @@ export default function SalesHistory() {
       accessorKey: "payment_method",
       header: "Method",
       cell: ({ row }) => (
-        <StatusBadge
-          value={row.getValue("payment_method")}
-          showIcon={false}
-          className="bg-slate-500/5 text-slate-600 border-slate-200 dark:bg-slate-400/5 dark:text-slate-400 dark:border-slate-800"
-        />
+        <div className="flex flex-wrap gap-1">
+          {row.getValue("payment_method") === "split" && row.original.payments?.length > 0 ? (
+            row.original.payments.map((p, idx) => (
+              <StatusBadge
+                key={idx}
+                value={p.payment_method}
+              />
+            ))
+          ) : (
+            <StatusBadge
+              value={row.getValue("payment_method")}
+            />
+          )}
+        </div>
       )
     },
     {
@@ -558,29 +568,29 @@ export default function SalesHistory() {
       id: "actions",
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex justify-end gap-1.5">
           <Button
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors"
+            size="sm"
+            className="h-8 px-2.5 gap-1.5 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-500/10 transition-colors text-xs font-semibold"
             onClick={() => handleOpenReturn(row.original)}
-            title="Return Sale"
           >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
-            onClick={() => handleReprint(row.original)}
-            title="Fast Reprint"
-          >
-            <Printer className="h-4 w-4" />
+            <RotateCcw className="h-3.5 w-3.5" />
+            Return
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-3 gap-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-500/10"
+            className="h-8 px-2.5 gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/10 transition-colors text-xs font-semibold"
+            onClick={() => handleReprint(row.original)}
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Print
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2.5 gap-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-500/10 transition-colors text-xs font-semibold"
             onClick={() => handleViewDetails(row.original)}
           >
             <Eye className="h-3.5 w-3.5" />
@@ -595,10 +605,10 @@ export default function SalesHistory() {
   const stats = useMemo(() => {
     const totalRev = data.reduce((sum, s) => sum + parseFloat(s.payable_amount || 0), 0);
     return [
-      { label: "Rev. (Page)", value: formatCurrency(totalRev), icon: TrendingUp, gradient: "from-emerald-500 to-teal-400" },
-      { label: "Transactions", value: pagination.total, icon: Receipt, gradient: "from-blue-500 to-indigo-400" },
-      { label: "Avg. (List)", value: formatCurrency(totalRev / (data.length || 1)), icon: ArrowUpRight, gradient: "from-violet-500 to-purple-400" },
-      { label: "Unique Clients", value: new Set(data.map(s => s.customer_id)).size, icon: Users, gradient: "from-amber-500 to-orange-400" },
+      { label: "Page Revenue", value: formatCurrency(totalRev), icon: TrendingUp, gradient: "from-emerald-500 to-teal-400" },
+      { label: "Total Invoices", value: pagination.total, icon: Receipt, gradient: "from-blue-500 to-indigo-400" },
+      { label: "Average Sale", value: formatCurrency(totalRev / (data.length || 1)), icon: ArrowUpRight, gradient: "from-violet-500 to-purple-400" },
+      { label: "Unique Customers", value: new Set(data.map(s => s.customer_id)).size, icon: Users, gradient: "from-amber-500 to-orange-400" },
     ];
   }, [data, pagination.total, formatCurrency]);
 
@@ -628,6 +638,7 @@ export default function SalesHistory() {
         searchPlaceholder="Filter by Invoice, Customer, or Branch..."
         searchColumn="searchText"
         initialColumnVisibility={{ searchText: false }}
+        storageKey="sales-history-columns"
         onSearchChange={handleSearchChange}
         onExportClick={null}
         exportData={exportData}

@@ -2,17 +2,20 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { 
-  CheckCircle2, 
+  Check, 
   Clock, 
-  XCircle, 
+  X, 
   AlertCircle, 
   RotateCcw, 
-  CreditCard, 
-  Banknote, 
-  History,
   Info,
-  ShieldCheck,
-  Ban
+  Activity,
+  Ban,
+  CreditCard,
+  Banknote,
+  QrCode,
+  Wallet,
+  History,
+  Globe
 } from "lucide-react";
 
 /**
@@ -53,39 +56,81 @@ export function StatusBadge({ value, className, label, showIcon = true }) {
 
   // Default styles (Neutral)
   let config = {
-    bg: "bg-slate-500/10 dark:bg-slate-400/10",
-    text: "text-slate-700 dark:text-slate-400 border-slate-500/20",
+    bg: "bg-slate-100 dark:bg-slate-500/20",
+    text: "text-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-500/30",
     icon: Info,
     label: label || (val.charAt(0).toUpperCase() + val.slice(1))
   };
 
   if (isSuccess) {
     config = {
-      bg: "bg-emerald-500/10 dark:bg-emerald-400/10",
-      text: "text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
-      icon: val === "active" ? ShieldCheck : CheckCircle2,
+      bg: "bg-emerald-100 dark:bg-emerald-500/20",
+      text: "text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30",
+      icon: val === "active" ? Activity : Check,
       label: label || (val === "true" ? "Active" : val.charAt(0).toUpperCase() + val.slice(1))
     };
   } else if (isWarning) {
     config = {
-      bg: "bg-amber-500/10 dark:bg-amber-400/10",
-      text: "text-amber-700 dark:text-amber-400 border-amber-500/20",
+      bg: "bg-amber-100 dark:bg-amber-500/20",
+      text: "text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-500/30",
       icon: Clock,
       label: label || (val === "partial" ? "Partially Paid" : val.charAt(0).toUpperCase() + val.slice(1))
     };
   } else if (isDanger) {
     config = {
-      bg: "bg-rose-500/10 dark:bg-rose-400/10",
-      text: "text-rose-700 dark:text-rose-400 border-rose-500/20",
-      icon: val === "inactive" ? Ban : XCircle,
+      bg: "bg-rose-100 dark:bg-rose-500/20",
+      text: "text-rose-800 dark:text-rose-400 border-rose-200 dark:border-rose-500/30",
+      icon: val === "inactive" ? Ban : X,
       label: label || (val === "false" ? "Inactive" : val.charAt(0).toUpperCase() + val.slice(1))
     };
   } else if (isInfo) {
     config = {
-      bg: "bg-indigo-500/10 dark:bg-indigo-400/10",
-      text: "text-indigo-700 dark:text-indigo-400 border-indigo-500/20",
+      bg: "bg-indigo-100 dark:bg-indigo-500/20",
+      text: "text-indigo-800 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30",
       icon: val.includes("refund") || val.includes("return") ? RotateCcw : Info,
       label: label || val.charAt(0).toUpperCase() + val.slice(1)
+    };
+  } else if (val === "cash") {
+    config = {
+      bg: "bg-emerald-100 dark:bg-emerald-500/20",
+      text: "text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30",
+      icon: Banknote,
+      label: label || "Cash"
+    };
+  } else if (val === "card") {
+    config = {
+      bg: "bg-blue-100 dark:bg-blue-500/20",
+      text: "text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-500/30",
+      icon: CreditCard,
+      label: label || "Card"
+    };
+  } else if (val === "online") {
+    config = {
+      bg: "bg-violet-100 dark:bg-violet-500/20",
+      text: "text-violet-800 dark:text-violet-400 border-violet-200 dark:border-violet-500/30",
+      icon: Globe,
+      label: label || "Online"
+    };
+  } else if (val === "qr") {
+    config = {
+      bg: "bg-fuchsia-100 dark:bg-fuchsia-500/20",
+      text: "text-fuchsia-800 dark:text-fuchsia-400 border-fuchsia-200 dark:border-fuchsia-500/30",
+      icon: QrCode,
+      label: label || "QR"
+    };
+  } else if (val === "wallet") {
+    config = {
+      bg: "bg-orange-100 dark:bg-orange-500/20",
+      text: "text-orange-800 dark:text-orange-400 border-orange-200 dark:border-orange-500/30",
+      icon: Wallet,
+      label: label || "Wallet"
+    };
+  } else if (val === "cheque") {
+    config = {
+      bg: "bg-slate-100 dark:bg-slate-500/20",
+      text: "text-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-500/30",
+      icon: History,
+      label: label || "Cheque"
     };
   }
 
@@ -99,7 +144,7 @@ export function StatusBadge({ value, className, label, showIcon = true }) {
     <Badge 
       variant="outline"
       className={cn(
-        "flex w-fit items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-tight transition-all duration-300 shadow-xs", 
+        "flex w-fit items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold uppercase tracking-wider shadow-none transition-colors duration-300", 
         config.bg, 
         config.text, 
         className
