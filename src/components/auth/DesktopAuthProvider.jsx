@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getDesktopSession, desktopLogout } from '@/lib/desktop-auth';
 import { TermsModal } from './terms-modal';
+import { useBroadcast } from '@/hooks/useBroadcast';
 
 const SessionContext = createContext(null);
 
@@ -15,6 +16,16 @@ export function DesktopAuthProvider({ children }) {
   const [status, setStatus] = useState(() => {
     if (typeof window !== 'undefined') return getDesktopSession() ? 'authenticated' : 'unauthenticated';
     return 'loading';
+  });
+
+  // 1. Blueprint Implementation: Listen for cross-window security signals
+  const { broadcast } = useBroadcast('erp_auth', (data) => {
+    if (data?.type === 'LOGOUT') {
+       console.log('[Broadcast] Remote logout signal received. Securing this window.');
+       if (getDesktopSession()) {
+         desktopLogout();
+       }
+    }
   });
 
   useEffect(() => {
@@ -39,6 +50,8 @@ export function DesktopAuthProvider({ children }) {
         console.warn(`[DesktopAuth] 401 Unauthorized from ${args[0]}. Logging out...`);
         // Only logout if we actually have a session to clear, to avoid infinite loops
         if (getDesktopSession()) {
+          // 2. Blueprint Implementation: Alert any secondary windows!
+          broadcast({ type: 'LOGOUT' });
           desktopLogout();
         }
       }
