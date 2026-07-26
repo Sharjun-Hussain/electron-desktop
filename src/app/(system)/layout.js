@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from '@/components/auth/DesktopAuthProvider';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { CustomSidebar } from "@/components/custom-sidebar";
 import { DashboardLayoutSkeleton } from '../skeletons/dashboard/dashboard-skeleton';
@@ -9,13 +9,18 @@ import { SystemBreadcrumb } from '@/components/general/breadcrumb/Breadcrumb';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppSettings } from '@/app/hooks/useAppSettings';
 import { useWakeLock } from '@/hooks/use-wake-lock';
+import { useNavigationStore } from '@/store/useNavigationStore';
+import { Button } from '@/components/ui/button';
+import { ShieldAlert } from 'lucide-react';
 
 export default function AppLayout({ children }) {
   const { status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const { general } = useAppSettings();
+  const { business, general } = useAppSettings();
+  const { track, history } = useNavigationStore();
 
   const density = general?.interface?.density || 'comfortable';
   const performance = general?.interface?.performance || 'standard';
@@ -32,6 +37,56 @@ export default function AppLayout({ children }) {
     }
   }, [status, router]);
 
+  // Track navigation history
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const fullPath = searchParams.toString() 
+        ? `${pathname}?${searchParams.toString()}` 
+        : pathname;
+      track(fullPath);
+    }
+  }, [pathname, searchParams, status, track]);
+
+  const moduleGuards = [
+    {
+      enabled: business?.accounting_enabled,
+      paths: ['/accounting', '/cheques', '/expenses', '/expense-categories']
+    },
+    {
+      enabled: business?.shopify_enabled,
+      paths: ['/settings/shopify']
+    },
+    {
+      enabled: business?.whatsapp_enabled,
+      paths: ['/crm/whatsapp']
+    },
+    {
+      enabled: business?.textlk_enabled,
+      paths: ['/crm/text-lk']
+    },
+    {
+      enabled: business?.business_type?.toLowerCase() === 'restaurant' || business?.business_type?.toLowerCase() === 'manufacturing',
+      paths: ['/production']
+    },
+    {
+      enabled: business?.business_type?.toLowerCase() === 'manufacturing',
+      paths: ['/production/orders', '/production/raw-materials', '/production/wastage', '/distributors']
+    },
+    {
+      enabled: business?.business_type?.toLowerCase() === 'restaurant',
+      paths: ['/dining', '/kitchen', '/waiter']
+    }
+  ];
+
+  const isBlocked = status === 'authenticated' && business && (() => {
+    return moduleGuards.some(guard => {
+      if (guard.enabled === false) {
+        return guard.paths.some(path => pathname === path || pathname.startsWith(path + '/'));
+      }
+      return false;
+    });
+  })();
+
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -41,6 +96,46 @@ export default function AppLayout({ children }) {
   }
 
   if (status === 'unauthenticated') return null;
+
+  if (isBlocked) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background px-4 text-center select-none animate-in fade-in duration-300">
+        <div className="relative flex items-center justify-center w-24 h-24 mb-6 rounded-full bg-red-500/10 border border-red-500/20 text-red-600">
+          <ShieldAlert className="w-10 h-10" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl mb-3">
+          Access Denied
+        </h1>
+        <p className="max-w-md text-sm text-muted-foreground mb-8">
+          You do not have the required authority to perform this action. Please contact your system administrator if you believe this is an error.
+        </p>
+        <Button
+          onClick={() => {
+            let backPath = '/';
+            if (history && history.length > 0) {
+              for (let i = history.length - 1; i >= 0; i--) {
+                const path = history[i];
+                const isPathBlocked = moduleGuards.some(guard => {
+                  if (guard.enabled === false) {
+                    return guard.paths.some(p => path === p || path.startsWith(p + '/'));
+                  }
+                  return false;
+                });
+                if (!isPathBlocked && path !== pathname) {
+                  backPath = path;
+                  break;
+                }
+              }
+            }
+            router.push(backPath);
+          }}
+          className="px-8 h-10 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200"
+        >
+          Go Back
+        </Button>
+      </div>
+    );
+  }
 
   // POS Screen - Full width, optimized for touch/speed
   if (isPosScreen) {

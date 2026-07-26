@@ -153,7 +153,7 @@ export function CustomSidebar() {
         items: [
           { title: "Recipes (BOM)", url: "/production/recipes", icon: FileText, requiredPermission: PERMISSIONS.PRODUCTION_VIEW },
           ...(isManufacturing ? [{ title: "Production Orders", url: "/production/orders", icon: ClipboardList, requiredPermission: PERMISSIONS.PRODUCTION_VIEW }] : []),
-          { title: "Raw Materials", url: "/production/raw-materials", icon: Boxes, requiredPermission: PERMISSIONS.PRODUCTION_VIEW },
+          ...(isManufacturing ? [{ title: "Raw Materials", url: "/production/raw-materials", icon: Boxes, requiredPermission: PERMISSIONS.PRODUCTION_VIEW }] : []),
           ...(isManufacturing ? [{ title: "Distributor Management", url: "/distributors", icon: Network, requiredPermission: PERMISSIONS.CUSTOMER_VIEW }] : []),
           ...(isManufacturing ? [{ title: "Wastage Log", url: "/production/wastage", icon: Trash2, requiredPermission: PERMISSIONS.PRODUCTION_VIEW }] : []),
         ]
