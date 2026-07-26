@@ -118,7 +118,8 @@ export const CheckoutPanel = memo(forwardRef(({
   }, [defaultEmployeeIds?.join(",")]); // only re-run if the IDs change
 
 
-  const { finance, loyalty: loyaltyConfig, business } = useAppSettings();
+  const { finance, loyalty: loyaltyConfig, business, localization, formatCurrency } = useAppSettings();
+  const currencyLabel = localization?.currency || "LKR";
   const loyaltyEnabled = business?.loyalty_enabled;
   const isManufacturing = business?.business_type === 'manufacturing';
 
@@ -297,42 +298,53 @@ export const CheckoutPanel = memo(forwardRef(({
             )}
 
             {/* Gross Total */}
-            <div className="flex justify-between items-center text-base border-b border-border/60 pb-2">
-              <span className="text-muted-foreground font-medium">{t("pos.subtotal")}</span>
-              <span className="font-bold text-foreground">LKR {totals.subtotal.toFixed(2)}</span>
+            <div className="flex justify-between items-center text-base border-b border-border/60 pb-2 gap-4">
+              <span className="text-muted-foreground font-medium whitespace-nowrap">{t("pos.subtotal")}</span>
+              <span className="font-bold text-foreground text-right truncate" title={formatCurrency(totals.subtotal)}>
+                {formatCurrency(totals.subtotal)}
+              </span>
             </div>
 
             {/* Total Quantity */}
-            <div className="flex justify-between items-center text-base border-b border-border/60 pb-2">
-              <span className="text-muted-foreground font-medium">Total items</span>
-              <span className="font-bold text-foreground">
-                {cart.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)}
+            <div className="flex justify-between items-center text-base border-b border-border/60 pb-2 gap-4">
+              <span className="text-muted-foreground font-medium whitespace-nowrap">Total items</span>
+              <span className="font-bold text-foreground text-right truncate" title={cart.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0).toLocaleString()}>
+                {cart.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0).toLocaleString()}
               </span>
             </div>
 
             {/* Total Savings */}
-            <div className="flex justify-between items-center text-base border-b border-border/60 pb-2">
-              <span className="text-muted-foreground font-medium">Total savings</span>
-              <span className="text-rose-600 font-bold">LKR {totalDiscount.toFixed(2)}</span>
+            <div className="flex justify-between items-center text-base border-b border-border/60 pb-2 gap-4">
+              <span className="text-muted-foreground font-medium whitespace-nowrap">Total savings</span>
+              <span className="text-rose-600 font-bold text-right truncate" title={formatCurrency(totalDiscount)}>
+                {formatCurrency(totalDiscount)}
+              </span>
             </div>
           </div>
 
           {/* Master Action Block */}
           <div className="space-y-4">
-            <div className="flex justify-between items-end px-1">
-              <div className="space-y-1">
+            <div className="flex justify-between items-end px-1 gap-2">
+              <div className="space-y-1 min-w-0 flex-1">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Net payable</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-4xl text-foreground font-black tracking-tighter">
-                    {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span 
+                    className={clsx(
+                      "text-foreground font-black tracking-tighter break-all",
+                      netTotal.toString().length > 12 ? "text-2xl" : 
+                      netTotal.toString().length > 9 ? "text-3xl" : "text-4xl"
+                    )}
+                    title={formatCurrency(netTotal)}
+                  >
+                    {netTotal.toLocaleString(undefined, { minimumFractionDigits: parseInt(finance?.precision || 2), maximumFractionDigits: parseInt(finance?.precision || 2) })}
                   </span>
-                  <span className="text-xs font-black text-muted-foreground">LKR</span>
+                  <span className="text-xs font-black text-muted-foreground">{currencyLabel}</span>
                 </div>
               </div>
               
               {showReceiptPreview && (
                 <Button size="icon" variant="ghost"
-                  className="h-9 w-9 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                  className="h-9 w-9 shrink-0 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
                   onClick={() => onLivePreview({ grandTotal, totalDiscount, subtotal: totals.subtotal })}
                 >
                   <Eye className="h-4 w-4" />
