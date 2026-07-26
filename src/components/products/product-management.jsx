@@ -500,13 +500,77 @@ export default function ProductsPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.status === "success") {
-          setAllProductsForExport(data.data.data || []);
+          const fetchedProducts = data.data.data || [];
+          
+          let formattedExport = fetchedProducts;
+          
+          const bType = session?.user?.organization?.business_type?.toLowerCase() || "";
+          
+          if (bType === 'retail' || bType === 'restaurant' || bType === 'wholesale') {
+            formattedExport = [];
+            fetchedProducts.forEach(product => {
+              const baseRow = {
+                "Name": product.name || "",
+                "Code": product.code || "",
+                "SKU": product.sku || "",
+                "Barcode": product.barcode || "",
+                "Main Category": product.main_category?.name || "",
+                "Sub Category": product.sub_category?.name || "",
+                "Brand": product.brand?.name || "",
+                "Unit": product.unit?.name || "",
+                "Cost Price": product.cost_price || 0,
+                "Selling Price": product.selling_price || 0,
+                "MRP Price": product.mrp_price || 0,
+                "Wholesale Price": product.wholesale_price || 0,
+                "Stock Qty": product.stock_quantity || 0,
+                "Batch Number": product.batches?.[0]?.batch_number || "",
+                "Expiry Date": product.batches?.[0]?.expiry_date ? new Date(product.batches[0].expiry_date).toLocaleDateString() : "",
+                "Low Stock Threshold": product.low_stock_threshold || "",
+                "Description": product.description || "",
+                "Attribute 1 Name": "",
+                "Attribute 1 Value": "",
+                "Attribute 2 Name": "",
+                "Attribute 2 Value": "",
+                "Attribute 3 Name": "",
+                "Attribute 3 Value": ""
+              };
+
+              if (product.variants && product.variants.length > 0) {
+                product.variants.forEach(variant => {
+                  const variantRow = { ...baseRow };
+                  variantRow["SKU"] = variant.sku || baseRow["SKU"];
+                  variantRow["Barcode"] = variant.barcode || baseRow["Barcode"];
+                  variantRow["Cost Price"] = variant.cost_price || baseRow["Cost Price"];
+                  variantRow["Selling Price"] = variant.price || variant.selling_price || baseRow["Selling Price"];
+                  variantRow["MRP Price"] = variant.mrp_price || baseRow["MRP Price"];
+                  variantRow["Wholesale Price"] = variant.wholesale_price || baseRow["Wholesale Price"];
+                  variantRow["Stock Qty"] = variant.stock_quantity || baseRow["Stock Qty"];
+                  variantRow["Batch Number"] = variant.batches?.[0]?.batch_number || baseRow["Batch Number"];
+                  variantRow["Expiry Date"] = variant.batches?.[0]?.expiry_date ? new Date(variant.batches[0].expiry_date).toLocaleDateString() : baseRow["Expiry Date"];
+                  
+                  if (variant.attribute_values) {
+                     variant.attribute_values.forEach((attr, idx) => {
+                       if (idx < 3) {
+                         variantRow[`Attribute ${idx + 1} Name`] = attr.attribute?.name || "";
+                         variantRow[`Attribute ${idx + 1} Value`] = attr.value || "";
+                       }
+                     });
+                  }
+                  formattedExport.push(variantRow);
+                });
+              } else {
+                formattedExport.push(baseRow);
+              }
+            });
+          }
+          
+          setAllProductsForExport(formattedExport);
         }
       }
     } catch (e) {
       console.error(e);
     }
-  }, [session?.accessToken]);
+  }, [session?.accessToken, session?.user?.organization?.business_type]);
 
   const fetchProducts = useCallback(async () => {
     if (!session?.accessToken) return;
