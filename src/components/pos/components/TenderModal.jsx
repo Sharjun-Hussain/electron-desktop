@@ -70,6 +70,7 @@ const TenderModal = ({
       setLastDiscount(0);
       setDiscountType(receiptSettings?.defaultExtraDiscountType || "amount");
       setCardChargePercent(0);
+      setChequeDetails({ cheque_number: "", bank_name: "", cheque_date: "" });
       setTimeout(() => inputRef.current?.focus(), 200);
     }
   }, [isOpen, totalAmount]);
@@ -164,7 +165,8 @@ const TenderModal = ({
       generalDiscountAmt: discountType === "amount" ? lastDiscount : 0,
       generalDiscount: discountType === "percentage" ? lastDiscount : 0,
       total_paid: totalPaid + cardChargeAmount,
-      balance: balance
+      balance: balance,
+      chequeDetails
     });
   };
 

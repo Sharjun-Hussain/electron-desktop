@@ -817,6 +817,7 @@ export const PaymentDialog = memo(({
   const [lastDiscount, setLastDiscount] = useState(0);
   const [discountType, setDiscountType] = useState(settings?.defaultExtraDiscountType || "amount");
   const [sendToKitchen, setSendToKitchen] = useState(true);
+  const [chequeDetails, setChequeDetails] = useState({ cheque_number: "", bank_name: "", cheque_date: "" });
 
   const totalReceived = useMemo(() => {
     return payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
@@ -844,6 +845,7 @@ export const PaymentDialog = memo(({
       setPayments([{ id: Date.now(), method: "cash", amount: "" }]);
       setLastDiscount(0);
       setDiscountType(settings?.defaultExtraDiscountType || "amount");
+      setChequeDetails({ cheque_number: "", bank_name: "", cheque_date: "" });
     }
   }, [isOpen, settings]);
 
@@ -862,7 +864,8 @@ export const PaymentDialog = memo(({
       generalDiscount: discountType === "percentage" ? lastDiscount : 0,
       received: totalReceived || netAmountToPay, // Keep for backward compatibility if needed by parent
       balance,
-      sendToKitchen
+      sendToKitchen,
+      chequeDetails
     });
   };
 
@@ -997,6 +1000,43 @@ export const PaymentDialog = memo(({
                     )}
                   </div>
                 </div>
+
+                {p.method === 'cheque' && (
+                  <div className="col-span-full bg-muted/30 p-4 rounded-xl border border-border/40 mt-2 space-y-4">
+                    <p className="text-xs font-black uppercase text-emerald-600 tracking-tight flex items-center gap-1.5">
+                      Cheque Details
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Cheque Number</label>
+                        <Input
+                          placeholder="e.g. 000123"
+                          value={chequeDetails.cheque_number}
+                          onChange={(e) => setChequeDetails(prev => ({ ...prev, cheque_number: e.target.value }))}
+                          className="h-10 text-sm font-medium bg-background border-border/40 focus:ring-1 focus:ring-emerald-500/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Bank Name</label>
+                        <Input
+                          placeholder="e.g. BOC"
+                          value={chequeDetails.bank_name}
+                          onChange={(e) => setChequeDetails(prev => ({ ...prev, bank_name: e.target.value }))}
+                          className="h-10 text-sm font-medium bg-background border-border/40 focus:ring-1 focus:ring-emerald-500/50"
+                        />
+                      </div>
+                      <div className="col-span-2 space-y-2 relative">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Cheque Date</label>
+                        <Input
+                          type="date"
+                          value={chequeDetails.cheque_date}
+                          onChange={(e) => setChequeDetails(prev => ({ ...prev, cheque_date: e.target.value }))}
+                          className="h-10 text-sm font-medium bg-background border-border/40 focus:ring-1 focus:ring-emerald-500/50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {payments.length > 1 && (
                   <Button

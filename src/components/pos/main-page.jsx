@@ -314,6 +314,7 @@ export default function PosPage() {
       paid_amount: paymentData.received,
       generalDiscountAmt: paymentData.generalDiscountAmt || 0,
       generalDiscount: paymentData.generalDiscount || 0,
+      chequeDetails: paymentData.chequeDetails,
       activeShiftId: activeShift?.id
     };
 

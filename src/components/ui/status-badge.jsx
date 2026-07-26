@@ -127,8 +127,8 @@ export function StatusBadge({ value, className, label, showIcon = true }) {
     };
   } else if (val === "cheque") {
     config = {
-      bg: "bg-slate-100 dark:bg-slate-500/20",
-      text: "text-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-500/30",
+      bg: "bg-cyan-100 dark:bg-cyan-500/20",
+      text: "text-cyan-800 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/30",
       icon: History,
       label: label || "Cheque"
     };

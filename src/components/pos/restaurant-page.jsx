@@ -397,6 +397,7 @@ export default function RestaurantPosPage() {
       payments: normalizedPayments,
       generalDiscountAmt: extraDiscountAmt,
       generalDiscount: extraDiscountPct,
+      chequeDetails: paymentData.chequeDetails,
       activeShiftId: activeShift?.id,
       sendToKitchen: paymentData.sendToKitchen
     };

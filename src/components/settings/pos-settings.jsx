@@ -1331,17 +1331,6 @@ export function PosSettings() {
                 </CardContent>
               </Card>
 
-              {/* Save Protocol Actions */}
-              <div className="flex justify-end pt-4">
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="h-10 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-2 active:scale-95 transition-all shadow-sm"
-                >
-                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Synchronize Protocol
-                </Button>
-              </div>
             </>
           )}
         </TabsContent>
