@@ -8,11 +8,23 @@ import {
   Database, Lock, ArrowUpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-import { useAppSettings } from "@/app/hooks/useAppSettings";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { cn } from "@/lib/utils";
+
+const SectionHeader = ({ icon: Icon, title, description }) => (
+  <div className="mb-6">
+    <div className="flex items-center gap-3 mb-2">
+      <div className="p-2 sm:p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl shadow-sm">
+        <Icon className="w-5 h-5 text-emerald-600" />
+      </div>
+      <div>
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-none tracking-tight">{title}</h3>
+        <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">{description}</p>
+      </div>
+    </div>
+  </div>
+);
 
 export function DataImportSettings() {
   const { business, isLoading: isSettingsLoading } = useAppSettings();
@@ -127,171 +139,179 @@ export function DataImportSettings() {
   };
 
   return (
-    <div className="space-y-6 w-full animate-in fade-in duration-300">
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl overflow-hidden p-6 sm:p-8">
+        <SectionHeader 
+          icon={Database} 
+          title="Database Management" 
+          description="Create backups or restore your entire system from a previous snapshot point." 
+        />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        
-        {/* BACKUP CARD */}
-        <Card className="border-border/60 shadow-sm overflow-hidden h-full">
-          <CardHeader className="bg-muted/30 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mt-6">
+          
+          {/* BACKUP CARD */}
+          <div className="flex flex-col h-full border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 rounded-xl overflow-hidden shadow-sm transition-all hover:border-emerald-500/30">
+            <div className="bg-slate-100/50 dark:bg-slate-900/50 p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
                 <HardDriveDownload className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-lg font-bold">Download Backup</CardTitle>
-                <CardDescription>Save a copy of your entire database</CardDescription>
+                <h4 className="font-bold text-[15px] text-slate-900 dark:text-white">Download Backup</h4>
+                <p className="text-[12px] text-slate-500 dark:text-slate-400">Save a copy of your entire database</p>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4">
-              <p className="text-sm text-blue-900/70 dark:text-blue-300/70 leading-relaxed">
-                Generates a complete <strong>.sql</strong> snapshot containing your entire business data history.
-              </p>
             </div>
             
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground border-b border-border/40 pb-2">
-                <span>FILE FORMAT</span>
-                <span className="text-foreground">MySQL Snapshot (.sql)</span>
+            <div className="p-5 space-y-6 flex-1 flex flex-col">
+              <div className="bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
+                <p className="text-[13px] text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed font-medium">
+                  Generates a complete <strong>.sql</strong> snapshot containing your entire business data history.
+                </p>
               </div>
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground border-b border-border/40 pb-2">
-                <span>DATA SCOPE</span>
-                <span className="text-foreground">Full Database</span>
+              
+              <div className="space-y-4 flex-1">
+                <div className="flex items-center justify-between text-[12px] font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 pb-2">
+                  <span>FILE FORMAT</span>
+                  <span className="text-slate-900 dark:text-slate-200">MySQL Snapshot (.sql)</span>
+                </div>
+                <div className="flex items-center justify-between text-[12px] font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 pb-2">
+                  <span>DATA SCOPE</span>
+                  <span className="text-slate-900 dark:text-slate-200">Full Database</span>
+                </div>
               </div>
+
+              <Button
+                onClick={handleExport}
+                disabled={isExporting}
+                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[13px] rounded-lg shadow-sm transition-all mt-auto"
+              >
+                {isExporting
+                  ? <><RefreshCw className="w-4 h-4 animate-spin mr-2" /> Preparing Snapshot...</>
+                  : <><HardDriveDownload className="w-4 h-4 mr-2" /> Generate Backup File</>
+                }
+              </Button>
             </div>
+          </div>
 
-            <Button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="w-full h-11 gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all active:scale-95 shadow-md"
-            >
-              {isExporting
-                ? <><RefreshCw className="w-4 h-4 animate-spin" /> Preparing Snapshot...</>
-                : <><HardDriveDownload className="w-4 h-4" /> Generate Backup File</>
-              }
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* RESTORE CARD */}
-        <Card className="border-border/60 shadow-sm overflow-hidden h-full">
-          <CardHeader className="bg-muted/30 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10 text-orange-600">
+          {/* RESTORE CARD */}
+          <div className="flex flex-col h-full border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 rounded-xl overflow-hidden shadow-sm transition-all hover:border-emerald-500/30">
+            <div className="bg-slate-100/50 dark:bg-slate-900/50 p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-600">
                 <HardDriveUpload className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-lg font-bold">Restore System</CardTitle>
-                <CardDescription>Upload a backup to restore your data</CardDescription>
+                <h4 className="font-bold text-[15px] text-slate-900 dark:text-white">Restore System</h4>
+                <p className="text-[12px] text-slate-500 dark:text-slate-400">Upload a backup to restore your data</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-6">
             
-            {/* IDLE */}
-            {restoreStage === 'idle' && (
-              <div className="space-y-6">
-                <div className="bg-orange-500/5 border border-orange-500/10 rounded-xl p-4">
-                  <p className="text-sm text-orange-900/70 dark:text-orange-300/70 leading-relaxed">
-                    Upload a previously downloaded <strong>.sql</strong> file. This will rebuild the system to that exact point in time.
-                  </p>
-                </div>
-                
-                <div
-                  className="relative border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:bg-muted/30 transition-all group"
-                  onClick={() => sqlFileRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files[0]); }}
-                >
-                  <input ref={sqlFileRef} type="file" accept=".sql" className="hidden" onChange={(e) => handleFileSelect(e.target.files[0])} />
-                  <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3 group-hover:bg-orange-500/10 transition-colors">
-                    <HardDriveUpload className="w-6 h-6 text-muted-foreground group-hover:text-orange-600 transition-colors" />
+            <div className="p-5 flex-1 flex flex-col">
+              
+              {/* IDLE */}
+              {restoreStage === 'idle' && (
+                <div className="space-y-6 flex-1 flex flex-col">
+                  <div className="bg-orange-50 dark:bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
+                    <p className="text-[13px] text-orange-900/80 dark:text-orange-300/80 leading-relaxed font-medium">
+                      Upload a previously downloaded <strong>.sql</strong> file. This will rebuild the system to that exact point in time.
+                    </p>
                   </div>
-                  <p className="text-sm font-bold text-foreground">Click or Drag & Drop</p>
-                  <p className="text-xs text-muted-foreground mt-1 font-medium italic">Select your .sql backup archive</p>
-                </div>
-              </div>
-            )}
-
-            {/* CONFIRM */}
-            {restoreStage === 'confirm' && (
-              <div className="space-y-5 animate-in fade-in duration-200">
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border">
-                  <Database className="w-6 h-6 text-muted-foreground shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-foreground truncate">{sqlFile?.name}</p>
-                    <p className="text-xs text-muted-foreground font-medium">{sqlFile ? `${(sqlFile.size / 1024).toFixed(1)} KB` : ''}</p>
+                  
+                  <div
+                    className="flex-1 relative border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group flex flex-col items-center justify-center min-h-[140px]"
+                    onClick={() => sqlFileRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files[0]); }}
+                  >
+                    <input ref={sqlFileRef} type="file" accept=".sql" className="hidden" onChange={(e) => handleFileSelect(e.target.files[0])} />
+                    <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center mb-3 group-hover:bg-orange-500/10 transition-colors">
+                      <HardDriveUpload className="w-6 h-6 text-slate-500 dark:text-slate-400 group-hover:text-orange-600 transition-colors" />
+                    </div>
+                    <p className="text-[13px] font-bold text-slate-900 dark:text-white">Click or Drag & Drop</p>
+                    <p className="text-[11px] text-slate-500 mt-1 font-medium italic">Select your .sql backup archive</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={cancelRestore}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
                 </div>
-                <div className="flex items-start gap-3 p-4 bg-red-500/5 dark:bg-red-500/10 rounded-xl border border-red-500/20">
-                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-900/80 dark:text-red-400 font-medium leading-relaxed">
-                    <strong>Destructive Action:</strong> This will permanently overwrite all current live data. This operation is irreversible.
-                  </p>
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <Button variant="outline" onClick={cancelRestore} className="flex-1 font-bold h-11 border-border/80">Cancel</Button>
-                  <Button onClick={confirmRestore} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold h-11 gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-all">
-                    <RotateCcw className="w-4 h-4" /> Start Restore
-                  </Button>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* RESTORING */}
-            {restoreStage === 'restoring' && (
-              <div className="py-10 space-y-6 text-center animate-in fade-in duration-200">
-                <div className="relative inline-block">
-                  <RefreshCw className="w-10 h-10 text-orange-500 animate-spin mx-auto" />
+              {/* CONFIRM */}
+              {restoreStage === 'confirm' && (
+                <div className="space-y-5 animate-in fade-in duration-200 flex-1 flex flex-col">
+                  <div className="flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <Database className="w-6 h-6 text-slate-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{sqlFile?.name}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{sqlFile ? `${(sqlFile.size / 1024).toFixed(1)} KB` : ''}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500 shrink-0" onClick={cancelRestore}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-500/20">
+                    <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-[13px] text-red-900/80 dark:text-red-400 font-medium leading-relaxed">
+                      <strong>Destructive Action:</strong> This will permanently overwrite all current live data. This operation is irreversible.
+                    </p>
+                  </div>
+                  <div className="flex gap-3 pt-2 mt-auto">
+                    <Button variant="outline" onClick={cancelRestore} className="flex-1 font-bold h-11 text-[13px]">Cancel</Button>
+                    <Button onClick={confirmRestore} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] h-11 transition-all">
+                      <RotateCcw className="w-4 h-4 mr-2" /> Start Restore
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-lg text-foreground uppercase tracking-tight">Restoring System...</p>
-                  <p className="text-sm text-muted-foreground mt-1">Please keep this application open</p>
-                </div>
-                <Progress className="h-2 rounded-full overflow-hidden" value={66} />
-              </div>
-            )}
+              )}
 
-            {/* SUCCESS */}
-            {restoreStage === 'success' && (
-              <div className="py-10 space-y-4 text-center animate-in zoom-in-95 duration-200">
-                <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-500" />
-                </div>
-                <p className="font-bold text-lg text-foreground">Restoration Successful!</p>
-                <p className="text-sm text-muted-foreground">Backend is restarting — refreshing in 10 seconds...</p>
-              </div>
-            )}
-
-            {/* ERROR */}
-            {restoreStage === 'error' && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="flex flex-col items-center gap-3 p-6 bg-red-50 dark:bg-red-950/20 rounded-xl border border-red-200 dark:border-red-800/40 text-center">
-                  <XCircle className="w-10 h-10 text-red-500" />
+              {/* RESTORING */}
+              {restoreStage === 'restoring' && (
+                <div className="py-10 space-y-6 text-center animate-in fade-in duration-200 flex-1 flex flex-col justify-center">
+                  <div className="relative inline-block mx-auto">
+                    <RefreshCw className="w-10 h-10 text-orange-500 animate-spin" />
+                  </div>
                   <div>
-                    <p className="font-bold text-red-700 dark:text-red-400">Restoration Failed</p>
-                    <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1 font-medium">{restoreError}</p>
+                    <h4 className="font-bold text-[15px] text-slate-900 dark:text-white uppercase tracking-tight">Restoring System...</h4>
+                    <p className="text-[12px] text-slate-500 mt-1">Please keep this application open</p>
+                  </div>
+                  <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-orange-500 h-1.5 rounded-full w-2/3 animate-pulse"></div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={cancelRestore} className="w-full gap-2 font-bold h-11 border-red-500/20 text-red-600 hover:bg-red-500/5">
-                  <RotateCcw className="w-4 h-4" /> Try Again
-                </Button>
-              </div>
-            )}
+              )}
 
-          </CardContent>
-        </Card>
+              {/* SUCCESS */}
+              {restoreStage === 'success' && (
+                <div className="py-10 space-y-4 text-center animate-in zoom-in-95 duration-200 flex-1 flex flex-col justify-center">
+                  <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                  </div>
+                  <h4 className="font-bold text-[15px] text-slate-900 dark:text-white">Restoration Successful!</h4>
+                  <p className="text-[12px] text-slate-500">Backend is restarting — refreshing in 10 seconds...</p>
+                </div>
+              )}
 
+              {/* ERROR */}
+              {restoreStage === 'error' && (
+                <div className="space-y-4 animate-in fade-in duration-200 flex-1 flex flex-col">
+                  <div className="flex flex-col items-center gap-3 p-6 bg-red-50 dark:bg-red-950/20 rounded-xl border border-red-200 dark:border-red-800/40 text-center flex-1 justify-center">
+                    <XCircle className="w-10 h-10 text-red-500" />
+                    <div>
+                      <h4 className="font-bold text-[15px] text-red-700 dark:text-red-400">Restoration Failed</h4>
+                      <p className="text-[12px] text-red-600/70 dark:text-red-400/70 mt-1 font-medium">{restoreError}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" onClick={cancelRestore} className="w-full gap-2 font-bold h-11 text-[13px] border-red-500/20 text-red-600 hover:bg-red-500/5 mt-auto">
+                    <RotateCcw className="w-4 h-4 mr-2" /> Try Again
+                  </Button>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      <div className="pt-6 border-t border-border/40 flex justify-center">
-        <p className="text-xs text-muted-foreground font-medium flex items-center gap-2">
-          <AlertTriangle className="w-3 h-3 text-amber-500" />
+      <div className="pt-2 flex justify-center">
+        <p className="text-[12px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
           Tip: Always perform a fresh backup before initiating a system restore.
         </p>
       </div>
