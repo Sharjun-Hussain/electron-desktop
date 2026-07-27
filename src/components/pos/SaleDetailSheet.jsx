@@ -45,7 +45,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-2xl flex flex-col h-full p-0 overflow-hidden border-l border-border/50 [&>button]:hidden">
+      <SheetContent className="w-full! sm:max-w-md! md:max-w-3xl! lg:max-w-4xl! flex flex-col h-full p-0 overflow-hidden border-l border-border/50 [&>button]:hidden">
         <SheetHeader className="px-8 py-6 border-b border-border bg-background shrink-0">
           <div className="flex justify-between items-start">
             <div className="flex gap-4">
@@ -188,7 +188,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
                   <TableBody>
                     {sale.items?.map((item, idx) => (
                       <TableRow key={idx} className="border-border/40 hover:bg-muted/30 transition-colors">
-                        <TableCell className="py-4 px-6">
+                        <TableCell className="py-4 px-6 whitespace-normal min-w-[250px]">
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-3">
                               <span className="text-base font-bold text-foreground leading-tight">
