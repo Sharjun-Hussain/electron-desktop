@@ -206,11 +206,16 @@ export function usePosActions({
 
       const terminalName = localStorage.getItem("pos_terminal_id") || "Main Terminal";
 
+      const totalGeneralDiscountNum = parseFloat(generalDiscountAmt) > 0 
+        ? parseFloat(generalDiscountAmt) 
+        : subtotal * (parseFloat(generalDiscount) / 100);
+      let distributedGeneralDiscount = 0;
+
       saleData = {
         branch_id: selectedBranch?.id || localStorage.getItem("selected_branch_id"),
         customer_id: state.customer?.id,
         distributor_id: state.distributor?.id,
-        items: state.cart.map((item) => {
+        items: state.cart.map((item, idx) => {
           if (!item.productId || !item.variantId) {
             console.error("Invalid item in cart:", item);
             throw new Error(`Item "${item.name}" has missing ID data. Please remove and re-add it.`);
@@ -231,14 +236,20 @@ export function usePosActions({
             wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
           }
 
-          const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
           const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
+          let allocatedGeneralDiscount = 0;
 
-          const generalDiscAmtFinal = genDiscAmtNum > 0
-            ? genDiscAmtNum * itemProportion
-            : itemSubtotal * (generalDiscount / 100);
+          if (totalGeneralDiscountNum > 0) {
+            if (idx === state.cart.length - 1) {
+              // Last item gets the remainder to avoid 0.01 fractional drops
+              allocatedGeneralDiscount = totalGeneralDiscountNum - distributedGeneralDiscount;
+            } else {
+              allocatedGeneralDiscount = Number((totalGeneralDiscountNum * itemProportion).toFixed(2));
+              distributedGeneralDiscount += allocatedGeneralDiscount;
+            }
+          }
 
-          const finalDiscountAmount = Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2));
+          const finalDiscountAmount = Number((itemLineDiscount + wholesaleDiscAmt + allocatedGeneralDiscount).toFixed(2));
 
           return {
             product_id: item.productId,
@@ -437,13 +448,18 @@ export function usePosActions({
 
     const isRestaurant = business?.business_type?.toLowerCase().includes('restaurant');
 
+    const totalGeneralDiscountNum = parseFloat(generalDiscountAmt) > 0 
+      ? parseFloat(generalDiscountAmt) 
+      : subtotal * (parseFloat(generalDiscount) / 100);
+    let distributedGeneralDiscount = 0;
+
     const saleData = {
       status: "draft",
       branch_id: selectedBranch?.id,
       customer_id: state.customer?.id,
       distributor_id: state.distributor?.id,
       seller_ids: selectedEmployeeIds,
-      items: state.cart.map((item) => {
+      items: state.cart.map((item, idx) => {
         const itemSubtotal = item.price * item.quantity;
         let itemLineDiscount;
         let wholesaleDiscAmt;
@@ -460,12 +476,18 @@ export function usePosActions({
           wholesaleDiscAmt = state.isWholesale ? itemSubtotal * (wholesaleDiscount / 100) : 0;
         }
 
-        const genDiscAmtNum = parseFloat(generalDiscountAmt) || 0;
         const itemProportion = subtotal > 0 ? (itemSubtotal / subtotal) : 0;
+        let allocatedGeneralDiscount = 0;
 
-        const generalDiscAmtFinal = genDiscAmtNum > 0
-          ? genDiscAmtNum * itemProportion
-          : itemSubtotal * (generalDiscount / 100);
+        if (totalGeneralDiscountNum > 0) {
+          if (idx === state.cart.length - 1) {
+            // Last item gets the remainder to avoid 0.01 fractional drops
+            allocatedGeneralDiscount = totalGeneralDiscountNum - distributedGeneralDiscount;
+          } else {
+            allocatedGeneralDiscount = Number((totalGeneralDiscountNum * itemProportion).toFixed(2));
+            distributedGeneralDiscount += allocatedGeneralDiscount;
+          }
+        }
 
         return {
           product_id: item.productId,
@@ -473,7 +495,7 @@ export function usePosActions({
           product_batch_id: item.batchId,
           quantity: item.quantity,
           unit_price: Number(parseFloat(item.price).toFixed(2)),
-          discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + generalDiscAmtFinal).toFixed(2)),
+          discount_amount: Number((itemLineDiscount + wholesaleDiscAmt + allocatedGeneralDiscount).toFixed(2)),
           manual_discount: Number(itemLineDiscount.toFixed(2)),
           cooking_notes: item.cooking_notes || null
         };
