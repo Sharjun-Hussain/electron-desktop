@@ -65,18 +65,23 @@ const employeeFetcher = async ([url, token]) => {
 };
 
 // ── Section header helper ────────────────────────────────
-const SectionHeader = ({ icon: Icon, title }) => (
-  <div className="flex items-center gap-2 mb-4">
-    <div className="p-1.5 rounded-md bg-emerald-500/10">
-      <Icon className="w-3.5 h-3.5 text-emerald-600" />
+const SectionHeader = ({ icon: Icon, title, description, className = "mb-6" }) => (
+  <div className={className}>
+    <div className="flex items-center gap-3 mb-2">
+      <div className="p-2 sm:p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl shadow-sm">
+        <Icon className="w-5 h-5 text-emerald-600" />
+      </div>
+      <div>
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-none tracking-tight">{title}</h3>
+        {description && <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">{description}</p>}
+      </div>
     </div>
-    <h3 className="text-sm font-semibold text-foreground">{title}</h3>
   </div>
 );
 
 // ── Input class helper ───────────────────────────────────
-const inputCls = "h-9 border-gray-200 focus-visible:ring-emerald-500 focus-visible:ring-offset-0 text-sm font-medium";
-const selectTriggerCls = "h-9 border-gray-200 focus:ring-emerald-500 text-sm font-medium";
+const inputCls = "h-10 border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 transition-all text-sm font-medium";
+const selectTriggerCls = "h-10 border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm font-medium";
 
 // ── Main Form Component ──────────────────────────────────
 export function BranchForm({ initialData }) {
@@ -176,7 +181,7 @@ export function BranchForm({ initialData }) {
 
   if (isRestricted) {
     return (
-      <Card className="border-amber-200 bg-amber-50/20 overflow-hidden">
+      <Card className="border-amber-200 bg-amber-50/20 overflow-hidden shadow-sm rounded-2xl">
         <div className="h-1 bg-amber-500 w-full" />
         <CardContent className="p-5 flex flex-col items-center text-center space-y-3">
           <div className="p-2 bg-amber-100 rounded-full">
@@ -221,10 +226,10 @@ export function BranchForm({ initialData }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
         {/* ── Branch Details ── */}
-        <Card className="border-border/40 rounded-xl shadow-sm">
+        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl relative overflow-hidden">
           <CardContent className="p-6">
             <SectionHeader icon={Building} title="Branch Details" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -308,7 +313,7 @@ export function BranchForm({ initialData }) {
         </Card>
 
         {/* ── Location & Hours ── */}
-        <Card className="border-border/40 rounded-xl shadow-sm">
+        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl relative overflow-hidden">
           <CardContent className="p-6">
             <SectionHeader icon={MapPin} title="Location & Hours" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -362,7 +367,7 @@ export function BranchForm({ initialData }) {
         </Card>
 
         {/* ── Manager ── */}
-        <Card className="border-border/40 rounded-xl shadow-sm">
+        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl relative overflow-hidden">
           <CardContent className="p-6">
             <SectionHeader icon={User} title="Manager Selection" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -399,12 +404,12 @@ export function BranchForm({ initialData }) {
         </Card>
 
         {/* ── Settings ── */}
-        <Card className="border-border/40 rounded-xl shadow-sm">
+        <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl relative overflow-hidden">
           <CardContent className="p-6">
             <SectionHeader icon={Settings2} title="Settings" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <FormField control={form.control} name="is_active" render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 px-4 py-3">
+                <FormItem className="flex flex-row items-center justify-between rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-4 py-3 shadow-sm hover:shadow-md transition-shadow">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -420,7 +425,7 @@ export function BranchForm({ initialData }) {
                 </FormItem>
               )} />
               <FormField control={form.control} name="is_main_branch" render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 px-4 py-3">
+                <FormItem className="flex flex-row items-center justify-between rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-4 py-3 shadow-sm hover:shadow-md transition-shadow">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
                       <Building className="h-4 w-4 text-emerald-600" />
@@ -453,14 +458,14 @@ export function BranchForm({ initialData }) {
             variant="outline"
             onClick={() => router.back()}
             disabled={isSubmitting}
-            className="h-10 px-5 font-semibold border-gray-200 text-sm"
+            className="h-10 px-5 font-semibold border-slate-200 dark:border-slate-700 rounded-xl shadow-sm text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
           >
             <X className="mr-2 h-4 w-4" /> Cancel
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm"
+            className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 text-sm active:scale-[0.98] transition-all"
           >
             {isSubmitting ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{isEditMode ? "Saving..." : "Creating..."}</>
