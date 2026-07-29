@@ -77,12 +77,14 @@ export function SettingsPage() {
   const allowedItems = useMemo(() => {
     const isOrganization = session?.user?.roles?.some(role => role.toLowerCase().includes('organization'));
     const isSuperAdmin = session?.user?.roles?.some(role => role.toLowerCase() === 'super admin');
+    const isWhiteLabel = process.env.NEXT_PUBLIC_IS_WHITE_LABEL === 'true';
 
     return sidebarItems.filter(item => {
       if (item.id === "loyalty" && !isLoyaltyEnabled) return false;
       if (item.id === "backup" && !isBackupEnabled) return false;
       if (isOrganization && (item.id === "health" || item.id === "ai")) return false;
       if (item.id === "communication" && !isSuperAdmin) return false;
+      if (isWhiteLabel && (item.id === "subscription" || item.id === "health" || item.id === "changelog")) return false;
       return hasPermission(item.permission);
     });
   }, [hasPermission, isLoyaltyEnabled, isBackupEnabled, session?.user?.roles]);
@@ -161,7 +163,7 @@ export function SettingsPage() {
         {/* Sidebar Footer */}
         <div className="p-4 mt-auto border-t border-slate-200 dark:border-slate-900">
           <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-            <span>Inzeedo Core</span>
+            <span>Inzeedo ERP</span>
             <span className="tabular-nums opacity-60">v1.2.2</span>
           </div>
         </div>

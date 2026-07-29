@@ -261,8 +261,8 @@ export function CustomSidebar() {
         items: [
           { title: t("sidebar.global_settings"), url: "/settings", icon: Settings, requiredPermission: PERMISSIONS.SETTINGS_MANAGE },
           // Master-only items — hidden from all tenant organizations
-          { title: t("sidebar.business_profiles"), url: "/organizations", icon: Building, requiredPermission: PERMISSIONS.ORG_VIEW, isMasterOnly: true },
-          { title: "Subscription Plans", url: "/super-admin/plans", icon: Sparkles, requiredPermission: PERMISSIONS.ORG_VIEW, isMasterOnly: true },
+          { title: t("sidebar.business_profiles"), url: "/organizations", icon: Building, requiredPermission: PERMISSIONS.ORG_VIEW, isMasterOnly: true, hideOnWhiteLabel: true },
+          { title: "Subscription Plans", url: "/super-admin/plans", icon: Sparkles, requiredPermission: PERMISSIONS.ORG_VIEW, isMasterOnly: true, hideOnWhiteLabel: true },
           { title: t("sidebar.branch_hierarchy"), url: "/branches", icon: Network, requiredPermission: PERMISSIONS.BRANCH_VIEW, moduleKey: "multi_location" },
           { title: t("sidebar.application_users"), url: "/users", icon: UserCog, requiredPermission: [PERMISSIONS.USER_VIEW, PERMISSIONS.ROLE_VIEW], moduleKey: "staff_management" },
           { title: t("sidebar.employees"), url: "/employees", icon: UserCircle, requiredPermission: PERMISSIONS.USER_VIEW, moduleKey: "staff_management" },
@@ -329,10 +329,15 @@ export function CustomSidebar() {
   };
 
   const filterItems = (items) => {
+    const isWhiteLabel = process.env.NEXT_PUBLIC_IS_WHITE_LABEL === 'true';
+    
     return items
       .map((item) => {
         // Check Master-only restriction on parent item
         if (item.isMasterOnly && business?.is_master !== true) return null;
+
+        // Check White-Label exclusion
+        if (item.hideOnWhiteLabel && isWhiteLabel) return null;
 
         // Check module availability for parent item
         if (item.moduleKey && !isModuleEnabled(item.moduleKey)) return null;
@@ -341,6 +346,9 @@ export function CustomSidebar() {
           const filteredSubItems = item.items.filter((subItem) => {
             // Check Master-only restriction on sub-item
             if (subItem.isMasterOnly && business?.is_master !== true) return false;
+
+            // Check White-Label exclusion for sub-item
+            if (subItem.hideOnWhiteLabel && isWhiteLabel) return false;
 
             // Check module availability for sub-item
             if (subItem.moduleKey && !isModuleEnabled(subItem.moduleKey)) return false;
