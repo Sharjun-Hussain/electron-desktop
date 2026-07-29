@@ -217,14 +217,15 @@ export function CustomSidebar() {
           { title: t("sidebar.intelligent_insights"), url: "/reports", icon: Zap, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "reports_advanced" },
         ]
       },
-      // Apps (Shopify & Custom E-Commerce) Section
-      ...(business?.shopify_enabled || business?.custom_ecommerce_enabled ? [{
-        title: t("sidebar.apps") || "Apps",
+      // Apps (Shopify, Custom E-Commerce & HRM) Section
+      ...(business?.shopify_enabled || business?.custom_ecommerce_enabled || business?.hrm_enabled ? [{
+        title: "Integrations",
         url: business?.shopify_enabled ? "/settings/shopify" : "/settings/custom-ecommerce",
         icon: Globe,
-        requiredPermission: PERMISSIONS.SETTINGS_MANAGE,
+        requiredPermission: null,
         items: [
-          ...(business?.shopify_enabled ? [{ title: "Shopify Setup", url: "/settings/shopify", icon: Monitor, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
+          ...(business?.shopify_enabled ? [{ title: "Shopify", url: "/settings/shopify", icon: Monitor, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
+          ...(business?.hrm_enabled ? [{ title: "HRM & Payroll", url: "/hrm-sso", icon: UserPlus, requiredPermission: null }] : []),
           ...(business?.custom_ecommerce_enabled ? [{ title: "Custom E-Commerce", url: "/settings/custom-ecommerce", icon: Store, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
         ]
       }] : []),
