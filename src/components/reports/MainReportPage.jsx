@@ -405,8 +405,13 @@ function ReportsContent({ isNested }) {
     if (!isManufacturing) list = list.filter(c => c.id !== "Manufacturing");
     if (!isRestaurant) list = list.filter(c => c.id !== "Restaurant");
     if (isRestrictedRole) list = list.filter(c => c.id !== "Finance");
+    
+    // Hide POS and Inventory modules if pos_enabled is false
+    if (business?.pos_enabled === false) {
+      list = list.filter(c => !["Sales", "Stocks", "Purchase", "Customer", "Restaurant"].includes(c.id));
+    }
     return list;
-  }, [isLoyaltyEnabled, isManufacturing, isRestaurant, isRestrictedRole]);
+  }, [isLoyaltyEnabled, isManufacturing, isRestaurant, isRestrictedRole, business?.pos_enabled]);
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -419,8 +424,14 @@ function ReportsContent({ isNested }) {
     if (!isLoyaltyEnabled) list = list.filter(r => r.category !== "Loyalty");
     if (!isManufacturing) list = list.filter(r => r.category !== "Manufacturing");
     if (!isRestaurant) list = list.filter(r => r.category !== "Restaurant");
+    
+    // Hide POS and Inventory reports if pos_enabled is false
+    if (business?.pos_enabled === false) {
+      list = list.filter(r => !["Sales", "Stocks", "Purchase", "Customer", "Restaurant"].includes(r.category));
+    }
+    
     return list;
-  }, [reports, isLoyaltyEnabled, isManufacturing, isRestaurant]);
+  }, [reports, isLoyaltyEnabled, isManufacturing, isRestaurant, business?.pos_enabled]);
 
   // Sync tab with URL
   useEffect(() => {

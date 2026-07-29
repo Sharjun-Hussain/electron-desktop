@@ -18,7 +18,8 @@ import {
   Trash2,
   Calendar,
   Zap,
-  Landmark
+  Landmark,
+  Monitor
 } from "lucide-react";
 import { mutate } from "swr";
 
@@ -78,6 +79,8 @@ export const formSchema = z.object({
   business_mode: z.string({ required_error: "Please select a business mode." }),
   shopify_enabled: z.boolean().optional(),
   custom_ecommerce_enabled: z.boolean().optional(),
+  pos_enabled: z.boolean().optional(),
+  hrm_enabled: z.boolean().optional(),
   whatsapp_enabled: z.boolean().optional(),
   textlk_enabled: z.boolean().optional(),
   loyalty_enabled: z.boolean().optional(),
@@ -137,6 +140,8 @@ export function OrganizationForm({ initialData }) {
       business_mode: initialData.business_mode || "Retailer",
       shopify_enabled: !!initialData.shopify_enabled,
       custom_ecommerce_enabled: !!initialData.custom_ecommerce_enabled,
+      pos_enabled: initialData.pos_enabled === undefined ? true : !!initialData.pos_enabled,
+      hrm_enabled: !!initialData.hrm_enabled,
       whatsapp_enabled: !!initialData.whatsapp_enabled,
       textlk_enabled: !!initialData.textlk_enabled,
       loyalty_enabled: !!initialData.loyalty_enabled,
@@ -152,6 +157,8 @@ export function OrganizationForm({ initialData }) {
       business_type: "Retail",
       business_mode: "Retailer",
       shopify_enabled: false,
+      pos_enabled: true,
+      hrm_enabled: false,
       custom_ecommerce_enabled: false,
       whatsapp_enabled: false,
       textlk_enabled: false,
@@ -205,6 +212,8 @@ export function OrganizationForm({ initialData }) {
     formData.append("business_type", data.business_type);
     formData.append("business_mode", data.business_mode);
     formData.append("shopify_enabled", data.shopify_enabled ? "true" : "false");
+    formData.append("pos_enabled", data.pos_enabled ? "true" : "false");
+    formData.append("hrm_enabled", data.hrm_enabled ? "true" : "false");
     formData.append("custom_ecommerce_enabled", data.custom_ecommerce_enabled ? "true" : "false");
     formData.append("whatsapp_enabled", data.whatsapp_enabled ? "true" : "false");
     formData.append("textlk_enabled", data.textlk_enabled ? "true" : "false");
@@ -582,6 +591,46 @@ export function OrganizationForm({ initialData }) {
                         Accounting Module
                       </FormLabel>
                       <FormDescription className="text-[10px]">Enable accounting features & general ledger access</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                        className="data-[state=checked]:bg-emerald-600"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="pos_enabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-blue-50/5 mt-2">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <Monitor className="h-4 w-4 text-blue-600" />
+                        Point of Sale & Billing
+                      </FormLabel>
+                      <FormDescription className="text-[10px]">Enable POS, Sales, and Purchase modules</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                        className="data-[state=checked]:bg-emerald-600"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="hrm_enabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-slate-50/5 mt-2">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <User className="h-4 w-4 text-emerald-600" />
+                        HRM Module
+                      </FormLabel>
+                      <FormDescription className="text-[10px]">Enable employee management & payroll</FormDescription>
                     </div>
                     <FormControl>
                       <Switch

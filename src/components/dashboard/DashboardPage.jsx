@@ -64,7 +64,7 @@ export default function Dashboard() {
             </div>
 
             {/* Restaurant Seating Monitor */}
-            {isRestaurant && pos?.showTableMonitor !== false && (
+            {isRestaurant && pos?.showTableMonitor !== false && business?.pos_enabled !== false && (
               <div id="dashboard-table-monitor" className="dashboard-item animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <DashboardTableMonitor />
               </div>

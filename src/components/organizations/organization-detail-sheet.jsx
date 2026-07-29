@@ -418,6 +418,33 @@ export default function OrganizationDetailSheet({
     }
   };
 
+  const handleTogglePos = async () => {
+    try {
+      // Leverages the dynamic updateOrganizationById mutation
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ pos_enabled: !org?.pos_enabled })
+        }
+      );
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success(`POS & Billing module ${resData.data.pos_enabled ? 'enabled' : 'disabled'} successfully`);
+        fetchDetails();
+        if (onUpdate) onUpdate();
+      } else {
+        throw new Error(resData.message);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to toggle POS module");
+    }
+  };
+
   const handleToggleBackup = async () => {
     try {
       const response = await fetch(
@@ -780,6 +807,26 @@ export default function OrganizationDetailSheet({
                   <SectionHeader icon={Boxes} title="Connected Applications" description="Authorize third-party integrations and modular apps" />
 
                   <div className="grid grid-cols-1 gap-3">
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                          <ShoppingCart className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground">Point of Sale & Billing</h4>
+                          <p className="text-[11px] font-medium text-muted-foreground">Core retail checkout, sales tracking, and item management</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={org?.pos_enabled !== false ? "destructive" : "outline"}
+                        onClick={handleTogglePos}
+                        className="h-8 rounded-md font-semibold text-[11px] px-4"
+                      >
+                        {org?.pos_enabled !== false ? "Disable" : "Enable"}
+                      </Button>
+                    </div>
+
                     <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
                       <div className="flex items-center gap-4">
                         <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20">

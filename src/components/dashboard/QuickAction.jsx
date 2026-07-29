@@ -137,6 +137,14 @@ export default function QuickActions() {
   const isRestaurant = business?.business_type?.toLowerCase() === "restaurant";
 
   let visibleActions = quickActions.filter(action => {
+    // Hide POS & Inventory related actions if pos_enabled is false
+    if (business?.pos_enabled === false) {
+      const posRestricted = ['pos', 'sales', 'inventory', 'stock-management', 'purchase', 'grn', 'inventory-insights', 'barcodes'];
+      if (posRestricted.includes(action.id)) {
+        return false;
+      }
+    }
+
     // Remove Offline Sync and Barcodes for Restaurant
     if (isRestaurant && (action.id === "offline-sync" || action.id === "barcodes")) {
       return false;

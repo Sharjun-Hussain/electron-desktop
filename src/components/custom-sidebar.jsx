@@ -213,7 +213,7 @@ export function CustomSidebar() {
         requiredPermission: [PERMISSIONS.REPORT_VIEW, PERMISSIONS.PRODUCT_VIEW, PERMISSIONS.STOCK_VIEW],
         moduleKey: "reports_basic",
         items: [
-          { title: t("sidebar.inventory_insights"), url: "/inventory-insights", icon: Lightbulb, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "reports_basic" },
+          { title: t("sidebar.inventory_insights"), url: "/inventory-insights", icon: Lightbulb, requiredPermission: PERMISSIONS.PRODUCT_VIEW, moduleKey: "reports_basic", hideOnPosDisabled: true },
           { title: t("sidebar.intelligent_insights"), url: "/reports", icon: Zap, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "reports_advanced" },
         ]
       },
@@ -275,6 +275,20 @@ export function CustomSidebar() {
 
   const isModuleEnabled = (moduleKey) => {
     if (!moduleKey) return true;
+
+    // 0a. Explicitly block POS, Sales, Purchases, and Items if pos_enabled is false
+    if (business?.pos_enabled === false) {
+      if (
+        moduleKey === 'pos_billing' || 
+        moduleKey === 'pos_advanced' ||
+        moduleKey === 'inventory_po' ||
+        moduleKey.startsWith('inventory_') ||
+        moduleKey === 'accounting_ledger_customer' ||
+        moduleKey === 'accounting_ledger_supplier'
+      ) {
+        return false;
+      }
+    }
 
     // 0. Check Master Organization (Full Bypass)
     if (business?.is_master === true) return true;
@@ -339,6 +353,9 @@ export function CustomSidebar() {
         // Check White-Label exclusion
         if (item.hideOnWhiteLabel && isWhiteLabel) return null;
 
+        // Check POS explicit restriction
+        if (item.hideOnPosDisabled && business?.pos_enabled === false) return null;
+
         // Check module availability for parent item
         if (item.moduleKey && !isModuleEnabled(item.moduleKey)) return null;
 
@@ -349,6 +366,9 @@ export function CustomSidebar() {
 
             // Check White-Label exclusion for sub-item
             if (subItem.hideOnWhiteLabel && isWhiteLabel) return false;
+
+            // Check POS explicit restriction for sub-item
+            if (subItem.hideOnPosDisabled && business?.pos_enabled === false) return false;
 
             // Check module availability for sub-item
             if (subItem.moduleKey && !isModuleEnabled(subItem.moduleKey)) return false;
