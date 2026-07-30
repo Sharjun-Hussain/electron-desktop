@@ -6,8 +6,8 @@ import { Save, Loader2, LayoutDashboard, DollarSign, Receipt, Clock, FileText, T
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { useSettings } from "@/hooks/swr/useSettings";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { useSettings } from "@/app/hooks/swr/useSettings";
+import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 

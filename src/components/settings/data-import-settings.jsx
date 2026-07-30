@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { cn } from "@/lib/utils";
 
 const SectionHeader = ({ icon: Icon, title, description }) => (
