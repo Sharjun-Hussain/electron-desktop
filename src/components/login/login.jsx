@@ -24,6 +24,7 @@ import {
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -66,7 +67,7 @@ const AuthHeader = memo(() => (
 ));
 AuthHeader.displayName = "AuthHeader";
 
-const AuthFields = memo(({ control, showPassword, setShowPassword }) => (
+const AuthFields = memo(({ control, showPassword, setShowPassword, rememberMe, setRememberMe }) => (
   <div className="space-y-6">
     <FormField
       control={control}
@@ -136,6 +137,21 @@ const AuthFields = memo(({ control, showPassword, setShowPassword }) => (
         </FormItem>
       )}
     />
+
+    <div className="flex items-center space-x-2 pt-2">
+      <Checkbox 
+        id="rememberMe" 
+        checked={rememberMe} 
+        onCheckedChange={setRememberMe}
+        className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+      />
+      <label
+        htmlFor="rememberMe"
+        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-700 dark:text-zinc-300 cursor-pointer"
+      >
+        Remember my credentials
+      </label>
+    </div>
   </div>
 ));
 AuthFields.displayName = "AuthFields";
@@ -184,6 +200,7 @@ function LoginForm() {
     isRedirecting: false,
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const updateState = useCallback(
     (updates) => setLoginState((prev) => ({ ...prev, ...updates })),
@@ -227,13 +244,15 @@ function LoginForm() {
         }
 
         if (result?.ok) {
+          if (rememberMe) {
+            const creds = btoa(JSON.stringify({ email: values.email, password: values.password }));
+            localStorage.setItem("inzeedo_saved_creds", creds);
+          } else {
+            localStorage.removeItem("inzeedo_saved_creds");
+          }
           updateState({ statusMessage: "Redirecting...", isRedirecting: true });
           toast.success("Access Granted");
-
-          setTimeout(() => {
-            const returnUrl = searchParams.get("redirect") || "/";
-            window.location.href = returnUrl;
-          }, 600);
+          window.location.href = "/";
           return;
         }
       } catch (error) {
@@ -244,8 +263,24 @@ function LoginForm() {
         });
       }
     },
-    [updateState, router, searchParams],
+    [updateState, router, searchParams, rememberMe],
   );
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("inzeedo_saved_creds");
+      if (saved) {
+        const decoded = JSON.parse(atob(saved));
+        if (decoded.email && decoded.password) {
+          form.setValue("email", decoded.email);
+          form.setValue("password", decoded.password);
+          setRememberMe(true);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [form]);
 
   return (
     <AuthLayout
@@ -271,6 +306,8 @@ function LoginForm() {
             control={form.control}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
+            rememberMe={rememberMe}
+            setRememberMe={setRememberMe}
           />
 
           <AuthActions

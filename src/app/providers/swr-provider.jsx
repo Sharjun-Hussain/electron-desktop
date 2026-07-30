@@ -4,9 +4,23 @@ import { SWRConfig } from "swr";
 import { signOut } from "@/components/auth/DesktopAuthProvider";
 
 const fetcher = async (url, options = {}) => {
+  let authHeader = {};
+  try {
+    const sessionStr = typeof window !== 'undefined' ? localStorage.getItem('inzeedo_session') : null;
+    if (sessionStr) {
+      const session = JSON.parse(sessionStr);
+      if (session?.accessToken) {
+        authHeader = { "Authorization": `Bearer ${session.accessToken}` };
+      }
+    }
+  } catch (e) {
+    // Ignore parse errors
+  }
+
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
+      ...authHeader,
       ...options.headers,
     },
     ...options,

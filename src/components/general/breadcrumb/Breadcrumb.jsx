@@ -118,6 +118,16 @@ export function SystemBreadcrumb() {
         }
       }
 
+      // Alias empty parent directories to their main module dashboard
+      const routeAliases = {
+        "/purchase": "/purchase/purchase-orders",
+        "/inventory": "/inventory/stock"
+      };
+
+      if (routeAliases[href] && !isLast) {
+        href = routeAliases[href];
+      }
+
       items.push(
         <BreadcrumbItem key={href}>
           {!isLast ? (

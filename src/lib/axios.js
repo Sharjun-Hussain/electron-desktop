@@ -9,6 +9,26 @@ const api = axios.create({
     withCredentials: true,
 });
 
+api.interceptors.request.use(
+    (config) => {
+        try {
+            if (typeof window !== 'undefined') {
+                const sessionStr = localStorage.getItem('inzeedo_session');
+                if (sessionStr) {
+                    const session = JSON.parse(sessionStr);
+                    if (session?.accessToken) {
+                        config.headers['Authorization'] = `Bearer ${session.accessToken}`;
+                    }
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
