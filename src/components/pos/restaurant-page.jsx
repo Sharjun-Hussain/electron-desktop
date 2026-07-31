@@ -1,4 +1,6 @@
 "use client";
+
+import { BRAND } from "@/lib/branding";
 import { ArrowLeft, Maximize, Minimize, Trash2, Moon, Sun, Calculator as CalculatorIcon, ZoomIn, ZoomOut, Clock, ChevronRight, ChevronLeft } from "lucide-react";
 
 import { useState, useEffect, useRef, useCallback, useTransition } from "react";
@@ -125,7 +127,7 @@ export default function RestaurantPosPage() {
     if (saved) setTerminalName(saved);
 
     // SEO & Branding
-    document.title = "Terminal Control Deck | Inzeedo POS";
+    document.title = `Terminal Control Deck | ${BRAND.PAGE_TITLE_SUFFIX}`;
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');

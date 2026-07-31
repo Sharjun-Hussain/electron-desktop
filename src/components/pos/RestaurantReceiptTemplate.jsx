@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import React, { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "@/lib/date-utils";
@@ -149,7 +150,7 @@ export const CustomerReceiptTemplate = forwardRef(
               />
             )}
             <h1 className="text-lg font-black">
-              {business?.name || "Inzeedo POS"}
+              {business?.name || BRAND.POS_DISPLAY_NAME}
             </h1>
             <div className="leading-tight text-black font-bold">
               <p>{business?.address || branch?.address}</p>
@@ -442,9 +443,9 @@ export const CustomerReceiptTemplate = forwardRef(
             )}
             <div className="leading-tight">
               <p className="text-[10px] whitespace-nowrap">
-                ERP SYSTEM FROM INZEEDO
+                {BRAND.RECEIPT_FOOTER}
               </p>
-              <p className="text-[10px]">© 2026 INZEEDO.LK | +94785706441</p>
+              <p className="text-[10px]">{BRAND.RECEIPT_CONTACT}</p>
             </div>
           </div>
 

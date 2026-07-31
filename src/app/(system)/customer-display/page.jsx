@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { 
   CheckCircle2, 
@@ -233,7 +235,7 @@ export default function CustomerDisplayPage() {
 
   // Dynamic Payment QR Code value based on payment amount and business
   const qrCodeUrl = useMemo(() => {
-    const merchantName = business?.name || "Inzeedo Merchant";
+    const merchantName = business?.name || BRAND.APP_NAME;
     const amount = payment.isOpen ? payment.totalAmount : computedTotals.netTotal;
     return `upi://pay?pa=merchant@upi&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=LKR&tn=POSOrder`;
   }, [business, payment, computedTotals]);
@@ -345,7 +347,7 @@ export default function CustomerDisplayPage() {
               </div>
             )}
             <span className="text-xl font-semibold uppercase  text-white text-center max-w-md  shadow-black">
-              {business?.name || "Inzeedo ERP"}
+              {business?.name || BRAND.APP_NAME}
             </span>
           </div>
         )}

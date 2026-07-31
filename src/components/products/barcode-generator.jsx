@@ -79,7 +79,7 @@ export function BarcodeGenerator({ data, onDataChange }) {
     pagePadding: 10,
     gap: 5,
     showCompanyName: true,
-    companyName: "INZEEDO POS",
+    companyName: BRAND.POS_DISPLAY_NAME,
   });
 
   const printRef = useRef(null);

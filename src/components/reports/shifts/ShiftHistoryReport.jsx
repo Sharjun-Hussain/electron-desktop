@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
@@ -439,7 +441,7 @@ export default function ShiftHistoryPage() {
       "Staff ID": item.cashier?.id || "N/A",
       "Branch Location": item.branch?.name || "N/A",
       "Branch ID": item.branch?.id || "N/A",
-      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Organization": session?.organization?.name || BRAND.POS_DISPLAY_NAME,
       "Opening Time": item.opening_time ? formatDateTime(item.opening_time) : "N/A",
       "Closing Time": item.closing_time ? formatDateTime(item.closing_time) : (item.status === "open" ? "Active" : "N/A"),
       "Status": item.status?.toUpperCase() || "UNKNOWN",

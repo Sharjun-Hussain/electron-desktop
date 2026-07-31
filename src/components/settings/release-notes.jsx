@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import React from "react";
 import {
   Sparkles,
@@ -117,7 +119,7 @@ export function ReleaseNotes() {
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-none">Software Evolution</h3>
-              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">Tracking the progress of Inzeedo POS</p>
+              <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1">Tracking the progress of {BRAND.POS_DISPLAY_NAME}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-100 dark:border-emerald-500/20">

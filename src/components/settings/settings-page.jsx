@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
@@ -163,7 +165,7 @@ export function SettingsPage() {
         {/* Sidebar Footer */}
         <div className="p-4 mt-auto border-t border-slate-200 dark:border-slate-900">
           <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-            <span>Inzeedo ERP</span>
+            <span>{BRAND.APP_NAME}</span>
             <span className="tabular-nums opacity-60">v1.2.2</span>
           </div>
         </div>

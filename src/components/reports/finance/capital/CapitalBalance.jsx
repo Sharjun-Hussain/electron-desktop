@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -77,7 +79,7 @@ export default function CapitalBalancePage() {
       "Account Code": item.code,
       "Category": item.Category,
       "Ledger Balance": Number(item.balance || 0),
-      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Organization": session?.organization?.name || BRAND.POS_DISPLAY_NAME,
       "Timestamp": new Date().toLocaleString()
     }));
   }, [data, session]);

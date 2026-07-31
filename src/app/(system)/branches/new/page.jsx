@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import { BranchForm } from "@/components/branches/new/branches-form";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -25,6 +26,6 @@ export default function AddBranchPage() {
 }
 
 export const metadata = {
-  title: "Add Branch | Inzeedo POS",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Add Branch | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };

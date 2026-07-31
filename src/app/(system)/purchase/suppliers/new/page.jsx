@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import { SupplierForm } from "@/components/purchase/suppliers/new/supplier-form";
 
 export default function AddOrganizationPage() {
@@ -19,6 +20,6 @@ export default function AddOrganizationPage() {
 }
 
 export const metadata = {
-  title: "Add New Organization | Inzeedo POS",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Add New Organization | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };

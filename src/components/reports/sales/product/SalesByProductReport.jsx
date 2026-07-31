@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { startOfMonth, startOfDay, endOfDay, startOfWeek, endOfWeek, endOfMonth, startOfYear, endOfYear, subYears } from "date-fns";
 import { format } from "@/lib/date-utils";
 import {
@@ -447,7 +449,7 @@ export default function SalesByProductPage() {
             .filter(Boolean)
             .join(", ")
           : "All Categories";
-      row["Organization"] = session?.organization?.name || "Inzeedo POS";
+      row["Organization"] = session?.organization?.name || BRAND.POS_DISPLAY_NAME;
       row["Horizon"] = date?.from
         ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}`
         : "Global";

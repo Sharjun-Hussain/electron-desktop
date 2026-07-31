@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -116,7 +118,7 @@ export default function ClassicPosPage() {
   // -- Clock --
   useEffect(() => {
     const t = setInterval(() => setCurrentDateTime(new Date()), 1000);
-    document.title = "POS | Inzeedo POS";
+    document.title = `POS | ${BRAND.PAGE_TITLE_SUFFIX}`;
     return () => clearInterval(t);
   }, []);
 

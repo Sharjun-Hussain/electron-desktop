@@ -1,6 +1,7 @@
+import { BRAND } from "@/lib/branding";
 export const metadata = {
-  title: "Supplier Performance | Inzeedo POS",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Supplier Performance | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };
 
 export default function Layout({ children }) {

@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 
 import SalesReturnHistoryPage from "@/components/sales/SalesReturnHistory";
 import React, { Suspense } from "react";
@@ -21,6 +22,6 @@ const page = () => {
 export default page;
 
 export const metadata = {
-  title: "Sales Returns & Refund Audits | Inzeedo POS",
-  description: "Manage and audit customer returns, track refund history, and maintain inventory accuracy with the Inzeedo POS centralized sales return module.",
+  title: `Sales Returns & Refund Audits | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Manage and audit customer returns, track refund history, and maintain inventory accuracy with the ${BRAND.APP_NAME} POS centralized sales return module.`,
 };

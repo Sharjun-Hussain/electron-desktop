@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
@@ -48,7 +50,7 @@ function EditOrganizationContent() {
           setOrganizationData(data.data);
           const label = data.data.name || `Organization #${data.data.id}`;
           setBreadcrumb('edit', label);
-          document.title = `Edit ${label} | Inzeedo POS`;
+          document.title = `Edit ${label} | ${BRAND.PAGE_TITLE_SUFFIX}`;
         } else {
           throw new Error(data.message || "Failed to fetch");
         }

@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -468,9 +470,9 @@ export default function ShopifySettingsPage() {
   }, [connectionStatus]);
 
   useEffect(() => {
-    const baseTitle = "Shopify Integration | Inzeedo POS";
+    const baseTitle = `Shopify Integration | ${BRAND.PAGE_TITLE_SUFFIX}`;
     if (connectionStatus === "success" && storeDetails?.name) {
-      document.title = `${storeDetails.name} - Shopify Sync | Inzeedo POS`;
+      document.title = `${storeDetails.name} - Shopify Sync | ${BRAND.PAGE_TITLE_SUFFIX}`;
     } else {
       document.title = baseTitle;
     }

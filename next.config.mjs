@@ -14,7 +14,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api-pos.inzeedo.lk',
+        hostname: 'pos-api-v2.inzeedo.lk',
       },
       {
         protocol: 'https',

@@ -1,8 +1,9 @@
+import { BRAND } from "@/lib/branding";
 import ProfilePage from "@/components/profile/ProfilePage";
 import React from "react";
 
 export const metadata = {
-  title: "My Profile | Inzeedo POS",
+  title: `My Profile | ${BRAND.PAGE_TITLE_SUFFIX}`,
   description: "Update your name, profile photo, and password.",
 };
 

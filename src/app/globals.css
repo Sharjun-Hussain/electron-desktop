@@ -111,7 +111,7 @@
   --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
-  --sidebar-bg-custom: #0B1521;
+  --sidebar-bg-custom: #0b1521;
 }
 
 @layer base {
@@ -121,6 +121,15 @@
 
   body {
     @apply bg-background text-foreground;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"] {
+    user-select: auto;
+    -webkit-user-select: auto;
   }
 
   /* Hide spinners for number inputs */
@@ -131,7 +140,7 @@
     margin: 0;
   }
 
-  input[type=number] {
+  input[type="number"] {
     -moz-appearance: textfield;
   }
 
@@ -183,18 +192,18 @@
   }
 
   /* Workspace Density Control */
-  [data-density='compact'] {
+  [data-density="compact"] {
     --density-padding-y: 0.5rem;
     --density-gap: 0.5rem;
   }
 
-  [data-density='comfortable'] {
+  [data-density="comfortable"] {
     --density-padding-y: 1rem;
     --density-gap: 1rem;
   }
 
   /* Performance Mode: Reduce Animations */
-  [data-performance='high'] * {
+  [data-performance="high"] * {
     transition-duration: 0ms !important;
     animation-duration: 0ms !important;
   }
@@ -241,7 +250,6 @@
   }
 
   @keyframes bounce-subtle {
-
     0%,
     100% {
       transform: translateY(0);

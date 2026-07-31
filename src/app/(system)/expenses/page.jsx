@@ -1,7 +1,8 @@
+import { BRAND } from "@/lib/branding";
 import ExpenseManagement from "@/components/expenses/expense-management";
 
 export const metadata = {
-  title: "Expenses | Inzeedo POS",
+  title: `Expenses | ${BRAND.PAGE_TITLE_SUFFIX}`,
   description: "Manage business expenses",
 };
 

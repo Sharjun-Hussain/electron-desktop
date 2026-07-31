@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import React, { useState } from "react";
 import {
   ShieldCheck,
@@ -59,7 +61,7 @@ export function TermsModal({ onAccept }) {
 
       const data = await res.json();
       if (data.status === "success") {
-        toast.success("Terms accepted. Welcome to Inzeedo POS!");
+        toast.success(`Terms accepted. Welcome to ${BRAND.POS_DISPLAY_NAME}!`);
         onAccept();
       }
     } catch (error) {
@@ -80,7 +82,7 @@ export function TermsModal({ onAccept }) {
             </div>
             <div>
               <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Master Service Agreement</CardTitle>
-              <CardDescription className="text-[12px] mt-0.5">Please review the comprehensive terms for Inzeedo POS Ecosystem</CardDescription>
+              <CardDescription className="text-[12px] mt-0.5">Please review the comprehensive terms for {BRAND.APP_NAME} Ecosystem</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -96,7 +98,7 @@ export function TermsModal({ onAccept }) {
                   <h3 className="text-[14px] font-bold">1. Proprietary Rights & Ownership</h3>
                 </div>
                 <p className="text-[12px] leading-relaxed">
-                  Inzeedo POS (the "Software") is a proprietary technology developed and owned by <strong>Inzeedo (PVT) Ltd</strong>. All rights, title, and interest in the Software, including source code, database structures, UI/UX designs, and algorithms, remain exclusively with Inzeedo. This agreement grants you a license to use the Software; it does not constitute a sale of the underlying code or intellectual property.
+                  {BRAND.POS_DISPLAY_NAME} (the "Software") is a proprietary technology developed and owned by <strong>{BRAND.APP_NAME}</strong>. All rights, title, and interest in the Software, including source code, database structures, UI/UX designs, and algorithms, remain exclusively with {BRAND.APP_NAME}. This agreement grants you a license to use the Software; it does not constitute a sale of the underlying code or intellectual property.
                 </p>
               </section>
 
@@ -144,7 +146,7 @@ export function TermsModal({ onAccept }) {
                   <h3 className="text-[14px] font-bold">4. Customization & Professional Services</h3>
                 </div>
                 <p className="text-[12px] leading-relaxed">
-                  The Inzeedo POS is a standardized product. Any adjustments, UI modifications, or addition of custom modules are considered <strong>Professional Services</strong>. These must be performed exclusively by Inzeedo's engineering team to maintain system integrity. Custom work is subject to separate quotations and service-level agreements.
+                  The {BRAND.POS_DISPLAY_NAME} is a standardized product. Any adjustments, UI modifications, or addition of custom modules are considered <strong>Professional Services</strong>. These must be performed exclusively by {BRAND.APP_NAME}'s engineering team to maintain system integrity. Custom work is subject to separate quotations and service-level agreements.
                 </p>
               </section>
 
@@ -155,7 +157,7 @@ export function TermsModal({ onAccept }) {
                   <h3 className="text-[14px] font-bold">5. User Responsibility & Environment</h3>
                 </div>
                 <p className="text-[12px] leading-relaxed">
-                  The performance of the system depends on your local environment. It is your responsibility to maintain: (a) Stable internet connectivity for cloud sync; (b) Hardware that meets our minimum specifications; (c) Security of your local devices. Inzeedo is not liable for data loss caused by hardware failure or power interruptions.
+                  The performance of the system depends on your local environment. It is your responsibility to maintain: (a) Stable internet connectivity for cloud sync; (b) Hardware that meets our minimum specifications; (c) Security of your local devices. {BRAND.APP_NAME} is not liable for data loss caused by hardware failure or power interruptions.
                 </p>
               </section>
 
@@ -188,7 +190,7 @@ export function TermsModal({ onAccept }) {
                   <h3 className="text-[14px] font-bold">8. Confidentiality</h3>
                 </div>
                 <p className="text-[12px] leading-relaxed">
-                  Both parties agree to protect the confidential information of the other. Your transactional data is your confidential information. The Inzeedo POS architecture and pricing models are our confidential information. Neither party shall disclose such information to third parties without prior written consent.
+                  Both parties agree to protect the confidential information of the other. Your transactional data is your confidential information. The {BRAND.POS_DISPLAY_NAME} architecture and pricing models are our confidential information. Neither party shall disclose such information to third parties without prior written consent.
                 </p>
               </section>
 

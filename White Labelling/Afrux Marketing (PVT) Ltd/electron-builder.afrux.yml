@@ -1,0 +1,78 @@
+appId: com.afrux.pos
+productName: Afrux POS
+copyright: Copyright © 2026 Afrux Marketing (PVT) Ltd
+
+releaseInfo:
+  releaseNotes: |
+    v1.2.5 (July 30, 2026)
+    - Initial white-label release for Afrux Marketing (PVT) Ltd.
+
+directories:
+  output: dist
+  buildResources: assets
+
+files:
+  - main.js
+  - preload.js
+  - licensing-service.js
+  - setup-wizard.html
+  - setup_wizard_banner_*.png
+  - package.json
+  - node_modules/**
+  - assets/**
+  - keys/**
+
+extraResources:
+  - from: ../backend
+    to: backend
+    filter:
+      - "src/**"
+      - "server.js"
+      - "package.json"
+      - "scripts/**"
+      - ".env.example"
+      - "!.git/**"
+      - "!node_modules/**"
+      - "!dist/**"
+      - "!logs/**"
+  - from: ../electron-desktop/out
+    to: frontend
+
+win:
+  target: nsis
+  # Update these icons with Afrux specific icons in the assets folder before building
+  icon: assets/icon.png
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Afrux POS
+  createDesktopShortcut: true
+
+linux:
+  target:
+    - target: AppImage
+      arch: x64
+    - target: deb
+      arch: x64
+  icon: assets/icon.png
+  category: Office
+  executableArgs:
+    - "--no-sandbox"
+  description: Afrux POS - Industrial Point of Sale System
+  maintainer: Afrux Marketing (PVT) Ltd.
+
+deb:
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libsecret-1-0
+
+asar: true
+asarUnpack:
+  - node_modules/node-machine-id/**

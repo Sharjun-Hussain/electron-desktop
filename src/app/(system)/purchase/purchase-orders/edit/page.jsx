@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
@@ -54,7 +56,7 @@ export default function EditPurchaseOrderPage() {
             const label = result.data.po_number || `PO #${result.data.id}`;
             setBreadcrumb(id, label);
             // Set Document Title
-            document.title = `Edit ${label} | Inzeedo POS`;
+            document.title = `Edit ${label} | ${BRAND.PAGE_TITLE_SUFFIX}`;
           } else {
             throw new Error(result.message || "Failed to load data");
           }

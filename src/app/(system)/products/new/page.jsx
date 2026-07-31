@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import { ProductForm } from "@/components/products/new/product-form";
 
 export default function AddProductPage() {
@@ -19,6 +20,6 @@ export default function AddProductPage() {
 }
 
 export const metadata = {
-  title: "Add New Product  | Inzeedo POS",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Add New Product | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };

@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import {
@@ -266,7 +268,7 @@ export default function CategorySalesReportPage({ type = "main" }) {
       "Total Revenue": Number(item.total_revenue || 0),
       "Revenue Share (%)": Number(((parseFloat(item.total_revenue) / (summary.grandTotalRevenue || 1)) * 100).toFixed(2)),
       "Store facility": branchId === "all" ? "All Stores" : branches.find((b) => b.id === branchId)?.name || "N/A",
-      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Organization": session?.organization?.name || BRAND.POS_DISPLAY_NAME,
       "Horizon": date?.from ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : "Global"
     }));
   }, [data, summary.grandTotalRevenue, branchId, branches, session, date]);

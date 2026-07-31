@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import React, { memo } from "react";
 import Image from "next/image";
 import { Terminal } from "lucide-react";
@@ -71,7 +73,7 @@ LeftPanel.displayName = "LeftPanel";
 // --- MEMOIZED FOOTER ---
 const AuthFooter = memo(() => (
   <div className="absolute bottom-6 text-center w-full text-xs text-slate-400 dark:text-zinc-600">
-    &copy; {new Date().getFullYear()} Inzeedo Systems. Secured by 256-bit
+    &copy; {new Date().getFullYear()} {BRAND.APP_NAME}. Secured by 256-bit
     encryption.
   </div>
 ));

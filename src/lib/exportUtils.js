@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { format } from "@/lib/date-utils";
@@ -6,7 +7,7 @@ import { format } from "@/lib/date-utils";
  * Generates a standardized filename with organization name and timestamp
  */
 const generateFileName = (orgName, baseName, extension) => {
-    const cleanOrg = (orgName || 'Inzeedo').replace(/[^a-z0-9]/gi, '_');
+    const cleanOrg = (orgName || BRAND.POS_DISPLAY_NAME).replace(/[^a-z0-9]/gi, '_');
     const cleanBase = baseName.replace(/[^a-z0-9]/gi, '_');
     const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
     return `${cleanOrg}_${cleanBase}_${timestamp}.${extension}`;

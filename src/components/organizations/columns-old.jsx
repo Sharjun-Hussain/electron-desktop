@@ -62,7 +62,7 @@ export const columns = [
     cell: ({ row }) => {
       const organization = row.original;
       const logoUrl = organization.logo
-        ? `https://apipos.inzeedo.lk/${organization.logo}`
+        ? `${process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://pos-api-v2.inzeedo.lk'}/${organization.logo}`
         : null;
 
       return (

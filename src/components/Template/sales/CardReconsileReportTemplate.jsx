@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import React from "react";
 import { format } from "@/lib/date-utils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
@@ -22,7 +23,7 @@ export const CardReconcilePrintTemplate = React.forwardRef(({ data, filters, sta
           <div>
             <div className="flex items-center gap-2 mb-2">
                <div className="h-8 w-8 bg-slate-900 rounded flex items-center justify-center text-white font-bold text-xs">POS</div>
-               <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">{business?.name || "Inzeedo Corp"}</h1>
+               <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">{business?.name || BRAND.APP_NAME}</h1>
             </div>
             <h2 className="text-xl font-semibold text-slate-700">Card Reconciliation Statement</h2>
             <p className="text-sm text-slate-500 mt-1">Financial Settlement Report</p>

@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
@@ -275,7 +277,7 @@ export default function SalesBySupplierPage() {
       "Margin Yield (%)": Number((item.margin || 0).toFixed(2)),
       "Avg Revenue per Item": Number((item.netSales / (item.sold || 1)).toFixed(2)),
       "Operational Unit": store === 'all' ? 'All Global Units' : branches.find(b => String(b.id) === String(store))?.name || 'Unit',
-      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Organization": session?.organization?.name || BRAND.POS_DISPLAY_NAME,
       "Horizon": date?.from ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : "Global"
     }));
   }, [data, store, branches, session, date]);

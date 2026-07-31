@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import UnitsPage from "@/components/units/units-management";
 import React from "react";
 
@@ -8,6 +9,6 @@ const page = () => {
 export default page;
 
 export const metadata = {
-  title: "Units | Inzeedo POS  ",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Units | ${BRAND.PAGE_TITLE_SUFFIX}  `,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };

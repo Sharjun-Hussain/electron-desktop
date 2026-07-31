@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import LoginPage from "@/components/login/login";
 import { LoaderIcon } from "lucide-react";
 import React, { Suspense } from "react";
@@ -8,6 +9,6 @@ const Login = () => {
 export default Login;
 
 export const metadata = {
-  title: "Login  | Inzeedo POS  ",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Login | ${BRAND.PAGE_TITLE_SUFFIX}  `,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };

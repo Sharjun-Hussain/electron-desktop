@@ -1,7 +1,8 @@
+import { BRAND } from "@/lib/branding";
 import ChequeManagement from "@/components/cheques/cheque-management";
 
 export const metadata = {
-  title: "Cheque Management | Inzeedo POS",
+  title: `Cheque Management | ${BRAND.PAGE_TITLE_SUFFIX}`,
   description: "Track and manage receivable and payable cheques",
 };
 

@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import React from "react";
 import { format } from "@/lib/date-utils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
@@ -35,7 +36,7 @@ export const ReportLayout = ({ children, title, subtitle, filters, stats, report
                </div>
              )}
              <div>
-               <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">{business?.name || "Inzeedo POS"}</h1>
+               <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">{business?.name || BRAND.POS_DISPLAY_NAME}</h1>
                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{report.headerTitle || "Business Report"}</p>
              </div>
           </div>

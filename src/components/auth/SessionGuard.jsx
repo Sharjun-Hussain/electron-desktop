@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -62,7 +64,7 @@ export default function SessionGuard({ children }) {
           </div>
           
           <div className="flex flex-col items-center">
-            <h2 className="text-xl font-bold tracking-tight text-foreground/90 mb-3">Inzeedo ERP</h2>
+            <h2 className="text-xl font-bold tracking-tight text-foreground/90 mb-3">{BRAND.APP_NAME}</h2>
             <div className="flex flex-col items-center gap-1.5">
               <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
                 Loading Workspace

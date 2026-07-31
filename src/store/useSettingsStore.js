@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -11,7 +12,7 @@ export const useSettingsStore = create(
         (set) => ({
             // Global UI Settings
             global: {
-                appName: 'Inzeedo POS',
+                appName: BRAND.POS_DISPLAY_NAME,
                 currency: 'LKR',
                 language: 'en',
                 theme: 'light',

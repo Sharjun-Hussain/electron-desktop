@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import {
@@ -298,7 +300,7 @@ export default function NonStockSalesPage() {
       "Unit Recognition": Number(item.unit_price || 0),
       "Total Recognition": Number(item.total_amount || 0),
       "Store Facility": branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name || "N/A",
-      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Organization": session?.organization?.name || BRAND.POS_DISPLAY_NAME,
       "Horizon": date?.from ? `${format(date.from, "LLL dd, yyyy")} - ${format(date.to, "LLL dd, yyyy")}` : "Global"
     }));
   }, [data, formatDate, branchId, branches, session, date]);

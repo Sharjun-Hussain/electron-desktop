@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -107,7 +109,7 @@ export function CustomSidebar() {
     name: session?.user?.name || "User",
     email: session?.user?.email || "user@example.com",
     avatar: session?.user?.image,
-    organizationName: session?.user?.organization?.name || business?.name || "Inzeedo",
+    organizationName: session?.user?.organization?.name || business?.name || BRAND.POS_DISPLAY_NAME,
     branchName: session?.user?.branches?.[0]?.name || "Main Branch",
   };
 

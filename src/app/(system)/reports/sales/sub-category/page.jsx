@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 
 import CategorySalesReportPage from "@/components/reports/sales/categories/CategorySalesReport";
 import React from "react";
@@ -9,6 +10,6 @@ const page = () => {
 export default page;
 
 export const metadata = {
-  title: "Sub-Category Sales Report | Sales Insights | Inzeedo POS",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Sub-Category Sales Report | Sales Insights | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };

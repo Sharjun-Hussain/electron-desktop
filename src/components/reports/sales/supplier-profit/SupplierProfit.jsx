@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import {
@@ -293,7 +295,7 @@ export default function SupplierProfitPage() {
       "Margin Coefficient (%)": Number((item.margin || 0).toFixed(2)),
       "Store Facility": branchId === "all" ? "All Locations" : branches.find((b) => String(b.id) === String(branchId))?.name || "N/A",
       "Analysis Horizon": date?.from ? `${format(date.from, "LLL dd")} - ${format(date.to, "LLL dd, yyyy")}` : "N/A",
-      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Organization": session?.organization?.name || BRAND.POS_DISPLAY_NAME,
       "Timestamp": new Date().toLocaleString()
     }));
   }, [data, branchId, branches, date, session]);

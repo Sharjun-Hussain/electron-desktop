@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import { DistributorsManagement } from "@/components/distributors/DistributorsManagement";
 import React, { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -20,6 +21,6 @@ const page = () => {
 export default page;
 
 export const metadata = {
-  title: "Distributor Network & Wholesale Partners | Inzeedo POS",
-  description: "Manage your wholesale distribution network, track partner performance, and audit distributor ledgers with Inzeedo POS centralized management tools.",
+  title: `Distributor Network & Wholesale Partners | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Manage your wholesale distribution network, track partner performance, and audit distributor ledgers with ${BRAND.APP_NAME} POS centralized management tools.`,
 };

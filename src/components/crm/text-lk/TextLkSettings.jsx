@@ -158,7 +158,7 @@ export function TextLkSettings() {
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sender ID</Label>
                 <Input 
-                  placeholder="e.g. INZEEDO" 
+                  placeholder="e.g. YOUR BRAND" 
                   className="h-11 font-bold text-sm bg-muted/40 border-border focus-visible:ring-indigo-500 text-foreground"
                   value={config.senderId}
                   onChange={(e) => setConfig(prev => ({ ...prev, senderId: e.target.value.toUpperCase() }))}

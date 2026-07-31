@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useReactToPrint } from "react-to-print";
@@ -452,7 +454,7 @@ export default function DailySalesSummaryPage() {
       if (selectedColumns.cashier) row["Cashier"] = item.cashier || "N/A";
       
       row["Branch Location"] = branch === "all" ? "All" : branches.find((b) => String(b.id) === String(branch))?.name || "N/A";
-      row["Organization"] = session?.organization?.name || "Inzeedo POS";
+      row["Organization"] = session?.organization?.name || BRAND.POS_DISPLAY_NAME;
       row["Currency"] = currencySymbol;
       return row;
     });

@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import React from "react";
 import { format } from "@/lib/date-utils";
 
@@ -91,7 +92,7 @@ export const BatchWiseSalesAuditTemplate = React.forwardRef(({ data, dateRange, 
       {/* Footer */}
       <div className="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400">
         <div>
-           Generated via Inzeedo Intelligent POS - Enterprise Edition
+           {BRAND.REPORT_GENERATED_BY}
         </div>
         <div>
           End of Report | Page 1 of 1

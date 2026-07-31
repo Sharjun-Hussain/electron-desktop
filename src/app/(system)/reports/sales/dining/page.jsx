@@ -1,9 +1,10 @@
+import { BRAND } from "@/lib/branding";
 import { DiningSalesReport } from "@/components/reports/sales/DiningSalesReport";
 import React, { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 export const metadata = {
-  title: "Restaurant & Dining Analytics | Inzeedo ERP",
+  title: `Restaurant & Dining Analytics | ${BRAND.PAGE_TITLE_SUFFIX} ERP`,
   description: "Track Dine-In vs Takeaway splits, analyze table occupancy, and review waiter performance ratios.",
 };
 

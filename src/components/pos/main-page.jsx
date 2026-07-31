@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useState, useEffect, useRef, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -116,7 +118,7 @@ export default function PosPage() {
     if (saved) setTerminalName(saved);
 
     // SEO & Branding
-    document.title = "Terminal Control Deck | Inzeedo POS";
+    document.title = `Terminal Control Deck | ${BRAND.PAGE_TITLE_SUFFIX}`;
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');

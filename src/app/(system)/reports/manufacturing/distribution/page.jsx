@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import DistributionReport from "@/components/reports/manufacturing/DistributionReport";
 import React, { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -20,6 +21,6 @@ const page = () => {
 export default page;
 
 export const metadata = {
-  title: "Distribution Channel Analytics | Inzeedo POS",
-  description: "Analyze your wholesale distribution performance, track partner shipments, and audit distributor network volumes with Inzeedo POS advanced manufacturing reports.",
+  title: `Distribution Channel Analytics | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Analyze your wholesale distribution performance, track partner shipments, and audit distributor network volumes with ${BRAND.APP_NAME} POS advanced manufacturing reports.`,
 };

@@ -1,3 +1,5 @@
+import { BRAND } from "@/lib/branding";
+
 export const translations = {
   en: {
     common: {
@@ -96,7 +98,7 @@ export const translations = {
       customer: "Customer",
       hold_sale: "Hold Sale",
       clear_cart: "Clear Cart",
-      credit: "Inzeedo Credit Enterprise © 2026",
+      credit: `${BRAND.APP_NAME} © 2026`,
       new_customer: "New Customer",
       full_name: "Full Name",
       phone_optional: "Phone (Optional)",
@@ -265,8 +267,8 @@ export const translations = {
       peripheral_diagnostics: "Peripheral Diagnostics",
     },
     footer: {
-      developed_by: "A next-generation enterprise solution, proudly developed and maintained by Inzeedo.",
-      rights_reserved: "© 2026 Inzeedo. All rights reserved.",
+      developed_by: `A next-generation enterprise solution, proudly developed and maintained by ${BRAND.APP_NAME}.`,
+      rights_reserved: `© 2026 ${BRAND.APP_NAME}. All rights reserved.`,
     }
   },
   ta: {
@@ -534,8 +536,8 @@ export const translations = {
       peripheral_diagnostics: "புறக்கருவி கண்டறிதல்",
     },
     footer: {
-      developed_by: "Inzeedo ஆல் பெருமையுடன் உருவாக்கப்பட்டு பராமரிக்கப்படும் அடுத்த தலைமுறை நிறுவன தீர்வு.",
-      rights_reserved: "© 2026 Inzeedo. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.",
+      developed_by: `${BRAND.APP_NAME} ஆல் பெருமையுடன் உருவாக்கப்பட்டு பராமரிக்கப்படும் அடுத்த தலைமுறை நிறுவன தீர்வு.`,
+      rights_reserved: `© 2026 ${BRAND.APP_NAME}. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.`,
     }
   }
 };

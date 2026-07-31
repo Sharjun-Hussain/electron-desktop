@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import React from "react";
 import { format } from "@/lib/date-utils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
@@ -24,7 +25,7 @@ export const SalesBySupplierPrintTemplate = React.forwardRef(({ data = [], filte
           <div>
             <div className="flex items-center gap-2 mb-2">
                <div className="h-8 w-8 bg-slate-900 rounded flex items-center justify-center text-white font-bold text-xs">POS</div>
-               <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">{business?.name || "Inzeedo Corp"}</h1>
+               <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">{business?.name || BRAND.APP_NAME}</h1>
             </div>
             <h2 className="text-xl font-semibold text-slate-700">Sales Summary By Supplier</h2>
             <p className="text-sm text-slate-500 mt-1">Vendor Performance Report</p>
@@ -89,7 +90,7 @@ export const SalesBySupplierPrintTemplate = React.forwardRef(({ data = [], filte
         {/* --- FOOTER --- */}
         <div className="fixed bottom-10 left-10 right-10 pt-4 border-t border-slate-200 text-center text-xs text-slate-400 flex justify-between">
           <span>Printed by Admin</span>
-          <span>Confidential | {business?.name || "Inzeedo POS"}</span>
+          <span>Confidential | {business?.name || BRAND.POS_DISPLAY_NAME}</span>
           <span>Page 1 of 1</span>
         </div>
       </div>

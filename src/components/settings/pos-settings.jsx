@@ -1146,7 +1146,7 @@ export function PosSettings() {
                             className="h-10 w-full border-dashed border-slate-200 dark:border-slate-800 text-[12px] font-medium hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all shadow-none disabled:opacity-100 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900/50"
                             onClick={async () => {
                               toast.loading("Sending test message...");
-                              await updateDisplay("INZEEDO POS", "READY TO SERVE");
+                              await updateDisplay(BRAND.POS_DISPLAY_NAME, "READY TO SERVE");
                               toast.dismiss();
                               toast.success("Message sent to pole display");
                             }}

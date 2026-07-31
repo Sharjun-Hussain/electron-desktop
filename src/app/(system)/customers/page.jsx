@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import { CustomersManagement } from "@/components/customers/customers-management";
 import React, { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -20,6 +21,6 @@ const page = () => {
 export default page;
 
 export const metadata = {
-  title: "Client Portfolios & Relationship Management | Inzeedo POS",
-  description: "Track customer transactions, manage loyalty points, and audit client ledgers with Inzeedo POS centralized CRM and relationship management tools.",
+  title: `Client Portfolios & Relationship Management | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Track customer transactions, manage loyalty points, and audit client ledgers with ${BRAND.APP_NAME} POS centralized CRM and relationship management tools.`,
 };

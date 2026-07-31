@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import React, { useState, memo, Suspense, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -345,7 +347,7 @@ const SplashLoader = memo(() => (
       </div>
       
       <div className="flex flex-col items-center">
-        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">Inzeedo ERP</h2>
+        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">{BRAND.APP_NAME}</h2>
         <div className="flex flex-col items-center gap-1.5">
           <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-[0.2em]">
             Initializing Environment

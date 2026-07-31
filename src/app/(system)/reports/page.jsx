@@ -1,4 +1,6 @@
-'use client';
+"use client";
+
+import { BRAND } from "@/lib/branding";
 
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from "react";
@@ -15,7 +17,7 @@ const ReportsHubPage = dynamic(() => import("@/components/reports/MainReportPage
 
 const ReportsPage = () => {
   useEffect(() => {
-    document.title = "Reports | Inzeedo POS";
+    document.title = `Reports | ${BRAND.PAGE_TITLE_SUFFIX}`;
   }, []);
 
   return <ReportsHubPage />;

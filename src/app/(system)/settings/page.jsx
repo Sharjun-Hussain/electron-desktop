@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/branding";
 import { SettingsPage } from "@/components/settings/settings-page";
 import React from "react";
 
@@ -8,6 +9,6 @@ const page = () => {
 export default page;
 
 export const metadata = {
-  title: "Settings | Inzeedo POS",
-  description: "Developed By : Inzeedo (PVT) Ltd.",
+  title: `Settings | ${BRAND.PAGE_TITLE_SUFFIX}`,
+  description: `Developed By : ${BRAND.APP_NAME} (PVT) Ltd.`,
 };

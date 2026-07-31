@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/branding";
+
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
@@ -209,7 +211,7 @@ export default function ChequeSummaryPage() {
       "Status": item.status?.toUpperCase(),
       "Origin Branch": item.branch?.name || "N/A",
       "Report Type": type === 'receivable' ? 'Customer Cheques' : 'Supplier Cheques',
-      "Organization": session?.organization?.name || "Inzeedo POS",
+      "Organization": session?.organization?.name || BRAND.POS_DISPLAY_NAME,
       "Timestamp": new Date().toLocaleString()
     }));
   }, [data.details, formatDate, type, session]);
