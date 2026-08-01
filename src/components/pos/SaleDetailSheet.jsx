@@ -293,7 +293,7 @@ const SaleDetailSheet = ({ isOpen, onOpenChange, sale, onReprint }) => {
           </Button>
           <Button
             size="lg"
-            className="w-full sm:w-auto min-w-[160px] font-semibold text-base h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+            className="w-full sm:w-auto min-w-40 font-semibold text-base h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
             onClick={() => onReprint(sale)}
           >
             <Printer className="mr-2 h-5 w-5" />

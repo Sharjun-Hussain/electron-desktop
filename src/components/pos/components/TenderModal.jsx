@@ -218,7 +218,7 @@ const TenderModal = ({
                         placeholder="0.00"
                     />
                     <Select value={discountType} onValueChange={setDiscountType}>
-                      <SelectTrigger className="w-[80px] h-12 rounded-md border border-slate-200 text-sm font-bold">
+                      <SelectTrigger className="w-20 h-12 rounded-md border border-slate-200 text-sm font-bold">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

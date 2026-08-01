@@ -2,11 +2,13 @@
 
 import { 
   Bell, Sun, Moon, LogOut, UserCircle, Settings, 
-  Maximize, Minimize, ChevronDown, Building2
+  Maximize, Minimize, ChevronDown, Building2,
+  AlertTriangle, Info
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSession, signOut } from "@/components/auth/DesktopAuthProvider";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useSettings } from "@/app/hooks/swr/useSettings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +23,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { getImageUrl } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 export default function Header() {
   const { setTheme, theme } = useTheme();
@@ -29,6 +39,36 @@ export default function Header() {
   const { business, general, refreshSettings } = useAppSettings();
   const { updateModularSettings } = useSettings();
   const router = useRouter();
+  const [licenseInfo, setLicenseInfo] = useState(null);
+  const [licenseAlerts, setLicenseAlerts] = useState([]);
+
+  useEffect(() => {
+    if (window.api && window.api.getLicenseInfo) {
+      window.api.getLicenseInfo().then(data => {
+        if (data) {
+          setLicenseInfo(data);
+          // Derive alerts directly from the license data
+          if (data.expiry) {
+            const daysToExpiry = Math.ceil((new Date(data.expiry) - new Date()) / (1000 * 60 * 60 * 24));
+            if (daysToExpiry > 0 && daysToExpiry <= 7) {
+              setLicenseAlerts([{
+                type: 'info',
+                title: 'Subscription Expiring Soon',
+                message: `Your software subscription will expire in ${daysToExpiry} ${daysToExpiry === 1 ? 'day' : 'days'}. Please ensure your payment is up to date on the cloud dashboard.`
+              }]);
+            }
+          }
+        }
+      });
+    }
+    if (window.api && window.api.getLicenseAlerts) {
+      window.api.getLicenseAlerts().then(alerts => {
+        if (alerts && alerts.length > 0) {
+          setLicenseAlerts(prev => [...prev, ...alerts]);
+        }
+      });
+    }
+  }, []);
 
   const handleThemeToggle = async () => {
     const newTheme = theme === "dark" ? "light" : "dark";
@@ -95,6 +135,25 @@ export default function Header() {
         {/* Right Side Actions: Default Styles */}
         <div className="flex items-center gap-2">
           
+          {licenseInfo && (
+            <div className="hidden md:flex flex-col items-end mr-4">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">License Status</span>
+              {licenseInfo.expiry ? (
+                <span className={`text-[11px] font-medium px-2 py-0.5 mt-0.5 rounded-full ${
+                  new Date(licenseInfo.expiry) < new Date(new Date().setDate(new Date().getDate() + 7)) 
+                    ? 'bg-red-500/10 text-red-500 border border-red-500/20' 
+                    : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                }`}>
+                  {licenseInfo.plan || 'PRO'} • Exp: {new Date(licenseInfo.expiry).toLocaleDateString()}
+                </span>
+              ) : (
+                <span className="text-[11px] font-medium px-2 py-0.5 mt-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                  {licenseInfo.plan || 'LIFETIME'}
+                </span>
+              )}
+            </div>
+          )}
+
           <Button id="dashboard-notifications" variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
             <Bell className="w-5 h-5" />
           </Button>
@@ -170,6 +229,55 @@ export default function Header() {
           </DropdownMenu>
         </div>
       </div>
+
+      <Dialog 
+        open={licenseAlerts.length > 0} 
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setLicenseAlerts([]);
+            if (window.api && window.api.clearLicenseAlerts) {
+              window.api.clearLicenseAlerts();
+            }
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          {licenseAlerts.map((alert, i) => (
+            <div key={i} className="flex flex-col gap-4">
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  {alert.type === 'warning' ? (
+                    <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500" />
+                    </div>
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
+                      <Info className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                    </div>
+                  )}
+                  <DialogTitle className="text-lg">{alert.title}</DialogTitle>
+                </div>
+              </DialogHeader>
+              <div className="py-2 text-sm text-muted-foreground leading-relaxed">
+                {alert.message}
+              </div>
+            </div>
+          ))}
+          <DialogFooter>
+            <Button 
+                onClick={() => {
+                  setLicenseAlerts([]);
+                  if (window.api && window.api.clearLicenseAlerts) {
+                    window.api.clearLicenseAlerts();
+                  }
+                }} 
+                className="w-full"
+            >
+              I Understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

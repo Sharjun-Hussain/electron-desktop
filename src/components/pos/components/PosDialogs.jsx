@@ -27,6 +27,7 @@ import {
   Archive, List, PackageSearch, Loader2,
   Trash2, RotateCcw, Printer, Search, Plus, Truck,
   Package,
+  AlertTriangle,
 } from "lucide-react";
 import clsx from "clsx";
 import { db } from "@/lib/indexedDB/db";
@@ -377,7 +378,7 @@ export const SaleListDialog = memo(({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-none w-screen h-[100dvh] max-h-screen m-0 border-none rounded-none flex flex-col p-0 overflow-hidden !translate-y-[-50%] !translate-x-[-50%]">
+      <DialogContent className="max-w-none! w-screen h-dvh max-h-screen m-0 border-none rounded-none flex flex-col p-0 overflow-hidden translate-y-[-50%]! translate-x-[-50%]!">
         <DialogHeader className="p-6 py-4 flex-row items-center justify-between space-y-0">
           <div>
             <DialogTitle className="text-2xl font-black flex items-center gap-2 text-foreground leading-none mb-1">
@@ -436,7 +437,7 @@ export const SaleListDialog = memo(({
             <Table>
               <TableHeader className="bg-muted/30 sticky top-0 z-10">
                 <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="w-[160px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("invoice_number")}>
+                  <TableHead className="w-40 px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("invoice_number")}>
                     {t("pos.invoice_no_col")} {filterState.sortKey === "invoice_number" && (filterState.sortDir === "asc" ? "↑" : "↓")}
                   </TableHead>
                   <TableHead className="w-[180px] px-4 py-3 font-bold text-sm text-foreground cursor-pointer" onClick={() => toggleSort("created_at")}>
@@ -574,7 +575,7 @@ export const StockCheckDialog = memo(({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-none w-screen h-[100dvh] max-h-screen m-0 border-none rounded-none flex flex-col p-0 overflow-hidden !translate-y-[-50%] !translate-x-[-50%]">
+      <DialogContent className="max-w-none! w-screen h-dvh max-h-screen m-0 border-none rounded-none flex flex-col p-0 overflow-hidden translate-y-[-50%]! translate-x-[-50%]!">
         <DialogHeader className="p-5 pb-4 border-b border-border/50 bg-muted/10">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-md bg-emerald-600/10 flex items-center justify-center border border-emerald-600/20">
@@ -591,7 +592,7 @@ export const StockCheckDialog = memo(({
           </div>
         </DialogHeader>
 
-        <div className="px-5 py-3 border-b border-border/50 bg-background flex-shrink-0">
+        <div className="px-5 py-3 border-b border-border/50 bg-background shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -647,7 +648,7 @@ export const StockCheckDialog = memo(({
 
                               return (
                                 <div key={idx} className={clsx(
-                                  "flex items-center border rounded-[4px] px-2 py-1 gap-2",
+                                  "flex items-center border rounded-lg px-2 py-1 gap-2",
                                   !isOut && !isLow ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
                                     : isLow ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
                                       : "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20"
@@ -688,7 +689,7 @@ export const StockCheckDialog = memo(({
                             <Button
                               onClick={() => { onAddToCart(v); onOpenChange(false); }}
                               size="sm"
-                              className="h-8 px-4 rounded-[4px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                              className="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
                             >
                               <Plus className="h-3.5 w-3.5 mr-1.5" /> Add
                             </Button>
@@ -936,7 +937,7 @@ export const PaymentDialog = memo(({
                     />
                   </div>
                   <Select value={discountType} onValueChange={setDiscountType}>
-                    <SelectTrigger className="w-[80px] h-10 rounded-xl border border-border/40 bg-muted/20 text-sm font-bold">
+                    <SelectTrigger className="w-20 h-10 rounded-xl border border-border/40 bg-muted/20 text-sm font-bold">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1041,7 +1042,7 @@ export const PaymentDialog = memo(({
                 {payments.length > 1 && (
                   <Button
                     variant="ghost"
-                    className="h-12 w-12 p-0 text-rose-500 hover:bg-rose-50 rounded-xl mb-[1px]"
+                    className="h-12 w-12 p-0 text-rose-500 hover:bg-rose-50 rounded-xl mb-px"
                     onClick={() => removePayment(p.id)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -1165,3 +1166,97 @@ export const QuantityInputDialog = memo(({ isOpen, onOpenChange, product, onConf
   );
 });
 QuantityInputDialog.displayName = "QuantityInputDialog";
+
+// ─── Out of Stock Warning Dialog ───────────────────────────────────────────────────
+export const OutOfStockWarningDialog = memo(({ isOpen, onOpenChange, product, availableBatches, onConfirm, onBatchSelect }) => {
+  const { t } = useTranslation();
+
+  if (!product) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md p-0 overflow-hidden bg-white dark:bg-slate-950 border-0 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] rounded-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <div className="relative overflow-hidden bg-linear-to-b from-red-50 to-white dark:from-red-950/40 dark:to-slate-950 p-8 pb-6 flex flex-col items-center justify-center border-b border-slate-100 dark:border-slate-800/50 text-center">
+          {/* Abstract subtle background shapes */}
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative mb-5">
+            <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20 duration-1000"></div>
+            <div className="relative h-16 w-16 rounded-full bg-linear-to-br from-red-100 to-red-50 dark:from-red-500/20 dark:to-red-500/5 flex items-center justify-center text-red-600 dark:text-red-400 shadow-inner ring-4 ring-white dark:ring-slate-950">
+              <AlertTriangle className="h-8 w-8" strokeWidth={2.5} />
+            </div>
+          </div>
+          <DialogTitle className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-2 tracking-tight">
+            Insufficient Stock
+          </DialogTitle>
+          <DialogDescription className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-[320px] leading-relaxed">
+            <strong className="text-slate-800 dark:text-slate-200 font-bold">{product.name} {product.size ? `- ${product.size}` : ''}</strong> is currently at <Badge variant="outline" className="bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 font-bold border-red-200 dark:border-red-500/30 px-1.5 py-0 mx-1">{(product.stock || 0).toFixed(0)}</Badge> units total stock.
+          </DialogDescription>
+        </div>
+
+        <div className="p-6 bg-white dark:bg-slate-950">
+          {availableBatches && availableBatches.length > 0 ? (
+            <div className="mb-6 relative">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Available Alternatives</p>
+                <div className="h-px flex-1 bg-linear-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent ml-4" />
+              </div>
+              <div className="space-y-2.5 max-h-[220px] overflow-y-auto custom-scrollbar pr-1 -mr-1">
+                {availableBatches.map(batch => (
+                  <div 
+                    key={batch.id} 
+                    className="group relative bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3.5 flex items-center justify-between hover:border-emerald-500/40 hover:shadow-[0_4px_20px_-4px_rgba(16,185,129,0.1)] cursor-pointer transition-all duration-300 overflow-hidden"
+                    onClick={() => {
+                        onBatchSelect(batch);
+                        onOpenChange(false);
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-linear-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <div className="flex items-center gap-3 relative z-10">
+                       <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
+                          <Package className="h-5 w-5 text-slate-400 group-hover:text-emerald-500" strokeWidth={1.5} />
+                       </div>
+                       <div>
+                         <div className="flex items-center gap-2">
+                           <p className="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">Batch {batch.batch_number || "N/A"}</p>
+                         </div>
+                         <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">Expires {batch.expiry_date ? format(new Date(batch.expiry_date), 'MMM dd, yyyy') : "N/A"}</p>
+                       </div>
+                    </div>
+                    <div className="text-right relative z-10">
+                      <div className="flex items-center justify-end gap-1.5 mb-0.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <p className="text-base font-black text-emerald-600 dark:text-emerald-400">{parseFloat(batch.quantity).toFixed(0)} <span className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-wide">Qty</span></p>
+                      </div>
+                      <p className="text-[11px] font-bold text-slate-500">LKR {(batch.selling_price || batch.retailPrice || product.retailPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 px-4 text-center mb-6 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-linear-to-br from-transparent via-slate-100/50 to-transparent dark:via-slate-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                <PackageSearch className="h-6 w-6 text-slate-400" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No Alternative Batches</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-[200px]">There are no other batches with positive stock available for this product.</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 relative z-10 mt-2">
+            <Button type="button" variant="outline" className="flex-1 h-12 font-semibold bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-all rounded-xl" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="button" className="flex-[1.5] h-12 bg-red-600 hover:bg-red-700 text-white font-bold shadow-[0_4px_14px_0_rgba(220,38,38,0.39)] hover:shadow-[0_6px_20px_rgba(220,38,38,0.23)] hover:-translate-y-0.5 transition-all duration-200 rounded-xl" onClick={() => { onConfirm(); onOpenChange(false); }}>
+              Proceed Anyway
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+OutOfStockWarningDialog.displayName = "OutOfStockWarningDialog";

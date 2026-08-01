@@ -28,7 +28,7 @@ import { CartPanel } from "./components/CartPanel";
 import { CheckoutPanel } from "./components/CheckoutPanel";
 import {
   HoldListDialog, SaleListDialog, StockCheckDialog,
-  ReturnDialogWrapper, SaleDetailWrapper, VariantSelectorDialog, PaymentDialog, QuantityInputDialog
+  ReturnDialogWrapper, SaleDetailWrapper, VariantSelectorDialog, PaymentDialog, QuantityInputDialog, OutOfStockWarningDialog
 } from "./components/PosDialogs";
 import { ReceiptTemplate } from "./ReceiptTemplate";
 import { InvoiceA4Template } from "./InvoiceA4Template";
@@ -156,6 +156,8 @@ export default function ManufacturerPosPage() {
   const [availableBatches, setAvailableBatches] = useState([]);
   const [itemPendingBatch, setItemPendingBatch] = useState(null);
   const [itemPendingQuantity, setItemPendingQuantity] = useState(null);
+  const [isOutStockWarningOpen, setIsOutStockWarningOpen] = useState(false);
+  const [itemPendingOutStock, setItemPendingOutStock] = useState(null);
   const [pendingPaymentArgs, setPendingPaymentArgs] = useState(null);
   const [isProductListVisible, setIsProductListVisible] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -439,6 +441,24 @@ export default function ManufacturerPosPage() {
       }
     }
 
+    // Out Of Stock Check
+    const isOutOfStock = (item.stock || 0) <= 0;
+    if (isOutOfStock && !skipStockWarning) {
+      const positiveBatches = (item.batches || []).filter(b => parseFloat(b.quantity) > 0);
+      
+      // If we had a pending item, we should remove it before showing warning
+      if (!skipBatchCheck && item.variantId) {
+        dispatch({ type: "REMOVE_ITEM", payload: `${item.variantId}_pending` });
+      }
+      
+      startTransition(() => {
+        setAvailableBatches(positiveBatches);
+        setItemPendingOutStock({ item, quantity: finalQuantity });
+        setIsOutStockWarningOpen(true);
+      });
+      return;
+    }
+
     const cart = cartRef.current;
     const existingIndex = cart.findIndex((ci) => ci.variantId === item.variantId && (!item.batchId || ci.batchId === item.batchId));
 
@@ -463,6 +483,17 @@ export default function ManufacturerPosPage() {
     setActiveDialog(null);
     setItemPendingBatch(null);
   }, [handleAddToCart, itemPendingBatch, state.isWholesale]);
+
+  const handleBatchSelectOutStock = useCallback((batch) => {
+    if (!itemPendingOutStock) return;
+    const { item, quantity } = itemPendingOutStock;
+    handleAddToCart({
+      ...item, batchId: batch.id,
+      price: state.isWholesale ? batch.wholesale_price : batch.selling_price
+    }, quantity, true, true, true);
+    setIsOutStockWarningOpen(false);
+    setItemPendingOutStock(null);
+  }, [handleAddToCart, itemPendingOutStock, state.isWholesale]);
 
   const [wholesaleDiscount, setWholesaleDiscount] = useState(0);
   const handleWholesaleToggle = useCallback(() => {
@@ -931,6 +962,15 @@ export default function ManufacturerPosPage() {
 
       <BatchSelectorDialog isOpen={activeDialog === 'batch'} onOpenChange={(open) => setActiveDialog(open ? 'batch' : null)}
         batches={availableBatches} onSelect={handleBatchSelect} productName={itemPendingBatch?.item?.name} />
+
+      <OutOfStockWarningDialog 
+        isOpen={isOutStockWarningOpen} 
+        onOpenChange={setIsOutStockWarningOpen} 
+        product={itemPendingOutStock?.item} 
+        availableBatches={availableBatches} 
+        onConfirm={() => handleAddToCart(itemPendingOutStock?.item, itemPendingOutStock?.quantity, false, true, true)} 
+        onBatchSelect={handleBatchSelectOutStock} 
+      />
 
       <SaleListDialog isOpen={activeDialog === 'saleList'} onOpenChange={(open) => setActiveDialog(open ? 'saleList' : null)}
         salesData={salesData} isLoadingSales={isLoadingSales} setPrintableSale={setPrintableSale}

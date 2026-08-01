@@ -38,7 +38,7 @@ import { usePosCart } from "./hooks/usePosCart";
 import { usePosActions } from "./hooks/usePosActions";
 import {
   HoldListDialog, SaleListDialog, StockCheckDialog,
-  ReturnDialogWrapper, SaleDetailWrapper
+  ReturnDialogWrapper, SaleDetailWrapper, OutOfStockWarningDialog
 } from "./components/PosDialogs";
 import { ReceiptTemplate } from "./ReceiptTemplate";
 import { InvoiceA4Template } from "./InvoiceA4Template";
@@ -153,6 +153,8 @@ export default function ClassicPosPage() {
   const [isBatchSelectorOpen, setIsBatchSelectorOpen] = useState(false);
   const [availableBatches, setAvailableBatches] = useState([]);
   const [itemPendingBatch, setItemPendingBatch] = useState(null);
+  const [isOutStockWarningOpen, setIsOutStockWarningOpen] = useState(false);
+  const [itemPendingOutStock, setItemPendingOutStock] = useState(null);
   const [isSalesReturnModalOpen, setIsSalesReturnModalOpen] = useState(false);
   const [lastSaleInfo, setLastSaleInfo] = useState({ bill: 0, paid: 0, balance: 0, timestamp: null });
 
@@ -363,9 +365,25 @@ export default function ClassicPosPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const handleAddToCart = useCallback(async (rawItem, quantity = 1, skipBatchCheck = false) => {
+  const handleAddToCart = useCallback(async (rawItem, quantity = 1, skipBatchCheck = false, skipStockWarning = false) => {
     let item = { ...rawItem };
     const vId = item.variantId || item.id;
+
+    // Out Of Stock Check
+    const isOutOfStock = (item.stock || 0) <= 0;
+    if (isOutOfStock && !skipStockWarning) {
+      const positiveBatches = (item.batches || []).filter(b => parseFloat(b.quantity) > 0);
+      
+      // If we had a pending item, we should remove it before showing warning
+      if (!skipBatchCheck && vId) {
+        dispatch({ type: "REMOVE_ITEM", payload: `${vId}_pending` });
+      }
+      
+      setAvailableBatches(positiveBatches);
+      setItemPendingOutStock({ item, quantity });
+      setIsOutStockWarningOpen(true);
+      return;
+    }
 
     // --- 1. LOCAL BATCH LOOKUP (NEAR INSTANT) ---
     let localBatches = item.batches || [];
@@ -487,6 +505,24 @@ export default function ClassicPosPage() {
     setIsBatchSelectorOpen(false);
     setItemPendingBatch(null);
   }, [itemPendingBatch, handleAddToCart, state.isWholesale]);
+
+  const handleBatchSelectOutStock = useCallback(async (batch) => {
+    if (!itemPendingOutStock) return;
+    const { item, quantity } = itemPendingOutStock;
+    
+    // Ensure this batch is cached locally
+    await db.batches.put({ ...batch, variantId: item.variantId || item.id });
+
+    handleAddToCart({
+      ...item,
+      batchId: batch.id,
+      price: state.isWholesale ? (Number(batch.wholesale_price) || 0) : (Number(batch.selling_price) || 0),
+      expiry_date: batch.expiry_date,
+      batch_number: batch.batch_number
+    }, quantity, true, true);
+    setIsOutStockWarningOpen(false);
+    setItemPendingOutStock(null);
+  }, [itemPendingOutStock, handleAddToCart, state.isWholesale]);
 
   const handleUpdateItem = useCallback((id, updates) => {
     dispatch({ type: "UPDATE_ITEM", payload: { id, ...updates } });
@@ -1338,6 +1374,15 @@ export default function ClassicPosPage() {
         productName={itemPendingBatch?.item?.name}
         batches={availableBatches}
         onSelect={handleBatchSelect}
+      />
+
+      <OutOfStockWarningDialog 
+        isOpen={isOutStockWarningOpen} 
+        onOpenChange={setIsOutStockWarningOpen} 
+        product={itemPendingOutStock?.item} 
+        availableBatches={availableBatches} 
+        onConfirm={() => handleAddToCart(itemPendingOutStock?.item, itemPendingOutStock?.quantity, false, true)} 
+        onBatchSelect={handleBatchSelectOutStock} 
       />
       <TenderModal
         isOpen={isTenderModalOpen}
