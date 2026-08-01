@@ -248,7 +248,7 @@ export default function ManufacturerPosPage() {
 
   const {
     isReady: isHardwareReady, selectedScalePort, selectedDisplayPort, currentWeight,
-    openDrawer, printReceipt, updateDisplay, startScaleListening, stopScaleListening
+    openDrawer, printReceipt, printRawReceipt, updateDisplay, startScaleListening, stopScaleListening
   } = useHardware();
 
   // Update Customer Display when cart changes
@@ -295,10 +295,20 @@ export default function ManufacturerPosPage() {
       isPrintingRef.current = true;
 
       // If hardware is ready, print SILENTLY and INSTANTLY
-      if (isHardwareReady && printRef.current) {
+      if (isHardwareReady) {
         const printSilently = async () => {
-          const html = printRef.current.innerHTML;
-          const success = await printReceipt(html);
+          const isRawEscPos = receiptSettings?.invoiceTemplate === 'raw_escpos_80' || receiptSettings?.invoiceTemplate === 'raw_escpos_58';
+          let success = false;
+          
+          if (isRawEscPos) {
+              const { generateRawReceiptBuffer } = await import('@/lib/raw-receipt-service');
+              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, localBusiness, selectedBranch, terminalName);
+              success = await printRawReceipt(buffer);
+          } else if (printRef.current) {
+              const html = printRef.current.innerHTML;
+              success = await printReceipt(html);
+          }
+
           if (success) {
             setPrintableSale(null); // Clear immediately so no preview shows
           } else {

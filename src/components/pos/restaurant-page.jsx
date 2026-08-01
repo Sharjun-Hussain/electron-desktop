@@ -215,7 +215,7 @@ export default function RestaurantPosPage() {
 
   const {
     isReady: isHardwareReady, selectedScalePort, selectedDisplayPort, currentWeight,
-    openDrawer, printReceipt, updateDisplay, startScaleListening, stopScaleListening
+    openDrawer, printReceipt, printRawReceipt, updateDisplay, startScaleListening, stopScaleListening
   } = useHardware();
 
   // Update Customer Display when cart changes
@@ -296,13 +296,20 @@ export default function RestaurantPosPage() {
       const needsKitchen = needsKitchenPrint(printableSale);
 
       // ── Hardware (silent) path ──────────────────────────────────────────
-      if (isHardwareReady && printRef.current) {
+      if (isHardwareReady) {
         const printSilently = async () => {
           // 1. Print customer receipt silently
-          const customerHtml = printRef.current?.innerHTML;
-          const customerOk = customerHtml
-            ? await printReceipt(customerHtml)
-            : false;
+          const isRawEscPos = receiptSettings?.invoiceTemplate === 'raw_escpos_80' || receiptSettings?.invoiceTemplate === 'raw_escpos_58';
+          let customerOk = false;
+          
+          if (isRawEscPos) {
+              const { generateRawReceiptBuffer } = await import('@/lib/raw-receipt-service');
+              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, localBusiness, selectedBranch, terminalName);
+              customerOk = await printRawReceipt(buffer);
+          } else if (printRef.current) {
+              const customerHtml = printRef.current.innerHTML;
+              customerOk = await printReceipt(customerHtml);
+          }
 
           // 2. Print kitchen slip silently (if needed)
           if (needsKitchen && kitchenPrintRef.current) {

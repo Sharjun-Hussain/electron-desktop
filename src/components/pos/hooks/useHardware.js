@@ -142,6 +142,23 @@ export const useHardware = () => {
     }
   }, [selectedPrinter]);
 
+  /**
+   * Action: Print Raw (ESC/POS) Receipt
+   */
+  const printRawReceipt = useCallback(async (buffer) => {
+    if (!selectedPrinter) {
+      toast.error("No printer selected. Please configure hardware settings.");
+      return false;
+    }
+    try {
+      await hardwareService.printRaw(selectedPrinter, buffer);
+      return true;
+    } catch (err) {
+      toast.error("Raw printing failed. Check printer connection.");
+      return false;
+    }
+  }, [selectedPrinter]);
+
   return {
     isReady,
     isConnecting,
@@ -156,6 +173,7 @@ export const useHardware = () => {
     stopScaleListening,
     updateDisplay,
     openDrawer,
-    printReceipt
+    printReceipt,
+    printRawReceipt
   };
 };

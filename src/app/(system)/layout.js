@@ -26,7 +26,7 @@ export default function AppLayout({ children }) {
   const performance = general?.interface?.performance || 'standard';
   const fontSize = general?.interface?.fontSize || '14';
 
-  const isPosScreen = pathname?.includes('/pos');
+  const isPosScreen = pathname?.includes('/pos') || pathname?.includes('/customer-display');
 
   // Keep the screen awake on POS screens
   useWakeLock(isPosScreen);

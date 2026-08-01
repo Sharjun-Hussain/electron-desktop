@@ -18,10 +18,11 @@ import {
   Users,
   ArrowRight,
   Heart,
-  Maximize
+  Maximize,
+  Coins
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import { useAppSettings } from "@/app/hooks/useAppSettings";
 import { useSettings } from "@/app/hooks/swr/useSettings";
 
@@ -295,7 +296,7 @@ export default function CustomerDisplayPage() {
                   idx === activePromoIndex ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0 pointer-events-none"
                 )}
               >
-                <img src={promo.url} alt="Promo" className="w-full h-full object-cover transition-transform duration-6000 ease-linear scale-105" style={{ transform: idx === activePromoIndex ? 'scale(1)' : 'scale(1.05)' }} />
+                <img src={getImageUrl(promo.url)} alt="Promo" className="w-full h-full object-cover transition-transform duration-6000 ease-linear scale-105" style={{ transform: idx === activePromoIndex ? 'scale(1)' : 'scale(1.05)' }} />
               </div>
             );
           }
@@ -305,7 +306,7 @@ export default function CustomerDisplayPage() {
             <div
               key={promo.id}
               className={cn(
-                "absolute inset-0 p-12 flex flex-col justify-center transition-all duration-1000 ease-in-out bg-gradient-to-br",
+                "absolute inset-0 p-12 flex flex-col justify-center transition-all duration-1000 ease-in-out bg-linear-to-br",
                 promo.bg,
                 idx === activePromoIndex ? "opacity-100 scale-100 translate-x-0 z-0" : "opacity-0 scale-95 translate-x-full z-[-1] pointer-events-none"
               )}
@@ -340,7 +341,7 @@ export default function CustomerDisplayPage() {
         {showBusiness && (
           <div className="flex flex-col items-center justify-center shrink-0 mb-6 mt-2">
             {business?.logo ? (
-              <img src={`${process.env.NEXT_PUBLIC_API_BASE_URL.replace('/api/v1', '')}/${business.logo}`} alt="Logo" className="w-20 h-20 object-contain rounded-full drop-shadow-lg bg-white/5 backdrop-blur-sm border border-white/10 p-1 mb-3" />
+              <img src={getImageUrl(business.logo)} alt="Logo" className="w-20 h-20 object-contain rounded-full drop-shadow-lg bg-white/5 backdrop-blur-sm border border-white/10 p-1 mb-3" />
             ) : (
               <div className="size-16 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-lg border border-white/20 mb-3">
                 <ShoppingBag className="w-8 h-8" />

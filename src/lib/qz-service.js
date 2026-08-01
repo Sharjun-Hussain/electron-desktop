@@ -120,6 +120,35 @@ export const hardwareService = {
   },
 
   /**
+   * Print a receipt using RAW bytes (ESC/POS)
+   * This takes a Uint8Array and sends it natively to the printer.
+   */
+  printRaw: async (printerName, buffer) => {
+    try {
+      const config = qz.configs.create(printerName);
+      
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+         binary += String.fromCharCode(bytes[i]);
+      }
+      const b64 = window.btoa(binary);
+
+      const data = [{
+        type: 'raw',
+        format: 'base64',
+        data: b64
+      }];
+      
+      await qz.print(config, data);
+      return true;
+    } catch (err) {
+      console.error("[Hardware] Raw print failed:", err);
+      throw err;
+    }
+  },
+
+  /**
    * Open Cash Drawer
    * Sends the standard EPSON/Star 'Kick' command
    */

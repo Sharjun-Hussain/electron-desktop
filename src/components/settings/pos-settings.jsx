@@ -696,6 +696,8 @@ export function PosSettings() {
                       {[
                         { id: "thermal_80", label: "Thermal 80mm", desc: "POS Standard", icon: ScrollText, width: "80mm" },
                         { id: "thermal_58", label: "Thermal 58mm", desc: "Narrow Roll", icon: ScrollText, width: "58mm" },
+                        { id: "raw_escpos_80", label: "Hardware Raw (80mm)", desc: "Native ESC/POS", icon: Usb, width: "80mm" },
+                        { id: "raw_escpos_58", label: "Hardware Raw (58mm)", desc: "Native ESC/POS", icon: Usb, width: "58mm" },
                         { id: "a4_professional", label: "Business A4", desc: "Professional Invoice", icon: FileText, width: "210mm" },
                         { id: "a4_basic", label: "Flatbed A4", desc: "Standard Layout", icon: FileText, width: "210mm" },
                       ].map((tpl) => {

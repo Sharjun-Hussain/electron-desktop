@@ -110,6 +110,37 @@ export function useSettings() {
         }
     };
 
+    const uploadMedia = async (file) => {
+        try {
+            const formData = new FormData();
+            formData.append('media', file);
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/settings/upload-media`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${session?.user?.accessToken || session?.accessToken}`,
+                },
+                body: formData
+            });
+            
+            const contentType = response.headers.get("content-type");
+            let result;
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                result = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(text || `Server returned ${response.status}`);
+            }
+
+            if (result.status === 'success') {
+                return { success: true, url: result.data.url };
+            }
+            throw new Error(result.message || 'Upload failed');
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    };
+
     const testConnection = async (type, provider, config) => {
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/settings/test-connection`, {
@@ -248,6 +279,7 @@ export function useSettings() {
         updateModularSettings,
         useGlobalSettings,
         uploadLogo,
+        uploadMedia,
         testConnection,
         useMaintenanceStats,
         optimizeDatabase,
