@@ -19,7 +19,8 @@ import {
   Calendar,
   Zap,
   Landmark,
-  Monitor
+  Monitor,
+  Store
 } from "lucide-react";
 import { mutate } from "swr";
 
