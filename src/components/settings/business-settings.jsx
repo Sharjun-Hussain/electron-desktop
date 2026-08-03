@@ -24,7 +24,7 @@ export function BusinessSettings() {
   const [formData, setFormData] = useState({
     businessName: '', taxId: '', businessType: 'retail',
     website: '', email: '', phone: '', address: '', city: '', state: '', zipCode: '',
-    shopify_enabled: false, whatsapp_enabled: false, textlk_enabled: false,
+    shopify_enabled: false, daraz_enabled: false, whatsapp_enabled: false, textlk_enabled: false,
     logo_deleted: false
   });
 
@@ -36,7 +36,7 @@ export function BusinessSettings() {
         businessType: org.business_type || 'retail', website: org.website || '',
         email: org.email || '', phone: org.phone || '', address: org.address || '',
         city: org.city || '', state: org.state || '', zipCode: org.zip_code || '',
-        shopify_enabled: !!org.shopify_enabled, whatsapp_enabled: !!org.whatsapp_enabled,
+        shopify_enabled: !!org.shopify_enabled, daraz_enabled: !!org.daraz_enabled, whatsapp_enabled: !!org.whatsapp_enabled,
         textlk_enabled: !!org.textlk_enabled, logo_deleted: false
       });
       if (org.logo) setLogoPreview(`${process.env.NEXT_PUBLIC_API_BASE_URL.replace('/api/v1', '')}/${org.logo}`);
@@ -108,7 +108,7 @@ export function BusinessSettings() {
       business_type: formData.businessType, website: finalWebsite,
       email: formData.email.trim(), phone: formData.phone.trim(), address: formData.address,
       city: formData.city, state: formData.state, zip_code: formData.zipCode,
-      shopify_enabled: formData.shopify_enabled, whatsapp_enabled: formData.whatsapp_enabled,
+      shopify_enabled: formData.shopify_enabled, daraz_enabled: formData.daraz_enabled, whatsapp_enabled: formData.whatsapp_enabled,
       textlk_enabled: formData.textlk_enabled
     };
     if (formData.logo_deleted) {

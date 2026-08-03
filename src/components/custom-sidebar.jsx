@@ -219,14 +219,15 @@ export function CustomSidebar() {
           { title: t("sidebar.intelligent_insights"), url: "/reports", icon: Zap, requiredPermission: PERMISSIONS.REPORT_VIEW, moduleKey: "reports_advanced" },
         ]
       },
-      // Apps (Shopify, Custom E-Commerce & HRM) Section
-      ...(business?.shopify_enabled || business?.custom_ecommerce_enabled || business?.hrm_enabled ? [{
+      // Apps (Shopify, Custom E-Commerce, Daraz & HRM) Section
+      ...(business?.shopify_enabled || business?.custom_ecommerce_enabled || business?.daraz_enabled || business?.hrm_enabled ? [{
         title: "Integrations",
-        url: business?.shopify_enabled ? "/settings/shopify" : "/settings/custom-ecommerce",
+        url: business?.shopify_enabled ? "/settings/shopify" : business?.daraz_enabled ? "/daraz" : "/settings/custom-ecommerce",
         icon: Globe,
         requiredPermission: null,
         items: [
-          ...(business?.shopify_enabled ? [{ title: "Shopify", url: "/settings/shopify", icon: Monitor, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
+          ...(business?.shopify_enabled ? [{ title: "Shopify ", url: "/settings/shopify", icon: Monitor, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
+          ...(business?.daraz_enabled ? [{ title: "Daraz", url: "/daraz", icon: Store, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
           ...(business?.hrm_enabled ? [{ title: "HRM & Payroll", url: "/hrm-sso", icon: UserPlus, requiredPermission: null }] : []),
           ...(business?.custom_ecommerce_enabled ? [{ title: "Custom E-Commerce", url: "/settings/custom-ecommerce", icon: Store, requiredPermission: PERMISSIONS.SETTINGS_MANAGE }] : []),
         ]

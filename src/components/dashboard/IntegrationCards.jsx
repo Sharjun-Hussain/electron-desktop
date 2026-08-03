@@ -23,12 +23,23 @@ export default function IntegrationCards() {
     !business?.shopify_enabled && 
     !business?.whatsapp_enabled && 
     !business?.textlk_enabled && 
-    !business?.custom_ecommerce_enabled
+    !business?.custom_ecommerce_enabled &&
+    !business?.daraz_enabled
   ) {
     return null;
   }
  
   const integrations = [
+    {
+      id: "daraz",
+      name: "Daraz E-commerce",
+      enabled: business?.daraz_enabled,
+      icon: Store,
+      color: "amber",
+      href: "/settings/daraz",
+      description: "Manage orders and sync inventory with Daraz sales channel.",
+      stats: "Daraz Gateway Active"
+    },
     {
       id: "shopify",
       name: "Shopify E-commerce",
@@ -93,6 +104,7 @@ export default function IntegrationCards() {
               item.color === 'emerald' ? "hover:border-emerald-500/30" : 
               item.color === 'blue' ? "hover:border-blue-500/30" : 
               item.color === 'purple' ? "hover:border-purple-500/30" : 
+              item.color === 'amber' ? "hover:border-amber-500/30" :
               "hover:border-indigo-500/30"
             )}
           >
@@ -102,6 +114,7 @@ export default function IntegrationCards() {
                 item.color === 'emerald' ? "bg-emerald-500" : 
                 item.color === 'blue' ? "bg-blue-500" : 
                 item.color === 'purple' ? "bg-purple-500" : 
+                item.color === 'amber' ? "bg-amber-500" :
                 "bg-indigo-500"
             )} />
  
@@ -115,6 +128,8 @@ export default function IntegrationCards() {
                     ? "bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400"
                     : item.color === 'purple'
                     ? "bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                    : item.color === 'amber'
+                    ? "bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
                     : "bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
                 )}>
                   <item.icon className="w-6 h-6" />
@@ -126,6 +141,7 @@ export default function IntegrationCards() {
                       item.color === 'emerald' ? "group-hover:text-emerald-600" : 
                       item.color === 'blue' ? "group-hover:text-blue-600" : 
                       item.color === 'purple' ? "group-hover:text-purple-600" : 
+                      item.color === 'amber' ? "group-hover:text-amber-600" :
                       "group-hover:text-indigo-600"
                     )}>
                       {item.name}
@@ -138,6 +154,8 @@ export default function IntegrationCards() {
                         ? "bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400"
                         : item.color === 'purple'
                         ? "bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20 text-purple-600 dark:text-purple-400"
+                        : item.color === 'amber'
+                        ? "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400"
                         : "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400"
                     )}>
                       <CheckCircle2 className="w-3 h-3" />
@@ -157,6 +175,7 @@ export default function IntegrationCards() {
                   item.color === 'emerald' ? "group-hover:bg-emerald-500" : 
                   item.color === 'blue' ? "group-hover:bg-blue-500" : 
                   item.color === 'purple' ? "group-hover:bg-purple-500" : 
+                  item.color === 'amber' ? "group-hover:bg-amber-500" :
                   "group-hover:bg-indigo-500"
                 )}
               >
@@ -171,6 +190,7 @@ export default function IntegrationCards() {
                       item.color === 'emerald' ? "bg-emerald-500" : 
                       item.color === 'blue' ? "bg-blue-500" : 
                       item.color === 'purple' ? "bg-purple-500" : 
+                      item.color === 'amber' ? "bg-amber-500" :
                       "bg-indigo-500"
                     )} />
                     <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">{item.stats}</span>
@@ -180,6 +200,7 @@ export default function IntegrationCards() {
                   item.color === 'emerald' ? "text-emerald-600 dark:text-emerald-400" : 
                   item.color === 'blue' ? "text-blue-600 dark:text-blue-400" : 
                   item.color === 'purple' ? "text-purple-600 dark:text-purple-400" : 
+                  item.color === 'amber' ? "text-amber-600 dark:text-amber-400" :
                   "text-indigo-600 dark:text-indigo-400"
                 )}>
                     <span>Manage Connection</span>

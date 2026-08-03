@@ -78,6 +78,7 @@ export const formSchema = z.object({
   business_type: z.string({ required_error: "Please select a business type." }),
   business_mode: z.string({ required_error: "Please select a business mode." }),
   shopify_enabled: z.boolean().optional(),
+  daraz_enabled: z.boolean().optional(),
   custom_ecommerce_enabled: z.boolean().optional(),
   pos_enabled: z.boolean().optional(),
   hrm_enabled: z.boolean().optional(),
@@ -139,6 +140,7 @@ export function OrganizationForm({ initialData }) {
       business_type: initialData.business_type || "Retail",
       business_mode: initialData.business_mode || "Retailer",
       shopify_enabled: !!initialData.shopify_enabled,
+      daraz_enabled: !!initialData.daraz_enabled,
       custom_ecommerce_enabled: !!initialData.custom_ecommerce_enabled,
       pos_enabled: initialData.pos_enabled === undefined ? true : !!initialData.pos_enabled,
       hrm_enabled: !!initialData.hrm_enabled,
@@ -157,6 +159,7 @@ export function OrganizationForm({ initialData }) {
       business_type: "Retail",
       business_mode: "Retailer",
       shopify_enabled: false,
+      daraz_enabled: false,
       pos_enabled: true,
       hrm_enabled: false,
       custom_ecommerce_enabled: false,
@@ -212,6 +215,7 @@ export function OrganizationForm({ initialData }) {
     formData.append("business_type", data.business_type);
     formData.append("business_mode", data.business_mode);
     formData.append("shopify_enabled", data.shopify_enabled ? "true" : "false");
+    formData.append("daraz_enabled", data.daraz_enabled ? "true" : "false");
     formData.append("pos_enabled", data.pos_enabled ? "true" : "false");
     formData.append("hrm_enabled", data.hrm_enabled ? "true" : "false");
     formData.append("custom_ecommerce_enabled", data.custom_ecommerce_enabled ? "true" : "false");
@@ -651,6 +655,26 @@ export function OrganizationForm({ initialData }) {
                         Shopify Integration
                       </FormLabel>
                       <FormDescription className="text-[10px]">Enable Shopify POS & Inventory sync</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                        className="data-[state=checked]:bg-emerald-600"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="daraz_enabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-3 shadow-sm bg-orange-50/5 mt-2">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <Store className="h-4 w-4 text-orange-600" />
+                        Daraz Integration
+                      </FormLabel>
+                      <FormDescription className="text-[10px]">Enable Daraz manual sales channel & sync</FormDescription>
                     </div>
                     <FormControl>
                       <Switch

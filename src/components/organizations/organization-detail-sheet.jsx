@@ -298,6 +298,30 @@ export default function OrganizationDetailSheet({
     }
   };
 
+  const handleToggleDaraz = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}/daraz`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success(`Daraz integration ${resData.data.daraz_enabled ? 'enabled' : 'disabled'} successfully`);
+        fetchDetails();
+        if (onUpdate) onUpdate();
+      } else {
+        throw new Error(resData.message);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to toggle Daraz integration");
+    }
+  };
+
   const handleToggleCustomEcommerce = async () => {
     try {
       const response = await fetch(
@@ -844,6 +868,26 @@ export default function OrganizationDetailSheet({
                         className="h-8 rounded-md font-semibold text-[11px] px-4"
                       >
                         {org?.shopify_enabled ? "Disable" : "Enable"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card/50">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-600 border border-orange-500/20">
+                          <Store className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-foreground">Daraz Integration</h4>
+                          <p className="text-[11px] font-medium text-muted-foreground">Daraz sales channel and synchronization</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={org?.daraz_enabled ? "destructive" : "outline"}
+                        onClick={handleToggleDaraz}
+                        className="h-8 rounded-md font-semibold text-[11px] px-4"
+                      >
+                        {org?.daraz_enabled ? "Disable" : "Enable"}
                       </Button>
                     </div>
 

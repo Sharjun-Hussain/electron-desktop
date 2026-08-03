@@ -57,6 +57,10 @@ export default function AppLayout({ children }) {
       paths: ['/settings/shopify']
     },
     {
+      enabled: business?.daraz_enabled,
+      paths: ['/daraz']
+    },
+    {
       enabled: business?.whatsapp_enabled,
       paths: ['/crm/whatsapp']
     },
