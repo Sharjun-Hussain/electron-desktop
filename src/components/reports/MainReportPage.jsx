@@ -328,30 +328,23 @@ const REPORTS_DATA = [
     isFavorite: true,
   },
   // ── Advanced Reports ──
-  {
-    id: "advanced-transactions",
-    name: "Stock Adjustments",
-    href: "/reports/stocks/advanced-transactions",
-    category: "Stocks",
-    description: "Wizard-based audit of inventory adjustments and manual movements.",
-    isFavorite: true,
-  },
-  {
-    id: "advanced-inventory",
-    name: "Advanced Stock Report",
-    href: "/reports/stocks/advanced-inventory",
-    category: "Stocks",
-    description: "Valuation, batch tracking, and expiry analysis for advanced inventory control.",
-    isFavorite: true,
-  },
-  {
-    id: "advanced-sales",
-    name: "Advanced Sale Report",
-    href: "/reports/sales/advanced-sales",
-    category: "Sales",
-    description: "Item-level sales analytics with comprehensive filtering and deep insights.",
-    isFavorite: true,
-  },
+  // {
+  //   id: "advanced-transactions",
+  //   name: "Stock Adjustments",
+  //   href: "/reports/stocks/advanced-transactions",
+  //   category: "Stocks",
+  //   description: "Wizard-based audit of inventory adjustments and manual movements.",
+  //   isFavorite: true,
+  // },
+
+  // {
+  //   id: "advanced-sales",
+  //   name: "Advanced Sale Report",
+  //   href: "/reports/sales/advanced-sales",
+  //   category: "Sales",
+  //   description: "Item-level sales analytics with comprehensive filtering and deep insights.",
+  //   isFavorite: true,
+  // },
   {
     id: "batch-sales-audit",
     name: "Batch-wise Sales Audit",
