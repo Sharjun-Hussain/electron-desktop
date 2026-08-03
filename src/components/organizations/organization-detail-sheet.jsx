@@ -469,6 +469,32 @@ export default function OrganizationDetailSheet({
     }
   };
 
+  const handleUpdateBusinessProfile = async (field, value) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ [field]: value })
+        }
+      );
+      const resData = await response.json();
+      if (resData.status === "success") {
+        toast.success(`${field === 'business_type' ? 'Business Category' : 'Operation Mode'} updated successfully`);
+        fetchDetails();
+        if (onUpdate) onUpdate();
+      } else {
+        throw new Error(resData.message);
+      }
+    } catch (err) {
+      toast.error(err.message || `Failed to update ${field}`);
+    }
+  };
+
   const handleToggleBackup = async () => {
     try {
       const response = await fetch(
@@ -1069,8 +1095,6 @@ export default function OrganizationDetailSheet({
                     {[
                       { icon: Mail, label: "Email Address", value: org?.email || "N/A" },
                       { icon: Phone, label: "Phone Number", value: org?.phone || "N/A" },
-                      { icon: Briefcase, label: "Business Category", value: org?.business_type || "N/A" },
-                      { icon: Layout, label: "Operational Style", value: org?.business_mode || "N/A" },
                       { icon: MapPin, label: "Address", value: org?.address || "N/A" },
                       { icon: Calendar, label: "Member Since", value: org?.created_at ? new Date(org.created_at).toLocaleDateString('en-US', { dateStyle: 'long' }) : "N/A" }
                     ].map((item, idx) => (
@@ -1084,6 +1108,58 @@ export default function OrganizationDetailSheet({
                         </div>
                       </div>
                     ))}
+
+                    {/* Business Category and Operation Mode Selects */}
+                    <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                      <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        <Briefcase className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-1">Business Category</p>
+                        <Select 
+                          value={org?.business_type || ""} 
+                          onValueChange={(val) => handleUpdateBusinessProfile('business_type', val)}
+                        >
+                          <SelectTrigger className="h-8 text-sm">
+                            <SelectValue placeholder="Select Category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Retail">Retail & General Store</SelectItem>
+                            <SelectItem value="Manufacturing">Manufacturing & Production</SelectItem>
+                            <SelectItem value="Pharmacy">Pharmacy & Healthcare</SelectItem>
+                            <SelectItem value="Restaurant">Restaurant & F&B</SelectItem>
+                            <SelectItem value="Hardware">Hardware & Construction</SelectItem>
+                            <SelectItem value="Apparel">Apparel & Fashion</SelectItem>
+                            <SelectItem value="Salon">Salon & Spa</SelectItem>
+                            <SelectItem value="Wholesale">Wholesale & Distribution</SelectItem>
+                            <SelectItem value="Other">Other Business</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                      <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
+                        <Layout className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-1">Operational Style</p>
+                        <Select 
+                          value={org?.business_mode || ""} 
+                          onValueChange={(val) => handleUpdateBusinessProfile('business_mode', val)}
+                        >
+                          <SelectTrigger className="h-8 text-sm">
+                            <SelectValue placeholder="Select Style" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Retailer">Retailer (B2C)</SelectItem>
+                            <SelectItem value="Wholesaler">Wholesaler (B2B)</SelectItem>
+                            <SelectItem value="Manufacturer">Manufacturer (Factory)</SelectItem>
+                            <SelectItem value="Service">Service Provider</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
