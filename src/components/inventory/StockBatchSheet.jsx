@@ -70,7 +70,7 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
-                <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 text-[10px] font-bold uppercase tracking-wider">
+                <Badge variant="outline" className="bg-emerald-500/5 text-emerald-600 border-emerald-500/10 text-xs font-semibold">
                   Batch Repository
                 </Badge>
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md">
@@ -78,7 +78,7 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
                   {stock.branch?.name}
                 </div>
               </div>
-              <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase truncate tracking-tight">
+              <SheetTitle className="text-xl font-semibold text-slate-900 dark:text-white truncate">
                 {stock.product?.name}
               </SheetTitle>
               <SheetDescription className="text-xs font-semibold text-slate-500 flex items-center gap-2 mt-1">
@@ -92,7 +92,7 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
           {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 opacity-60">
               <Loader2 className="size-8 animate-spin text-emerald-600" />
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Synchronizing Batch Data...</p>
+              <p className="text-sm font-medium text-muted-foreground">Synchronizing Batch Data...</p>
             </div>
           ) : (
             <ScrollArea className="flex-1 px-8 h-full">
@@ -100,19 +100,19 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-5 rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-emerald-600 mb-1.5 flex items-center gap-1.5">
                       <TrendingUp className="size-3" /> On Hand
                     </p>
-                    <p className="text-2xl font-black text-emerald-700 tabular-nums">
+                    <p className="text-2xl font-bold text-emerald-700 tabular-nums">
                       {parseFloat(stock.quantity).toLocaleString()}
                       <span className="text-xs font-bold ml-1 opacity-60">Units</span>
                     </p>
                   </div>
                   <div className="p-5 rounded-3xl bg-amber-500/5 border border-amber-500/10">
-                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                      <AlertCircle className="size-3" /> active batches
+                    <p className="text-xs font-semibold text-amber-600 mb-1.5 flex items-center gap-1.5">
+                      <AlertCircle className="size-3" /> Active Batches
                     </p>
-                    <p className="text-2xl font-black text-amber-700 tabular-nums">
+                    <p className="text-2xl font-bold text-amber-700 tabular-nums">
                       {batches.length}
                     </p>
                   </div>
@@ -121,10 +121,10 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
                 {/* Batches List */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-border pb-2">
-                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                       <History className="size-4" /> Batch Segmentation
                     </h3>
-                    <Badge variant="secondary" className="text-[10px] font-black uppercase tracking-tighter">Current Stock</Badge>
+                    <Badge variant="secondary" className="text-xs font-medium">Current Stock</Badge>
                   </div>
 
                   <div className="space-y-3">
@@ -138,9 +138,9 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
                                 <Barcode className="size-5" />
                               </div>
                               <div className="space-y-1">
-                                <p className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                   #{batch.batch_number || "DEF-BATCH"}
-                                  {isExpired && <Badge variant="destructive" className="h-4 text-[8px] font-black uppercase px-1 rounded-sm">Expired</Badge>}
+                                  {isExpired && <Badge variant="destructive" className="h-5 text-[10px] font-semibold px-2 rounded-sm">Expired</Badge>}
                                 </p>
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
@@ -150,25 +150,25 @@ export const StockBatchSheet = ({ isOpen, onClose, stock }) => {
                                   <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
                                     Sell: LKR {parseFloat(batch.selling_price || 0).toLocaleString()}
                                   </div>
-                                  <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600">
+                                  <div className="flex items-center gap-1 text-xs font-medium text-blue-600">
                                     Cost: LKR {parseFloat(batch.cost_price || 0).toLocaleString()}
                                   </div>
                                 </div>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className={`text-lg font-black tabular-nums ${parseFloat(batch.quantity) <= 0 ? 'text-muted-foreground' : 'text-slate-900 dark:text-white'}`}>
-                                {parseFloat(batch.quantity).toLocaleString()}
+                              <p className={`text-lg font-bold tabular-nums ${parseFloat(batch.quantity) <= 0 ? 'text-muted-foreground' : 'text-slate-900 dark:text-white'}`}>
+                                {parseFloat(batch.quantity).toLocaleString(undefined, { maximumFractionDigits: 4 })}
                               </p>
-                              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Units Remaining</p>
+                              <p className="text-xs font-medium text-muted-foreground">{stock.product?.unit?.short_name || 'Units'} Remaining</p>
                             </div>
                           </div>
                         );
                       })
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border rounded-[32px] bg-muted/10 opacity-60">
+                      <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border rounded-4xl bg-muted/10 opacity-60">
                         <Package className="size-10 text-muted-foreground mb-3 opacity-20" />
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No Batch Data Found</p>
+                        <p className="text-sm font-semibold text-muted-foreground mt-2">No Batch Data Found</p>
                         <p className="text-[10px] text-muted-foreground mt-1">This product may not have batch tracking enabled</p>
                       </div>
                     )}
