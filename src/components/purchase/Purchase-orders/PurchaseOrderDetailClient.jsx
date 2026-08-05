@@ -68,6 +68,7 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { useReactToPrint } from "react-to-print";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
@@ -193,7 +194,7 @@ const AttachmentItem = ({ file, onDelete, isDeleting }) => {
 
 export default function PurchaseOrderView() {
   const searchParams = useSearchParams();
-  const poid = searchParams.get('id');
+  const poid = searchParams.get('poid') || searchParams.get('id');
   const router = useRouter();
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(true);
@@ -404,9 +405,77 @@ export default function PurchaseOrderView() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-muted/30">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
-        <span className="ml-2 text-muted-foreground/60 font-medium">Loading Order...</span>
+      <div className="flex-1 space-y-6 p-6 bg-background min-h-[90vh]">
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-xl" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div>
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-32 rounded-xl" />
+            <Skeleton className="h-9 w-24 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Info Cards Skeleton */}
+        <Card className="border border-border/50 shadow-sm bg-card">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Skeleton className="h-4 w-32 mb-6" />
+                <div className="space-y-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="grid grid-cols-3 gap-4">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="col-span-2 h-4 w-40" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t md:border-t-0 md:border-l md:pl-8 pt-6 md:pt-0 border-border/50">
+                <Skeleton className="h-4 w-32 mb-6" />
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="grid grid-cols-3 gap-4">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="col-span-2 h-4 w-32" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Table Skeleton */}
+        <Card className="border border-border/50 shadow-sm bg-card mt-6">
+          <CardHeader className="px-6 py-4 border-b border-border/30 flex flex-row items-center justify-between">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-9 w-[300px] rounded-md" />
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex justify-between items-center py-2 border-b border-border/30 pb-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <div className="flex gap-12">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
