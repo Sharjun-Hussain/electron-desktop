@@ -140,12 +140,40 @@ export const generateRawReceiptBuffer = async (sale, settingsObj, business, bran
     const item = items[i];
     const maxNameLen = lineLength === 46 ? 46 : 32;
     const rawProdName = (item.product_name || item.product?.name || item.name || 'Item').toUpperCase();
-    const itemName = `${i + 1} ${rawProdName}`.substring(0, maxNameLen);
-    encoder.line(itemName);
+    const fullItemName = `${i + 1} ${rawProdName}`;
+    
+    if (fullItemName.length <= maxNameLen) {
+      encoder.line(fullItemName);
+    } else {
+      let currentLine = "";
+      const words = fullItemName.split(" ");
+      for (let w = 0; w < words.length; w++) {
+        const word = words[w];
+        if (currentLine.length + word.length + (currentLine ? 1 : 0) > maxNameLen) {
+          if (currentLine) encoder.line(currentLine);
+          currentLine = "  " + word; // Indent next line
+        } else {
+          currentLine += (currentLine ? " " : "") + word;
+        }
+      }
+      if (currentLine) {
+        encoder.line(currentLine);
+      }
+    }
 
     const variantName = (item.product_variant?.name || item.variant?.name || item.variant_name || '').toUpperCase();
     if (variantName && variantName !== rawProdName && variantName !== 'DEFAULT') {
-      encoder.line(`  - ${variantName}`.substring(0, maxNameLen));
+      const fullVarName = `  - ${variantName}`;
+      if (fullVarName.length <= maxNameLen) {
+        encoder.line(fullVarName);
+      } else {
+        encoder.line(fullVarName.substring(0, maxNameLen));
+        let rem = fullVarName.substring(maxNameLen);
+        while (rem.length > 0) {
+          encoder.line(`    ${rem.substring(0, maxNameLen - 4)}`);
+          rem = rem.substring(maxNameLen - 4);
+        }
+      }
     }
 
     const priceStr = parseFloat(item.unit_price || item.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });

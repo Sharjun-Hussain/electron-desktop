@@ -304,7 +304,7 @@ export default function RestaurantPosPage() {
           
           if (isRawEscPos) {
               const { generateRawReceiptBuffer } = await import('@/lib/raw-receipt-service');
-              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, localBusiness, selectedBranch, terminalName);
+              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, business, selectedBranch, terminalName);
               customerOk = await printRawReceipt(buffer);
           } else if (printRef.current) {
               const customerHtml = printRef.current.innerHTML;
@@ -340,7 +340,7 @@ export default function RestaurantPosPage() {
     } else {
       isPrintingRef.current = false;
     }
-  }, [printableSale, isHardwareReady, printReceipt]);
+  }, [printableSale, receiptSettings, session, isHardwareReady, printReceipt, printRawReceipt, business, selectedBranch, handlePrintRef]);
 
   // ── Kitchen-only print trigger (Send to Kitchen – no customer receipt) ────
   const isKitchenPrintingRef = useRef(false);

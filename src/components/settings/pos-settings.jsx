@@ -93,11 +93,43 @@ export function PosSettings() {
 
   // Fetch all hardware when QZ is ready
   useEffect(() => {
+    const fetchNativePrinters = async () => {
+      try {
+        if (typeof window !== "undefined" && window.api && window.api.getPrinters) {
+          const nativePrinters = await window.api.getPrinters();
+          if (nativePrinters && nativePrinters.length > 0) {
+            setSystemPrinters(nativePrinters.map(p => p.name));
+            return true;
+          }
+        }
+      } catch (err) {
+        console.error("Native printer fetch error:", err);
+      }
+      return false;
+    };
+
     if (isHardwareReady) {
       // Printers
-      qz.printers.find().then(setSystemPrinters).catch(console.error);
+      qz.printers.find()
+        .then(async (printers) => {
+          if (printers && printers.length > 0) {
+            setSystemPrinters(printers);
+          } else {
+            // Fallback to Electron IPC if QZ returns empty list
+            await fetchNativePrinters();
+          }
+        })
+        .catch(async (err) => {
+          console.error("QZ printers.find error:", err);
+          // Fallback to Electron IPC if QZ throws an error
+          await fetchNativePrinters();
+        });
+      
       // Serial Ports (Scales/Displays)
       hardwareService.findSerialPorts().then(setSerialPorts).catch(console.error);
+    } else {
+      // Even if QZ is disconnected, populate the list if we're in Electron desktop mode
+      fetchNativePrinters();
     }
   }, [isHardwareReady]);
 

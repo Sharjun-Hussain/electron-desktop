@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert } from 'lucide-react';
 
 export default function AppLayout({ children }) {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -83,6 +83,10 @@ export default function AppLayout({ children }) {
   ];
 
   const isBlocked = status === 'authenticated' && business && (() => {
+    // Exempt Super Admins from feature flag blocks
+    const isSuperAdmin = session?.user?.roles?.includes('Super Admin');
+    if (isSuperAdmin) return false;
+
     return moduleGuards.some(guard => {
       if (guard.enabled === false) {
         return guard.paths.some(path => pathname === path || pathname.startsWith(path + '/'));
@@ -160,8 +164,9 @@ export default function AppLayout({ children }) {
 
   // Standard Dashboard Screens
   return (
-    <div
-      className="flex h-screen w-full bg-background text-foreground font-sans selection:bg-[#10b981] selection:text-white transition-colors duration-500 overflow-hidden"
+    <>
+      <div
+        className="flex h-screen w-full bg-background text-foreground font-sans selection:bg-[#10b981] selection:text-white transition-colors duration-500 overflow-hidden"
       data-density={density}
       data-performance={performance}
       style={{ fontSize: `${fontSize}px` }}
@@ -182,5 +187,6 @@ export default function AppLayout({ children }) {
         </footer>
       </div>
     </div>
+    </>
   );
 }

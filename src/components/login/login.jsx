@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import logoImg from "../../../public/logo.png";
+import logoImg from "../../../public/ERP_logo_transparent.png";
 
 // Icons
 import {
@@ -254,7 +254,11 @@ function LoginForm() {
           }
           updateState({ statusMessage: "Redirecting...", isRedirecting: true });
           toast.success("Access Granted");
-          window.location.href = "/";
+
+          setTimeout(() => {
+            const returnUrl = searchParams.get("redirect") || "/";
+            window.location.href = returnUrl;
+          }, 600);
           return;
         }
       } catch (error) {

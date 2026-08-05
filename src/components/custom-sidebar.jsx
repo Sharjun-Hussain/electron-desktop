@@ -348,34 +348,36 @@ export function CustomSidebar() {
 
   const filterItems = (items) => {
     const isWhiteLabel = process.env.NEXT_PUBLIC_IS_WHITE_LABEL === 'true';
+    // Super Admins bypass ALL restrictions (white-label, master-only, module guards)
+    const isSuperAdmin = session?.user?.roles?.includes('Super Admin');
     
     return items
       .map((item) => {
-        // Check Master-only restriction on parent item
-        if (item.isMasterOnly && business?.is_master !== true) return null;
+        // Check Master-only restriction on parent item (Super Admin bypasses)
+        if (item.isMasterOnly && business?.is_master !== true && !isSuperAdmin) return null;
 
-        // Check White-Label exclusion
-        if (item.hideOnWhiteLabel && isWhiteLabel) return null;
+        // Check White-Label exclusion (Super Admin bypasses)
+        if (item.hideOnWhiteLabel && isWhiteLabel && !isSuperAdmin) return null;
 
         // Check POS explicit restriction
         if (item.hideOnPosDisabled && business?.pos_enabled === false) return null;
 
-        // Check module availability for parent item
-        if (item.moduleKey && !isModuleEnabled(item.moduleKey)) return null;
+        // Check module availability for parent item (Super Admin bypasses)
+        if (item.moduleKey && !isModuleEnabled(item.moduleKey) && !isSuperAdmin) return null;
 
         if (item.items) {
           const filteredSubItems = item.items.filter((subItem) => {
-            // Check Master-only restriction on sub-item
-            if (subItem.isMasterOnly && business?.is_master !== true) return false;
+            // Check Master-only restriction on sub-item (Super Admin bypasses)
+            if (subItem.isMasterOnly && business?.is_master !== true && !isSuperAdmin) return false;
 
-            // Check White-Label exclusion for sub-item
-            if (subItem.hideOnWhiteLabel && isWhiteLabel) return false;
+            // Check White-Label exclusion for sub-item (Super Admin bypasses)
+            if (subItem.hideOnWhiteLabel && isWhiteLabel && !isSuperAdmin) return false;
 
             // Check POS explicit restriction for sub-item
             if (subItem.hideOnPosDisabled && business?.pos_enabled === false) return false;
 
-            // Check module availability for sub-item
-            if (subItem.moduleKey && !isModuleEnabled(subItem.moduleKey)) return false;
+            // Check module availability for sub-item (Super Admin bypasses)
+            if (subItem.moduleKey && !isModuleEnabled(subItem.moduleKey) && !isSuperAdmin) return false;
 
             if (!subItem.requiredPermission) return true;
             if (Array.isArray(subItem.requiredPermission)) {
@@ -434,8 +436,8 @@ export function CustomSidebar() {
           isCollapsed ? "w-20" : "w-30"
         )}
       >
-        <div className="mb-8 flex shrink-0">
-          <img src="/logo.png" alt="App Logo" className="size-10 rounded-xl object-contain bg-white dark:bg-slate-900 border border-border/50 p-1 shadow-sm" />
+        <div className="mb-8 flex shrink-0 px-4">
+          <img src="/ERP_logo_white.png" alt="App Logo" className="h-10 w-auto object-contain rounded-xl" />
         </div>
 
         <nav className="flex-1 w-full  flex flex-col gap-1 overflow-y-auto thin-scrollbar items-center">

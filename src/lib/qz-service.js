@@ -14,30 +14,34 @@ let isConnected = false;
  */
 qz.security.setCertificatePromise((resolve, reject) => {
     // This is the public certificate that identifies your app.
-    resolve("-----BEGIN CERTIFICATE-----\n" +
-            "MIID6TCCAtGgAwIBAgIUc5X1GAheUsR6znOBj5EJE0KfJl0wDQYJKoZIhvcNAQEL\n" +
-            "BQAwgYIxCzAJBgNVBAYTAkxLMRAwDgYDVQQIDAdFYXN0ZXJuMRAwDgYDVQQHDAdD\n" +
-            "b2xvbWJvMRowGAYDVQQKDBFJbnplZWRvIChQVlQpIEx0ZDEQMA4GA1UEAwwHSW56\n" +
-            "ZWVkbzEiMCAGCSqGSIb3DQEJARYTbXJqb29uMDA1QGdtYWlsLmNvbTAeFw0yNjA1\n" +
-            "MTUwOTEyNDhaFw0zNjA1MTIwOTEyNDhaMIGDMQswCQYDVQQGEwJMSzEQMA4GA1UE\n" +
-            "CAwHRWFzdGVybjEQMA4GA1UEBwwHQ29sb21ibzEaMBgGA1UECgwRSW56ZWVkbyAo\n" +
-            "UFZUKSBMdGQxEDAOBgNVBAMMB0luemVlZG8xIjAgBgkqhkiG9w0BCQEWE21yam9v\n" +
-            "bjAwNUBnbWFpbC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDF\n" +
-            "Ea1kT2vQZwQUqgcpjJgPy8JtZ7ZKErGME/kZRtRK+y6rmGHjsEX2LumbJVGHrFhn\n" +
-            "nsAL1ZoWEeH5l1BociisYTXjSI9o1ekEKoat/iG5AiF8mx8nSXZrQTqrBrCubBZg\n" +
-            "AC8JDpBFl8aw+BaGxQK+zChlDjutm7KOy5l6QivlY1zuCcq7zHPfLhTrh73y3FM8\n" +
-            "dT/gIkyxdDcJ5PQo4rQ51hJp+P9dPYWwQBz8Gh7fKeygXlcGTP1YCl/rfr068j00\n" +
-            "UDwGwWNXtqu4SfmkPl+tIu2De0PALQotHi1/bBwwPaUhyK7GWhyQsbh258gA31MD\n" +
-            "yHlLsZKY0hJv82CqXYRdAgMBAAGjUzBRMB0GA1UdDgQWBBQP2zTpXGNmNvmGg39+\n" +
-            "mdxt3dHonTAfBgNVHSMEGDAWgBQP2zTpXGNmNvmGg39+mdxt3dHonTAPBgNVHRMB\n" +
-            "Af8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBVnbdQZ/YllW2BzU1NzWQEpt1I\n" +
-            "uwNP7qrLJYk+Fjq6tzlx4myzIL2F2rjEJZq+aM9AcnD56LSuTbrH8F7+W1kLBvuL\n" +
-            "2S3kLTmhqms5p66hKPt+0NYOV5gE3i3mK7nn5IlBG0i/W9X0CZGPBqRAghR7y5H8\n" +
-            "ji1Gh962KKaMYVhzxicLn0DyKICLPixy/kgkYag8owS9eFpLpdRhMAKFcJXGLGiE\n" +
-            "Iq8PVPDIceLdCA6IooIWPzwsw0DO+QtmjckuoVSnbydx4LOPdAslT4nJwlw4p5Ln\n" +
-            "vjsa1wDcUW6yzHEr+VWNsf2kT/eb+IE7N55Yia0/q6VuupbIrIVIDWGY85OS\n" +
-            "-----END CERTIFICATE-----");
+    resolve(
+      "-----BEGIN CERTIFICATE-----\n" +
+      "MIID6TCCAtGgAwIBAgIUDvBZ+hh8DnXMrXhuMsitWxbs1dMwDQYJKoZIhvcNAQEL\n" +
+      "BQAwgYMxCzAJBgNVBAYTAkxLMRAwDgYDVQQIDAdFYXN0ZXJuMRAwDgYDVQQHDAdD\n" +
+      "b2xvbWJvMRowGAYDVQQKDBFJbnplZWRvIChQVlQpIEx0ZDEQMA4GA1UEAwwHSW56\n" +
+      "ZWVkbzEiMCAGCSqGSIb3DQEJARYTbXJqb29uMDA1QGdtYWlsLmNvbTAeFw0yNjA3\n" +
+      "MDIwODM5MzNaFw0zNjA2MjkwODM5MzNaMIGDMQswCQYDVQQGEwJMSzEQMA4GA1UE\n" +
+      "CAwHRWFzdGVybjEQMA4GA1UEBwwHQ29sb21ibzEaMBgGA1UECgwRSW56ZWVkbyAo\n" +
+      "UFZUKSBMdGQxEDAOBgNVBAMMB0luemVlZG8xIjAgBgkqhkiG9w0BCQEWE21yam9v\n" +
+      "bjAwNUBnbWFpbC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDK\n" +
+      "JIdiDr3GQcDbqRpvaVipqCc6GwOI+yLAcHCT4K4L8ARC1wabzNioRrXedYeQ+Ng4\n" +
+      "ptYmZ8T6bQc1fXcx56qZVt0KOKOAS/KXiwrEA1fhyNlaweAdghL8R1MEm3FY6bOP\n" +
+      "irVwndckqYL0jV3rcjakfhqcvtAgXCQaJKSn72h4j9prfbaWM+SK+xWiAwFFxnkh\n" +
+      "fqyyg+CX70Au8wmvcsfB9JD8ekiWu1icGiXMG/ZDnUFSYu8Tq5JQbtB+ZUUcGZjD\n" +
+      "7jFpeW8rmZDWuN6o05c9nhm9ZjNrrhsMhtRrmBn+uwEOyDqTj32vkJdBowsQJT8T\n" +
+      "zJf96v32N4vVviYko5qvAgMBAAGjUzBRMB0GA1UdDgQWBBQcNlDN9N3jNhxuJ50T\n" +
+      "xcLXJdRofjAfBgNVHSMEGDAWgBQcNlDN9N3jNhxuJ50TxcLXJdRofjAPBgNVHRMB\n" +
+      "Af8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBi4ziDXvl66oBlVinK7klQgWIF\n" +
+      "CIuxgyY9PUwF3S+c+t9x3Yd9EGvV6/kaNxKqg+6YrZjmiJ283Ug6yZ4OIj33rO45\n" +
+      "j6recmewhka/YV5IL0j+u/3ho4TNwzNrVyDbSQi2NrQrZeyYwFRUnME3bSie4kjV\n" +
+      "Dquk3R2I7jA73Zo5haCheT5k+ygUwrlMgYqjCeJFWfOXgSDLv4mokm+EfDvcPVPG\n" +
+      "wRiabejtkgCJvfYza/I2J5Gi/WerFwoQ9nfj4+PScH2VLdHPiyl5KM6VgMaJ4XlH\n" +
+      "obLvR6ZI3bKSyJrPaRg6NGRFBiKZxqS1abj8SJUvjT3zH+EywYUY/zUqcGfd\n" +
+      "-----END CERTIFICATE-----"
+    );
 });
+
+qz.security.setSignatureAlgorithm("SHA512");
 
 qz.security.setSignaturePromise((toSign) => {
     return (resolve, reject) => {
@@ -94,7 +98,21 @@ export const hardwareService = {
       const printer = await qz.printers.find(printerName);
       return printer;
     } catch (err) {
-      console.error("[Hardware] Printer not found:", err);
+      console.error("[Hardware] Printer not found via QZ, attempting native fallback:", err);
+      // Fallback to native Electron API if available
+      if (typeof window !== "undefined" && window.api && window.api.getPrinters) {
+        try {
+          const nativePrinters = await window.api.getPrinters();
+          if (printerName) {
+            const found = nativePrinters.find(p => p.name.includes(printerName) || p.displayName === printerName);
+            if (found) return found.name;
+          } else if (nativePrinters.length > 0) {
+            return nativePrinters.map(p => p.name);
+          }
+        } catch (nativeErr) {
+          console.error("[Hardware] Native fallback also failed:", nativeErr);
+        }
+      }
       return null;
     }
   },
@@ -127,12 +145,15 @@ export const hardwareService = {
     try {
       const config = qz.configs.create(printerName);
       
-      let binary = '';
-      const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.byteLength; i++) {
-         binary += String.fromCharCode(bytes[i]);
+      let b64 = buffer;
+      if (typeof buffer !== "string") {
+        let binary = "";
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        b64 = window.btoa(binary);
       }
-      const b64 = window.btoa(binary);
 
       const data = [{
         type: 'raw',

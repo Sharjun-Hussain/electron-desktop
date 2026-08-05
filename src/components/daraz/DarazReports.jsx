@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { 
   ShoppingCart, 
   Clock, 

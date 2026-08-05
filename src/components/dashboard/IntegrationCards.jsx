@@ -36,7 +36,7 @@ export default function IntegrationCards() {
       enabled: business?.daraz_enabled,
       icon: Store,
       color: "amber",
-      href: "/settings/daraz",
+      href: "/daraz",
       description: "Manage orders and sync inventory with Daraz sales channel.",
       stats: "Daraz Gateway Active"
     },

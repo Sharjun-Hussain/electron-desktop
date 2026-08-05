@@ -3,7 +3,7 @@
  * Handles authentication for the standalone Electron app using localStorage.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
 
 export const desktopLogin = async (email, password) => {
   try {
@@ -13,7 +13,7 @@ export const desktopLogin = async (email, password) => {
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, isDesktop: true }),
     });
 
     if (!res.ok) {
@@ -63,10 +63,7 @@ export const getDesktopSession = () => {
 
   try {
     const session = JSON.parse(sessionStr);
-    if (Date.now() > session.expires) {
-      localStorage.removeItem('inzeedo_session');
-      return null;
-    }
+    // Removed client-side expiry check to keep electron session permanent
     return session;
   } catch (e) {
     return null;

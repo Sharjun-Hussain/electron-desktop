@@ -302,7 +302,7 @@ export default function ManufacturerPosPage() {
           
           if (isRawEscPos) {
               const { generateRawReceiptBuffer } = await import('@/lib/raw-receipt-service');
-              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, localBusiness, selectedBranch, terminalName);
+              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, business, selectedBranch, terminalName);
               success = await printRawReceipt(buffer);
           } else if (printRef.current) {
               const html = printRef.current.innerHTML;

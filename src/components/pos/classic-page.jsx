@@ -341,7 +341,7 @@ export default function ClassicPosPage() {
     } else {
       handleStandardPrint();
     }
-  }, [printableSale, handleStandardPrint, posResponse]);
+  }, [printableSale, handleStandardPrint, posResponse, isHardwareReady, printReceipt, printRawReceipt, receiptSettings, business, selectedBranch, terminalName]);
 
   const isPrintingRef = useRef(false);
 
@@ -1355,9 +1355,9 @@ export default function ClassicPosPage() {
       {/* Hidden printing templates */}
       <div style={{ position: "absolute", left: "-9999px", top: 0, opacity: 0, pointerEvents: "none" }}>
         {receiptSettings?.invoiceTemplate === 'a4_professional' ? (
-          <InvoiceA4Template ref={printRef} sale={printableSale} settings={receiptSettings} business={localBusiness} branch={selectedBranch} terminalName={terminalName} />
+          <InvoiceA4Template ref={printRef} sale={printableSale} settings={receiptSettings} business={business} branch={selectedBranch} terminalName={terminalName} />
         ) : (
-          <ReceiptTemplate ref={printRef} sale={printableSale} settings={receiptSettings} business={localBusiness} branch={selectedBranch} terminalName={terminalName} />
+          <ReceiptTemplate ref={printRef} sale={printableSale} settings={receiptSettings} business={business} branch={selectedBranch} terminalName={terminalName} />
         )}
       </div>
       

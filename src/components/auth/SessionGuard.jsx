@@ -16,7 +16,7 @@ export default function SessionGuard({ children }) {
   useEffect(() => {
     // 1. Auth Guarding
     const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-token"];
-    if (status === "unauthenticated" && !publicPaths.includes(pathname)) {
+    if (status === "unauthenticated" && !publicPaths.some(p => pathname === p || pathname.startsWith(`${p}/`))) {
       const returnUrl = pathname + window.location.search;
       router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
       return;
@@ -39,7 +39,7 @@ export default function SessionGuard({ children }) {
 
   // Don't render protected routes until we know the auth status
   const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-token"];
-  if (status === "loading" && !publicPaths.includes(pathname)) {
+    if (status === "loading" && !publicPaths.some(p => pathname === p || pathname.startsWith(`${p}/`))) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background relative overflow-hidden">
         {/* Subtle background ambient glow */}

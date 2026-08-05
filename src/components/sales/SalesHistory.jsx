@@ -60,6 +60,7 @@ import { Badge } from "@/components/ui/badge";
 import { ReceiptTemplate } from "../pos/ReceiptTemplate";
 import { InvoiceA4Template } from "../pos/InvoiceA4Template";
 import { SalesHistorySkeleton } from "./SalesHistorySkeleton";
+import { useHardware } from "../pos/hooks/useHardware";
 
 // --- MEMOIZED STATS COMPONENT ---
 const StatsSection = React.memo(({ stats }) => {
@@ -89,6 +90,7 @@ export default function SalesHistory() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { isReady: isHardwareReady, printReceipt, printRawReceipt } = useHardware();
 
   // Sync settings when loaded
   useEffect(() => {
@@ -375,6 +377,31 @@ export default function SalesHistory() {
           return;
       }
 
+      // Hardware silent printing
+      if (isHardwareReady && receiptSettings?.invoiceTemplate !== 'a4_professional') {
+        const printSilently = async () => {
+          const isRawEscPos = receiptSettings?.invoiceTemplate === 'raw_escpos_80' || receiptSettings?.invoiceTemplate === 'raw_escpos_58';
+          let success = false;
+          
+          if (isRawEscPos) {
+              const { generateRawReceiptBuffer } = await import('@/lib/raw-receipt-service');
+              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, business, null, null);
+              success = await printRawReceipt(buffer);
+          } else if (printRef.current) {
+              const html = printRef.current.innerHTML;
+              success = await printReceipt(html);
+          }
+          
+          if (success) {
+            setPrintableSale(null);
+          } else {
+            handlePrintRef.current();
+          }
+        };
+        printSilently();
+        return;
+      }
+
       const t = setTimeout(() => {
         if (printRef.current) handlePrintRef.current();
       }, 500); // wait briefly for rendering
@@ -382,7 +409,7 @@ export default function SalesHistory() {
     } else {
       isPrintingRef.current = false;
     }
-  }, [printableSale, receiptSettings, session]);
+  }, [printableSale, receiptSettings, session, isHardwareReady, printReceipt, printRawReceipt, business, handlePrintRef]);
 
   const handleReprint = async (sale) => {
     try {

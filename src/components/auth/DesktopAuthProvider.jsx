@@ -45,16 +45,11 @@ export function DesktopAuthProvider({ children }) {
 
       const response = await originalFetch(...args);
       
-      // If we get a 401, it means our session is invalid or expired
-      if (response.status === 401 && !window.location.pathname.includes('/login')) {
-        console.warn(`[DesktopAuth] 401 Unauthorized from ${args[0]}. Logging out...`);
-        // Only logout if we actually have a session to clear, to avoid infinite loops
-        if (getDesktopSession()) {
-          // 2. Blueprint Implementation: Alert any secondary windows!
-          broadcast({ type: 'LOGOUT' });
-          desktopLogout();
-        }
+      // Removed auto-logout on 401 for Electron Desktop to prevent hard redirects
+      if (response.status === 401) {
+        console.warn(`[DesktopAuth] 401 Unauthorized from ${args[0]}. Auto-redirect disabled.`);
       }
+      
       return response;
     };
 

@@ -277,7 +277,7 @@ export default function PosPage() {
           
           if (isRawEscPos) {
               const { generateRawReceiptBuffer } = await import('@/lib/raw-receipt-service');
-              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, localBusiness, selectedBranch, terminalName);
+              const buffer = await generateRawReceiptBuffer(printableSale, receiptSettings, business, selectedBranch, terminalName);
               success = await printRawReceipt(buffer);
           } else if (printRef.current) {
               const html = printRef.current.innerHTML;
@@ -304,7 +304,7 @@ export default function PosPage() {
     } else {
       isPrintingRef.current = false;
     }
-  }, [printableSale, isHardwareReady, printReceipt, receiptSettings, session]);
+  }, [printableSale, receiptSettings, session, isHardwareReady, printReceipt, printRawReceipt, business, selectedBranch, handlePrintRef]);
 
   const handlePayNow = useCallback((args) => {
     setPendingPaymentArgs(args);

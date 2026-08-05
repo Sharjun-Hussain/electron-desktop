@@ -165,6 +165,7 @@ export default function ShopifySettingsPage() {
   const [shopifyOrders, setShopifyOrders] = useState([]);
   const [shopifyOrdersLoading, setShopifyOrdersLoading] = useState(false);
   const [inventoryLoaded, setInventoryLoaded] = useState(false);
+  const shopifyTotalPages = shopifyProducts ? Math.ceil(shopifyProducts.length / shopifyPageSize) || 1 : 1;
   const [shopifyProductsLoaded, setShopifyProductsLoaded] = useState(false);
   const [shopifyOrdersLoaded, setShopifyOrdersLoaded] = useState(false);
   const [analyticsLoaded, setAnalyticsLoaded] = useState(false);

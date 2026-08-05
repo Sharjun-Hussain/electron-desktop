@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { 
   startOfMonth, 
   endOfMonth, 
@@ -98,6 +98,7 @@ export function DarazOrdersOverview() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDarazStore, setSelectedDarazStore] = useState("all");
   const [selectedPaymentOption, setSelectedPaymentOption] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -143,6 +144,21 @@ export function DarazOrdersOverview() {
       if (selectedPaymentOption !== "all") {
          query.set("payment_method", selectedPaymentOption);
       }
+
+      // Filter by status
+      if (selectedStatus !== "all") {
+        if (selectedStatus === "pending") {
+          query.set("payment_status", "unpaid,partially_paid");
+          query.set("status", "completed,draft"); // exclude cancelled/returned
+        } else if (selectedStatus === "completed") {
+          query.set("payment_status", "paid");
+          query.set("status", "completed,draft"); // allow daraz drafts that are already paid
+        } else if (selectedStatus === "cancelled") {
+          query.set("status", "cancelled");
+        } else {
+          query.set("status", selectedStatus);
+        }
+      }
       
       query.set("source", "daraz");
 
@@ -172,7 +188,20 @@ export function DarazOrdersOverview() {
             parcel_barcode: embedded.parcel_barcode || null
           };
         });
-        setData(flattened);
+
+        // Safety: apply status filter client-side as well (Daraz "Pending/Completed" is payment-driven)
+        const normalizedStatus = String(selectedStatus || "all").toLowerCase();
+        const statusFiltered = flattened.filter((s) => {
+          const saleStatus = String(s.status || "").toLowerCase();
+          const paymentStatus = String(s.payment_status || "").toLowerCase();
+
+          if (normalizedStatus === "pending") return saleStatus !== "cancelled" && paymentStatus !== "paid";
+          if (normalizedStatus === "completed") return saleStatus !== "cancelled" && paymentStatus === "paid";
+          if (normalizedStatus === "cancelled") return saleStatus === "cancelled";
+          return true;
+        });
+
+        setData(statusFiltered);
         if (result.data.pagination) setPagination(prev => ({ ...prev, ...result.data.pagination }));
       }
     } catch (e) {
@@ -181,7 +210,7 @@ export function DarazOrdersOverview() {
     } finally {
       setLoading(false);
     }
-  }, [session, date, selectedDarazStore, selectedPaymentOption]);
+  }, [session, date, selectedDarazStore, selectedPaymentOption, selectedStatus]);
 
   useEffect(() => {
     fetchDarazOrders();
@@ -194,6 +223,7 @@ export function DarazOrdersOverview() {
     setInternalDate(defaultRange);
     setSelectedDarazStore("all");
     setSelectedPaymentOption("all");
+    setSelectedStatus("all");
     setPagination(p => ({ ...p, page: 1 }));
   };
 
@@ -303,6 +333,25 @@ export function DarazOrdersOverview() {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Status Filter */}
+        <div className="space-y-1.5 focus-visible:ring-0">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-3.5 w-3.5 text-blue-600" />
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Status</label>
+          </div>
+          <Select value={selectedStatus} onValueChange={(val) => { setSelectedStatus(val); setPagination(p => ({ ...p, page: 1 })); }}>
+            <SelectTrigger className="h-9 text-xs w-full focus:ring-0 focus-visible:ring-0">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent className="dark:border-border">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );
@@ -390,28 +439,28 @@ export function DarazOrdersOverview() {
     {
       accessorKey: "invoice_number",
       header: "Invoice No",
-      cell: ({ row }) => <span className="text-xs font-semibold">{row.getValue("invoice_number")}</span>
+      cell: ({ row }) => <span className="text-sm font-semibold">{row.getValue("invoice_number")}</span>
     },
     {
       accessorKey: "order_id", // Fake attribute mapped for Daraz Order NO
       header: "Order No",
-      cell: ({ row }) => <span className="text-xs">{row.original.ecommerce_order_id || 'N/A'}</span>
+      cell: ({ row }) => <span className="text-sm">{row.original.ecommerce_order_id || 'N/A'}</span>
     },
     {
       accessorKey: "parcel_barcode",
       header: "Parcel Barcode",
-      cell: ({ row }) => <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{row.original.parcel_barcode || 'N/A'}</span>
+      cell: ({ row }) => <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{row.original.parcel_barcode || 'N/A'}</span>
     },
     {
       accessorKey: "daraz_store_name",
       header: "Daraz Store Name",
-      cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.getValue("daraz_store_name")}</span>
+      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.getValue("daraz_store_name")}</span>
     },
     {
       accessorKey: "payable_amount",
       header: () => <div className="text-right">Product Total</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums text-foreground">
+        <div className="text-right text-sm tabular-nums text-foreground">
           {formatCurrency(row.getValue("payable_amount") - (row.original.delivery_fees || 0))}
         </div>
       )
@@ -420,7 +469,7 @@ export function DarazOrdersOverview() {
       accessorKey: "delivery_fees",
       header: () => <div className="text-right">Delivery Fees</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums text-foreground">
+        <div className="text-right text-sm tabular-nums text-foreground">
           {formatCurrency(row.getValue("delivery_fees"))}
         </div>
       )
@@ -429,7 +478,7 @@ export function DarazOrdersOverview() {
       id: "grand_total",
       header: () => <div className="text-right font-bold">Grand Total</div>,
       cell: ({ row }) => (
-        <div className="text-right text-xs font-bold tabular-nums text-emerald-700">
+        <div className="text-right text-sm font-bold tabular-nums text-emerald-700">
           {formatCurrency(row.getValue("payable_amount"))}
         </div>
       )
@@ -437,11 +486,43 @@ export function DarazOrdersOverview() {
     {
       accessorKey: "received_amount",
       header: () => <div className="text-right">Received Amount</div>,
-      cell: ({ row }) => (
-        <div className="text-right text-xs tabular-nums text-foreground">
-          {formatCurrency(row.original.paid_amount || 0)}
-        </div>
-      )
+      cell: ({ row }) => {
+        const paid = parseFloat(row.original.paid_amount || 0);
+        const payable = parseFloat(row.original.payable_amount || 0);
+        const isCancelled = row.original.status === "cancelled";
+        const isDaraz = (row.original.source || "daraz") === "daraz";
+        const paymentStatus = String(row.original.payment_status || "").toLowerCase();
+
+        const items = Array.isArray(row.original.items) ? row.original.items : [];
+        const deliveryFees = parseFloat(row.original.delivery_fees || 0);
+        const netProductRevenue = Math.max(0, paid - deliveryFees); // use cash received for paid sales
+        const totalCost = items.reduce((sum, item) => {
+          const qty = parseFloat(item?.quantity || 0);
+          const unitCost = parseFloat(item?.batch?.cost_price ?? item?.variant?.cost_price ?? 0);
+          return sum + qty * unitCost;
+        }, 0);
+
+        const profit = netProductRevenue - totalCost;
+        const label = profit > 0 ? "Profit" : profit < 0 ? "Loss" : "P/L";
+        const plClass =
+          profit > 0 ? "text-emerald-600" : profit < 0 ? "text-red-500" : "text-muted-foreground";
+
+        const showProfit = isDaraz && !isCancelled && paymentStatus === "paid";
+        return (
+          <div className="text-right">
+            <div className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(paid)}</div>
+            {showProfit && payable > 0 && (
+              <div className={`text-xs font-semibold tabular-nums mt-1 ${plClass}`}>
+                {profit > 0
+                  ? `${label}: +${formatCurrency(profit)}`
+                  : profit < 0
+                    ? `${label}: ${formatCurrency(profit)}`
+                    : `${label}: ${formatCurrency(0)}`}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       accessorKey: "payment_method",
@@ -460,7 +541,7 @@ export function DarazOrdersOverview() {
     {
       accessorKey: "created_at",
       header: "Date",
-      cell: ({ row }) => <span className="text-xs whitespace-nowrap">{format(new Date(row.getValue("created_at")), "yyyy-MM-dd")}</span>
+      cell: ({ row }) => <span className="text-sm whitespace-nowrap">{format(new Date(row.getValue("created_at")), "yyyy-MM-dd")}</span>
     },
     {
       id: "action",
@@ -484,17 +565,19 @@ export function DarazOrdersOverview() {
       cell: ({ row }) => {
         const isPaid = row.original.payment_status === "paid";
         const isCancelled = row.original.status === 'cancelled';
+        if (isPaid) return null;
         return (
-          <div className="flex flex-col gap-1 w-[90px]">
+          <div className="flex flex-col gap-1.5 w-[120px]">
             <Button
                disabled={isCancelled}
                onClick={() => handleMarkPaid(row.original)} 
-               variant="ghost" 
                size="sm" 
                className={
-                 isCancelled ? "h-6 text-[10px] bg-slate-100 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border-none cursor-not-allowed" :
-                 (isPaid ? "h-6 text-[10px] bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors" : 
-                 "h-6 text-[10px] bg-blue-50/50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 transition-colors")
+                 isCancelled
+                   ? "h-7 rounded-md text-[11px] bg-muted/40 text-muted-foreground border border-border/60 cursor-not-allowed"
+                   : isPaid
+                     ? "h-7 rounded-md text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                     : "h-7 rounded-md text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200/60 dark:border-emerald-500/20"
                }
             >
                {isPaid ? "Paid" : "Mark Paid"}
@@ -502,11 +585,11 @@ export function DarazOrdersOverview() {
             <Button
                disabled={isCancelled}
                onClick={() => handleCancelOrder(row.original.id)}
-               variant="ghost" 
                size="sm" 
                className={
-                 isCancelled ? "h-6 text-[10px] bg-slate-100 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border-none cursor-not-allowed" :
-                 "h-6 text-[10px] bg-red-50/50 hover:bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 transition-colors"
+                 isCancelled
+                   ? "h-7 rounded-md text-[11px] bg-muted/40 text-muted-foreground border border-border/60 cursor-not-allowed"
+                   : "h-7 rounded-md text-[11px] font-semibold bg-transparent hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-500/30"
                }
             >
                {isCancelled ? "Cancelled" : "Cancel Order"}

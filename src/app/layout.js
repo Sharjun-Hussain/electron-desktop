@@ -1,7 +1,7 @@
 "use client"
 import "./globals.css";
 import { Toaster } from "sonner";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Providers from "./providers";
 import ClientOnly from "@/components/auth/ClientOnly";
 import ErrorBoundary from "@/components/common/ErrorBoundary";

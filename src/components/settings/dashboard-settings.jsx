@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { Save, Loader2, LayoutDashboard, DollarSign, Receipt, Clock, FileText, TrendingDown, AlertTriangle, Users, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

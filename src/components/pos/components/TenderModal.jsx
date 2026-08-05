@@ -48,6 +48,7 @@ const TenderModal = ({
   const [lastDiscount, setLastDiscount] = useState(0);
   const [selectedMethod, setSelectedMethod] = useState("cash");
   const [cardChargePercent, setCardChargePercent] = useState(0);
+  const [chequeDetails, setChequeDetails] = useState({ cheque_number: "", bank_name: "", cheque_date: "" });
   const inputRef = useRef(null);
 
   const posTouchUI = useSettingsStore((state) => state.global?.posTouchUI || false);
