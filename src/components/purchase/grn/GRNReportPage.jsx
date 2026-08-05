@@ -431,7 +431,7 @@ export default function GRNReportPage() {
       isFiltered={isFiltered}
       onRowClick={(row) => {
         topLoader.start();
-        router.push(`/purchase/grn/view/${row.id}`);
+        router.push(`/purchase/grn/view?id=${row.id}`);
       }}
       onClearFilters={handleClearFilters}
       addButtonLabel="New GRN"

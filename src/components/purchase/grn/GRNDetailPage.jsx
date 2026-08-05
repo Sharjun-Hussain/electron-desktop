@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/components/auth/DesktopAuthProvider";
 import { format } from "@/lib/date-utils";
 import {
@@ -142,6 +142,8 @@ const AttachmentItem = ({ file, onDelete, isDeleting }) => {
 
 export default function GRNDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const routeId = params.id || (searchParams ? searchParams.get("id") : null);
   const router = useRouter();
   const { data: session } = useSession();
   const [grn, setGrn] = useState(null);
@@ -181,8 +183,8 @@ export default function GRNDetailPage() {
 
   useEffect(() => {
     async function fetchGRNDetails() {
-      if (!params.id || !session?.accessToken) {
-        if (params.id === undefined || session?.accessToken === undefined) {
+      if (!routeId || !session?.accessToken) {
+        if (routeId === undefined || session?.accessToken === undefined) {
           // Still initializing
         } else {
           setLoading(false);
@@ -191,7 +193,7 @@ export default function GRNDetailPage() {
       }
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/grn/${params.id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers/grn/${routeId}`, {
           headers: { Authorization: `Bearer ${session.accessToken}` },
         });
         const result = await response.json();
@@ -208,7 +210,7 @@ export default function GRNDetailPage() {
       }
     }
     fetchGRNDetails();
-  }, [params.id, session]);
+  }, [routeId, session]);
 
   if (loading) {
     return (
