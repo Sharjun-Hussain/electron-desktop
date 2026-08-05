@@ -144,7 +144,7 @@ export function EditCustomerSheet({ customer, open, onOpenChange, onSave }) {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
-                      <FormLabel className="font-semibold text-foreground">Full Name</FormLabel>
+                      <FormLabel className="font-semibold text-foreground">Full Name <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g. Johnathan Smith"
@@ -163,7 +163,7 @@ export function EditCustomerSheet({ customer, open, onOpenChange, onSave }) {
                     name="phone"
                     render={({ field }) => (
                       <FormItem className="space-y-1.5">
-                        <FormLabel className="font-semibold text-foreground">Contact Number</FormLabel>
+                        <FormLabel className="font-semibold text-foreground">Contact Number <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
                           <Input
                             type="tel"
