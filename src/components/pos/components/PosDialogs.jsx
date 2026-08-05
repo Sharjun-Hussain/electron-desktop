@@ -1127,8 +1127,8 @@ export const QuantityInputDialog = memo(({ isOpen, onOpenChange, product, onConf
     e?.preventDefault();
     const parsed = parseFloat(qty);
     if (parsed > 0) {
-      onConfirm(parsed);
       onOpenChange(false);
+      onConfirm(parsed);
     }
   };
 

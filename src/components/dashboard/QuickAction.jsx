@@ -50,11 +50,11 @@ const quickActions = [
     color: "emerald",
   },
   {
-    id: "stock-management",
-    name: "Stock Level",
+    id: "inventory-insights",
+    name: "Inventory Insights",
     icon: Box,
-    description: "Adjust Stock",
-    href: "/inventory/stock",
+    description: "Stock & Analytics",
+    href: "/inventory-insights",
     color: "cyan",
   },
   {
@@ -89,14 +89,7 @@ const quickActions = [
     href: "/purchase/grn/direct",
     color: "orange",
   },
-  {
-    id: "inventory-insights",
-    name: "Full Stock Data",
-    icon: Package,
-    description: "Stock Data",
-    href: "/inventory-insights",
-    color: "cyan",
-  },
+
   {
     id: "barcodes",
     name: "Barcodes",
