@@ -23,6 +23,8 @@ import {
   Columns,
   Barcode,
   Copy,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -71,6 +80,7 @@ const InventoryInsightsDashboard = () => {
   // Pagination & Filtering States
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // all, low, out, healthy
@@ -132,7 +142,7 @@ const InventoryInsightsDashboard = () => {
       // Build Dashboard Data URL
       const dashboardUrl = new URL(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reports/stocks/summary`);
       dashboardUrl.searchParams.append("page", page);
-      dashboardUrl.searchParams.append("size", 20);
+      dashboardUrl.searchParams.append("size", pageSize);
       if (debouncedSearch) dashboardUrl.searchParams.append("search", debouncedSearch);
       if (filterStatus !== "all") dashboardUrl.searchParams.append("status", filterStatus);
 
@@ -184,7 +194,7 @@ const InventoryInsightsDashboard = () => {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, [session?.accessToken, debouncedSearch, filterStatus]);
+  }, [session?.accessToken, debouncedSearch, filterStatus, pageSize]);
 
   useEffect(() => {
     fetchData(currentPage);
@@ -476,30 +486,56 @@ const InventoryInsightsDashboard = () => {
             </div>
             
             {/* Pagination Controls */}
-            {!loading && totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border/50">
-                <p className="text-[13px] text-slate-500 font-medium">
-                  Page <span className="font-bold text-slate-900 dark:text-white">{currentPage}</span> of {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="h-10 w-10 p-0 rounded-xl border-border disabled:opacity-50"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="h-10 w-10 p-0 rounded-xl border-border disabled:opacity-50"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+            {!initialLoad && totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-border bg-[#0b1120]/10">
+                <div className="flex items-center gap-3 w-full justify-center sm:justify-start">
+                  <span className="text-[13px] text-muted-foreground font-medium">Page {currentPage} of {totalPages}</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => {
+                    setPageSize(Number(v));
+                    setCurrentPage(1);
+                  }}>
+                    <SelectTrigger className="w-[70px] h-8 bg-transparent border border-border/50 text-foreground hover:bg-muted/50 transition-colors shadow-none text-xs rounded-md">
+                      <SelectValue placeholder={pageSize} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border shadow-xl rounded-md">
+                      {[10, 20, 50, 100].map((size) => (
+                        <SelectItem key={size} value={String(size)} className="font-medium text-xs">{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-[13px] text-muted-foreground font-medium">per page</span>
+                </div>
+                
+                <div className="flex items-center gap-1.5 w-full justify-center sm:justify-end">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={() => setCurrentPage(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
+                  
+                  {(() => {
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+                    const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+                    
+                    return pages.map(pageNum => (
+                      <Button 
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "ghost"} 
+                        size="icon" 
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={cn(
+                          "h-8 w-8 rounded font-semibold text-sm transition-all",
+                          currentPage === pageNum 
+                            ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" 
+                            : "bg-transparent border border-transparent hover:border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                        )}
+                      >
+                        {pageNum}
+                      </Button>
+                    ));
+                  })()}
+
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
                 </div>
               </div>
             )}
