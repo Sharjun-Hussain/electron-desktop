@@ -220,10 +220,10 @@ const InventoryInsightsDashboard = () => {
   }, { dependencies: [loading, stockItems.length], scope: containerRef });
 
   const getStatusInfo = (qty, threshold) => {
-    if (qty <= 0) return { label: "Out of Stock", color: "bg-red-500", text: "text-red-600", bg: "bg-red-50" };
+    if (qty <= 0) return { label: "Out of Stock", color: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30", text: "text-red-600", bg: "bg-red-50" };
     const stockThreshold = Number(threshold || 10);
-    if (qty <= stockThreshold) return { label: "Low Stock", color: "bg-amber-500", text: "text-amber-600", bg: "bg-amber-50" };
-    return { label: "Healthy", color: "bg-emerald-500", text: "text-emerald-600", bg: "bg-emerald-50" };
+    if (qty <= stockThreshold) return { label: "Low Stock", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30", text: "text-amber-600", bg: "bg-amber-50" };
+    return { label: "Healthy", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30", text: "text-emerald-600", bg: "bg-emerald-50" };
   };
 
   return (
@@ -429,7 +429,7 @@ const InventoryInsightsDashboard = () => {
                           
                           {visibleColumns.status && (
                               <TableCell className="text-center">
-                                <Badge className={cn("rounded-lg px-2.5 py-0.5 text-[11px] font-semibold border-none shadow-none", status.color, "text-white")}>
+                                <Badge variant="outline" className={cn("rounded-md px-2.5 py-0.5 text-[11px] font-bold shadow-none", status.color)}>
                                   {status.label}
                                 </Badge>
                               </TableCell>
