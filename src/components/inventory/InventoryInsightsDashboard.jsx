@@ -56,6 +56,7 @@ const InventoryInsightsDashboard = () => {
   
   // Data States
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [stockItems, setStockItems] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
   const [expiringItems, setExpiringItems] = useState([]);
@@ -113,6 +114,7 @@ const InventoryInsightsDashboard = () => {
   };
   
   const containerRef = useRef(null);
+  const hasAnimated = useRef(false);
 
   // Debounce search query
   useEffect(() => {
@@ -180,6 +182,7 @@ const InventoryInsightsDashboard = () => {
       toast.error("Failed to load stock reports");
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   }, [session?.accessToken, debouncedSearch, filterStatus]);
 
@@ -193,7 +196,8 @@ const InventoryInsightsDashboard = () => {
   };
 
   useGSAP(() => {
-    if (!loading && stockItems.length > 0) {
+    if (!loading && stockItems.length > 0 && !hasAnimated.current) {
+      hasAnimated.current = true;
       gsap.from(".insight-card", {
         y: 20,
         opacity: 0,
@@ -364,7 +368,7 @@ const InventoryInsightsDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {initialLoad ? (
                     <StatusShimmer rows={10} />
                   ) : stockItems.length > 0 ? (
                     stockItems.map((item) => {
@@ -549,7 +553,7 @@ const InventoryInsightsDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {initialLoad ? (
                     <StatusShimmer rows={5} />
                   ) : (
                     (() => {
