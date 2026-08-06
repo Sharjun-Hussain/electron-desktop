@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
+import ProductStockDetailSheet from "./ProductStockDetailSheet";
 
 const InventoryInsightsDashboard = () => {
   const { data: session } = useSession();
@@ -73,6 +74,7 @@ const InventoryInsightsDashboard = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all"); // all, low, out, healthy
   const [expireFilterStatus, setExpireFilterStatus] = useState("all"); // all, expired, expiring, low, out
+  const [selectedItem, setSelectedItem] = useState(null);
   
   // Column Visibility State
   const [visibleColumns, setVisibleColumns] = useState({
@@ -82,13 +84,17 @@ const InventoryInsightsDashboard = () => {
     costPrice: false,
     sellingPrice: true,
     mrpPrice: false,
+    totalBatches: true,
     onHand: true,
   });
 
   useEffect(() => {
     try {
         const saved = localStorage.getItem("inventoryInsightsColumns");
-        if (saved) setVisibleColumns(JSON.parse(saved));
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            setVisibleColumns(prev => ({ ...prev, ...parsed }));
+        }
     } catch (e) {
         console.error("Could not parse saved column settings", e);
     }
@@ -315,6 +321,7 @@ const InventoryInsightsDashboard = () => {
                             costPrice: "Cost Price",
                             sellingPrice: "Selling Price",
                             mrpPrice: "MRP",
+                            totalBatches: "Total Batches",
                             onHand: "On Hand"
                         };
                         return (
@@ -352,6 +359,7 @@ const InventoryInsightsDashboard = () => {
                     {visibleColumns.costPrice && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Cost Price</TableHead>}
                     {visibleColumns.sellingPrice && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selling Price</TableHead>}
                     {visibleColumns.mrpPrice && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground">MRP</TableHead>}
+                    {visibleColumns.totalBatches && <TableHead className="text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Batches</TableHead>}
                     {visibleColumns.onHand && <TableHead className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground pr-6">On Hand</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -367,7 +375,7 @@ const InventoryInsightsDashboard = () => {
                       const barcodeVal = item.variant?.barcode || item.product?.barcode;
 
                       return (
-                        <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border/40">
+                        <TableRow key={item.id} onClick={() => setSelectedItem(item)} className="hover:bg-muted/30 transition-colors border-border/40 cursor-pointer">
                           <TableCell className="pl-6 py-3">
                             <div className="flex items-center gap-3">
                               <div className={cn("p-2.5 rounded-xl", status.bg, status.text)}>
@@ -428,6 +436,14 @@ const InventoryInsightsDashboard = () => {
                           {visibleColumns.mrpPrice && (
                               <TableCell className="text-right text-xs font-bold text-slate-500">
                                 {formatCurrency(item.batches?.[0]?.mrp_price || 0)}
+                              </TableCell>
+                          )}
+
+                          {visibleColumns.totalBatches && (
+                              <TableCell className="text-center text-xs font-bold">
+                                  <span className={cn("px-2.5 py-1 rounded-full border shadow-xs", (item.batches?.length || 0) > 0 ? "bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20" : "bg-slate-50 text-slate-400 border-slate-200 dark:bg-slate-800 dark:border-slate-700")}>
+                                      {item.batches?.length || (item.batch_number ? 1 : 0)}
+                                  </span>
                               </TableCell>
                           )}
 
@@ -564,7 +580,7 @@ const InventoryInsightsDashboard = () => {
                       const subName = isVariantProduct ? item.product?.name : (item.variant?.name || "Standard");
 
                       return (
-                        <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border/40">
+                        <TableRow key={item.id} onClick={() => setSelectedItem(item)} className="hover:bg-muted/30 transition-colors border-border/40 cursor-pointer">
                           <TableCell className="pl-6 py-3">
                             <div>
                                <h4 className="font-bold text-foreground text-sm leading-tight">{mainName}</h4>
@@ -699,6 +715,12 @@ const InventoryInsightsDashboard = () => {
           </div>
         </div>
       </div>
+      <ProductStockDetailSheet 
+        isOpen={!!selectedItem} 
+        onClose={() => setSelectedItem(null)} 
+        selectedItem={selectedItem} 
+        formatCurrency={formatCurrency} 
+      />
     </div>
   );
 };
