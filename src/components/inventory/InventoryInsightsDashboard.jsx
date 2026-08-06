@@ -22,6 +22,7 @@ import {
   History,
   Columns,
   Barcode,
+  Copy,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -360,6 +361,11 @@ const InventoryInsightsDashboard = () => {
                   ) : stockItems.length > 0 ? (
                     stockItems.map((item) => {
                       const status = getStatusInfo(parseFloat(item.quantity), parseFloat(item.variant?.low_stock_threshold || 10));
+                      const isVariantProduct = item.variant?.name && item.variant?.name !== 'Default';
+                      const mainName = isVariantProduct ? item.variant.name : item.product?.name;
+                      const subName = isVariantProduct ? item.product?.name : (item.variant?.name || "Standard");
+                      const barcodeVal = item.variant?.barcode || item.product?.barcode;
+
                       return (
                         <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border/40">
                           <TableCell className="pl-6 py-3">
@@ -368,19 +374,25 @@ const InventoryInsightsDashboard = () => {
                                 <Package className="h-5 w-5" />
                               </div>
                               <div>
-                                <h4 className="font-bold text-foreground text-sm leading-tight">{item.product?.name}</h4>
-                                <div className="flex flex-wrap items-center gap-2 mt-1">
-                                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-mono font-bold border border-transparent dark:border-slate-700">
-                                        {item.variant?.sku || item.product?.code}
-                                    </span>
-                                    {(item.variant?.barcode || item.product?.barcode) && (
-                                        <span className="text-[10px] flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold border border-emerald-500/20">
-                                            <Barcode className="h-3 w-3" />
-                                            {item.variant?.barcode || item.product?.barcode}
-                                        </span>
+                                <h4 className="font-bold text-foreground text-sm leading-tight">{mainName}</h4>
+                                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                    {barcodeVal && (
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigator.clipboard.writeText(barcodeVal);
+                                            toast.success("Barcode copied to clipboard");
+                                          }}
+                                          className="text-[10.5px] flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono font-bold border border-emerald-200 dark:border-emerald-500/30 transition-all cursor-pointer group shadow-sm active:scale-95"
+                                          title="Click to copy barcode"
+                                        >
+                                            <Barcode className="h-3 w-3 opacity-80 group-hover:opacity-100 transition-opacity" />
+                                            <span>{barcodeVal}</span>
+                                            <Copy className="h-3 w-3 opacity-0 -ml-1 flex-shrink-0 group-hover:ml-0 group-hover:opacity-100 transition-all duration-200 ease-out" />
+                                        </button>
                                     )}
-                                    <span className="text-[11px] text-slate-400 font-medium">
-                                        {item.variant?.name || "Standard"}
+                                    <span className="text-[10.5px] text-slate-500 font-medium bg-muted/60 px-2 py-0.5 rounded border border-border/50">
+                                        {subName}
                                     </span>
                                 </div>
                               </div>
@@ -547,13 +559,17 @@ const InventoryInsightsDashboard = () => {
                         }
                       };
                       const status = getExpiryStatus(item.expiration_status);
+                      const isVariantProduct = item.variant?.name && item.variant?.name !== 'Default';
+                      const mainName = isVariantProduct ? item.variant.name : item.product?.name;
+                      const subName = isVariantProduct ? item.product?.name : (item.variant?.name || "Standard");
+
                       return (
                         <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-border/40">
                           <TableCell className="pl-6 py-3">
                             <div>
-                               <h4 className="font-bold text-foreground text-sm leading-tight">{item.product?.name}</h4>
+                               <h4 className="font-bold text-foreground text-sm leading-tight">{mainName}</h4>
                               <p className="text-[11px] text-slate-500 font-medium mt-1">
-                                {item.variant?.name || "Standard"} • Batch: {item.batch_number || 'N/A'}
+                                {subName} • Batch: {item.batch_number || 'N/A'}
                               </p>
                             </div>
                           </TableCell>
