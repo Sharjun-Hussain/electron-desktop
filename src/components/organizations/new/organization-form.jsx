@@ -359,6 +359,7 @@ export function OrganizationForm({ initialData }) {
                     <SelectContent>
                       <SelectItem value="Retail">Retail & General Store</SelectItem>
                       <SelectItem value="Manufacturing">Manufacturing & Production</SelectItem>
+                      <SelectItem value="Jewelry">Jewelry & Gemstones</SelectItem>
                       <SelectItem value="Pharmacy">Pharmacy & Healthcare</SelectItem>
                       <SelectItem value="Restaurant">Restaurant & F&B</SelectItem>
                       <SelectItem value="Hardware">Hardware & Construction</SelectItem>
