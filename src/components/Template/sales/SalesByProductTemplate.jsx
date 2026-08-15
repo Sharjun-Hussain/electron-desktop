@@ -9,19 +9,7 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
   return (
     <div style={{ display: "none" }}>
       <div ref={ref}>
-        <style type="text/css" media="print">{`
-          @page { margin: 4mm; }
-          * {
-            font-family: monospace !important;
-            font-weight: 600 !important;
-            color: #000 !important;
-            -webkit-font-smoothing: none !important;
-            text-rendering: optimizeSpeed !important;
-          }
-          th, h1, h2, h3, .font-bold, .font-black {
-            font-weight: 900 !important;
-          }
-        `}</style>
+
         <ReportLayout 
           title="Sales by Product Report" 
           subtitle="Detailed performance tracking across inventory classifications"
