@@ -31,20 +31,20 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
           {/* --- SUMMARY METRICS --- */}
           <div className="grid grid-cols-4 gap-4 mb-8">
             <div className="p-4 border border-slate-200 rounded bg-slate-50/50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Quantity</span>
-              <div className="text-lg font-bold mt-1 text-slate-900">{(stats.totalSold || 0).toLocaleString()} Units</div>
+              <span className="text-[10px] text-slate-500 uppercase font-medium tracking-wider">Total Quantity</span>
+              <div className="text-lg font-semibold mt-1 text-slate-900">{(stats.totalSold || 0).toLocaleString()} Units</div>
             </div>
             <div className="p-4 border border-slate-200 rounded bg-slate-50/50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Revenue</span>
-              <div className="text-lg font-bold mt-1 text-slate-900">{formatCurrency(stats.totalRevenue || 0)}</div>
+              <span className="text-[10px] text-slate-500 uppercase font-medium tracking-wider">Total Revenue</span>
+              <div className="text-lg font-semibold mt-1 text-slate-900">{formatCurrency(stats.totalRevenue || 0)}</div>
             </div>
             <div className="p-4 border border-slate-200 rounded bg-slate-50/50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Profit</span>
-              <div className="text-lg font-bold mt-1 text-emerald-700">{formatCurrency(stats.totalProfit || 0)}</div>
+              <span className="text-[10px] text-slate-500 uppercase font-medium tracking-wider">Total Profit</span>
+              <div className="text-lg font-semibold mt-1 text-emerald-700">{formatCurrency(stats.totalProfit || 0)}</div>
             </div>
             <div className="p-4 border border-slate-200 rounded bg-slate-50/50">
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Top Mover</span>
-              <div className="text-sm font-bold mt-2 truncate text-slate-900">{stats.topSellingItem?.name || "-"}</div>
+              <span className="text-[10px] text-slate-500 uppercase font-medium tracking-wider">Top Mover</span>
+              <div className="text-sm font-semibold mt-2 truncate text-slate-900">{stats.topSellingItem?.name || "-"}</div>
             </div>
           </div>
 
@@ -52,34 +52,34 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
           <table className="w-full text-left border-collapse report-table">
             <thead>
               <tr className="text-[10px] uppercase tracking-wider">
-                {selectedColumns?.skuEntity !== false && <th className="py-3 px-2 font-bold">Product Name</th>}
-                {selectedColumns?.skuEntity !== false && <th className="py-3 px-2 font-bold">SKU</th>}
-                {selectedColumns?.batch !== false && <th className="py-3 px-2 font-bold">Batch / Exp</th>}
-                {selectedColumns?.quantity !== false && <th className="py-3 px-2 font-bold text-right">Qty Sold</th>}
-                {selectedColumns?.cost !== false && <th className="py-3 px-2 font-bold text-right">Cost</th>}
-                {selectedColumns?.mrp !== false && <th className="py-3 px-2 font-bold text-right">MRP</th>}
-                {selectedColumns?.wholesale !== false && <th className="py-3 px-2 font-bold text-right">Wholesale</th>}
-                {selectedColumns?.sellingPrice !== false && <th className="py-3 px-2 font-bold text-right">Selling</th>}
-                {selectedColumns?.revenue !== false && <th className="py-3 px-2 font-bold text-right">Revenue</th>}
-                {selectedColumns?.profit !== false && <th className="py-3 px-2 font-bold text-right">Profit</th>}
+                {selectedColumns?.skuEntity !== false && <th className="py-3 px-2 font-medium">Product Name</th>}
+                {selectedColumns?.skuEntity !== false && <th className="py-3 px-2 font-medium">SKU</th>}
+                {selectedColumns?.batch !== false && <th className="py-3 px-2 font-medium">Batch / Exp</th>}
+                {selectedColumns?.quantity !== false && <th className="py-3 px-2 font-medium text-right">Qty Sold</th>}
+                {selectedColumns?.cost !== false && <th className="py-3 px-2 font-medium text-right">Cost</th>}
+                {selectedColumns?.mrp !== false && <th className="py-3 px-2 font-medium text-right">MRP</th>}
+                {selectedColumns?.wholesale !== false && <th className="py-3 px-2 font-medium text-right">Wholesale</th>}
+                {selectedColumns?.sellingPrice !== false && <th className="py-3 px-2 font-medium text-right">Selling</th>}
+                {selectedColumns?.revenue !== false && <th className="py-3 px-2 font-medium text-right">Revenue</th>}
+                {selectedColumns?.profit !== false && <th className="py-3 px-2 font-medium text-right">Profit</th>}
               </tr>
             </thead>
-            <tbody className="text-[12px] font-bold">
+            <tbody className="text-[12px] font-normal">
               {data.map((item, index) => (
                 <tr key={index} className="break-inside-avoid">
-                  {selectedColumns?.skuEntity !== false && <td className="font-bold">{item.name}</td>}
-                  {selectedColumns?.skuEntity !== false && <td className="font-semibold">{item.sku}</td>}
-                  {selectedColumns?.batch !== false && <td className="font-semibold">
+                  {selectedColumns?.skuEntity !== false && <td className="font-medium">{item.name}</td>}
+                  {selectedColumns?.skuEntity !== false && <td className="font-normal">{item.sku}</td>}
+                  {selectedColumns?.batch !== false && <td className="font-normal">
                     <div>{item.batch !== 'N/A' ? item.batch : '-'}</div>
                     {item.expiry !== 'N/A' && <div className="text-[9px]">{item.expiry}</div>}
                   </td>}
-                  {selectedColumns?.quantity !== false && <td className="text-right font-bold">{(item.sold || 0)}</td>}
-                  {selectedColumns?.cost !== false && <td className="text-right font-semibold">{formatCurrency(item.cost_price || 0)}</td>}
-                  {selectedColumns?.mrp !== false && <td className="text-right font-semibold">{formatCurrency(item.mrp_price || 0)}</td>}
-                  {selectedColumns?.wholesale !== false && <td className="text-right font-semibold">{formatCurrency(item.wholesale_price || 0)}</td>}
-                  {selectedColumns?.sellingPrice !== false && <td className="text-right font-semibold">{formatCurrency(item.selling_price || 0)}</td>}
-                  {selectedColumns?.revenue !== false && <td className="text-right font-bold">{formatCurrency(item.sales || 0)}</td>}
-                  {selectedColumns?.profit !== false && <td className="text-right font-bold text-emerald-700">{formatCurrency(item.profit || 0)}</td>}
+                  {selectedColumns?.quantity !== false && <td className="text-right font-semibold">{(item.sold || 0)}</td>}
+                  {selectedColumns?.cost !== false && <td className="text-right font-normal">{formatCurrency(item.cost_price || 0)}</td>}
+                  {selectedColumns?.mrp !== false && <td className="text-right font-normal">{formatCurrency(item.mrp_price || 0)}</td>}
+                  {selectedColumns?.wholesale !== false && <td className="text-right font-normal">{formatCurrency(item.wholesale_price || 0)}</td>}
+                  {selectedColumns?.sellingPrice !== false && <td className="text-right font-normal">{formatCurrency(item.selling_price || 0)}</td>}
+                  {selectedColumns?.revenue !== false && <td className="text-right font-semibold">{formatCurrency(item.sales || 0)}</td>}
+                  {selectedColumns?.profit !== false && <td className="text-right font-semibold text-emerald-700">{formatCurrency(item.profit || 0)}</td>}
                 </tr>
               ))}
             </tbody>
@@ -89,7 +89,7 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
         {stats.paymentAmounts && (
         <div style={{ pageBreakBefore: 'always', paddingTop: '20mm' }}>
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">Register & Payment Summary</h2>
+            <h2 className="text-2xl font-medium text-slate-900 mb-1">Register & Payment Summary</h2>
             <p className="text-sm text-slate-500">
               {dateRange?.from ? format(dateRange.from, "do MMM, yyyy hh:mm a") : ""} - {dateRange?.to ? format(dateRange.to, "do MMM, yyyy hh:mm a") : format(new Date(), "do MMM, yyyy hh:mm a")}
             </p>
@@ -98,7 +98,7 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
           <div className="grid grid-cols-2 gap-12">
             {/* Left Column: Payment Methods */}
             <div>
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-200">Payment Breakdown</h3>
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-200">Payment Breakdown</h3>
               <table className="w-full text-sm">
                 <tbody>
                   <tr className="border-b border-slate-100">
@@ -139,36 +139,36 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
 
             {/* Right Column: Register Totals */}
             <div>
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-200">Register Totals</h3>
+              <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-200">Register Totals</h3>
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm text-slate-600">Total Gross Sales</span>
-                  <span className="text-sm font-bold text-slate-800">Rs {(stats.totalSales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="text-sm font-semibold text-slate-800">Rs {(stats.totalSales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm text-slate-600">Total Refunds Processed</span>
-                  <span className="text-sm font-bold text-rose-600">- Rs {(stats.totalRefund || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="text-sm font-semibold text-rose-600">- Rs {(stats.totalRefund || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm text-slate-600">Total Expenses</span>
-                  <span className="text-sm font-bold text-amber-600">- Rs {(stats.totalExpense || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="text-sm font-semibold text-amber-600">- Rs {(stats.totalExpense || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200/60">
                   <span className="text-sm text-slate-600">Total Discounts</span>
-                  <span className="text-sm font-bold text-blue-600">- Rs {(stats.totalDiscount || stats.totalDiscounts || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="text-sm font-semibold text-blue-600">- Rs {(stats.totalDiscount || stats.totalDiscounts || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 
                 <div className="flex justify-between items-center mb-5 gap-4">
-                  <span className="text-sm font-bold text-slate-700 leading-tight">Net Collected</span>
-                  <span className="text-lg font-black text-slate-900 whitespace-nowrap shrink-0 text-right">
+                  <span className="text-sm font-semibold text-slate-700 leading-tight">Net Collected</span>
+                  <span className="text-lg font-semibold text-slate-900 whitespace-nowrap shrink-0 text-right">
                     Rs {((Object.values(stats.paymentAmounts || {}).reduce((a, b) => a + b, 0) - (stats.paymentAmounts?.Credit || 0)) - (stats.totalRefund || 0) - (stats.totalExpense || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 
                 <div className="mt-5 pt-5 border-t border-slate-200 bg-white -mx-5 -mb-5 p-5 rounded-b-xl">
                   <div className="flex justify-between items-center gap-4">
-                    <span className="text-sm font-bold text-slate-800 leading-tight">Expected Cash In Drawer</span>
-                    <span className="text-xl font-black text-emerald-600 whitespace-nowrap shrink-0 text-right">
+                    <span className="text-sm font-semibold text-slate-800 leading-tight">Expected Cash In Drawer</span>
+                    <span className="text-xl font-semibold text-emerald-600 whitespace-nowrap shrink-0 text-right">
                       Rs {(stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -177,8 +177,8 @@ export const SalesByProductPrintTemplate = React.forwardRef(({ data, filters, st
                   </p>
 
                   <div className="flex justify-between items-center gap-4 mt-4 pt-4 border-t border-slate-100">
-                    <span className="text-sm font-bold text-slate-800 leading-tight">Net Cash (Excl. Float)</span>
-                    <span className="text-xl font-black text-emerald-600 whitespace-nowrap shrink-0 text-right">
+                    <span className="text-sm font-semibold text-slate-800 leading-tight">Net Cash (Excl. Float)</span>
+                    <span className="text-xl font-semibold text-emerald-600 whitespace-nowrap shrink-0 text-right">
                       Rs {(
                         (stats.cashInHand !== undefined ? stats.cashInHand : (stats.paymentAmounts?.Cash || stats.paymentAmounts?.cash || 0)) 
                         - (stats.totalOpeningBalance || 0) 

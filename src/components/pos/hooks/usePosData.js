@@ -9,19 +9,37 @@ import { db, syncMasterData } from "@/lib/indexedDB/db";
 
 function getImageUrl(imageField) {
   if (!imageField) return null;
+
+  const processStr = (path) => {
+    if (path.startsWith("http")) return path;
+    if (path.startsWith("/")) path = path.slice(1);
+    
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (apiBase && apiBase !== "undefined") {
+         const baseUrl = apiBase.replace("/api/v1", "");
+         return `${baseUrl}/${encodeURI(path.replace(/\\/g, "/"))}`;
+      }
+    } catch (e) {
+      // Ignored if process is not defined
+    }
+    
+    // Fallback if env vars were stripped during build
+    if (typeof window !== "undefined") {
+       return `${window.location.origin}/${encodeURI(path.replace(/\\/g, "/"))}`;
+    }
+    
+    return `/${encodeURI(path.replace(/\\/g, "/"))}`;
+  };
+
   try {
     const images = JSON.parse(imageField);
     if (Array.isArray(images) && images.length > 0) {
-      const path = images[0];
-      if (path.startsWith("http")) return path;
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL.replace("/api/v1", "");
-      return `${baseUrl}/${encodeURI(path.replace(/\\/g, "/"))}`;
+      return processStr(images[0]);
     }
   } catch (e) {
-    if (typeof imageField === "string" && imageField.startsWith("http")) return imageField;
     if (typeof imageField === "string" && imageField.length > 0) {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL.replace("/api/v1", "");
-      return `${baseUrl}/${encodeURI(imageField.replace(/\\/g, "/"))}`;
+      return processStr(imageField);
     }
   }
   return null;
