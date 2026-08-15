@@ -257,7 +257,11 @@ function LoginForm() {
 
           setTimeout(() => {
             const returnUrl = searchParams.get("redirect") || "/";
-            window.location.href = returnUrl;
+            if (returnUrl.startsWith("http://") || returnUrl.startsWith("https://") || returnUrl.startsWith("file://")) {
+               router.push("/");
+            } else {
+               router.push(returnUrl);
+            }
           }, 600);
           return;
         }

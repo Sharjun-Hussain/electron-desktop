@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { signIn } from "@/components/auth/DesktopAuthProvider";
+import { useSession } from "@/components/auth/DesktopAuthProvider";
+import { desktopLogin } from "@/lib/desktop-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,6 +25,7 @@ export default function SessionExpiredModal({ open, onOpenChange }) {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState(null);
   const router = useRouter();
+  const { update } = useSession();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -35,11 +37,7 @@ export default function SessionExpiredModal({ open, onOpenChange }) {
     setServerError(null);
 
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: values.email,
-        password: values.password,
-      });
+      const result = await desktopLogin(values.email, values.password);
 
       if (result?.error) {
         setServerError(
@@ -49,9 +47,11 @@ export default function SessionExpiredModal({ open, onOpenChange }) {
         );
       } else if (result?.ok) {
         toast.success("Session Restored");
+        // Update session context
+        await update(result.session.user);
         // Don't route anywhere, just dismiss
         if (onOpenChange) onOpenChange(false);
-        // Ensure NextAuth session data is refreshed internally
+        // Refresh page data silently
         router.refresh();
       }
     } catch (error) {
