@@ -257,11 +257,11 @@ function LoginForm() {
 
           setTimeout(() => {
             const returnUrl = searchParams.get("redirect") || "/";
-            if (returnUrl.startsWith("http://") || returnUrl.startsWith("https://") || returnUrl.startsWith("file://")) {
-               router.push("/");
-            } else {
-               router.push(returnUrl);
-            }
+            // Use hard navigation so DesktopAuthProvider re-reads localStorage fresh
+            const safeUrl = (returnUrl.startsWith("http://") || returnUrl.startsWith("https://") || returnUrl.startsWith("file://"))
+              ? "/"
+              : returnUrl;
+            window.location.href = safeUrl;
           }, 600);
           return;
         }

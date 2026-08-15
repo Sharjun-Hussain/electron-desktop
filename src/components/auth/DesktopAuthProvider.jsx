@@ -14,9 +14,12 @@ export function DesktopAuthProvider({ children }) {
   });
   
   const [status, setStatus] = useState(() => {
+    // On the client, read synchronously from localStorage — never stay in 'loading'
     if (typeof window !== 'undefined') return getDesktopSession() ? 'authenticated' : 'unauthenticated';
+    // SSR: return loading, will be resolved by useEffect after hydration
     return 'loading';
   });
+  const [mounted, setMounted] = useState(false);
 
   // 1. Blueprint Implementation: Listen for cross-window security signals
   const { broadcast } = useBroadcast('erp_auth', (data) => {
@@ -29,10 +32,11 @@ export function DesktopAuthProvider({ children }) {
   });
 
   useEffect(() => {
-    // Re-verify session on mount
+    // Re-verify session on mount (resolves SSR 'loading' state)
     const currentSession = getDesktopSession();
     setSession(currentSession);
     setStatus(currentSession ? 'authenticated' : 'unauthenticated');
+    setMounted(true);
     
     const { fetch: originalFetch } = window;
     window.fetch = async (...args) => {
@@ -63,20 +67,20 @@ export function DesktopAuthProvider({ children }) {
       if (newData && typeof window !== 'undefined') {
         const current = getDesktopSession();
         if (current && current.user) {
-          // Update specific fields
+          // Patch specific profile fields if updating profile
           if (newData.name) current.user.name = newData.name;
           if (newData.email) current.user.email = newData.email;
           if (newData.image) {
             current.user.image = newData.image;
-            // Add a timestamp to break image cache when updated
             current.user.imageLastUpdated = Date.now();
           }
-          
           localStorage.setItem('inzeedo_session', JSON.stringify(current));
           setSession({ ...current });
+          setStatus('authenticated');
           return;
         }
       }
+      // Full re-read (e.g. after SessionExpiredModal re-login)
       const updated = getDesktopSession();
       setSession(updated);
       setStatus(updated ? 'authenticated' : 'unauthenticated');

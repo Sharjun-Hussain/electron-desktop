@@ -32,6 +32,7 @@ export default function AppLayout({ children }) {
   useWakeLock(isPosScreen);
 
   useEffect(() => {
+    if (status === 'loading') return; // Wait for DesktopAuthProvider to settle
     if (status === 'unauthenticated') {
       router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
