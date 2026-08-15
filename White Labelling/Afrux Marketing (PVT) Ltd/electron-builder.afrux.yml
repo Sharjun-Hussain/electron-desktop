@@ -31,6 +31,7 @@ extraResources:
       - "package.json"
       - "scripts/**"
       - ".env.example"
+      - "uploads/**"
       - "!.git/**"
       - "!node_modules/**"
       - "!dist/**"

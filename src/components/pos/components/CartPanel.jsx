@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, forwardRef, useCallback, useRef, useImperativeHandle, useState } from "react";
+import { memo, forwardRef, useCallback, useRef, useImperativeHandle, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Calculator, Maximize, Minimize, X, Plus, Minus, Trash2, Weight, Ruler, Loader2 } from "lucide-react";
@@ -13,26 +13,18 @@ import { Badge } from "@/components/ui/badge";
 // ─── CartItemCard ──────────────────────────────────────────────────────────────
 // Highlight is done with CSS :focus-within — zero re-renders for keyboard nav.
 export const CartItemCard = memo(
-  forwardRef(({ item, dispatch, onEnterPress, isRestaurant }, ref) => {
-    const netTotal = (item.price * item.quantity * (1 - item.discount / 100)) - (item.discount_amt || 0);
+  forwardRef(({ item, dispatch, onEnterPress, compactProductCol = false, isRestaurant = false, visibleColumns }, ref) => {
+    const netTotal = (item.price * item.quantity) - ((item.discount_amt || 0) + (item.price * item.quantity * ((item.discount || 0) / 100)));
+
     const qtyRef = useRef(null);
     const discRef = useRef(null);
     const amtDiscRef = useRef(null);
     const { t } = useTranslation();
 
     useImperativeHandle(ref, () => ({
-      focusQty: () => {
-        qtyRef.current?.focus();
-        qtyRef.current?.select?.();
-      },
-      focusDiscount: () => {
-        discRef.current?.focus();
-        discRef.current?.select?.();
-      },
-      focusAmountDiscount: () => {
-        amtDiscRef.current?.focus();
-        amtDiscRef.current?.select?.();
-      },
+      focusQty: () => qtyRef.current?.focus(),
+      focusDiscount: () => discRef.current?.focus(),
+      focusAmountDiscount: () => amtDiscRef.current?.focus(),
     }));
 
     const handleQuantityChange = useCallback((valString) => {
@@ -42,12 +34,12 @@ export const CartItemCard = memo(
     }, [dispatch, item.id]);
 
     const handleDiscountChange = useCallback((val) => {
-      const discount = Math.max(0, Math.min(100, val));
+      const discount = Math.max(0, Math.min(100, Number(val) || 0));
       dispatch({ type: "UPDATE_ITEM", payload: { id: item.id, discount } });
     }, [dispatch, item.id]);
 
     const handleDiscountAmtChange = useCallback((val) => {
-      const discount_amt = Math.max(0, val);
+      const discount_amt = Math.max(0, Number(val) || 0);
       dispatch({ type: "UPDATE_ITEM", payload: { id: item.id, discount_amt } });
     }, [dispatch, item.id]);
 
@@ -56,85 +48,86 @@ export const CartItemCard = memo(
 
     const formatWeight = (qty, unit) => {
       if (!qty || !unit) return "";
-      const u = unit.toLowerCase();
-      if (u === "kg") {
-        if (qty < 1) return `${(qty * 1000).toFixed(0)} g`;
-        return `${qty} Kg`;
-      }
+      const lowerWrap = unit.toLowerCase();
+      if (lowerWrap === "kg" || lowerWrap === "l") return `${qty.toFixed(3)} ${unit}`;
+      if (lowerWrap === "g" || lowerWrap === "m") return `${qty.toFixed(0)} ${unit}`;
       return `${qty} ${unit}`;
     };
 
-    /*
-    const handleReadScale = () => {
-      setIsWeighing(true);
-      // Simulate industrial hardware bridge response latency
-      setTimeout(() => {
-        const randomWeight = (Math.random() * 5 + 0.5).toFixed(3);
-        handleQuantityChange(Number(randomWeight));
-        setIsWeighing(false);
-        toast.success(t("pos.weight_locked") + ": " + randomWeight + " " + item.unit);
-      }, 1500);
-    };
-    */
+    const hasProductInfo = visibleColumns.includes("name") || visibleColumns.includes("barcode");
 
     return (
       <div className="group flex items-center gap-x-3 p-2 py-1.5 rounded-lg border-b border-border/30 transition-all duration-200 bg-card hover:bg-emerald-500/5 focus-within:bg-emerald-500/10">
         {/* Product Info */}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm text-foreground break-words leading-tight">{item.name}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            {item.barcode} {item.size && `• ${item.size}`}
-            {isWeighted && (
-              <span className="ml-2 text-emerald-600 font-medium bg-emerald-50 px-1 rounded">
-                {formatWeight(item.quantity, item.unit)}
-              </span>
+        {hasProductInfo && (
+          <div className={compactProductCol ? "w-[200px] shrink-0" : "flex-1 min-w-[180px]"}>
+            {visibleColumns.includes("name") && (
+              <p className={compactProductCol 
+                ? "font-medium text-sm text-foreground whitespace-normal line-clamp-3 leading-tight" 
+                : "font-medium text-sm text-foreground wrap-break-word leading-tight"
+              }>{item.name}</p>
             )}
-          </p>
-          {isRestaurant && (
-            <div className="mt-1">
-              <input
-                type="text"
-                placeholder="Cooking instructions (e.g. no onion, extra spicy)..."
-                value={item.cooking_notes || ""}
-                onChange={(e) => dispatch({ type: "UPDATE_ITEM", payload: { id: item.id, cooking_notes: e.target.value } })}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-2 py-0.5 text-[10px] font-medium text-foreground focus:outline-none focus:border-emerald-500 placeholder:text-muted-foreground/40 transition-colors"
-              />
-            </div>
-          )}
-        </div>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {visibleColumns.includes("barcode") && <>{item.barcode} {item.size && `• ${item.size}`}</>}
+              {isWeighted && (
+                <span className="ml-2 text-emerald-600 font-medium bg-emerald-50 px-1 rounded">
+                  {formatWeight(item.quantity, item.unit)}
+                </span>
+              )}
+            </p>
+            {isRestaurant && (
+              <div className="mt-1">
+                <input
+                  type="text"
+                  placeholder="Cooking instructions (e.g. no onion, extra spicy)..."
+                  value={item.cooking_notes || ""}
+                  onChange={(e) => dispatch({ type: "UPDATE_ITEM", payload: { id: item.id, cooking_notes: e.target.value } })}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md px-2 py-0.5 text-[10px] font-medium text-foreground focus:outline-none focus:border-emerald-500 placeholder:text-muted-foreground/40 transition-colors"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* MRP */}
-        <div className="w-16 shrink-0 text-right">
-          <p className="text-[12px] text-muted-foreground/60 line-through">{(item.mrp || item.price).toFixed(2)}</p>
-        </div>
+        {visibleColumns.includes("mrp") && (
+          <div className="w-16 shrink-0 text-right">
+            <p className="text-[12px] text-muted-foreground/60 line-through">{(item.mrp || item.price).toFixed(2)}</p>
+          </div>
+        )}
 
         {/* Price */}
-        <div className="w-16 shrink-0 text-right">
-          <p className="text-[13px] text-foreground font-medium">{item.price.toFixed(2)}</p>
-        </div>
+        {visibleColumns.includes("price") && (
+          <div className="w-16 shrink-0 text-right">
+            <p className="text-[13px] text-foreground font-medium">{item.price.toFixed(2)}</p>
+          </div>
+        )}
 
         {/* Quantity */}
-        <div className="flex shrink-0 flex-col items-center w-14">
-            <Input
-              ref={qtyRef}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  onEnterPress();
-                }
-              }}
-              onFocus={(e) => e.target.select()}
-              type="number"
-              step="0.001"
-              value={item.quantity}
-              onChange={(e) => handleQuantityChange(e.target.value)}
-              onWheel={(e) => e.target.blur()}
-              data-cart-qty="true"
-              className="h-8 w-full text-center text-[13px] font-medium bg-transparent border-transparent hover:border-border/30 focus:bg-white dark:focus:bg-slate-950 focus:border-emerald-500/50 transition-all rounded-md shadow-none p-0"
-            />
-          </div>
+        {visibleColumns.includes("quantity") && (
+          <div className="flex shrink-0 flex-col items-center w-14">
+              <Input
+                ref={qtyRef}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    onEnterPress();
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+                type="number"
+                step="0.001"
+                value={item.quantity}
+                onChange={(e) => handleQuantityChange(e.target.value)}
+                onWheel={(e) => e.target.blur()}
+                data-cart-qty="true"
+                className="h-8 w-full text-center text-[13px] font-medium bg-transparent border-transparent hover:border-border/30 focus:bg-white dark:focus:bg-slate-950 focus:border-emerald-500/50 transition-all rounded-md shadow-none p-0"
+              />
+            </div>
+        )}
   
-          {/* Discount (%) */}
+        {/* Discount (%) */}
+        {visibleColumns.includes("discount_percent") && (
           <div className="w-14 shrink-0">
             <div className="relative group/disc">
               <Input
@@ -156,8 +149,10 @@ export const CartItemCard = memo(
               <span className="absolute right-0.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/40 pointer-events-none group-focus-within/disc:text-muted-foreground">%</span>
             </div>
           </div>
+        )}
   
-          {/* Manual Discount (Amt) */}
+        {/* Manual Discount (Amt) */}
+        {visibleColumns.includes("discount") && (
           <div className="w-16 shrink-0">
             <div className="relative">
               <Input
@@ -176,13 +171,16 @@ export const CartItemCard = memo(
                 className="h-8 w-full text-center text-[13px] p-0 bg-transparent border-transparent hover:border-border/30 focus:bg-white dark:focus:bg-slate-950 focus:border-emerald-500/50 transition-all rounded-md shadow-none"
                 placeholder="0"
               />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Amount */}
-        <div className="w-24 shrink-0 text-right">
-          <p className="font-bold text-[14px] text-emerald-600">{netTotal.toFixed(2)}</p>
-        </div>
+        {visibleColumns.includes("total") && (
+          <div className="w-24 shrink-0 text-right">
+            <p className="font-bold text-[14px] text-emerald-600">{netTotal.toFixed(2)}</p>
+          </div>
+        )}
 
         {/* Delete */}
         <div className="w-6 shrink-0 flex justify-end">
@@ -216,25 +214,52 @@ export const CartPanel = memo(({
   enableWholesale = true,
   isManufacturing = false,
   isRestaurant = false,
+  compactProductCol = false,
+  visibleColumns = ["barcode", "name", "quantity", "mrp", "price", "discount", "discount_percent", "total", "batch", "expire"],
 }) => {
   const { t } = useTranslation();
+  const scrollRef = useRef(null);
+  
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [cart.length]);
+
   return (
     <main className="flex flex-col h-full overflow-hidden">
       {/* Redundant header hidden as requested */}
 
-      <div className="flex-1 p-4 pt-0 overflow-y-auto bg-background/60">
+      <div ref={scrollRef} className="flex-1 p-4 pt-0 overflow-y-auto bg-background/60 custom-scrollbar">
         {cart.length > 0 ? (
           <div className="max-w-full mx-auto overflow-x-auto pb-4">
-            <div className="min-w-[550px]">
+            <div className="min-w-[700px]">
               {/* Table Header */}
               <div className="flex items-center gap-x-3 p-2 py-2 sticky top-0 bg-amber-500/10 backdrop-blur-sm z-20 border-b border-amber-500/20 mb-1 rounded-t-lg">
-                <div className="flex-1 text-[12px] font-bold text-amber-700 uppercase tracking-tight">Product</div>
-                <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">MRP</div>
-                <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Price</div>
-                <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Qty</div>
-                <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Disc %</div>
-                <div className="w-16 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Manual</div>
-                <div className="w-24 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Amount</div>
+                {(visibleColumns.includes("name") || visibleColumns.includes("barcode")) && (
+                  <div className={`${compactProductCol ? "w-[200px] shrink-0" : "flex-1 min-w-[180px]"} text-[12px] font-bold text-amber-700 uppercase tracking-tight`}>Product</div>
+                )}
+                {visibleColumns.includes("mrp") && (
+                  <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">MRP</div>
+                )}
+                {visibleColumns.includes("price") && (
+                  <div className="w-16 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Price</div>
+                )}
+                {visibleColumns.includes("quantity") && (
+                  <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Qty</div>
+                )}
+                {visibleColumns.includes("discount_percent") && (
+                  <div className="w-14 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Disc %</div>
+                )}
+                {visibleColumns.includes("discount") && (
+                  <div className="w-16 text-center text-[12px] font-bold text-amber-700 uppercase tracking-tight">Manual</div>
+                )}
+                {visibleColumns.includes("total") && (
+                  <div className="w-24 text-right text-[12px] font-bold text-amber-700 uppercase tracking-tight">Amount</div>
+                )}
                 <div className="w-6" />
               </div>
 
@@ -246,6 +271,8 @@ export const CartPanel = memo(({
                     dispatch={dispatch}
                     onEnterPress={onEnterPress}
                     isRestaurant={isRestaurant}
+                    compactProductCol={compactProductCol}
+                    visibleColumns={visibleColumns}
                     ref={(el) => {
                       if (el) cartItemRefs.current.set(item.id, el);
                       else cartItemRefs.current.delete(item.id);

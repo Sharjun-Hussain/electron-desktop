@@ -4,6 +4,7 @@ import PosPage from "@/components/pos/main-page";
 import ClassicPosPage from "@/components/pos/classic-page";
 import RestaurantPosPage from "@/components/pos/restaurant-page";
 import ManufacturerPosPage from "@/components/pos/manufacturer-pos-page";
+import RetailPosPage from "@/components/pos/retail-pos-page";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import React from "react";
 
@@ -23,6 +24,10 @@ const Page = () => {
 
   if (posLayout === "classic") {
     return <ClassicPosPage />;
+  }
+
+  if (posLayout === "retail") {
+    return <RetailPosPage />;
   }
 
   return <PosPage />;

@@ -70,8 +70,8 @@ const ProductCardSimple = memo(({ product, onAddToCart, isWholesale }) => {
 ProductCardSimple.displayName = "ProductCardSimple";
 
 // ─── Main ProductGrid component ───────────────────────────────────────────────
-export const ProductGrid = memo(forwardRef(({ allProducts, flattenedVariants, onAddToCart, isWholesale, productSearch }, ref) => {
-  const [showImages, setShowImages] = useState(true);
+export const ProductGrid = memo(forwardRef(({ allProducts, flattenedVariants, onAddToCart, isWholesale, productSearch, defaultShowImages = true, gridCols }, ref) => {
+  const [showImages, setShowImages] = useState(defaultShowImages);
 
   const filteredProducts = useMemo(() => {
     if (!productSearch) return allProducts;
@@ -87,13 +87,13 @@ export const ProductGrid = memo(forwardRef(({ allProducts, flattenedVariants, on
   return (
     <div className="flex-1 p-1 overflow-y-auto bg-muted/5">
       {showImages ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-1">
+        <div className={gridCols || "grid grid-cols-2 lg:grid-cols-3 gap-1"}>
           {filteredProducts.map((p) => (
             <ProductCardWithImage key={p.id} product={p} onAddToCart={onAddToCart} isWholesale={isWholesale} />
           ))}
         </div>
       ) : (
-        <div className="flex flex-col gap-1">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
           {filteredProducts.map((p) => (
             <ProductCardSimple key={p.id} product={p} onAddToCart={onAddToCart} isWholesale={isWholesale} />
           ))}

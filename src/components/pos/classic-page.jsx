@@ -17,6 +17,7 @@ import { useShift } from "@/app/hooks/swr/useShift";
 import { useSettings } from "@/app/hooks/swr/useSettings";
 import { useFullscreen } from "@/hooks/use-fullscreen";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { useHardware } from "./hooks/useHardware";
 
 import {
   Search, X, Loader2, Plus, Minus, Trash2,
@@ -135,6 +136,7 @@ export default function ClassicPosPage() {
     isLoading, refreshData
   } = usePosData();
   const { state, dispatch, handleSelectCustomer, handleSelectDistributor } = usePosCart();
+  const { isReady: isHardwareReady, printReceipt, printRawReceipt } = useHardware();
 
   // -- UI state --
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);

@@ -24,10 +24,9 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {
-  Archive, List, PackageSearch, Loader2,
-  Trash2, RotateCcw, Printer, Search, Plus, Truck,
-  Package,
-  AlertTriangle,
+  History, AlertTriangle, UserPlus, FileText, ChevronRight, Calculator as CalcIcon,
+  XCircle, RotateCcw, PackageSearch, PenLine, CreditCard,
+  Package, Archive, List, Loader2, Trash2, Printer, Search, Plus, Truck
 } from "lucide-react";
 import clsx from "clsx";
 import { db } from "@/lib/indexedDB/db";
@@ -760,13 +759,13 @@ export const VariantSelectorDialog = memo(({ isOpen, onOpenChange, product, onSe
               <div key={v.id}
                 className="group flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all cursor-pointer"
                 onClick={() => {
+                  onOpenChange(false); // Close first to prevent overriding activeDialog set by handleAddToCart
                   onSelect({
                     variantId: v.id, productId: v.productId, barcode: v.barcode,
                     name: v.fullName, size: v.variantName, unit: v.unit,
                     retailPrice: v.retailPrice, mrpPrice: v.mrpPrice, wholesalePrice: v.wholesalePrice,
-                    batches: v.batches
+                    price: v.retailPrice, stock: v.stock, batches: v.batches
                   });
-                  onOpenChange(false);
                 }}>
                 <div className="flex flex-col">
                   <span className="text-sm font-medium group-hover:text-emerald-700 transition-colors uppercase tracking-tight">{v.variantName}</span>
@@ -814,7 +813,7 @@ export const PaymentDialog = memo(({
   entityLabel = "Customer",
 }) => {
   const { t } = useTranslation();
-  const [payments, setPayments] = useState([{ id: 1, method: "cash", amount: "" }]);
+  const [payments, setPayments] = useState([{ id: 1, method: settings?.defaultPaymentMethod || "cash", amount: "" }]);
   const [lastDiscount, setLastDiscount] = useState(0);
   const [discountType, setDiscountType] = useState(settings?.defaultExtraDiscountType || "amount");
   const [sendToKitchen, setSendToKitchen] = useState(true);
@@ -843,7 +842,7 @@ export const PaymentDialog = memo(({
 
   useEffect(() => {
     if (isOpen) {
-      setPayments([{ id: Date.now(), method: "cash", amount: "" }]);
+      setPayments([{ id: Date.now(), method: settings?.defaultPaymentMethod || "cash", amount: "" }]);
       setLastDiscount(0);
       setDiscountType(settings?.defaultExtraDiscountType || "amount");
       setChequeDetails({ cheque_number: "", bank_name: "", cheque_date: "" });
@@ -895,7 +894,7 @@ export const PaymentDialog = memo(({
           <DialogDescription className="sr-only">Choose a payment method and confirm the amount received.</DialogDescription>
           <div className="flex items-baseline justify-between">
             <span className="text-white font-black text-3xl">
-              LKR {netAmountToPay.toFixed(2)}
+              {settings?.currency_symbol || 'Rs'} {netAmountToPay.toFixed(2)}
             </span>
             <span className="text-white font-bold uppercase text-[11px] opacity-90">Payable Total</span>
           </div>
@@ -903,11 +902,11 @@ export const PaymentDialog = memo(({
 
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+            <div className="space-y-3">
+              <label className="text-sm font-black uppercase  text-slate-500 ml-1">
                 Select {entityLabel} (Default: Walk-in)
               </label>
-              <div className="border border-border/40 rounded-xl overflow-hidden bg-muted/5 h-10 flex items-center">
+              <div className="border border-border/40 rounded-xl mt-3 overflow-hidden bg-muted/5 h-10 flex items-center">
                 <CustomerSelector
                   customers={allCustomers}
                   selectedCustomer={selectedCustomer}
@@ -920,11 +919,11 @@ export const PaymentDialog = memo(({
 
           {(settings?.enableExtraDiscount !== false) && (
             <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">
+              <div className="space-y-3">
+                <label className="text-md font-black uppercase  text-slate-500 ml-1">
                   Extra Discount
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex mt-3 items-center gap-2">
                   <div className="relative flex-1">
                     <Input
                       type="number"
@@ -941,14 +940,14 @@ export const PaymentDialog = memo(({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="amount">LKR</SelectItem>
+                      <SelectItem value="amount">{settings?.currency_symbol || 'Rs'}</SelectItem>
                       <SelectItem value="percentage">%</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 {discountType === "percentage" && lastDiscount > 0 && (
                   <p className="text-[10px] text-slate-500 font-medium ml-1">
-                    Amount: LKR {calculatedDiscountAmt.toFixed(2)}
+                    Amount: {settings?.currency_symbol || 'Rs'} {calculatedDiscountAmt.toFixed(2)}
                   </p>
                 )}
               </div>
@@ -958,12 +957,12 @@ export const PaymentDialog = memo(({
           <div className="space-y-3">
             {payments.map((p, index) => (
               <div key={p.id} className={clsx("grid gap-3 items-end", payments.length > 1 ? "grid-cols-[1fr_1.5fr_auto]" : "grid-cols-[1fr_1.5fr]")}>
-                <div className="space-y-2">
-                  {index === 0 && <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">Payment Method</label>}
+                <div className="space-y-3">
+                  {index === 0 && <label className="text-sm font-black uppercase  text-slate-500 ml-1">Payment Method</label>}
                   <select
                     value={p.method}
                     onChange={(e) => updatePayment(p.id, "method", e.target.value)}
-                    className="w-full h-12 px-3 rounded-xl border border-border/40 bg-muted/20 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/20 appearance-none cursor-pointer"
+                    className="w-full h-12 px-3 mt-3 rounded-xl border border-border/40 bg-muted/20 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/20 appearance-none cursor-pointer"
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
                       backgroundRepeat: 'no-repeat',
@@ -977,8 +976,8 @@ export const PaymentDialog = memo(({
                   </select>
                 </div>
 
-                <div className="space-y-2 relative">
-                  {index === 0 && <label className="text-[11px] font-black uppercase tracking-tight text-slate-500 ml-1">Amount Received</label>}
+                <div className="space-y-3 relative">
+                  {index === 0 && <label className="text-sm font-black uppercase  text-slate-500 ml-1">Amount Received</label>}
                   <div className="relative">
                     <Input
                       type="number"
@@ -987,7 +986,7 @@ export const PaymentDialog = memo(({
                       onChange={(e) => updatePayment(p.id, "amount", e.target.value)}
                       autoFocus={index === 0}
                       onWheel={(e) => e.target.blur()}
-                      className="h-12 text-xl font-bold bg-muted/20 border-border/40 rounded-xl focus:ring-1 focus:ring-violet-500/20"
+                      className="h-12 text-xl mt-3 font-bold bg-muted/20 border-border/40 rounded-xl focus:ring-1 focus:ring-violet-500/20"
                       onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
                     />
                     {index === 0 && payments.length === 1 && (
@@ -1061,14 +1060,14 @@ export const PaymentDialog = memo(({
               </Button>
             )}
           </div>
-          
+
           {isRestaurant && (
             <div className="flex items-center gap-2 pt-2 pb-1">
-              <input 
-                type="checkbox" 
-                id="sendToKitchen" 
-                checked={sendToKitchen} 
-                onChange={(e) => setSendToKitchen(e.target.checked)} 
+              <input
+                type="checkbox"
+                id="sendToKitchen"
+                checked={sendToKitchen}
+                onChange={(e) => setSendToKitchen(e.target.checked)}
                 className="w-4 h-4 rounded border-border/40 text-violet-600 focus:ring-violet-500/20"
               />
               <label htmlFor="sendToKitchen" className="text-xs font-bold text-slate-700 cursor-pointer uppercase">
@@ -1079,16 +1078,16 @@ export const PaymentDialog = memo(({
 
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="bg-muted/10 p-4 rounded-xl border border-border/30">
-              <p className="text-[10px] font-black uppercase text-slate-500 mb-1">Balance</p>
+              <p className="text-sm font-black uppercase text-slate-500 mb-1">Balance</p>
               <p className={clsx(
-                "text-xl font-black",
+                "text-xl  font-black",
                 balance > 0 ? "text-emerald-600" : "text-muted-foreground/20"
               )}>
                 {balance.toFixed(2)}
               </p>
             </div>
             <div className="bg-muted/10 p-4 rounded-xl border border-border/30">
-              <p className="text-[10px] font-black uppercase text-slate-500 mb-1">Remaining</p>
+              <p className="text-sm font-black uppercase text-slate-500 mb-1">Remaining</p>
               <p className={clsx(
                 "text-xl font-black",
                 remaining > 0 ? "text-rose-500" : "text-muted-foreground/20"
@@ -1144,7 +1143,7 @@ export const QuantityInputDialog = memo(({ isOpen, onOpenChange, product, onConf
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input 
+          <Input
             ref={inputRef}
             type="number"
             inputMode="decimal"

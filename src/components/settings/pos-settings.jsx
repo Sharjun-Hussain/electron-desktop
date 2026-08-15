@@ -517,6 +517,7 @@ export function PosSettings() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
                         { id: "modern", label: "Modern Desktop", desc: "Touch-friendly & Visual", icon: Monitor },
+                        { id: "retail", label: "Retail Workstation", desc: "Product-First Left Layout", icon: Monitor },
                         { id: "classic", label: "Classic Industrial", desc: "Keyboard-first & Compact", icon: LayoutGrid },
                       ].map((layout) => {
                         const isActive = posLayout === layout.id;
